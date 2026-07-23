@@ -1,0 +1,6 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - button "Sign in" [ref=e3]
+    - button "Sign up" [ref=e4]
+  - button "Open Next.js Dev Tools" [ref=e11] [cursor=pointer]
+  - alert [ref=e15]

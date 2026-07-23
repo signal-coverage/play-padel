@@ -1,0 +1,109 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id                 String        @id @default(cuid())
+  clerkUserId        String        @unique
+  name               String        @default("")
+  city               String        @default("")
+  phone              String        @default("")
+  onboardingComplete Boolean       @default(false)
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+  reservations       Reservation[]
+}
+
+enum ReservationStatus {
+  PENDING_PAYMENT
+  CONFIRMED
+  CANCELLED
+  EXPIRED
+}
+
+enum PaymentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+// Admin/seed-managed only — no self-service UI in v1 (see spec: Seed/Admin-Only
+// Management). depositRequired/depositAmountArs pairing is enforced at the
+// application layer (seed script / future admin tooling), not by the DB.
+model Club {
+  id               String   @id @default(cuid())
+  name             String
+  address          String
+  timezone         String
+  openTime         String
+  closeTime        String
+  depositRequired  Boolean  @default(false)
+  depositAmountArs Int?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  courts           Court[]
+}
+
+model Court {
+  id           String        @id @default(cuid())
+  clubId       String
+  club         Club          @relation(fields: [clubId], references: [id])
+  name         String
+  slotMinutes  Int
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  reservations Reservation[]
+
+  @@index([clubId])
+}
+
+// Double-booking prevention is enforced by a hand-written `EXCLUDE USING gist`
+// constraint added directly to the generated migration SQL (see
+// prisma/migrations/*_add_reservation_domain/migration.sql) — Prisma's schema
+// language cannot express exclusion constraints, so there is no matching
+// `@@` attribute here. See design.md "Raw-SQL exclusion constraint".
+model Reservation {
+  id        String            @id @default(cuid())
+  courtId   String
+  court     Court             @relation(fields: [courtId], references: [id])
+  userId    String
+  user      User              @relation(fields: [userId], references: [id])
+  // Stored as timestamptz (not the Postgres provider's default timestamp(3))
+  // so the hand-written exclusion constraint's `tstzrange(...)` call is
+  // IMMUTABLE — casting timestamp -> timestamptz depends on session TimeZone
+  // and Postgres rejects that in an index expression (42P17).
+  startsAt  DateTime          @db.Timestamptz(3)
+  endsAt    DateTime          @db.Timestamptz(3)
+  status    ReservationStatus @default(PENDING_PAYMENT)
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+  payments  Payment[]
+
+  @@index([courtId])
+  @@index([userId])
+}
+
+model Payment {
+  reservationId      String
+  reservation        Reservation   @relation(fields: [reservationId], references: [id])
+  id                 String        @id @default(cuid())
+  mpPaymentId        String?       @unique
+  mpPreferenceId     String?
+  status             PaymentStatus @default(PENDING)
+  amountArs          Int
+  createdAt          DateTime      @default(now())
+  webhookReceivedAt  DateTime?
+
+  @@index([reservationId])
+}

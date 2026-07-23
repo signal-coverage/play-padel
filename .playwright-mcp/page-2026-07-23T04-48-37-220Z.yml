@@ -1,0 +1,49 @@
+- generic [active] [ref=f19e1]:
+  - banner [ref=f19e2]:
+    - button "Open user menu" [ref=f19e31] [cursor=pointer]:
+      - img "'s logo" [ref=f19e34]
+  - button "Open Next.js Dev Tools" [ref=f19e25] [cursor=pointer]
+  - alert [ref=f19e29]
+  - generic [ref=f19e36]:
+    - generic [ref=f19e37]:
+      - link "← Back to clubs" [ref=f19e38] [cursor=pointer]:
+        - /url: /clubs
+      - heading "Club Palermo Padel — Cancha 1" [level=1] [ref=f19e39]
+      - paragraph [ref=f19e40]: No deposit required — booking confirms instantly.
+    - generic [ref=f19e41]:
+      - link "← Previous day" [ref=f19e42] [cursor=pointer]:
+        - /url: /clubs/seed-free-court-1?date=2026-07-22
+      - generic [ref=f19e43]: 2026-07-23
+      - link "Next day →" [ref=f19e44] [cursor=pointer]:
+        - /url: /clubs/seed-free-court-1?date=2026-07-24
+    - generic [ref=f19e45]:
+      - generic [ref=f19e46]:
+        - generic [ref=f19e47]: 08:00 – 09:30
+        - button "Book" [ref=f19e49]
+      - generic [ref=f19e50]:
+        - generic [ref=f19e51]: 09:30 – 11:00
+        - button "Book" [ref=f19e53]
+      - generic [ref=f19e54]:
+        - generic [ref=f19e55]: 11:00 – 12:30
+        - button "Book" [ref=f19e57]
+      - generic [ref=f19e58]:
+        - generic [ref=f19e59]: 12:30 – 14:00
+        - button "Book" [ref=f19e61]
+      - generic [ref=f19e62]:
+        - generic [ref=f19e63]: 14:00 – 15:30
+        - button "Book" [ref=f19e65]
+      - generic [ref=f19e66]:
+        - generic [ref=f19e67]: 15:30 – 17:00
+        - button "Book" [ref=f19e69]
+      - generic [ref=f19e70]:
+        - generic [ref=f19e71]: 17:00 – 18:30
+        - button "Book" [ref=f19e73]
+      - generic [ref=f19e74]:
+        - generic [ref=f19e75]: 18:30 – 20:00
+        - button "Book" [ref=f19e77]
+      - generic [ref=f19e78]:
+        - generic [ref=f19e79]: 20:00 – 21:30
+        - button "Book" [ref=f19e81]
+      - generic [ref=f19e82]:
+        - generic [ref=f19e83]: 21:30 – 23:00
+        - button "Book" [ref=f19e85]

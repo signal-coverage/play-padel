@@ -1,0 +1,70 @@
+- generic [ref=f1e1]:
+  - banner [ref=f1e2]:
+    - button "Sign in" [ref=f1e3]
+    - button "Sign up" [ref=f1e4]
+  - generic [active]:
+    - generic [ref=f1e235]:
+      - generic [ref=f1e236]:
+        - navigation [ref=f1e238]:
+          - button [disabled] [ref=f1e239]:
+            - img "previous" [ref=f1e240]
+          - generic [ref=f1e242]:
+            - generic [ref=f1e243]: 1/
+            - text: "1"
+          - button [disabled] [ref=f1e244]:
+            - img "next" [ref=f1e245]
+        - generic [ref=f1e248]:
+          - generic "Latest available version is detected (16.2.11)." [ref=f1e251]: Next.js 16.2.11
+          - generic [ref=f1e252]: Turbopack
+      - generic [ref=f1e253]:
+        - dialog "Console Error" [ref=f1e254]:
+          - generic [ref=f1e257]:
+            - generic [ref=f1e258]:
+              - generic [ref=f1e259]:
+                - generic [ref=f1e260]:
+                  - generic [ref=f1e261]: Console Error
+                  - generic [ref=f1e262]: Server
+                - generic [ref=f1e263]:
+                  - button "Copy Error Info" [ref=f1e264] [cursor=pointer]
+                  - button "No related documentation found" [disabled] [ref=f1e267]
+                  - button "Attach Node.js inspector" [ref=f1e270] [cursor=pointer]
+              - generic [ref=f1e279]:
+                - generic [ref=f1e280]:
+                  - text: "(node:47748) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'. In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees. To prepare for this change: - If you want the current behavior, explicitly use 'sslmode=verify-full' - If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require' See"
+                  - link "https://www.postgresql.org/docs/current/libpq-ssl.html" [ref=f1e281] [cursor=pointer]:
+                    - /url: https://www.postgresql.org/docs/current/libpq-ssl.html
+                  - text: "for libpq SSL mode definitions. (Use `node --trace-warnings ...` to show where the warning was created)"
+                - button "Show More" [ref=f1e283] [cursor=pointer]
+            - generic [ref=f1e285]:
+              - generic [ref=f1e286]:
+                - paragraph [ref=f1e287]:
+                  - text: Call Stack
+                  - generic [ref=f1e288]: "11"
+                - button "Show 9 ignore-listed frame(s)" [ref=f1e289] [cursor=pointer]
+              - generic [ref=f1e292]:
+                - generic [ref=f1e293]:
+                  - text: process._0x48609d [as emit]
+                  - button "Sourcemapping failed. Click to log cause of error." [ref=f1e294] [cursor=pointer]
+                - text: about:/Server/c:%5CUsers%5CNico%5C.vscode%5Cextensions%5Cwallabyjs.console-ninja-1.0.537%5Cout%5CbuildHook%5Cindex.js (1:236889)
+              - generic [ref=f1e297]:
+                - generic [ref=f1e298]: AppLayout
+                - text: <anonymous>
+          - generic [ref=f1e299]: "1"
+          - generic [ref=f1e300]: "2"
+        - contentinfo [ref=f1e301]:
+          - region "Error feedback" [ref=f1e302]:
+            - paragraph [ref=f1e303]:
+              - link "Was this helpful?" [ref=f1e304] [cursor=pointer]:
+                - /url: https://nextjs.org/telemetry#error-feedback
+            - button "Mark as helpful" [ref=f1e305] [cursor=pointer]
+            - button "Mark as not helpful" [ref=f1e309] [cursor=pointer]
+    - generic [ref=f1e10] [cursor=pointer]:
+      - button "Open Next.js Dev Tools" [ref=f1e11]
+      - generic [ref=f1e224]:
+        - button "Open issues overlay" [ref=f1e225]:
+          - generic [ref=f1e226]:
+            - generic [ref=f1e227]: "0"
+            - generic [ref=f1e228]: "1"
+          - generic [ref=f1e229]: Issue
+        - button "Collapse issues badge" [ref=f1e230]
+  - alert [ref=f1e15]

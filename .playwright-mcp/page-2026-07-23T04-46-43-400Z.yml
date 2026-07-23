@@ -1,0 +1,51 @@
+- generic [active] [ref=f1e1]:
+  - banner [ref=f1e2]:
+    - button "Sign in" [ref=f1e3]
+    - button "Sign up" [ref=f1e4]
+  - generic [ref=f1e124]:
+    - generic [ref=f1e125]:
+      - generic [ref=f1e127]:
+        - heading "Create your account" [level=1] [ref=f1e128]
+        - paragraph [ref=f1e129]: Welcome! Please fill in the details to get started.
+      - generic [ref=f1e130]:
+        - generic [ref=f1e132]:
+          - button "Sign in with Google Continue with Google" [disabled]:
+            - generic:
+              - generic:
+                - generic "Sign in with Google"
+              - generic: Continue with Google
+        - paragraph [ref=f1e140]: or
+        - generic [ref=f1e142]:
+          - generic [ref=f1e143]:
+            - generic [ref=f1e146]:
+              - generic [ref=f1e147]: Email address
+              - textbox "Email address" [disabled]:
+                - /placeholder: Enter your email address
+                - text: padel.tester+clerk_test@example.com
+            - generic [ref=f1e152]:
+              - generic [ref=f1e153]:
+                - generic [ref=f1e154]: Password
+                - generic [ref=f1e156]:
+                  - textbox "Password" [disabled]:
+                    - /placeholder: Create a password
+                    - text: PadelTest!2026Secure
+                  - button "Show password" [ref=f1e158] [cursor=pointer]
+              - generic [ref=f1e162]: Your password meets all the necessary requirements.
+              - paragraph [ref=f1e186]: Your password meets all the necessary requirements.
+          - generic [ref=f1e164]:
+            - button "Loading" [disabled]:
+              - generic:
+                - generic "Loading"
+    - generic [ref=f1e169]:
+      - generic [ref=f1e170]:
+        - generic [ref=f1e171]: Already have an account?
+        - link "Sign in" [ref=f1e172] [cursor=pointer]:
+          - /url: http://localhost:3001/sign-in
+      - generic [ref=f1e174]:
+        - generic [ref=f1e176]:
+          - paragraph [ref=f1e177]: Secured by
+          - link "Clerk logo" [ref=f1e178] [cursor=pointer]:
+            - /url: https://go.clerk.com/components
+        - paragraph [ref=f1e184]: Development mode
+  - button "Open Next.js Dev Tools" [ref=f1e11] [cursor=pointer]
+  - alert [ref=f1e15]

@@ -1,0 +1,21 @@
+- generic [active] [ref=f24e1]:
+  - banner [ref=f24e2]
+  - generic [ref=f24e3]:
+    - generic [ref=f24e4]:
+      - heading "Clubs" [level=1] [ref=f24e5]
+      - paragraph [ref=f24e6]: Pick a court to see its availability and book a slot.
+    - generic [ref=f24e7]:
+      - generic [ref=f24e8]:
+        - generic [ref=f24e9]:
+          - generic [ref=f24e10]: Club Belgrano Padel
+          - generic [ref=f24e11]: Av. Cabildo 2100, CABA · Deposit required (ARS 5000)
+        - link "Cancha 1" [ref=f24e13] [cursor=pointer]:
+          - /url: /clubs/seed-deposit-court-1
+      - generic [ref=f24e14]:
+        - generic [ref=f24e15]:
+          - generic [ref=f24e16]: Club Palermo Padel
+          - generic [ref=f24e17]: Av. Santa Fe 4200, CABA · No deposit required
+        - link "Cancha 1" [ref=f24e19] [cursor=pointer]:
+          - /url: /clubs/seed-free-court-1
+  - button "Open Next.js Dev Tools" [ref=f24e25] [cursor=pointer]
+  - alert [ref=f24e29]
