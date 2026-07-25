@@ -69,14 +69,14 @@ export function LandingFooter() {
         </motion.div>
 
         <motion.div
-          className="flex items-end justify-between gap-6 flex-wrap"
+          className="flex items-end justify-between gap-6"
           initial={shouldReduce ? false : { opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-60px" }}
           transition={{ duration: 0.6, ease, delay: 0.1 }}
         >
           <div
-            className="overflow-hidden leading-none text-[clamp(56px,11vw,180px)]"
+            className="overflow-hidden leading-none text-[clamp(56px,11vw,160px)]"
             style={{ height: "0.80em" }}
           >
             <span className="block font-extrabold tracking-[-0.04em] text-[#DFFD36] whitespace-nowrap">

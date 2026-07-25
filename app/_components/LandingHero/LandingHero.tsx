@@ -18,7 +18,7 @@ export function LandingHero() {
   const shouldReduce = useReducedMotion();
 
   return (
-    <section className="relative isolate overflow-hidden min-h-[calc(90svh-4rem)] flex items-end w-full pb-12">
+    <section className="relative isolate overflow-hidden min-h-[calc(90svh-4rem)] flex items-end w-full pt-28 pb-12">
       {/* Background image */}
       <Image
         src={heroImage}
