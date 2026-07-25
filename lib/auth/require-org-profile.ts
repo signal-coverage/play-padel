@@ -1,4 +1,4 @@
-import "@/lib/plugins/initialize-plugins";
+// import "@/lib/plugins/initialize-plugins";
 import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/infrastructure/db/client";
 

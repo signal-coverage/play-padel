@@ -1,3 +1,1 @@
-export const CURRENCIES = [
-  { value: "ARS", label: "ARS — Argentine Peso" },
-];
+export const CURRENCIES = [{ value: "ARS", label: "ARS — Argentine Peso" }];

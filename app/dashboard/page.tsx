@@ -1,28 +1,26 @@
 "use client";
 
-import { useOrganization } from "@/core/organizations/hooks/use-organization";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Building2, CalendarDays, CreditCard, Puzzle } from "lucide-react";
-import { PLAN_LABEL } from "@/core/organizations/consts";
-import { PLAN_VARIANT } from "@/lib/consts";
+// import { PLAN_VARIANT } from "@/lib/consts";
 import { getGreeting } from "./utils";
-import { PluginWidgets } from "./_components/PluginWidgets";
+// import { PluginWidgets } from "./_components/PluginWidgets";
 
 export default function DashboardPage() {
-  const { organization, userProfile } = useOrganization();
+  // const { organization, userProfile } = useOrganization();
 
-  const greeting = getGreeting();
-  const name = userProfile?.displayName ?? "there";
+  // const greeting = getGreeting();
+  // const name = userProfile?.displayName ?? "there";
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">
-          {greeting}, {name}
+          {/* {greeting}, {name} */}
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
-          {organization?.name} ·{" "}
+          {/* {organization?.name} ·{" "} */}
           {new Date().toLocaleDateString("en-US", {
             weekday: "long",
             month: "long",
@@ -35,48 +33,37 @@ export default function DashboardPage() {
         <StatCard
           icon={Building2}
           label="Organization"
-          value={organization?.name ?? "—"}
-          sub={organization?.status ?? ""}
-          subVariant={
-            organization?.status === "ACTIVE" ? "default" : "secondary"
-          }
+          value={"—"}
+          sub={""}
+          subVariant={"secondary"}
         />
         <StatCard
           icon={CreditCard}
           label="Plan"
           value={
-            (organization?.plan != null
-              ? PLAN_LABEL[organization.plan]
-              : undefined) ??
-            organization?.plan ??
+            // (organization?.plan != null
+            //   ? PLAN_LABEL[organization.plan]
+            //   : undefined) ??
+            // organization?.plan ??
             "—"
           }
-          sub={organization?.currency ?? ""}
+          sub={""}
         />
         <StatCard
           icon={Puzzle}
           label="Modules enabled"
-          value={String(organization?.enabledPlugins?.length ?? 0)}
-          sub={
-            organization?.enabledPlugins?.length === 1 ? "module" : "modules"
-          }
+          value={String(0)}
+          sub={"modules"}
         />
         <StatCard
           icon={CalendarDays}
           label="Member since"
-          value={
-            organization?.createdAt
-              ? organization.createdAt.toLocaleDateString("en-US", {
-                  month: "short",
-                  year: "numeric",
-                })
-              : "—"
-          }
-          sub={organization?.timezone ?? ""}
+          value={"—"}
+          sub={""}
         />
       </div>
 
-      <PluginWidgets />
+      {/* <PluginWidgets /> */}
     </div>
   );
 }

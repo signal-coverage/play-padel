@@ -1,1 +1,0 @@
-export { ProfessionalsPage } from "./ProfessionalsPage";

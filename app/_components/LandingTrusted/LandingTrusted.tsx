@@ -8,7 +8,9 @@ export function LandingTrusted() {
 
   return (
     <section className="py-28 bg-white">
-      <div className={`${CONTAINER} flex flex-col md:flex-row gap-10 md:gap-16`}>
+      <div
+        className={`${CONTAINER} flex flex-col md:flex-row gap-10 md:gap-16`}
+      >
         <motion.div
           className="shrink-0"
           initial={shouldReduce ? false : { opacity: 0, y: 12 }}

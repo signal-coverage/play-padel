@@ -45,8 +45,8 @@ export function LandingCtaBanner() {
           viewport={{ once: true }}
           transition={{ duration: 0.5, delay: 0.12, ease }}
         >
-          Join a vibrant community of paddle lovers where every match brings
-          new friends, new skills, and endless fun on and off the court.
+          Join a vibrant community of paddle lovers where every match brings new
+          friends, new skills, and endless fun on and off the court.
         </motion.p>
 
         <motion.div

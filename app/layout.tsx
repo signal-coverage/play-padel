@@ -31,7 +31,8 @@ const jakarta = Plus_Jakarta_Sans({
 
 export const metadata: Metadata = {
   title: "Play Padel",
-  description: "Find available padel court appointments across different clubs in one place.",
+  description:
+    "Find available padel court appointments across different clubs in one place.",
   applicationName: "Play Padel",
   appleWebApp: {
     title: "Play Padel",

@@ -410,9 +410,7 @@ export async function recordPayment(
   return toPayment(payment);
 }
 
-export async function getDailyCash(
-  orgId: string,
-): Promise<DailyCashSummary> {
+export async function getDailyCash(orgId: string): Promise<DailyCashSummary> {
   const now = new Date();
   const utcStart = startOfDay(now);
   const utcEnd = endOfDay(now);

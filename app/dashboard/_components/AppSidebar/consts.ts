@@ -1,4 +1,4 @@
-import type { PermissionKey } from "@/core/permissions/types";
+// import type { PermissionKey } from "@/core/permissions/types";
 import {
   LayoutDashboard,
   Users,
@@ -15,7 +15,7 @@ export type NavItem = {
   title: string;
   href: string;
   icon: LucideIcon;
-  requiredPermission?: PermissionKey;
+  // // requiredPermission?: PermissionKey;
 };
 
 export const navItems: NavItem[] = [
@@ -24,42 +24,42 @@ export const navItems: NavItem[] = [
     title: "Patients",
     href: "/dashboard/patients",
     icon: Users,
-    requiredPermission: "patients.read",
+    // requiredPermission: "patients.read",
   },
   {
     title: "Professionals",
     href: "/dashboard/professionals",
     icon: Activity,
-    requiredPermission: "professionals.read",
+    // requiredPermission: "professionals.read",
   },
   {
     title: "Appointments",
     href: "/dashboard/appointments",
     icon: Calendar,
-    requiredPermission: "appointments.read",
+    // requiredPermission: "appointments.read",
   },
   {
     title: "Billing",
     href: "/dashboard/billing",
     icon: CreditCard,
-    requiredPermission: "billing.read",
+    // requiredPermission: "billing.read",
   },
   {
     title: "Reports",
     href: "/dashboard/reports",
     icon: BarChart3,
-    requiredPermission: "billing.read",
+    // requiredPermission: "billing.read",
   },
   {
     title: "Audit Log",
     href: "/dashboard/settings/audit",
     icon: ClipboardList,
-    requiredPermission: "settings.manage",
+    // requiredPermission: "settings.manage",
   },
   {
     title: "Custom Roles",
     href: "/dashboard/settings/custom-roles",
     icon: ShieldCheck,
-    requiredPermission: "settings.manage",
+    // requiredPermission: "settings.manage",
   },
 ];

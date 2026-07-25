@@ -8,7 +8,8 @@ export function EventShowcase() {
   const [activeIndex, setActiveIndex] = useState(0);
   const total = EVENTS.length;
 
-  const goTo = (index: number) => setActiveIndex(((index % total) + total) % total);
+  const goTo = (index: number) =>
+    setActiveIndex(((index % total) + total) % total);
   const goPrev = () => goTo(activeIndex - 1);
   const goNext = () => goTo(activeIndex + 1);
 

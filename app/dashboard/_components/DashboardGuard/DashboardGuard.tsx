@@ -2,22 +2,22 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useOrganization } from "@/core/organizations/hooks/use-organization";
+// import { useOrganization } from "@/core/organizations/hooks/use-organization";
 import { Loader2 } from "lucide-react";
 import type { DashboardGuardProps } from "./types";
 
 export function DashboardGuard({ children }: DashboardGuardProps) {
-  const { loading, needsOnboarding } = useOrganization();
+  // const { loading, needsOnboarding } = useOrganization();
   const router = useRouter();
 
-  useEffect(() => {
-    if (!loading && needsOnboarding) {
-      router.replace("/onboarding");
-    }
-  }, [loading, needsOnboarding, router]);
+  // useEffect(() => {
+  //   if (!loading && needsOnboarding) {
+  //     router.replace("/onboarding");
+  //   }
+  // }, [loading, needsOnboarding, router]);
 
-  if (loading) return <DashboardLoader />;
-  if (needsOnboarding) return null;
+  // if (loading) return <DashboardLoader />;
+  // if (needsOnboarding) return null;
 
   return <>{children}</>;
 }

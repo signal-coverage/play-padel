@@ -86,10 +86,16 @@ export function LandingFooter() {
 
           <div className="flex items-center gap-6 text-[13px] text-white/30 flex-wrap pb-12">
             <span>© 2026 Play Padel. All rights reserved.</span>
-            <Link href="/privacy" className="hover:text-white/60 transition-colors">
+            <Link
+              href="/privacy"
+              className="hover:text-white/60 transition-colors"
+            >
               Privacy
             </Link>
-            <Link href="/terms" className="hover:text-white/60 transition-colors">
+            <Link
+              href="/terms"
+              className="hover:text-white/60 transition-colors"
+            >
               Terms &amp; Conditions
             </Link>
           </div>

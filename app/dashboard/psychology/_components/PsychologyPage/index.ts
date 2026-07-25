@@ -1,1 +1,0 @@
-export { PsychologyPage } from "./PsychologyPage";

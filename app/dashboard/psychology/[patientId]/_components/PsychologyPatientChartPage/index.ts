@@ -1,1 +1,0 @@
-export { PsychologyPatientChartPage } from "./PsychologyPatientChartPage";

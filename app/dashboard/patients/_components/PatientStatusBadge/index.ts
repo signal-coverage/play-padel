@@ -1,1 +1,0 @@
-export { PatientStatusBadge } from "./PatientStatusBadge";

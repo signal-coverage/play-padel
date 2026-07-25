@@ -27,19 +27,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ChevronUp, HelpCircle, Settings, User } from "lucide-react";
 import { navItems } from "./consts";
-import { usePlugins } from "@/providers/plugin-provider";
-import { usePermission } from "@/core/permissions/hooks/use-permission";
 
 export function AppSidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { user, signOut } = useAuth();
   const { openUserProfile } = useClerk();
-  const { pluginNavItems } = usePlugins();
-  const { hasPermission } = usePermission();
-  const visibleNavItems = navItems.filter((item) =>
-    item.requiredPermission ? hasPermission(item.requiredPermission) : true,
-  );
+  const visibleNavItems = navItems.filter((item) => item);
 
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
@@ -73,9 +67,9 @@ export function AppSidebar() {
       <SidebarContent>
         {visibleNavItems.length > 0 && (
           <>
-            {pluginNavItems.length > 0 && (
+            {/* {pluginNavItems.length > 0 && (
               <SidebarSeparator className={`${collapsed && "ml-0"}`} />
-            )}
+            )} */}
             <SidebarGroup className={collapsed ? "pl-1" : ""}>
               {!collapsed && (
                 <SidebarGroupLabel>Administration</SidebarGroupLabel>
@@ -114,7 +108,7 @@ export function AppSidebar() {
 
         <SidebarSeparator className={`${collapsed && "ml-0"}`} />
 
-        {pluginNavItems.length > 0 && (
+        {/* {pluginNavItems.length > 0 && (
           <SidebarGroup className={collapsed ? "pl-1" : ""}>
             {!collapsed && <SidebarGroupLabel>Plugins</SidebarGroupLabel>}
             <SidebarGroupContent>
@@ -146,7 +140,7 @@ export function AppSidebar() {
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
-        )}
+        )} */}
 
         <SidebarSeparator className={`${collapsed && "ml-0"}`} />
 

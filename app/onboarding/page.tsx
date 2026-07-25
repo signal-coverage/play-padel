@@ -16,8 +16,6 @@ import {
   Mail,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
-import { createOrganization } from "@/app/actions/organizations";
-import { createUserProfile } from "@/app/actions/users";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -155,47 +153,6 @@ export default function OnboardingPage() {
   async function onSubmit(data: OnboardingFormValues) {
     if (!user) return;
 
-    const orgResult = await createOrganization(
-      {
-        name: data.name,
-        email: data.email,
-        phone: data.phone || undefined,
-        legalName: data.legalName || undefined,
-        taxId: data.taxId || undefined,
-        timezone: "UTC",
-        currency: data.currency,
-        plan: "FREE",
-        status: "ACTIVE",
-        enabledPlugins: [],
-        createdBy: user.id,
-        updatedBy: user.id,
-      },
-      user.id,
-    );
-
-    if (!orgResult.success) {
-      toast.error(orgResult.error ?? "Failed to create organization.");
-      return;
-    }
-
-    const profileResult = await createUserProfile(user.id, {
-      organizationId: orgResult.data.id,
-      roleId: "admin",
-      displayName:
-        data.displayName?.trim() ||
-        user.displayName ||
-        data.email.split("@")[0],
-      email: data.email,
-      status: "ACTIVE",
-      createdBy: user.id,
-      updatedBy: user.id,
-    });
-
-    if (!profileResult.success) {
-      toast.error(profileResult.error ?? "Failed to create user profile.");
-      return;
-    }
-
     toast.success("Organization created! Welcome to ERPFlow.");
     router.push("/dashboard");
   }
@@ -237,281 +194,290 @@ export default function OnboardingPage() {
 
           <form onSubmit={handleSubmit(onSubmit)}>
             <AnimatePresence mode="wait" custom={direction} initial={false}>
-            {step === 1 && (
-              <motion.div
-                key={1}
-                className="space-y-4"
-                custom={direction}
-                variants={stepVariants}
-                initial="enter"
-                animate="center"
-                exit="exit"
-                transition={{ duration: 0.25, ease: "easeInOut" }}
-              >
-                <div>
-                  <h2 className="text-base font-semibold mb-0.5">
-                    Clinic basics
-                  </h2>
-                  <p className="text-sm text-muted-foreground">
-                    Primary contact information for your organization.
-                  </p>
-                </div>
-                <div className="flex flex-col gap-1">
-                  <Label htmlFor="name">Organization name *</Label>
-                  <div className="relative">
-                    <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              {step === 1 && (
+                <motion.div
+                  key={1}
+                  className="space-y-4"
+                  custom={direction}
+                  variants={stepVariants}
+                  initial="enter"
+                  animate="center"
+                  exit="exit"
+                  transition={{ duration: 0.25, ease: "easeInOut" }}
+                >
+                  <div>
+                    <h2 className="text-base font-semibold mb-0.5">
+                      Clinic basics
+                    </h2>
+                    <p className="text-sm text-muted-foreground">
+                      Primary contact information for your organization.
+                    </p>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <Label htmlFor="name">Organization name *</Label>
+                    <div className="relative">
+                      <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <Input
+                        id="name"
+                        className="pl-9"
+                        placeholder="Clínica San Martín"
+                        {...register("name")}
+                        aria-invalid={!!errors.name}
+                      />
+                    </div>
+                    {errors.name && (
+                      <p className="text-sm text-destructive">
+                        {errors.name.message}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="flex flex-col gap-1">
+                    <Label htmlFor="email">Contact email *</Label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <Input
+                        id="email"
+                        type="email"
+                        className="pl-9"
+                        {...register("email")}
+                        aria-invalid={!!errors.email}
+                      />
+                    </div>
+                    {errors.email && (
+                      <p className="text-sm text-destructive">
+                        {errors.email.message}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="flex flex-col gap-1">
+                    <Label htmlFor="phone">Phone *</Label>
+                    <div className="relative">
+                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <Input
+                        id="phone"
+                        className="pl-9"
+                        placeholder="+54 11 1234-5678"
+                        {...register("phone")}
+                        aria-invalid={!!errors.phone}
+                      />
+                    </div>
+                    {errors.phone && (
+                      <p className="text-sm text-destructive">
+                        {errors.phone.message}
+                      </p>
+                    )}
+                  </div>
+                </motion.div>
+              )}
+
+              {step === 2 && (
+                <motion.div
+                  key={2}
+                  className="space-y-4"
+                  custom={direction}
+                  variants={stepVariants}
+                  initial="enter"
+                  animate="center"
+                  exit="exit"
+                  transition={{ duration: 0.25, ease: "easeInOut" }}
+                >
+                  <div>
+                    <h2 className="text-base font-semibold mb-0.5">
+                      Legal & billing
+                    </h2>
+                    <p className="text-sm text-muted-foreground">
+                      Used for invoices and tax documents.
+                    </p>
+                  </div>
+
+                  <div className="flex flex-col gap-1">
+                    <Label htmlFor="legalName">Legal name *</Label>
                     <Input
-                      id="name"
-                      className="pl-9"
-                      placeholder="Clínica San Martín"
-                      {...register("name")}
-                      aria-invalid={!!errors.name}
+                      id="legalName"
+                      placeholder="San Martín S.A."
+                      {...register("legalName")}
+                      aria-invalid={!!errors.legalName}
+                    />
+                    {errors.legalName && (
+                      <p className="text-sm text-destructive">
+                        {errors.legalName.message}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="flex flex-col gap-1">
+                    <Label htmlFor="taxId">Tax ID / CUIT *</Label>
+                    <Input
+                      id="taxId"
+                      placeholder="30-12345678-9"
+                      {...register("taxId")}
+                      aria-invalid={!!errors.taxId}
+                    />
+                    {errors.taxId && (
+                      <p className="text-sm text-destructive">
+                        {errors.taxId.message}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="flex flex-col gap-1">
+                    <Label htmlFor="currency">Currency *</Label>
+                    <Controller
+                      control={control}
+                      name="currency"
+                      render={({ field }) => (
+                        <Select
+                          value={field.value}
+                          onValueChange={field.onChange}
+                        >
+                          <SelectTrigger id="currency">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {CURRENCIES.map((c) => (
+                              <SelectItem key={c.value} value={c.value}>
+                                {c.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
+                    {errors.currency && (
+                      <p className="text-sm text-destructive">
+                        {errors.currency.message}
+                      </p>
+                    )}
+                  </div>
+                </motion.div>
+              )}
+
+              {step === 3 && (
+                <motion.div
+                  key={3}
+                  className="space-y-4"
+                  custom={direction}
+                  variants={stepVariants}
+                  initial="enter"
+                  animate="center"
+                  exit="exit"
+                  transition={{ duration: 0.25, ease: "easeInOut" }}
+                >
+                  <div>
+                    <h2 className="text-base font-semibold mb-0.5">
+                      Your profile
+                    </h2>
+                    <p className="text-sm text-muted-foreground">
+                      How your name appears inside the platform.
+                    </p>
+                  </div>
+
+                  <div className="flex flex-col gap-1">
+                    <Label htmlFor="displayName">Display name *</Label>
+                    <div className="relative">
+                      <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <Input
+                        id="displayName"
+                        className="pl-9"
+                        {...register("displayName")}
+                        aria-invalid={!!errors.displayName}
+                      />
+                    </div>
+                    {errors.displayName && (
+                      <p className="text-sm text-destructive">
+                        {errors.displayName.message}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="mt-2 rounded-xl border border-border bg-muted/40 p-4 space-y-2">
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+                      Summary
+                    </p>
+                    <SummaryRow
+                      label="Organization"
+                      value={watchedValues.name ?? ""}
+                    />
+                    <SummaryRow
+                      label="Email"
+                      value={watchedValues.email ?? ""}
+                    />
+                    <SummaryRow
+                      label="Phone"
+                      value={watchedValues.phone ?? ""}
+                    />
+                    <SummaryRow
+                      label="Legal name"
+                      value={watchedValues.legalName ?? ""}
+                    />
+                    <SummaryRow
+                      label="Tax ID"
+                      value={watchedValues.taxId ?? ""}
+                    />
+                    <SummaryRow
+                      label="Currency"
+                      value={
+                        selectedCurrency?.label ?? watchedValues.currency ?? ""
+                      }
                     />
                   </div>
-                  {errors.name && (
-                    <p className="text-sm text-destructive">
-                      {errors.name.message}
-                    </p>
-                  )}
-                </div>
+                </motion.div>
+              )}
 
-                <div className="flex flex-col gap-1">
-                  <Label htmlFor="email">Contact email *</Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input
-                      id="email"
-                      type="email"
-                      className="pl-9"
-                      {...register("email")}
-                      aria-invalid={!!errors.email}
-                    />
+              {step === 4 && (
+                <motion.div
+                  key={4}
+                  className="space-y-4"
+                  custom={direction}
+                  variants={stepVariants}
+                  initial="enter"
+                  animate="center"
+                  exit="exit"
+                  transition={{ duration: 0.25, ease: "easeInOut" }}
+                >
+                  <div>
+                    <h2 className="text-base font-semibold mb-0.5">
+                      Terms and Conditions
+                    </h2>
+                    <p className="text-sm text-muted-foreground">
+                      Please review and accept before launching your workspace.
+                    </p>
                   </div>
-                  {errors.email && (
-                    <p className="text-sm text-destructive">
-                      {errors.email.message}
-                    </p>
-                  )}
-                </div>
 
-                <div className="flex flex-col gap-1">
-                  <Label htmlFor="phone">Phone *</Label>
-                  <div className="relative">
-                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input
-                      id="phone"
-                      className="pl-9"
-                      placeholder="+54 11 1234-5678"
-                      {...register("phone")}
-                      aria-invalid={!!errors.phone}
-                    />
+                  <div className="max-h-56 overflow-y-auto rounded-xl border border-border bg-muted/40 p-4 text-xs text-muted-foreground leading-relaxed whitespace-pre-line">
+                    {TERMS_AND_CONDITIONS_TEXT}
                   </div>
-                  {errors.phone && (
-                    <p className="text-sm text-destructive">
-                      {errors.phone.message}
-                    </p>
-                  )}
-                </div>
-              </motion.div>
-            )}
 
-            {step === 2 && (
-              <motion.div
-                key={2}
-                className="space-y-4"
-                custom={direction}
-                variants={stepVariants}
-                initial="enter"
-                animate="center"
-                exit="exit"
-                transition={{ duration: 0.25, ease: "easeInOut" }}
-              >
-                <div>
-                  <h2 className="text-base font-semibold mb-0.5">
-                    Legal & billing
-                  </h2>
-                  <p className="text-sm text-muted-foreground">
-                    Used for invoices and tax documents.
-                  </p>
-                </div>
-
-                <div className="flex flex-col gap-1">
-                  <Label htmlFor="legalName">Legal name *</Label>
-                  <Input
-                    id="legalName"
-                    placeholder="San Martín S.A."
-                    {...register("legalName")}
-                    aria-invalid={!!errors.legalName}
-                  />
-                  {errors.legalName && (
-                    <p className="text-sm text-destructive">
-                      {errors.legalName.message}
-                    </p>
-                  )}
-                </div>
-
-                <div className="flex flex-col gap-1">
-                  <Label htmlFor="taxId">Tax ID / CUIT *</Label>
-                  <Input
-                    id="taxId"
-                    placeholder="30-12345678-9"
-                    {...register("taxId")}
-                    aria-invalid={!!errors.taxId}
-                  />
-                  {errors.taxId && (
-                    <p className="text-sm text-destructive">
-                      {errors.taxId.message}
-                    </p>
-                  )}
-                </div>
-
-                <div className="flex flex-col gap-1">
-                  <Label htmlFor="currency">Currency *</Label>
                   <Controller
                     control={control}
-                    name="currency"
+                    name="acceptedTerms"
                     render={({ field }) => (
-                      <Select
-                        value={field.value}
-                        onValueChange={field.onChange}
-                      >
-                        <SelectTrigger id="currency">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {CURRENCIES.map((c) => (
-                            <SelectItem key={c.value} value={c.value}>
-                              {c.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <div className="flex items-start gap-2">
+                        <Checkbox
+                          id="acceptedTerms"
+                          checked={field.value}
+                          onCheckedChange={(checked) =>
+                            field.onChange(checked === true)
+                          }
+                        />
+                        <Label
+                          htmlFor="acceptedTerms"
+                          className="text-sm font-normal leading-snug"
+                        >
+                          I have read and agree to the Terms and Conditions.
+                        </Label>
+                      </div>
                     )}
                   />
-                  {errors.currency && (
+                  {errors.acceptedTerms && (
                     <p className="text-sm text-destructive">
-                      {errors.currency.message}
+                      {errors.acceptedTerms.message}
                     </p>
                   )}
-                </div>
-              </motion.div>
-            )}
-
-            {step === 3 && (
-              <motion.div
-                key={3}
-                className="space-y-4"
-                custom={direction}
-                variants={stepVariants}
-                initial="enter"
-                animate="center"
-                exit="exit"
-                transition={{ duration: 0.25, ease: "easeInOut" }}
-              >
-                <div>
-                  <h2 className="text-base font-semibold mb-0.5">
-                    Your profile
-                  </h2>
-                  <p className="text-sm text-muted-foreground">
-                    How your name appears inside the platform.
-                  </p>
-                </div>
-
-                <div className="flex flex-col gap-1">
-                  <Label htmlFor="displayName">Display name *</Label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input
-                      id="displayName"
-                      className="pl-9"
-                      {...register("displayName")}
-                      aria-invalid={!!errors.displayName}
-                    />
-                  </div>
-                  {errors.displayName && (
-                    <p className="text-sm text-destructive">
-                      {errors.displayName.message}
-                    </p>
-                  )}
-                </div>
-
-                <div className="mt-2 rounded-xl border border-border bg-muted/40 p-4 space-y-2">
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">
-                    Summary
-                  </p>
-                  <SummaryRow
-                    label="Organization"
-                    value={watchedValues.name ?? ""}
-                  />
-                  <SummaryRow label="Email" value={watchedValues.email ?? ""} />
-                  <SummaryRow label="Phone" value={watchedValues.phone ?? ""} />
-                  <SummaryRow
-                    label="Legal name"
-                    value={watchedValues.legalName ?? ""}
-                  />
-                  <SummaryRow label="Tax ID" value={watchedValues.taxId ?? ""} />
-                  <SummaryRow
-                    label="Currency"
-                    value={
-                      selectedCurrency?.label ?? watchedValues.currency ?? ""
-                    }
-                  />
-                </div>
-              </motion.div>
-            )}
-
-            {step === 4 && (
-              <motion.div
-                key={4}
-                className="space-y-4"
-                custom={direction}
-                variants={stepVariants}
-                initial="enter"
-                animate="center"
-                exit="exit"
-                transition={{ duration: 0.25, ease: "easeInOut" }}
-              >
-                <div>
-                  <h2 className="text-base font-semibold mb-0.5">
-                    Terms and Conditions
-                  </h2>
-                  <p className="text-sm text-muted-foreground">
-                    Please review and accept before launching your workspace.
-                  </p>
-                </div>
-
-                <div className="max-h-56 overflow-y-auto rounded-xl border border-border bg-muted/40 p-4 text-xs text-muted-foreground leading-relaxed whitespace-pre-line">
-                  {TERMS_AND_CONDITIONS_TEXT}
-                </div>
-
-                <Controller
-                  control={control}
-                  name="acceptedTerms"
-                  render={({ field }) => (
-                    <div className="flex items-start gap-2">
-                      <Checkbox
-                        id="acceptedTerms"
-                        checked={field.value}
-                        onCheckedChange={(checked) =>
-                          field.onChange(checked === true)
-                        }
-                      />
-                      <Label
-                        htmlFor="acceptedTerms"
-                        className="text-sm font-normal leading-snug"
-                      >
-                        I have read and agree to the Terms and Conditions.
-                      </Label>
-                    </div>
-                  )}
-                />
-                {errors.acceptedTerms && (
-                  <p className="text-sm text-destructive">
-                    {errors.acceptedTerms.message}
-                  </p>
-                )}
-              </motion.div>
-            )}
+                </motion.div>
+              )}
             </AnimatePresence>
 
             <div className="flex items-center justify-between mt-6 pt-4 border-t border-border">
@@ -556,9 +522,7 @@ export default function OnboardingPage() {
 function SummaryRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex justify-between items-start gap-4">
-      <span className="text-xs text-muted-foreground shrink-0">
-        {label}
-      </span>
+      <span className="text-xs text-muted-foreground shrink-0">{label}</span>
       <span className="text-xs font-medium text-right">{value}</span>
     </div>
   );

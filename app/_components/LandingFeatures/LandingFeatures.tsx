@@ -79,7 +79,9 @@ export function LandingFeatures() {
               viewport={{ once: true }}
               transition={{ duration: 0.5, ease, delay: 0.05 }}
             >
-              <span className="text-[#111111]">World-Class Paddle Facilities</span>
+              <span className="text-[#111111]">
+                World-Class Paddle Facilities
+              </span>
               <br />
               <span className="text-[#111111]">for </span>
               <span className="text-[#A3A3A3]">Every Level of Play</span>
@@ -132,7 +134,11 @@ export function LandingFeatures() {
                   />
                   <span className="absolute left-1/2 -translate-x-1/2 bottom-3 max-w-[calc(100%-1.5rem)] inline-flex items-center gap-1 bg-white/90 backdrop-blur-sm text-[#111111] rounded-full px-3 py-1.5 text-xs font-semibold">
                     <span className="truncate min-w-0">{next.title}</span>
-                    <ArrowUpRight size={13} strokeWidth={2.5} className="shrink-0" />
+                    <ArrowUpRight
+                      size={13}
+                      strokeWidth={2.5}
+                      className="shrink-0"
+                    />
                   </span>
                 </motion.div>
               </AnimatePresence>
