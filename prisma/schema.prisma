@@ -1,8 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client"
   output   = "../lib/generated/prisma"
@@ -12,98 +7,519 @@ datasource db {
   provider = "postgresql"
 }
 
-model User {
-  id                 String        @id @default(cuid())
-  clerkUserId        String        @unique
-  name               String        @default("")
-  city               String        @default("")
-  phone              String        @default("")
-  onboardingComplete Boolean       @default(false)
-  createdAt          DateTime      @default(now())
-  updatedAt          DateTime      @updatedAt
-  reservations       Reservation[]
+model Organization {
+  id             String             @id @default(cuid())
+  name           String
+  legalName      String?
+  taxId          String?
+  email          String
+  phone          String?
+  logoUrl        String?
+  timezone       String
+  currency       String
+  plan           Plan               @default(FREE)
+  status         OrganizationStatus @default(ACTIVE)
+  enabledPlugins String[]
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+  createdBy      String
+  updatedBy      String
+  users          UserProfile[]
+  patients       Patient[]
+  professionals  Professional[]
+  appointments   Appointment[]
+  invoices       Invoice[]
+  payments       Payment[]
+
+  @@map("organizations")
 }
 
-enum ReservationStatus {
-  PENDING_PAYMENT
+model UserProfile {
+  id             String       @id
+  organizationId String
+  roleId         SystemRole
+  displayName    String
+  email          String
+  photoURL       String?
+  phone          String?
+  status         UserStatus   @default(ACTIVE)
+  lastLogin      DateTime?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  createdBy      String
+  updatedBy      String
+  customRoleId   String?
+  customRole     CustomRole? @relation(fields: [customRoleId], references: [id])
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
+  @@map("user_profiles")
+}
+
+enum Plan {
+  FREE
+  CONSULTING_ROOM
+  MEDICAL_CENTER
+  HOSPITAL
+  CUSTOM
+}
+
+enum OrganizationStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  DISABLED
+}
+
+enum SystemRole {
+  admin
+  staff
+  professional
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  PENDING
+}
+
+enum DocumentType {
+  DNI
+  PASSPORT
+  CUIL
+  OTHER
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+  PREFER_NOT_TO_SAY
+}
+
+enum PatientStatus {
+  ACTIVE
+  INACTIVE
+  ARCHIVED
+}
+
+model Patient {
+  id               String        @id @default(cuid())
+  organizationId   String
+  documentType     DocumentType
+  documentNumber   String
+  firstName        String
+  lastName         String
+  birthDate        DateTime?
+  gender           Gender?
+  phone            String?
+  email            String?
+  address          Json?
+  insurance        Json?
+  emergencyContact Json?
+  tags             String[]
+  notes            String?
+  odontogramState  Json?
+  consultations    Consultation[]
+  status           PatientStatus @default(ACTIVE)
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  createdBy        String?
+  updatedBy        String?
+  deletedAt        DateTime?
+  deletedBy        String?
+
+  organization Organization  @relation(fields: [organizationId], references: [id])
+  appointments Appointment[]
+  invoices     Invoice[]
+
+  @@unique([organizationId, documentType, documentNumber])
+  @@index([organizationId, status])
+  @@index([organizationId, createdAt])
+  @@map("patients")
+}
+
+model Consultation {
+  id             String   @id @default(cuid())
+  organizationId String
+  patientId      String
+  professionalId String?
+  appointmentId  String?
+  chiefComplaint String?
+  diagnosis      String?
+  treatment      String?
+  notes          String?
+  odontogramState Json?
+  date           DateTime @default(now())
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  createdBy      String?
+
+  patient Patient @relation(fields: [patientId], references: [id])
+
+  @@index([patientId, date])
+  @@index([organizationId, patientId])
+  @@map("consultations")
+}
+
+enum AppointmentStatus {
+  SCHEDULED
   CONFIRMED
   CANCELLED
-  EXPIRED
+  COMPLETED
+  NO_SHOW
+}
+
+model Professional {
+  id             String         @id @default(cuid())
+  organizationId String
+  organization   Organization   @relation(fields: [organizationId], references: [id])
+  displayName    String
+  specialties    String[]
+  license        String?
+  phone          String?
+  email          String?
+  calendarColor  String?
+  userId         String?
+  active         Boolean        @default(true)
+  workingHours   WorkingHours[]
+  appointments   Appointment[]
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  createdBy      String?
+  updatedBy      String?
+  deletedAt      DateTime?
+  deletedBy      String?
+
+  @@index([organizationId, active])
+}
+
+model WorkingHours {
+  id             String       @id @default(cuid())
+  organizationId String
+  professionalId String
+  professional   Professional @relation(fields: [professionalId], references: [id])
+  dayOfWeek      Int
+  startTime      String
+  endTime        String
+  active         Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+
+  @@index([professionalId, dayOfWeek])
+}
+
+model Appointment {
+  id               String            @id @default(cuid())
+  organizationId   String
+  organization     Organization      @relation(fields: [organizationId], references: [id])
+  patientId        String
+  patient          Patient           @relation(fields: [patientId], references: [id])
+  patientName      String
+  professionalId   String?
+  professional     Professional?     @relation(fields: [professionalId], references: [id])
+  professionalName String?
+  pluginId         String?
+  status           AppointmentStatus @default(SCHEDULED)
+  scheduledStart   DateTime
+  scheduledEnd     DateTime
+  reason           String?
+  location         String?
+  notes            String?
+  cancelledAt      DateTime?
+  cancelledBy      String?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  createdBy        String?
+  updatedBy        String?
+
+  invoices Invoice[]
+
+  @@index([organizationId, scheduledStart])
+  @@index([organizationId, patientId])
+  @@index([organizationId, professionalId])
+  @@index([organizationId, status])
+}
+
+enum InvoiceStatus {
+  DRAFT
+  ISSUED
+  PAID
+  VOID
+}
+
+enum PaymentMethod {
+  CASH
+  CARD
+  TRANSFER
+  DIGITAL
 }
 
 enum PaymentStatus {
   PENDING
-  APPROVED
-  REJECTED
-  CANCELLED
+  COMPLETED
+  FAILED
+  REFUNDED
 }
 
-// Admin/seed-managed only — no self-service UI in v1 (see spec: Seed/Admin-Only
-// Management). depositRequired/depositAmountArs pairing is enforced at the
-// application layer (seed script / future admin tooling), not by the DB.
-model Club {
-  id               String   @id @default(cuid())
-  name             String
-  address          String
-  timezone         String
-  openTime         String
-  closeTime        String
-  depositRequired  Boolean  @default(false)
-  depositAmountArs Int?
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-  courts           Court[]
-}
+model Invoice {
+  id             String        @id @default(cuid())
+  organizationId String
+  organization   Organization  @relation(fields: [organizationId], references: [id])
+  patientId      String
+  patient        Patient       @relation(fields: [patientId], references: [id])
+  patientName    String
+  appointmentId  String?
+  appointment    Appointment?  @relation(fields: [appointmentId], references: [id])
+  number         Int
+  status         InvoiceStatus @default(DRAFT)
+  currency       String
+  items          Json
+  subtotal       Float
+  tax            Float         @default(0)
+  discount       Float         @default(0)
+  total          Float
+  notes          String?
+  issuedAt       DateTime?
+  paidAt         DateTime?
+  voidedAt       DateTime?
+  voidedBy       String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  createdBy      String?
+  updatedBy      String?
+  payments       Payment[]
 
-model Court {
-  id           String        @id @default(cuid())
-  clubId       String
-  club         Club          @relation(fields: [clubId], references: [id])
-  name         String
-  slotMinutes  Int
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  reservations Reservation[]
-
-  @@index([clubId])
-}
-
-// Double-booking prevention is enforced by a hand-written `EXCLUDE USING gist`
-// constraint added directly to the generated migration SQL (see
-// prisma/migrations/*_add_reservation_domain/migration.sql) — Prisma's schema
-// language cannot express exclusion constraints, so there is no matching
-// `@@` attribute here. See design.md "Raw-SQL exclusion constraint".
-model Reservation {
-  id        String            @id @default(cuid())
-  courtId   String
-  court     Court             @relation(fields: [courtId], references: [id])
-  userId    String
-  user      User              @relation(fields: [userId], references: [id])
-  // Stored as timestamptz (not the Postgres provider's default timestamp(3))
-  // so the hand-written exclusion constraint's `tstzrange(...)` call is
-  // IMMUTABLE — casting timestamp -> timestamptz depends on session TimeZone
-  // and Postgres rejects that in an index expression (42P17).
-  startsAt  DateTime          @db.Timestamptz(3)
-  endsAt    DateTime          @db.Timestamptz(3)
-  status    ReservationStatus @default(PENDING_PAYMENT)
-  createdAt DateTime          @default(now())
-  updatedAt DateTime          @updatedAt
-  payments  Payment[]
-
-  @@index([courtId])
-  @@index([userId])
+  @@unique([organizationId, number])
+  @@index([organizationId, status])
+  @@index([organizationId, patientId])
+  @@index([organizationId, createdAt])
 }
 
 model Payment {
-  reservationId      String
-  reservation        Reservation   @relation(fields: [reservationId], references: [id])
-  id                 String        @id @default(cuid())
-  mpPaymentId        String?       @unique
-  mpPreferenceId     String?
-  status             PaymentStatus @default(PENDING)
-  amountArs          Int
-  createdAt          DateTime      @default(now())
-  webhookReceivedAt  DateTime?
+  id             String        @id @default(cuid())
+  organizationId String
+  organization   Organization  @relation(fields: [organizationId], references: [id])
+  invoiceId      String
+  invoice        Invoice       @relation(fields: [invoiceId], references: [id])
+  method         PaymentMethod
+  amount         Float
+  currency       String
+  status         PaymentStatus @default(COMPLETED)
+  reference      String?
+  paidAt         DateTime      @default(now())
+  createdAt      DateTime      @default(now())
+  createdBy      String?
+}
 
-  @@index([reservationId])
+enum NotificationType {
+  APPOINTMENT_REMINDER
+  APPOINTMENT_CANCELLED
+  INVOICE_PAID
+  PATIENT_BIRTHDAY
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  FAILED
+}
+
+model Notification {
+  id             String             @id @default(cuid())
+  organizationId String
+  type           NotificationType
+  recipientId    String
+  recipientEmail String
+  title          String
+  message        String
+  status         NotificationStatus @default(PENDING)
+  failureReason  String?
+  sentAt         DateTime?
+  createdAt      DateTime           @default(now())
+
+  @@index([organizationId, status])
+  @@index([organizationId, type, recipientId])
+  @@map("notifications")
+}
+
+model PluginRegistry {
+  id             String   @id @default(cuid())
+  organizationId String
+  pluginId       String
+  version        String
+  enabled        Boolean  @default(true)
+  installedAt    DateTime @default(now())
+  installedBy    String
+  config         Json     @default("{}")
+
+  @@unique([organizationId, pluginId])
+  @@index([organizationId])
+}
+
+enum TreatmentStatus {
+  PLANNED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+model Treatment {
+  id             String          @id @default(cuid())
+  organizationId String
+  patientId      String
+  professionalId String?
+  consultationId String?
+  toothNumber    Int?
+  surface        String?
+  description    String
+  status         TreatmentStatus @default(PLANNED)
+  price          Float?
+  notes          String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  createdBy      String
+
+  @@index([organizationId, patientId])
+  @@index([organizationId, status])
+}
+
+model AuditLog {
+  id              String   @id @default(cuid())
+  organizationId  String
+  userId          String
+  userDisplayName String   @default("")
+  action          String
+  entity          String
+  entityId        String
+  metadata        Json?
+  timestamp       DateTime @default(now())
+
+  @@index([organizationId, timestamp(sort: Desc)])
+  @@index([organizationId, entity])
+}
+
+enum NutritionPlanStatus {
+  ACTIVE
+  COMPLETED
+  SUSPENDED
+}
+
+model NutritionPlan {
+  id             String              @id @default(cuid())
+  organizationId String
+  patientId      String
+  professionalId String?
+  title          String
+  caloricTarget  Int?
+  proteinTarget  Float?
+  carbTarget     Float?
+  fatTarget      Float?
+  notes          String?
+  startDate      DateTime
+  status         NutritionPlanStatus @default(ACTIVE)
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+  createdBy      String
+
+  sessions NutritionSession[]
+
+  @@index([organizationId, patientId])
+  @@index([organizationId, status])
+}
+
+model NutritionSession {
+  id             String         @id @default(cuid())
+  organizationId String
+  patientId      String
+  planId         String?
+  appointmentId  String?
+  professionalId String?
+  weight         Float?
+  bmi            Float?
+  chiefComplaint String?
+  observations   String?
+  dietaryChanges String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  createdBy      String
+
+  plan NutritionPlan? @relation(fields: [planId], references: [id])
+
+  @@index([organizationId, patientId])
+  @@index([organizationId, planId])
+}
+
+enum SessionType {
+  INDIVIDUAL
+  GROUP
+  COUPLE
+  FAMILY
+}
+
+enum RiskLevel {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum GoalStatus {
+  ACTIVE
+  ACHIEVED
+  ABANDONED
+}
+
+model PsychologySession {
+  id                  String      @id @default(cuid())
+  organizationId      String
+  patientId           String
+  professionalId      String?
+  appointmentId       String?
+  sessionType         SessionType @default(INDIVIDUAL)
+  moodRating          Int?
+  anxietyLevel        Int?
+  chiefComplaint      String?
+  sessionNotes        String?
+  therapeuticApproach String?
+  homeworkAssigned    String?
+  riskAssessment      RiskLevel?  @default(LOW)
+  nextSessionGoals    String?
+  createdAt           DateTime    @default(now())
+  updatedAt           DateTime    @updatedAt
+  createdBy           String
+
+  @@index([organizationId, patientId])
+  @@index([organizationId, riskAssessment])
+}
+
+model PsychologyGoal {
+  id             String     @id @default(cuid())
+  organizationId String
+  patientId      String
+  description    String
+  targetDate     DateTime?
+  status         GoalStatus @default(ACTIVE)
+  progress       String?
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  createdBy      String
+
+  @@index([organizationId, patientId])
+  @@index([organizationId, status])
+}
+
+model CustomRole {
+  id             String   @id @default(cuid())
+  organizationId String
+  name           String
+  description    String?
+  permissions    String[]
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  createdBy      String
+
+  users          UserProfile[]
+
+  @@unique([organizationId, name])
+  @@index([organizationId])
+  @@map("custom_roles")
 }

@@ -1,0 +1,84 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - generic [ref=e4]:
+        - link "Play Padel Play Padel" [ref=e6] [cursor=pointer]:
+          - /url: /
+          - img "Play Padel" [ref=e7]
+          - generic [ref=e8]: Play Padel
+        - navigation [ref=e9]:
+          - link "Clubs" [ref=e11] [cursor=pointer]:
+            - /url: "#clubs"
+          - link "Courts" [ref=e13] [cursor=pointer]:
+            - /url: "#courts"
+          - link "Sports" [ref=e15] [cursor=pointer]:
+            - /url: "#sports"
+          - link "Pricing" [ref=e17] [cursor=pointer]:
+            - /url: "#pricing"
+        - link "Try for free" [ref=e19] [cursor=pointer]:
+          - /url: "#appointment"
+    - generic [ref=e20]:
+      - img "Arrangement of padel paddles and balls" [ref=e21]
+      - generic [ref=e22]:
+        - generic [ref=e24]:
+          - heading "Play. Connect. Elevate Your Game with Our Paddle Clubs." [level=1] [ref=e25]: Play. Connect. ElevateYour Game with OurPaddle Clubs.
+          - link "Explore Clubs" [ref=e27] [cursor=pointer]:
+            - /url: "#appointment"
+          - paragraph [ref=e30]: Discover the fun, fast-paced world of paddle with top-notch courts, friendly matches, and a community built for connection.
+        - generic [ref=e32]:
+          - generic [ref=e33]:
+            - generic [ref=e34]: A
+            - generic [ref=e35]: C
+            - generic [ref=e36]: M
+            - generic [ref=e37]: S
+          - generic [ref=e38]: +2,400 players
+    - generic [ref=e40]:
+      - generic [ref=e41]: Beyond the Court
+      - generic [ref=e43]:
+        - heading "Whether you're here for the thrill, the fitness, or the friends — Play Padel brings paddle lovers together in a space that's fun, inclusive, and energizing." [level=2] [ref=e44]
+        - generic [ref=e45]:
+          - generic [ref=e46]:
+            - generic [ref=e47]: 810+
+            - generic [ref=e48]: Active Members
+            - paragraph [ref=e49]: A growing paddle community — from beginners to pros — playing, laughing, and improving together.
+          - generic [ref=e50]:
+            - generic [ref=e51]: 98%
+            - generic [ref=e52]: Satisfaction Rate
+            - paragraph [ref=e53]: Members stick around for the vibe — fun sessions, friendly crowd, and events that make matches memorable.
+          - generic [ref=e54]:
+            - generic [ref=e55]: 20+
+            - generic [ref=e56]: Certified Pro Coaches
+            - paragraph [ref=e57]: Pick up the game or level up with certified coaches who keep it fun, strategic, and simple to follow.
+    - generic [ref=e58]:
+      - generic [ref=e59]:
+        - heading "Built for Players Who Want More Than Just a Match" [level=2] [ref=e60]: Built for Players Who WantMore Than Just a Match
+        - generic [ref=e61]: Paddle, People, Purpose
+      - generic [ref=e62]:
+        - generic [ref=e63]:
+          - button "Coaches Who Get You" [ref=e65] [cursor=pointer]
+          - generic [ref=e71]:
+            - button "Vibe-Driven Community" [ref=e72] [cursor=pointer]
+            - paragraph [ref=e79]: Whether you're smashing your first rally or chasing your next win, you're surrounded by good energy and great people.
+          - button "Not Just Matches — Experiences" [ref=e81] [cursor=pointer]
+          - button "Spaces That Elevate Your Game" [ref=e88] [cursor=pointer]
+        - generic [ref=e94]:
+          - img "Players sharing a moment at the net after a match" [ref=e95]
+          - link "Learn More" [ref=e96] [cursor=pointer]:
+            - /url: "#appointment"
+  - region "Notifications alt+T"
+  - button "Open Next.js Dev Tools" [ref=e105] [cursor=pointer]
+  - alert [ref=e109]
+  - generic [ref=e110]:
+    - generic [ref=e111]:
+      - link "LocatorJS" [ref=e112] [cursor=pointer]:
+        - /url: https://www.locatorjs.com
+      - button "Settings" [ref=e120] [cursor=pointer]
+    - generic [ref=e121]:
+      - text: Go to component code with
+      - generic [ref=e122]: Alt
+      - text: +
+      - generic [ref=e123]: click
+    - generic [ref=e124]:
+      - link "What is Locator?" [ref=e125] [cursor=pointer]:
+        - /url: https://www.locatorjs.com
+      - generic [ref=e126] [cursor=pointer]: Stop showing this popup

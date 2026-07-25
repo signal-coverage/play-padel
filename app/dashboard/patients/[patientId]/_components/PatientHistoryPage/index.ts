@@ -1,0 +1,1 @@
+export { PatientHistoryPage } from "./PatientHistoryPage";

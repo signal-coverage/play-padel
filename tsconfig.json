@@ -19,7 +19,9 @@
       }
     ],
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./*"],
+      "odonto-next": ["./lib/odonto-next/index.d.ts"],
+      "odonto-next/style.css": ["./lib/odonto-next/odontogram.css"]
     }
   },
   "include": [

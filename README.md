@@ -1,36 +1,45 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ERPFlow
 
-## Getting Started
+**ERPFlow** is a modular, multi-tenant ERP platform designed for healthcare organizations, built with React and Firebase.
 
-First, run the development server:
+It provides a shared Core for authentication, patient management, scheduling, billing, reporting, and role-based access control (RBAC), while extending functionality through a plugin-based architecture for medical specialties such as Dentistry, Nutrition, Psychology, Cardiology, and more.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+Designed with scalability in mind, ERPFlow supports everyone from independent healthcare professionals to multi-specialty clinics, hospitals, and healthcare providers. Each organization can enable only the modules they need while sharing a secure, scalable SaaS infrastructure.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Features
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- 🏥 Multi-tenant SaaS architecture
+- 🔐 Authentication with Role-Based Access Control (RBAC)
+- 👥 Patient and Professional management
+- 📅 Appointment scheduling and calendar
+- 💳 Billing and payment management
+- 📊 Customizable dashboard with dynamic widgets
+- 🧩 Plugin-based architecture for medical specialties
+- 📝 Audit logs and activity tracking
+- ☁️ Firebase-powered backend (Authentication, Firestore, Storage, Cloud Functions)
+- ⚛️ Built with React, TypeScript, Vite, Tailwind CSS, and shadcn/ui
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Tech Stack
 
-## Learn More
+**Frontend**
 
-To learn more about Next.js, take a look at the following resources:
+- React
+- TypeScript
+- Vite
+- React Router
+- TanStack Query
+- Tailwind CSS
+- shadcn/ui
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+**Backend**
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- Firebase Authentication
+- Cloud Firestore
+- Cloud Storage
+- Cloud Functions
 
-## Deploy on Vercel
+## Vision
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+ERPFlow aims to become a flexible ERP platform where the Core remains stable while new business domains are added as independent plugins. Although the first implementation focuses on healthcare, the long-term architecture is designed to support additional industries through the same modular foundation.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+**Build once. Extend forever.**

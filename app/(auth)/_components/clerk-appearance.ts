@@ -1,0 +1,32 @@
+export const clerkAppearance = {
+  variables: {
+    colorPrimary: "#7C5CFF",
+    colorText: "#111827",
+    colorTextSecondary: "#6B7280",
+    colorBackground: "#ffffff",
+    colorInputBackground: "#ffffff",
+    colorInputText: "#111827",
+    colorTextOnPrimaryBackground: "#ffffff",
+    borderRadius: "10px",
+    fontFamily: "inherit",
+    fontSize: "14px",
+    spacingUnit: "16px",
+  },
+  elements: {
+    rootBox: "w-full",
+    cardBox: "!shadow-none !border-0 w-full",
+    card: "!pt-2",
+    headerTitle: "!hidden",
+    headerSubtitle: "!hidden",
+    formButtonPrimary: "!rounded-[10px] !h-12 !font-medium !shadow-sm",
+    socialButtonsBlockButton:
+      "!rounded-[10px] !h-12 !border-gray-200 hover:!bg-gray-50",
+    formFieldInput: "!rounded-[10px] !h-12 !border-gray-200",
+    formFieldLabel: "!text-sm !font-medium !text-gray-700",
+    dividerLine: "!bg-gray-200",
+    dividerText: "!text-gray-400 !text-xs",
+    footer: "!bg-white",
+    footerPagesLink: "!text-[#7C5CFF]",
+    identityPreviewEditButton: "!text-[#7C5CFF]",
+  },
+} as const;

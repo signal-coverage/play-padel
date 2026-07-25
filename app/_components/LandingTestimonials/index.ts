@@ -1,0 +1,1 @@
+export { LandingTestimonials } from "./LandingTestimonials";

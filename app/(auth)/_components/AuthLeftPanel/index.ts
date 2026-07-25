@@ -1,0 +1,1 @@
+export { AuthLeftPanel } from "./AuthLeftPanel";

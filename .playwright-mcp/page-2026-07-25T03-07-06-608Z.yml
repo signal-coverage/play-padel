@@ -1,0 +1,211 @@
+- generic [active] [ref=f4e1]:
+  - generic [ref=f4e2]:
+    - banner [ref=f4e3]:
+      - generic [ref=f4e4]:
+        - link "Play Padel Play Padel" [ref=f4e6] [cursor=pointer]:
+          - /url: /
+          - img "Play Padel" [ref=f4e7]
+          - generic [ref=f4e8]: Play Padel
+        - navigation [ref=f4e9]:
+          - link "About" [ref=f4e11] [cursor=pointer]:
+            - /url: "#about"
+          - link "Facilities" [ref=f4e13] [cursor=pointer]:
+            - /url: "#features"
+          - link "Events" [ref=f4e15] [cursor=pointer]:
+            - /url: "#modules"
+          - link "Get Started" [ref=f4e17] [cursor=pointer]:
+            - /url: "#appointment"
+        - link "Try for free" [ref=f4e19] [cursor=pointer]:
+          - /url: "#appointment"
+    - generic [ref=f4e20]:
+      - img "Arrangement of padel paddles and balls" [ref=f4e21]
+      - generic [ref=f4e22]:
+        - generic [ref=f4e24]:
+          - heading "Play. Connect. Elevate Your Game with Our Paddle Clubs." [level=1] [ref=f4e25]: Play. Connect. ElevateYour Game with OurPaddle Clubs.
+          - link "Explore Clubs" [ref=f4e27] [cursor=pointer]:
+            - /url: "#appointment"
+          - paragraph [ref=f4e30]: Discover the fun, fast-paced world of paddle with top-notch courts, friendly matches, and a community built for connection.
+        - generic [ref=f4e32]:
+          - generic [ref=f4e33]:
+            - generic [ref=f4e34]: A
+            - generic [ref=f4e35]: C
+            - generic [ref=f4e36]: M
+            - generic [ref=f4e37]: S
+          - generic [ref=f4e38]: +2,400 players
+    - generic [ref=f4e40]:
+      - generic [ref=f4e41]: Beyond the Court
+      - generic [ref=f4e43]:
+        - heading "Whether you're here for the thrill, the fitness, or the friends — Play Padel brings paddle lovers together in a space that's fun, inclusive, and energizing." [level=2] [ref=f4e44]
+        - generic [ref=f4e45]:
+          - generic [ref=f4e46]:
+            - generic [ref=f4e47]: 810+
+            - generic [ref=f4e48]: Active Members
+            - paragraph [ref=f4e49]: A growing paddle community — from beginners to pros — playing, laughing, and improving together.
+          - generic [ref=f4e50]:
+            - generic [ref=f4e51]: 98%
+            - generic [ref=f4e52]: Satisfaction Rate
+            - paragraph [ref=f4e53]: Members stick around for the vibe — fun sessions, friendly crowd, and events that make matches memorable.
+          - generic [ref=f4e54]:
+            - generic [ref=f4e55]: 20+
+            - generic [ref=f4e56]: Certified Pro Coaches
+            - paragraph [ref=f4e57]: Pick up the game or level up with certified coaches who keep it fun, strategic, and simple to follow.
+    - generic [ref=f4e58]:
+      - generic [ref=f4e59]:
+        - heading "Built for Players Who Want More Than Just a Match" [level=2] [ref=f4e60]: Built for Players Who WantMore Than Just a Match
+        - generic [ref=f4e61]: Paddle, People, Purpose
+      - generic [ref=f4e62]:
+        - generic [ref=f4e63]:
+          - button "Coaches Who Get You" [ref=f4e65] [cursor=pointer]
+          - generic [ref=f4e71]:
+            - button "Vibe-Driven Community" [ref=f4e72] [cursor=pointer]
+            - paragraph [ref=f4e79]: Whether you're smashing your first rally or chasing your next win, you're surrounded by good energy and great people.
+          - button "Not Just Matches — Experiences" [ref=f4e81] [cursor=pointer]
+          - button "Spaces That Elevate Your Game" [ref=f4e88] [cursor=pointer]
+        - generic [ref=f4e94]:
+          - img "Players sharing a moment at the net after a match" [ref=f4e95]
+          - link "Learn More" [ref=f4e96] [cursor=pointer]:
+            - /url: "#appointment"
+    - generic [ref=f4e101]:
+      - generic [ref=f4e102]:
+        - generic [ref=f4e103]: Built for Paddle. Built for You.
+        - img "Pro-Level Paddle Courts" [ref=f4e106]
+      - generic [ref=f4e107]:
+        - generic [ref=f4e108]:
+          - generic [ref=f4e109]:
+            - button "Previous facility" [ref=f4e110] [cursor=pointer]
+            - button "Next facility" [ref=f4e113] [cursor=pointer]
+          - heading "World-Class Paddle Facilities for Every Level of Play" [level=2] [ref=f4e116]: World-Class Paddle Facilitiesfor Every Level of Play
+        - generic [ref=f4e117]:
+          - generic [ref=f4e119]:
+            - heading "Pro-Level Paddle Courts" [level=3] [ref=f4e120]
+            - paragraph [ref=f4e121]: Designed with top-grade turf and lighting, perfect for both casual play and competitive matches.
+            - generic [ref=f4e122]: 1 / 8
+          - button "Training Zone Training Zone" [ref=f4e123] [cursor=pointer]:
+            - generic [ref=f4e124]:
+              - img "Training Zone" [ref=f4e125]
+              - generic [ref=f4e126]: Training Zone
+    - generic [ref=f4e131]:
+      - generic [ref=f4e132]:
+        - heading "Rally, Learn, and Celebrate with Our Paddle Community Events" [level=2] [ref=f4e133]:
+          - generic [ref=f4e134]: Rally, Learn, and Celebrate with
+          - text: Our Paddle Community Events
+        - generic [ref=f4e135]: Play Together, Grow Together
+      - generic [ref=f4e136]:
+        - generic [ref=f4e138]:
+          - button [ref=f4e139] [cursor=pointer]:
+            - img "Sunset Social Paddle" [ref=f4e140]
+          - button "Sunday Smash Tournament Sunday Smash Tournament" [ref=f4e141] [cursor=pointer]:
+            - img "Sunday Smash Tournament" [ref=f4e142]
+            - generic [ref=f4e143]: Sunday Smash Tournament
+          - button "Skills & Drills Clinic Skills & Drills Clinic" [ref=f4e145] [cursor=pointer]:
+            - img "Skills & Drills Clinic" [ref=f4e146]
+            - generic [ref=f4e147]: Skills & Drills Clinic
+          - button "Paddle & Breakfast Meet-Up Paddle & Breakfast Meet-Up" [ref=f4e149] [cursor=pointer]:
+            - img "Paddle & Breakfast Meet-Up" [ref=f4e150]
+            - generic [ref=f4e151]: Paddle & Breakfast Meet-Up
+        - generic [ref=f4e154]:
+          - generic [ref=f4e155]:
+            - heading "Sunset Social Paddle" [level=3] [ref=f4e156]
+            - paragraph [ref=f4e157]: Wind down with an easygoing evening session open to every skill level — golden-hour rallies, no pressure.
+          - generic [ref=f4e158]:
+            - generic [ref=f4e159]: 1 / 4
+            - button "Previous event" [ref=f4e160] [cursor=pointer]
+            - button "Next event" [ref=f4e163] [cursor=pointer]
+      - paragraph [ref=f4e166]: Join paddle events.Play more, connect better.
+    - generic [ref=f4e167]:
+      - generic [ref=f4e168]:
+        - heading "Real Stories from the People Who Play Here Every Week" [level=2] [ref=f4e169]: Real Stories from the PeopleWho Play Here Every Week
+        - generic [ref=f4e170]:
+          - button "Previous testimonial" [ref=f4e171] [cursor=pointer]
+          - button "Next testimonial" [ref=f4e174] [cursor=pointer]
+      - generic [ref=f4e177]:
+        - generic [ref=f4e178]:
+          - paragraph [ref=f4e179]: I was looking for a place to stay active and meet new people — and this club delivered more than I expected. The coaches here make learning so fun and easy, and I've really grown as a player while making some great friendships along the way.
+          - paragraph [ref=f4e180]:
+            - generic [ref=f4e181]: Sinta,
+            - text: Intermediate Player
+        - generic [ref=f4e182]:
+          - button "Show testimonial from Sinta" [pressed] [ref=f4e183] [cursor=pointer]:
+            - generic [ref=f4e184]: S
+          - button "Show testimonial from Marco" [ref=f4e185] [cursor=pointer]:
+            - generic [ref=f4e186]: M
+          - button "Show testimonial from Valentina" [ref=f4e187] [cursor=pointer]:
+            - generic [ref=f4e188]: V
+          - button "Show testimonial from Diego" [ref=f4e189] [cursor=pointer]:
+            - generic [ref=f4e190]: D
+          - button "Show testimonial from Camila" [ref=f4e191] [cursor=pointer]:
+            - generic [ref=f4e192]: C
+    - generic [ref=f4e194]:
+      - heading "Be Part of a Paddle Club That Feels Like Home" [level=2] [ref=f4e196]: Be Part of a Paddle ClubThat Feels Like Home
+      - paragraph [ref=f4e197]: Join a vibrant community of paddle lovers where every match brings new friends, new skills, and endless fun on and off the court.
+      - link "Let's Play Paddle!" [ref=f4e199] [cursor=pointer]:
+        - /url: /signup
+    - contentinfo [ref=f4e200]:
+      - generic [ref=f4e201]:
+        - generic [ref=f4e202]:
+          - paragraph [ref=f4e203]: We're more than a paddle club — we're a community that lives for rallies, laughs, and friendly competition.
+          - generic [ref=f4e204]:
+            - generic [ref=f4e205]:
+              - heading "Let's Talk" [level=4] [ref=f4e206]
+              - list [ref=f4e207]:
+                - listitem [ref=f4e208]:
+                  - link "hello@playpadel.com" [ref=f4e209] [cursor=pointer]:
+                    - /url: mailto:hello@playpadel.com
+                - listitem [ref=f4e210]:
+                  - link "+1 (021) 123-4567" [ref=f4e211] [cursor=pointer]:
+                    - /url: tel:+10211234567
+            - generic [ref=f4e212]:
+              - heading "Navigate" [level=4] [ref=f4e213]
+              - list [ref=f4e214]:
+                - listitem [ref=f4e215]:
+                  - link "Homepage" [ref=f4e216] [cursor=pointer]:
+                    - /url: /
+                - listitem [ref=f4e217]:
+                  - link "About" [ref=f4e218] [cursor=pointer]:
+                    - /url: "#about"
+                - listitem [ref=f4e219]:
+                  - link "Facilities" [ref=f4e220] [cursor=pointer]:
+                    - /url: "#features"
+                - listitem [ref=f4e221]:
+                  - link "Events" [ref=f4e222] [cursor=pointer]:
+                    - /url: "#modules"
+            - generic [ref=f4e223]:
+              - heading "Support" [level=4] [ref=f4e224]
+              - list [ref=f4e225]:
+                - listitem [ref=f4e226]:
+                  - link "FAQs" [ref=f4e227] [cursor=pointer]:
+                    - /url: "#faq"
+                - listitem [ref=f4e228]:
+                  - link "Contact" [ref=f4e229] [cursor=pointer]:
+                    - /url: "#appointment"
+                - listitem [ref=f4e230]:
+                  - link "Help Center" [ref=f4e231] [cursor=pointer]:
+                    - /url: "#"
+                - listitem [ref=f4e232]:
+                  - link "Live Chat Support" [ref=f4e233] [cursor=pointer]:
+                    - /url: "#"
+            - generic [ref=f4e234]:
+              - heading "Social Media" [level=4] [ref=f4e235]
+              - list [ref=f4e236]:
+                - listitem [ref=f4e237]:
+                  - link "Facebook" [ref=f4e238] [cursor=pointer]:
+                    - /url: "#"
+                - listitem [ref=f4e239]:
+                  - link "Instagram" [ref=f4e240] [cursor=pointer]:
+                    - /url: "#"
+                - listitem [ref=f4e241]:
+                  - link "Youtube" [ref=f4e242] [cursor=pointer]:
+                    - /url: "#"
+                - listitem [ref=f4e243]:
+                  - link "LinkedIn" [ref=f4e244] [cursor=pointer]:
+                    - /url: "#"
+        - generic [ref=f4e245]:
+          - generic [ref=f4e246]: Play Padel
+          - generic [ref=f4e248]:
+            - generic [ref=f4e249]: © 2026 Play Padel. All rights reserved.
+            - link "Privacy" [ref=f4e250] [cursor=pointer]:
+              - /url: /privacy
+            - link "Terms & Conditions" [ref=f4e251] [cursor=pointer]:
+              - /url: /terms
+  - region "Notifications alt+T"
+  - button "Open Next.js Dev Tools" [ref=f4e257] [cursor=pointer]

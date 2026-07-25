@@ -1,0 +1,117 @@
+- generic [ref=f2e1]:
+  - generic [ref=f2e2]:
+    - banner [ref=f2e3]:
+      - generic [ref=f2e4]:
+        - link "Play Padel Play Padel" [ref=f2e6] [cursor=pointer]:
+          - /url: /
+          - img "Play Padel" [ref=f2e7]
+          - generic [ref=f2e8]: Play Padel
+        - link "Try for free" [ref=f2e10] [cursor=pointer]:
+          - /url: "#appointment"
+    - generic [ref=f2e11]:
+      - img "Arrangement of padel paddles and balls" [ref=f2e12]
+      - generic [ref=f2e13]:
+        - generic [ref=f2e15]:
+          - heading "Play. Connect. Elevate Your Game with Our Paddle Clubs." [level=1] [ref=f2e16]: Play. Connect. ElevateYour Game with OurPaddle Clubs.
+          - link "Explore Clubs" [ref=f2e18] [cursor=pointer]:
+            - /url: "#appointment"
+          - paragraph [ref=f2e21]: Discover the fun, fast-paced world of paddle with top-notch courts, friendly matches, and a community built for connection.
+        - generic [ref=f2e23]:
+          - generic [ref=f2e24]:
+            - generic [ref=f2e25]: A
+            - generic [ref=f2e26]: C
+            - generic [ref=f2e27]: M
+            - generic [ref=f2e28]: S
+          - generic [ref=f2e29]: +2,400 players
+    - generic [ref=f2e31]:
+      - generic [ref=f2e32]: Beyond the Court
+      - generic [ref=f2e34]:
+        - heading "Whether you're here for the thrill, the fitness, or the friends — Play Padel brings paddle lovers together in a space that's fun, inclusive, and energizing." [level=2] [ref=f2e35]
+        - generic [ref=f2e36]:
+          - generic [ref=f2e37]:
+            - generic [ref=f2e38]: 810+
+            - generic [ref=f2e39]: Active Members
+            - paragraph [ref=f2e40]: A growing paddle community — from beginners to pros — playing, laughing, and improving together.
+          - generic [ref=f2e41]:
+            - generic [ref=f2e42]: 98%
+            - generic [ref=f2e43]: Satisfaction Rate
+            - paragraph [ref=f2e44]: Members stick around for the vibe — fun sessions, friendly crowd, and events that make matches memorable.
+          - generic [ref=f2e45]:
+            - generic [ref=f2e46]: 20+
+            - generic [ref=f2e47]: Certified Pro Coaches
+            - paragraph [ref=f2e48]: Pick up the game or level up with certified coaches who keep it fun, strategic, and simple to follow.
+    - generic [ref=f2e49]:
+      - generic [ref=f2e50]:
+        - heading "Built for Players Who Want More Than Just a Match" [level=2] [ref=f2e51]: Built for Players Who WantMore Than Just a Match
+        - generic [ref=f2e52]: Paddle, People, Purpose
+      - generic [ref=f2e53]:
+        - generic [ref=f2e54]:
+          - button "Coaches Who Get You" [ref=f2e56] [cursor=pointer]
+          - generic [ref=f2e62]:
+            - button "Vibe-Driven Community" [ref=f2e63] [cursor=pointer]
+            - paragraph [ref=f2e70]: Whether you're smashing your first rally or chasing your next win, you're surrounded by good energy and great people.
+          - button "Not Just Matches — Experiences" [ref=f2e72] [cursor=pointer]
+          - button "Spaces That Elevate Your Game" [ref=f2e79] [cursor=pointer]
+        - generic [ref=f2e85]:
+          - img "Players sharing a moment at the net after a match" [ref=f2e86]
+          - link "Learn More" [ref=f2e87] [cursor=pointer]:
+            - /url: "#appointment"
+    - generic [ref=f2e92]:
+      - generic [ref=f2e93]:
+        - generic [ref=f2e94]: Built for Paddle. Built for You.
+        - img "Solo Practice Walls" [ref=f2e191]
+      - generic [ref=f2e98]:
+        - generic [ref=f2e99]:
+          - generic [ref=f2e100]:
+            - button "Previous facility" [ref=f2e101] [cursor=pointer]
+            - button "Next facility" [ref=f2e104] [cursor=pointer]
+          - heading "World-Class Paddle Facilities for Every Level of Play" [level=2] [ref=f2e107]: World-Class Paddle Facilitiesfor Every Level of Play
+        - generic [ref=f2e108]:
+          - generic [ref=f2e109]:
+            - heading "Solo Practice Walls" [level=3] [ref=f2e192]
+            - paragraph [ref=f2e111]: Rebound walls for solo reps — perfect for footwork drills and building consistency.
+            - generic [ref=f2e112]: 6 / 8
+          - button "Beginner-Friendly Courts Beginner-Friendly Courts" [ref=f2e193] [cursor=pointer]:
+            - img "Beginner-Friendly Courts" [ref=f2e194]
+            - generic [ref=f2e115]: Beginner-Friendly Courts
+    - generic [ref=f2e120]:
+      - generic [ref=f2e121]:
+        - heading "Rally, Learn, and Celebrate with Our Paddle Community Events" [level=2] [ref=f2e122]:
+          - generic [ref=f2e123]: Rally, Learn, and Celebrate with
+          - text: Our Paddle Community Events
+        - generic [ref=f2e124]:
+          - generic [ref=f2e125]: Play Together, Grow Together
+          - generic [ref=f2e126]:
+            - button "Scroll events left" [ref=f2e127] [cursor=pointer]
+            - button "Scroll events right" [active] [ref=f2e130] [cursor=pointer]
+      - generic [ref=f2e133]:
+        - generic [ref=f2e134]:
+          - img "Sunset Social Paddle" [ref=f2e135]
+          - generic [ref=f2e136]: Sunset Social Paddle
+        - generic [ref=f2e141]:
+          - img "Sunday Smash Tournament" [ref=f2e142]
+          - generic [ref=f2e143]: Sunday Smash Tournament
+        - generic [ref=f2e148]:
+          - img "Skills & Drills Clinic" [ref=f2e149]
+          - generic [ref=f2e150]: Skills & Drills Clinic
+        - generic [ref=f2e155]:
+          - img "Paddle & Breakfast Meet-Up" [ref=f2e156]
+          - generic [ref=f2e157]: Paddle & Breakfast Meet-Up
+      - paragraph [ref=f2e162]: Join paddle events.Play more, connect better.
+  - region "Notifications alt+T"
+  - button "Open Next.js Dev Tools" [ref=f2e168] [cursor=pointer]
+  - alert [ref=f2e172]
+  - generic [ref=f2e173]:
+    - generic [ref=f2e174]:
+      - link "LocatorJS" [ref=f2e175] [cursor=pointer]:
+        - /url: https://www.locatorjs.com
+      - button "Settings" [ref=f2e183] [cursor=pointer]
+    - generic [ref=f2e184]:
+      - text: Go to component code with
+      - generic [ref=f2e185]: Alt
+      - text: +
+      - generic [ref=f2e186]: click
+    - generic [ref=f2e187]:
+      - link "What is Locator?" [ref=f2e188] [cursor=pointer]:
+        - /url: https://www.locatorjs.com
+      - generic [ref=f2e189] [cursor=pointer]: Stop showing this popup

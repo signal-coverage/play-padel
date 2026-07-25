@@ -1,0 +1,1 @@
+export { PsychologyPage } from "./PsychologyPage";
