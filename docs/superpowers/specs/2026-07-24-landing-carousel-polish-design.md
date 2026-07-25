@@ -19,7 +19,7 @@ Two horizontal-scroll/carousel components on the landing page (`app/_components/
 ### B. `LandingFeatures.tsx` — "next facility" preview button
 
 - Same hover treatment as (A): image `scale-[1.08]` + button lift/shadow, `duration-500 ease-out`. Additionally `active:scale-95` on press, since this button is a real control (`onClick={goNext}`), not decorative.
-- Same badge overflow fix: `max-w-[calc(100%-1.5rem)]` on the badge, `truncate min-w-0` on the title text span, `shrink-0` on the arrow icon.
+- Badge is horizontally centered instead of left-anchored: `left-1/2 -translate-x-1/2 bottom-3` (was `left-3 bottom-3`). Still capped with `max-w-[calc(100%-1.5rem)]` and `truncate min-w-0` on the title text span (with `shrink-0` on the arrow icon) as a safety net for titles too long to fit even centered — this is the button the user specifically wants centered, unlike (A)'s bottom-left badges.
 
 ## Out of scope
 
