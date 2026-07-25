@@ -1,14 +1,13 @@
 export type NotificationType =
-  | "APPOINTMENT_REMINDER"
-  | "APPOINTMENT_CANCELLED"
-  | "INVOICE_PAID"
-  | "PATIENT_BIRTHDAY";
+  | "RESERVATION_REMINDER"
+  | "RESERVATION_CANCELLED"
+  | "PAYMENT_CONFIRMED";
 
 export type NotificationStatus = "PENDING" | "SENT" | "FAILED";
 
 export interface Notification {
   id: string;
-  organizationId: string;
+  clubId: string;
   type: NotificationType;
   recipientId: string;
   recipientEmail: string;
@@ -22,7 +21,7 @@ export interface Notification {
 
 export interface DispatchParams {
   type: NotificationType;
-  organizationId: string;
+  clubId: string;
   recipientId: string;
   recipientEmail: string | null | undefined;
   recipientName: string;

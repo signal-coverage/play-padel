@@ -1,0 +1,88 @@
+import {
+  Body,
+  Container,
+  Head,
+  Heading,
+  Hr,
+  Html,
+  Preview,
+  Section,
+  Text,
+} from "@react-email/components";
+import * as React from "react";
+
+interface ReservationReminderProps {
+  userName: string;
+  scheduledStart: Date;
+  courtName?: string;
+}
+
+export function ReservationReminder({
+  userName,
+  scheduledStart,
+  courtName,
+}: ReservationReminderProps) {
+  const formattedDate = scheduledStart.toLocaleDateString("en-US", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+  const formattedTime = scheduledStart.toLocaleTimeString("en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+  return (
+    <Html>
+      <Head />
+      <Preview>Reservation reminder for {formattedDate}</Preview>
+      <Body style={main}>
+        <Container style={container}>
+          <Heading style={h1}>Reservation Reminder</Heading>
+          <Text style={text}>Hello {userName},</Text>
+          <Text style={text}>
+            This is a reminder about your upcoming court reservation:
+          </Text>
+          <Section style={infoBox}>
+            <Text style={infoLine}>
+              <strong>Date:</strong> {formattedDate}
+            </Text>
+            <Text style={infoLine}>
+              <strong>Time:</strong> {formattedTime}
+            </Text>
+            {courtName && (
+              <Text style={infoLine}>
+                <strong>Court:</strong> {courtName}
+              </Text>
+            )}
+          </Section>
+          <Hr style={hr} />
+          <Text style={footer}>
+            You can cancel this reservation yourself up to 2 hours before its
+            start time. After that, please contact the club directly.
+          </Text>
+        </Container>
+      </Body>
+    </Html>
+  );
+}
+
+const main = { backgroundColor: "#f6f9fc", fontFamily: "sans-serif" };
+const container = {
+  backgroundColor: "#ffffff",
+  margin: "0 auto",
+  padding: "20px",
+  maxWidth: "600px",
+};
+const h1 = { color: "#1a1a1a", fontSize: "24px", fontWeight: "bold" };
+const text = { color: "#374151", fontSize: "14px", lineHeight: "24px" };
+const infoBox = {
+  backgroundColor: "#f3f4f6",
+  borderRadius: "8px",
+  padding: "16px",
+  marginTop: "16px",
+};
+const infoLine = { color: "#374151", fontSize: "14px", margin: "4px 0" };
+const hr = { borderColor: "#e5e7eb", margin: "20px 0" };
+const footer = { color: "#6b7280", fontSize: "12px" };

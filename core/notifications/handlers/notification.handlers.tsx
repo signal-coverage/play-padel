@@ -2,99 +2,92 @@ import { render } from "@react-email/render";
 import { prisma } from "@/infrastructure/db/client";
 import { eventBus } from "@/core/events/event-bus";
 import { dispatch } from "@/lib/notifications/dispatcher";
-import { AppointmentReminder } from "@/lib/email/templates/AppointmentReminder";
-import { AppointmentCancelled } from "@/lib/email/templates/AppointmentCancelled";
-import { InvoicePaid } from "@/lib/email/templates/InvoicePaid";
+import { ReservationReminder } from "@/lib/email/templates/ReservationReminder";
+import { ReservationCancelled } from "@/lib/email/templates/ReservationCancelled";
+import { PaymentConfirmed } from "@/lib/email/templates/PaymentConfirmed";
 
-// appointment.created → APPOINTMENT_REMINDER (booking confirmation to patient)
-eventBus.on("appointment.created", async (payload) => {
+// reservation.created → RESERVATION_REMINDER (booking confirmation to the user)
+eventBus.on("reservation.created", async (payload) => {
   try {
-    const [appointment, patient] = await Promise.all([
-      prisma.appointment.findUnique({
-        where: { id: payload.appointmentId },
-        select: {
-          scheduledStart: true,
-          professionalName: true,
-          location: true,
-        },
+    const [reservation, user] = await Promise.all([
+      prisma.reservation.findUnique({
+        where: { id: payload.reservationId },
+        select: { scheduledStart: true, courtName: true },
       }),
-      prisma.patient.findUnique({
-        where: { id: payload.patientId },
-        select: { email: true, firstName: true, lastName: true },
+      prisma.userProfile.findUnique({
+        where: { id: payload.userId },
+        select: { email: true, displayName: true },
       }),
     ]);
 
-    if (!appointment || !patient) return;
+    if (!reservation || !user) return;
 
-    const patientName = `${patient.firstName} ${patient.lastName}`.trim();
     const html = await render(
-      <AppointmentReminder
-        patientName={patientName}
-        scheduledStart={appointment.scheduledStart}
-        professionalName={appointment.professionalName ?? undefined}
-        location={appointment.location ?? undefined}
+      <ReservationReminder
+        userName={user.displayName}
+        scheduledStart={reservation.scheduledStart}
+        courtName={reservation.courtName}
       />,
     );
 
     await dispatch({
-      type: "APPOINTMENT_REMINDER",
-      organizationId: payload.organizationId,
-      recipientId: payload.patientId,
-      recipientEmail: patient.email,
-      recipientName: patientName,
-      subject: "Appointment Confirmed",
+      type: "RESERVATION_REMINDER",
+      clubId: payload.clubId,
+      recipientId: payload.userId,
+      recipientEmail: user.email,
+      recipientName: user.displayName,
+      subject: "Reservation Confirmed",
       html,
     });
   } catch (err) {
-    console.error("[notification.handlers] appointment.created error:", err);
+    console.error("[notification.handlers] reservation.created error:", err);
   }
 });
 
-// appointment.status_changed (CANCELLED) → APPOINTMENT_CANCELLED
-eventBus.on("appointment.status_changed", async (payload) => {
+// reservation.status_changed (CANCELLED) → RESERVATION_CANCELLED
+eventBus.on("reservation.status_changed", async (payload) => {
   if (payload.status !== "CANCELLED") return;
 
   try {
-    const [appointment, patient] = await Promise.all([
-      prisma.appointment.findUnique({
-        where: { id: payload.appointmentId },
-        select: { scheduledStart: true, professionalName: true },
+    const [reservation, user] = await Promise.all([
+      prisma.reservation.findUnique({
+        where: { id: payload.reservationId },
+        select: { scheduledStart: true, courtName: true },
       }),
-      prisma.patient.findUnique({
-        where: { id: payload.patientId },
-        select: { email: true, firstName: true, lastName: true },
+      prisma.userProfile.findUnique({
+        where: { id: payload.userId },
+        select: { email: true, displayName: true },
       }),
     ]);
 
-    if (!appointment || !patient) return;
+    if (!reservation || !user) return;
 
-    const patientName = `${patient.firstName} ${patient.lastName}`.trim();
     const html = await render(
-      <AppointmentCancelled
-        patientName={patientName}
-        scheduledStart={appointment.scheduledStart}
-        professionalName={appointment.professionalName ?? undefined}
+      <ReservationCancelled
+        userName={user.displayName}
+        scheduledStart={reservation.scheduledStart}
+        courtName={reservation.courtName}
       />,
     );
 
     await dispatch({
-      type: "APPOINTMENT_CANCELLED",
-      organizationId: payload.organizationId,
-      recipientId: payload.patientId,
-      recipientEmail: patient.email,
-      recipientName: patientName,
-      subject: "Your Appointment Has Been Cancelled",
+      type: "RESERVATION_CANCELLED",
+      clubId: payload.clubId,
+      recipientId: payload.userId,
+      recipientEmail: user.email,
+      recipientName: user.displayName,
+      subject: "Your Reservation Has Been Cancelled",
       html,
     });
   } catch (err) {
     console.error(
-      "[notification.handlers] appointment.status_changed error:",
+      "[notification.handlers] reservation.status_changed error:",
       err,
     );
   }
 });
 
-// invoice.paid → INVOICE_PAID
+// invoice.paid → PAYMENT_CONFIRMED
 eventBus.on("invoice.paid", async (payload) => {
   try {
     const invoice = await prisma.invoice.findUnique({
@@ -103,19 +96,23 @@ eventBus.on("invoice.paid", async (payload) => {
         number: true,
         total: true,
         currency: true,
-        patient: {
-          select: { email: true, firstName: true, lastName: true },
-        },
+        userId: true,
+        userName: true,
       },
     });
 
     if (!invoice) return;
 
-    const patientName =
-      `${invoice.patient.firstName} ${invoice.patient.lastName}`.trim();
+    const user = await prisma.userProfile.findUnique({
+      where: { id: invoice.userId },
+      select: { email: true, displayName: true },
+    });
+
+    const userName = user?.displayName ?? invoice.userName;
+
     const html = await render(
-      <InvoicePaid
-        patientName={patientName}
+      <PaymentConfirmed
+        userName={userName}
         invoiceNumber={invoice.number}
         total={invoice.total}
         currency={invoice.currency}
@@ -123,11 +120,11 @@ eventBus.on("invoice.paid", async (payload) => {
     );
 
     await dispatch({
-      type: "INVOICE_PAID",
-      organizationId: payload.organizationId,
-      recipientId: payload.patientId,
-      recipientEmail: invoice.patient.email,
-      recipientName: patientName,
+      type: "PAYMENT_CONFIRMED",
+      clubId: payload.clubId,
+      recipientId: invoice.userId,
+      recipientEmail: user?.email ?? null,
+      recipientName: userName,
       subject: "Payment Received",
       html,
     });

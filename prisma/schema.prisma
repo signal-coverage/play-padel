@@ -7,63 +7,40 @@ datasource db {
   provider = "postgresql"
 }
 
-model Organization {
-  id             String             @id @default(cuid())
-  name           String
-  legalName      String?
-  taxId          String?
-  email          String
-  phone          String?
-  logoUrl        String?
-  timezone       String
-  currency       String
-  plan           Plan               @default(FREE)
-  status         OrganizationStatus @default(ACTIVE)
-  enabledPlugins String[]
-  createdAt      DateTime           @default(now())
-  updatedAt      DateTime           @updatedAt
-  createdBy      String
-  updatedBy      String
-  users          UserProfile[]
-  patients       Patient[]
-  professionals  Professional[]
-  appointments   Appointment[]
-  invoices       Invoice[]
-  payments       Payment[]
+model Club {
+  id        String     @id @default(cuid())
+  name      String
+  legalName String?
+  taxId     String?
+  email     String
+  phone     String?
+  logoUrl   String?
+  timezone  String
+  currency  String
+  plan      Plan       @default(FREE)
+  status    ClubStatus @default(ACTIVE)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  createdBy String
+  updatedBy String
 
-  @@map("organizations")
-}
+  users        UserProfile[]
+  courts       Court[]
+  reservations Reservation[]
+  invoices     Invoice[]
+  payments     Payment[]
 
-model UserProfile {
-  id             String       @id
-  organizationId String
-  roleId         SystemRole
-  displayName    String
-  email          String
-  photoURL       String?
-  phone          String?
-  status         UserStatus   @default(ACTIVE)
-  lastLogin      DateTime?
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
-  createdBy      String
-  updatedBy      String
-  customRoleId   String?
-  customRole     CustomRole? @relation(fields: [customRoleId], references: [id])
-  organization   Organization @relation(fields: [organizationId], references: [id])
-
-  @@map("user_profiles")
+  @@map("clubs")
 }
 
 enum Plan {
   FREE
-  CONSULTING_ROOM
-  MEDICAL_CENTER
-  HOSPITAL
+  BASIC
+  PRO
   CUSTOM
 }
 
-enum OrganizationStatus {
+enum ClubStatus {
   ACTIVE
   INACTIVE
   SUSPENDED
@@ -71,22 +48,14 @@ enum OrganizationStatus {
 }
 
 enum SystemRole {
-  admin
-  staff
-  professional
+  owner
+  player
 }
 
 enum UserStatus {
   ACTIVE
   INACTIVE
   PENDING
-}
-
-enum DocumentType {
-  DNI
-  PASSPORT
-  CUIL
-  OTHER
 }
 
 enum Gender {
@@ -96,72 +65,72 @@ enum Gender {
   PREFER_NOT_TO_SAY
 }
 
-enum PatientStatus {
-  ACTIVE
-  INACTIVE
-  ARCHIVED
+model UserProfile {
+  id            String      @id
+  role          SystemRole  @default(player)
+  clubId        String?
+  club          Club?       @relation(fields: [clubId], references: [id])
+  displayName   String
+  firstName     String?
+  lastName      String?
+  email         String
+  photoURL      String?
+  phone         String?
+  address       String?
+  gender        Gender?
+  padelCategory Int?
+  status        UserStatus  @default(ACTIVE)
+  lastLogin     DateTime?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  createdBy     String
+  updatedBy     String
+
+  reservations Reservation[]
+
+  @@index([clubId])
+  @@map("user_profiles")
 }
 
-model Patient {
-  id               String        @id @default(cuid())
-  organizationId   String
-  documentType     DocumentType
-  documentNumber   String
-  firstName        String
-  lastName         String
-  birthDate        DateTime?
-  gender           Gender?
-  phone            String?
-  email            String?
-  address          Json?
-  insurance        Json?
-  emergencyContact Json?
-  tags             String[]
-  notes            String?
-  odontogramState  Json?
-  consultations    Consultation[]
-  status           PatientStatus @default(ACTIVE)
-  createdAt        DateTime      @default(now())
-  updatedAt        DateTime      @updatedAt
-  createdBy        String?
-  updatedBy        String?
-  deletedAt        DateTime?
-  deletedBy        String?
+model Court {
+  id                  String    @id @default(cuid())
+  clubId              String
+  club                Club      @relation(fields: [clubId], references: [id])
+  name                String
+  surface             String?
+  indoor              Boolean   @default(false)
+  color               String?
+  slotDurationMinutes Int       @default(90)
+  active              Boolean   @default(true)
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  createdBy           String?
+  updatedBy           String?
+  deletedAt           DateTime?
+  deletedBy           String?
 
-  organization Organization  @relation(fields: [organizationId], references: [id])
-  appointments Appointment[]
-  invoices     Invoice[]
+  availability CourtAvailability[]
+  reservations Reservation[]
 
-  @@unique([organizationId, documentType, documentNumber])
-  @@index([organizationId, status])
-  @@index([organizationId, createdAt])
-  @@map("patients")
+  @@index([clubId, active])
+  @@map("courts")
 }
 
-model Consultation {
-  id             String   @id @default(cuid())
-  organizationId String
-  patientId      String
-  professionalId String?
-  appointmentId  String?
-  chiefComplaint String?
-  diagnosis      String?
-  treatment      String?
-  notes          String?
-  odontogramState Json?
-  date           DateTime @default(now())
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-  createdBy      String?
+model CourtAvailability {
+  id        String   @id @default(cuid())
+  courtId   String
+  court     Court    @relation(fields: [courtId], references: [id])
+  dayOfWeek Int
+  startTime String
+  endTime   String
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
 
-  patient Patient @relation(fields: [patientId], references: [id])
-
-  @@index([patientId, date])
-  @@index([organizationId, patientId])
-  @@map("consultations")
+  @@index([courtId, dayOfWeek])
+  @@map("court_availability")
 }
 
-enum AppointmentStatus {
+enum ReservationStatus {
   SCHEDULED
   CONFIRMED
   CANCELLED
@@ -169,74 +138,34 @@ enum AppointmentStatus {
   NO_SHOW
 }
 
-model Professional {
-  id             String         @id @default(cuid())
-  organizationId String
-  organization   Organization   @relation(fields: [organizationId], references: [id])
-  displayName    String
-  specialties    String[]
-  license        String?
-  phone          String?
-  email          String?
-  calendarColor  String?
-  userId         String?
-  active         Boolean        @default(true)
-  workingHours   WorkingHours[]
-  appointments   Appointment[]
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
+model Reservation {
+  id             String            @id @default(cuid())
+  clubId         String
+  club           Club              @relation(fields: [clubId], references: [id])
+  userId         String
+  user           UserProfile       @relation(fields: [userId], references: [id])
+  userName       String
+  courtId        String
+  court          Court             @relation(fields: [courtId], references: [id])
+  courtName      String
+  status         ReservationStatus @default(CONFIRMED)
+  scheduledStart DateTime
+  scheduledEnd   DateTime
+  notes          String?
+  cancelledAt    DateTime?
+  cancelledBy    String?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
   createdBy      String?
   updatedBy      String?
-  deletedAt      DateTime?
-  deletedBy      String?
-
-  @@index([organizationId, active])
-}
-
-model WorkingHours {
-  id             String       @id @default(cuid())
-  organizationId String
-  professionalId String
-  professional   Professional @relation(fields: [professionalId], references: [id])
-  dayOfWeek      Int
-  startTime      String
-  endTime        String
-  active         Boolean      @default(true)
-  createdAt      DateTime     @default(now())
-
-  @@index([professionalId, dayOfWeek])
-}
-
-model Appointment {
-  id               String            @id @default(cuid())
-  organizationId   String
-  organization     Organization      @relation(fields: [organizationId], references: [id])
-  patientId        String
-  patient          Patient           @relation(fields: [patientId], references: [id])
-  patientName      String
-  professionalId   String?
-  professional     Professional?     @relation(fields: [professionalId], references: [id])
-  professionalName String?
-  pluginId         String?
-  status           AppointmentStatus @default(SCHEDULED)
-  scheduledStart   DateTime
-  scheduledEnd     DateTime
-  reason           String?
-  location         String?
-  notes            String?
-  cancelledAt      DateTime?
-  cancelledBy      String?
-  createdAt        DateTime          @default(now())
-  updatedAt        DateTime          @updatedAt
-  createdBy        String?
-  updatedBy        String?
 
   invoices Invoice[]
 
-  @@index([organizationId, scheduledStart])
-  @@index([organizationId, patientId])
-  @@index([organizationId, professionalId])
-  @@index([organizationId, status])
+  @@index([clubId, scheduledStart])
+  @@index([clubId, userId])
+  @@index([clubId, courtId])
+  @@index([clubId, status])
+  @@map("reservations")
 }
 
 enum InvoiceStatus {
@@ -261,60 +190,62 @@ enum PaymentStatus {
 }
 
 model Invoice {
-  id             String        @id @default(cuid())
-  organizationId String
-  organization   Organization  @relation(fields: [organizationId], references: [id])
-  patientId      String
-  patient        Patient       @relation(fields: [patientId], references: [id])
-  patientName    String
-  appointmentId  String?
-  appointment    Appointment?  @relation(fields: [appointmentId], references: [id])
-  number         Int
-  status         InvoiceStatus @default(DRAFT)
-  currency       String
-  items          Json
-  subtotal       Float
-  tax            Float         @default(0)
-  discount       Float         @default(0)
-  total          Float
-  notes          String?
-  issuedAt       DateTime?
-  paidAt         DateTime?
-  voidedAt       DateTime?
-  voidedBy       String?
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
-  createdBy      String?
-  updatedBy      String?
-  payments       Payment[]
+  id            String        @id @default(cuid())
+  clubId        String
+  club          Club          @relation(fields: [clubId], references: [id])
+  userId        String
+  userName      String
+  reservationId String?
+  reservation   Reservation?  @relation(fields: [reservationId], references: [id])
+  number        Int
+  status        InvoiceStatus @default(DRAFT)
+  currency      String
+  items         Json
+  subtotal      Float
+  tax           Float         @default(0)
+  discount      Float         @default(0)
+  total         Float
+  notes         String?
+  issuedAt      DateTime?
+  paidAt        DateTime?
+  voidedAt      DateTime?
+  voidedBy      String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  createdBy     String?
+  updatedBy     String?
 
-  @@unique([organizationId, number])
-  @@index([organizationId, status])
-  @@index([organizationId, patientId])
-  @@index([organizationId, createdAt])
+  payments Payment[]
+
+  @@unique([clubId, number])
+  @@index([clubId, status])
+  @@index([clubId, userId])
+  @@index([clubId, createdAt])
+  @@map("invoices")
 }
 
 model Payment {
-  id             String        @id @default(cuid())
-  organizationId String
-  organization   Organization  @relation(fields: [organizationId], references: [id])
-  invoiceId      String
-  invoice        Invoice       @relation(fields: [invoiceId], references: [id])
-  method         PaymentMethod
-  amount         Float
-  currency       String
-  status         PaymentStatus @default(COMPLETED)
-  reference      String?
-  paidAt         DateTime      @default(now())
-  createdAt      DateTime      @default(now())
-  createdBy      String?
+  id        String        @id @default(cuid())
+  clubId    String
+  club      Club          @relation(fields: [clubId], references: [id])
+  invoiceId String
+  invoice   Invoice       @relation(fields: [invoiceId], references: [id])
+  method    PaymentMethod
+  amount    Float
+  currency  String
+  status    PaymentStatus @default(COMPLETED)
+  reference String?
+  paidAt    DateTime      @default(now())
+  createdAt DateTime      @default(now())
+  createdBy String?
+
+  @@map("payments")
 }
 
 enum NotificationType {
-  APPOINTMENT_REMINDER
-  APPOINTMENT_CANCELLED
-  INVOICE_PAID
-  PATIENT_BIRTHDAY
+  RESERVATION_REMINDER
+  RESERVATION_CANCELLED
+  PAYMENT_CONFIRMED
 }
 
 enum NotificationStatus {
@@ -325,7 +256,7 @@ enum NotificationStatus {
 
 model Notification {
   id             String             @id @default(cuid())
-  organizationId String
+  clubId         String
   type           NotificationType
   recipientId    String
   recipientEmail String
@@ -336,55 +267,14 @@ model Notification {
   sentAt         DateTime?
   createdAt      DateTime           @default(now())
 
-  @@index([organizationId, status])
-  @@index([organizationId, type, recipientId])
+  @@index([clubId, status])
+  @@index([clubId, type, recipientId])
   @@map("notifications")
-}
-
-model PluginRegistry {
-  id             String   @id @default(cuid())
-  organizationId String
-  pluginId       String
-  version        String
-  enabled        Boolean  @default(true)
-  installedAt    DateTime @default(now())
-  installedBy    String
-  config         Json     @default("{}")
-
-  @@unique([organizationId, pluginId])
-  @@index([organizationId])
-}
-
-enum TreatmentStatus {
-  PLANNED
-  IN_PROGRESS
-  COMPLETED
-  CANCELLED
-}
-
-model Treatment {
-  id             String          @id @default(cuid())
-  organizationId String
-  patientId      String
-  professionalId String?
-  consultationId String?
-  toothNumber    Int?
-  surface        String?
-  description    String
-  status         TreatmentStatus @default(PLANNED)
-  price          Float?
-  notes          String?
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
-  createdBy      String
-
-  @@index([organizationId, patientId])
-  @@index([organizationId, status])
 }
 
 model AuditLog {
   id              String   @id @default(cuid())
-  organizationId  String
+  clubId          String
   userId          String
   userDisplayName String   @default("")
   action          String
@@ -393,133 +283,7 @@ model AuditLog {
   metadata        Json?
   timestamp       DateTime @default(now())
 
-  @@index([organizationId, timestamp(sort: Desc)])
-  @@index([organizationId, entity])
-}
-
-enum NutritionPlanStatus {
-  ACTIVE
-  COMPLETED
-  SUSPENDED
-}
-
-model NutritionPlan {
-  id             String              @id @default(cuid())
-  organizationId String
-  patientId      String
-  professionalId String?
-  title          String
-  caloricTarget  Int?
-  proteinTarget  Float?
-  carbTarget     Float?
-  fatTarget      Float?
-  notes          String?
-  startDate      DateTime
-  status         NutritionPlanStatus @default(ACTIVE)
-  createdAt      DateTime            @default(now())
-  updatedAt      DateTime            @updatedAt
-  createdBy      String
-
-  sessions NutritionSession[]
-
-  @@index([organizationId, patientId])
-  @@index([organizationId, status])
-}
-
-model NutritionSession {
-  id             String         @id @default(cuid())
-  organizationId String
-  patientId      String
-  planId         String?
-  appointmentId  String?
-  professionalId String?
-  weight         Float?
-  bmi            Float?
-  chiefComplaint String?
-  observations   String?
-  dietaryChanges String?
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
-  createdBy      String
-
-  plan NutritionPlan? @relation(fields: [planId], references: [id])
-
-  @@index([organizationId, patientId])
-  @@index([organizationId, planId])
-}
-
-enum SessionType {
-  INDIVIDUAL
-  GROUP
-  COUPLE
-  FAMILY
-}
-
-enum RiskLevel {
-  LOW
-  MEDIUM
-  HIGH
-  CRITICAL
-}
-
-enum GoalStatus {
-  ACTIVE
-  ACHIEVED
-  ABANDONED
-}
-
-model PsychologySession {
-  id                  String      @id @default(cuid())
-  organizationId      String
-  patientId           String
-  professionalId      String?
-  appointmentId       String?
-  sessionType         SessionType @default(INDIVIDUAL)
-  moodRating          Int?
-  anxietyLevel        Int?
-  chiefComplaint      String?
-  sessionNotes        String?
-  therapeuticApproach String?
-  homeworkAssigned    String?
-  riskAssessment      RiskLevel?  @default(LOW)
-  nextSessionGoals    String?
-  createdAt           DateTime    @default(now())
-  updatedAt           DateTime    @updatedAt
-  createdBy           String
-
-  @@index([organizationId, patientId])
-  @@index([organizationId, riskAssessment])
-}
-
-model PsychologyGoal {
-  id             String     @id @default(cuid())
-  organizationId String
-  patientId      String
-  description    String
-  targetDate     DateTime?
-  status         GoalStatus @default(ACTIVE)
-  progress       String?
-  createdAt      DateTime   @default(now())
-  updatedAt      DateTime   @updatedAt
-  createdBy      String
-
-  @@index([organizationId, patientId])
-  @@index([organizationId, status])
-}
-
-model CustomRole {
-  id             String   @id @default(cuid())
-  organizationId String
-  name           String
-  description    String?
-  permissions    String[]
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-  createdBy      String
-
-  users          UserProfile[]
-
-  @@unique([organizationId, name])
-  @@index([organizationId])
-  @@map("custom_roles")
+  @@index([clubId, timestamp(sort: Desc)])
+  @@index([clubId, entity])
+  @@map("audit_logs")
 }

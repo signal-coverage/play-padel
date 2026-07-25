@@ -1,12 +1,11 @@
 export type UserStatus = "ACTIVE" | "INACTIVE" | "PENDING";
-export type SystemRole = "admin" | "staff" | "professional";
+export type SystemRole = "owner" | "player";
 
 export interface UserProfile {
   id: string;
-  organizationId: string;
-  roleId: SystemRole;
-  customRoleId?: string | null;
-  customRoleName?: string | null;
+  role: SystemRole;
+  // Optional: only club owners belong to a club — players don't.
+  clubId?: string;
   displayName: string;
   email: string;
   photoURL?: string;
@@ -17,5 +16,4 @@ export interface UserProfile {
   updatedAt: Date;
   createdBy: string;
   updatedBy: string;
-  effectivePermissions?: string[];
 }

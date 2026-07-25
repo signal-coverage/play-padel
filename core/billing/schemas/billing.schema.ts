@@ -11,8 +11,8 @@ export const invoiceItemSchema = z.object({
 });
 
 export const createInvoiceSchema = z.object({
-  patientId: z.string().min(1, "Patient is required"),
-  appointmentId: z.string().optional(),
+  userId: z.string().min(1, "User is required"),
+  reservationId: z.string().optional(),
   currency: z.string().min(1, "Currency is required"),
   items: z.array(invoiceItemSchema).min(1, "At least one item is required"),
   tax: z.number().min(0, "Tax cannot be negative"),

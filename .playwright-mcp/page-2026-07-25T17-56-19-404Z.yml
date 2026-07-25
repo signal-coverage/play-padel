@@ -1,0 +1,66 @@
+- generic [ref=f20e1]:
+  - generic [ref=f20e144]:
+    - generic [ref=f20e145]:
+      - img "Play Padel" [ref=f20e147]
+      - heading "Set up your Play Padel account" [level=1] [ref=f20e148]
+      - paragraph [ref=f20e149]: This takes about 2 minutes.
+    - generic [ref=f20e150]:
+      - generic [ref=f20e151]:
+        - generic [ref=f20e152]: You
+        - generic [ref=f20e158]:
+          - generic [ref=f20e159]: "2"
+          - generic [ref=f20e160]: Profile
+        - generic [ref=f20e163]:
+          - generic [ref=f20e164]: "3"
+          - generic [ref=f20e165]: Terms
+      - generic [ref=f20e166]:
+        - generic [ref=f20e192]:
+          - generic [ref=f20e193]:
+            - heading "Your profile" [level=2] [ref=f20e194]
+            - paragraph [ref=f20e195]: Tell us a bit about yourself.
+          - generic [ref=f20e196]:
+            - generic [ref=f20e197] [cursor=pointer]: First name *
+            - textbox "First name *" [ref=f20e198]
+          - generic [ref=f20e199]:
+            - generic [ref=f20e200] [cursor=pointer]: Last name *
+            - textbox "Last name *" [ref=f20e201]
+          - generic [ref=f20e202]:
+            - generic [ref=f20e203] [cursor=pointer]: Phone *
+            - textbox "Phone *" [ref=f20e207]:
+              - /placeholder: +54 11 1234-5678
+          - generic [ref=f20e208]:
+            - generic [ref=f20e209] [cursor=pointer]: Address
+            - textbox "Address" [ref=f20e210]:
+              - /placeholder: Optional
+          - generic [ref=f20e211]:
+            - generic [ref=f20e212] [cursor=pointer]: Gender
+            - combobox "Gender" [ref=f20e213] [cursor=pointer]:
+              - generic: Prefer not to answer
+            - combobox [ref=f20e214] [cursor=pointer]
+          - generic [ref=f20e215]:
+            - generic [ref=f20e216] [cursor=pointer]: Padel category
+            - paragraph [ref=f20e217]: Your skill-level ranking — Category 1 is the highest level, Category 8 is a beginner.
+            - combobox "Padel category" [ref=f20e218] [cursor=pointer]:
+              - generic: Not sure yet
+            - combobox [ref=f20e219] [cursor=pointer]
+        - generic [ref=f20e187]:
+          - button "Back" [ref=f20e220] [cursor=pointer]
+          - button "Continue" [active] [ref=f20e188] [cursor=pointer]
+    - paragraph [ref=f20e189]: Step 2 of 3
+  - region "Notifications alt+T"
+  - button "Open Next.js Dev Tools" [ref=f20e33] [cursor=pointer]
+  - alert [ref=f20e37]
+  - generic [ref=f20e38]:
+    - generic [ref=f20e39]:
+      - link "LocatorJS" [ref=f20e40] [cursor=pointer]:
+        - /url: https://www.locatorjs.com
+      - button "Settings" [ref=f20e48] [cursor=pointer]
+    - generic [ref=f20e49]:
+      - text: Go to component code with
+      - generic [ref=f20e50]: Alt
+      - text: +
+      - generic [ref=f20e51]: click
+    - generic [ref=f20e52]:
+      - link "What is Locator?" [ref=f20e53] [cursor=pointer]:
+        - /url: https://www.locatorjs.com
+      - generic [ref=f20e54] [cursor=pointer]: Stop showing this popup

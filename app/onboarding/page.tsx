@@ -1,19 +1,22 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import Image from "next/image";
 import { useForm, Controller, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   Check,
   Building2,
   Landmark,
+  LayoutGrid,
   User,
+  Users,
   FileText,
   Phone,
   Mail,
+  type LucideIcon,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { Input } from "@/components/ui/input";
@@ -27,62 +30,88 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { CURRENCIES } from "@/lib/consts";
+import { CURRENCIES, TIMEZONES } from "@/lib/consts";
 import {
   onboardingFormSchema,
   STEP_FIELDS,
+  PLAYER_FLOW,
+  OWNER_FLOW,
+  COURT_RANGE_OPTIONS,
+  GENDER_OPTIONS,
+  PADEL_CATEGORY_OPTIONS,
   type OnboardingFormValues,
+  type OnboardingStepKey,
 } from "./types";
 import { TERMS_AND_CONDITIONS_TEXT } from "./terms-content";
 
-const TOTAL_STEPS = 4;
+const STEP_META: Record<
+  OnboardingStepKey,
+  { label: string; icon: LucideIcon }
+> = {
+  userType: { label: "You", icon: Users },
+  clubBasics: { label: "Club", icon: Building2 },
+  legalBilling: { label: "Legal", icon: Landmark },
+  plan: { label: "Plan", icon: LayoutGrid },
+  profile: { label: "Profile", icon: User },
+  playerProfile: { label: "Profile", icon: User },
+  terms: { label: "Terms", icon: FileText },
+};
 
-const STEPS = [
-  { step: 1, label: "Clinic", icon: Building2 },
-  { step: 2, label: "Legal", icon: Landmark },
-  { step: 3, label: "Profile", icon: User },
-  { step: 4, label: "Terms", icon: FileText },
-];
+function optionCardClass(selected: boolean) {
+  return [
+    "flex w-full items-start gap-3 rounded-xl border-2 p-4 text-left transition-colors duration-200",
+    selected
+      ? "border-primary bg-primary/5"
+      : "border-border hover:border-muted-foreground/30",
+  ].join(" ");
+}
 
-function StepIndicator({ current }: { current: number }) {
+function StepIndicator({
+  flow,
+  current,
+}: {
+  flow: readonly OnboardingStepKey[];
+  current: number;
+}) {
   return (
     <div className="flex items-center w-full mb-8">
-      {STEPS.map((s, i) => {
-        const done = current > s.step;
-        const active = current === s.step;
+      {flow.map((key, i) => {
+        const meta = STEP_META[key];
+        const done = current > i;
+        const active = current === i;
         return (
-          <div key={s.step} className="flex items-center flex-1 last:flex-none">
+          <div key={key} className="flex items-center flex-1 last:flex-none">
             <div className="flex flex-col items-center gap-1">
               <div
                 className={[
                   "w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold border-2 transition-all duration-300 ease-out",
                   done
-                    ? "bg-[#2D8A60] border-[#2D8A60] text-white"
+                    ? "bg-primary border-primary text-primary-foreground"
                     : active
-                      ? "bg-white border-[#2D8A60] text-[#2D8A60] scale-105"
+                      ? "bg-card border-primary text-primary scale-105"
                       : "bg-muted border-muted-foreground/20 text-muted-foreground",
                 ].join(" ")}
               >
-                {done ? <Check className="w-4 h-4" /> : s.step}
+                {done ? <Check className="w-4 h-4" /> : i + 1}
               </div>
               <span
                 className={[
                   "text-xs font-medium transition-colors duration-300 ease-out",
                   active
-                    ? "text-[#2D8A60]"
+                    ? "text-primary"
                     : done
                       ? "text-foreground"
                       : "text-muted-foreground",
                 ].join(" ")}
               >
-                {s.label}
+                {meta.label}
               </span>
             </div>
-            {i < STEPS.length - 1 && (
+            {i < flow.length - 1 && (
               <div
                 className={[
                   "flex-1 h-0.5 mx-2 mb-4 rounded transition-colors duration-500 ease-out",
-                  current > s.step ? "bg-[#2D8A60]" : "bg-muted-foreground/20",
+                  current > i ? "bg-primary" : "bg-muted-foreground/20",
                 ].join(" ")}
               />
             )}
@@ -107,20 +136,27 @@ const stepVariants = {
 
 export default function OnboardingPage() {
   const { user } = useAuth();
-  const router = useRouter();
-  const [step, setStep] = useState(1);
+  const [stepIndex, setStepIndex] = useState(0);
   const [direction, setDirection] = useState(1);
 
   const form = useForm<OnboardingFormValues>({
     resolver: zodResolver(onboardingFormSchema),
     defaultValues: {
+      userType: undefined,
       name: "",
       email: user?.email ?? "",
       phone: "",
       legalName: "",
       taxId: "",
+      timezone: TIMEZONES[0].value,
       currency: "ARS",
+      courtRange: undefined,
       displayName: user?.displayName || user?.email?.split("@")[0] || "",
+      firstName: "",
+      lastName: "",
+      address: "",
+      gender: undefined,
+      padelCategory: "unknown",
       acceptedTerms: false,
     },
   });
@@ -130,73 +166,111 @@ export default function OnboardingPage() {
     control,
     handleSubmit,
     trigger,
+    setValue,
+    getValues,
     formState: { errors, isSubmitting },
   } = form;
 
+  // Clerk's useUser() resolves after this component's first render, so the
+  // useForm defaultValues (captured once at mount) miss it — this backfills
+  // the email once Clerk data lands, for both Google and email-OTP sign-up.
+  useEffect(() => {
+    if (user?.email && !getValues("email")) {
+      setValue("email", user.email);
+    }
+  }, [user?.email, getValues, setValue]);
+
   const watchedValues = useWatch({ control });
 
+  // Both flows share the "userType" step; only the choice made there decides
+  // whether the club-creation steps are part of the wizard at all.
+  const flow = watchedValues.userType === "owner" ? OWNER_FLOW : PLAYER_FLOW;
+  const currentKey = flow[stepIndex] as OnboardingStepKey;
+  const isLastStep = stepIndex === flow.length - 1;
+
   async function handleNext() {
-    const fields = STEP_FIELDS[step];
+    const fields = STEP_FIELDS[currentKey];
     if (fields.length > 0) {
       const valid = await trigger(fields);
       if (!valid) return;
     }
     setDirection(1);
-    setStep((s) => s + 1);
+    setStepIndex((s) => s + 1);
   }
 
   function handleBack() {
     setDirection(-1);
-    setStep((s) => s - 1);
+    setStepIndex((s) => s - 1);
   }
 
   async function onSubmit(data: OnboardingFormValues) {
     if (!user) return;
 
-    toast.success("Organization created! Welcome to ERPFlow.");
-    router.push("/dashboard");
+    try {
+      const res = await fetch("/api/onboarding", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        toast.error(body?.error ?? "Something went wrong. Please try again.");
+        return;
+      }
+
+      if (data.userType === "owner") {
+        toast.success("Club created! Welcome to Play Padel.");
+      } else {
+        toast.success("You're all set. Welcome to Play Padel!");
+      }
+      // Hard navigation, not router.push: AuthProvider only fetches /api/me
+      // once per Clerk session and won't know a profile now exists, which
+      // would otherwise leave DashboardGuard stuck redirecting back here
+      // against OnboardingLayout redirecting to /dashboard, forever.
+      window.location.assign("/dashboard");
+    } catch {
+      toast.error("Something went wrong. Please try again.");
+    }
   }
 
-  const selectedCurrency = CURRENCIES.find(
-    (c) => c.value === watchedValues.currency,
+  const selectedCurrency = useMemo(
+    () => CURRENCIES.find((c) => c.value === watchedValues.currency),
+    [watchedValues.currency],
+  );
+  const selectedTimezone = useMemo(
+    () => TIMEZONES.find((t) => t.value === watchedValues.timezone),
+    [watchedValues.timezone],
+  );
+  const selectedCourtRange = useMemo(
+    () =>
+      COURT_RANGE_OPTIONS.find((o) => o.value === watchedValues.courtRange),
+    [watchedValues.courtRange],
   );
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-[#FAFAFA]">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-muted">
       <div className="w-full max-w-xl">
         <div className="mb-6 text-center">
-          <div className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-[#A8E6CF] mb-3">
-            <svg viewBox="0 0 24 24" fill="none" className="w-6 h-6">
-              <path
-                d="M12 2L2 7v10l10 5 10-5V7L12 2z"
-                stroke="#2D8A60"
-                strokeWidth="2"
-                strokeLinejoin="round"
-              />
-              <path
-                d="M12 12v5M12 12L7 9.5M12 12l5-2.5"
-                stroke="#2D8A60"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-              />
-            </svg>
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-white border border-black/10 mb-3 p-2">
+            <Image src="/logo.svg" alt="Play Padel" width={24} height={24} />
           </div>
           <h1 className="text-2xl font-bold text-foreground">
-            Set up your organization
+            Set up your Play Padel account
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
             This takes about 2 minutes.
           </p>
         </div>
 
-        <div className="bg-white border border-border rounded-2xl p-6 shadow-sm">
-          <StepIndicator current={step} />
+        <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
+          <StepIndicator flow={flow} current={stepIndex} />
 
           <form onSubmit={handleSubmit(onSubmit)}>
             <AnimatePresence mode="wait" custom={direction} initial={false}>
-              {step === 1 && (
+              {currentKey === "userType" && (
                 <motion.div
-                  key={1}
+                  key="userType"
                   className="space-y-4"
                   custom={direction}
                   variants={stepVariants}
@@ -207,20 +281,86 @@ export default function OnboardingPage() {
                 >
                   <div>
                     <h2 className="text-base font-semibold mb-0.5">
-                      Clinic basics
+                      Welcome to Play Padel
                     </h2>
                     <p className="text-sm text-muted-foreground">
-                      Primary contact information for your organization.
+                      Tell us how you&apos;ll be using it.
+                    </p>
+                  </div>
+
+                  <Controller
+                    control={control}
+                    name="userType"
+                    render={({ field }) => (
+                      <div className="flex flex-col gap-3">
+                        <button
+                          type="button"
+                          onClick={() => field.onChange("player")}
+                          className={optionCardClass(field.value === "player")}
+                        >
+                          <User className="w-5 h-5 mt-0.5 shrink-0 text-primary" />
+                          <div>
+                            <p className="text-sm font-semibold">
+                              I&apos;m a player
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              Browse clubs and reserve free courts.
+                            </p>
+                          </div>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => field.onChange("owner")}
+                          className={optionCardClass(field.value === "owner")}
+                        >
+                          <Building2 className="w-5 h-5 mt-0.5 shrink-0 text-primary" />
+                          <div>
+                            <p className="text-sm font-semibold">
+                              I&apos;m a club owner
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              Manage courts and availability for my club.
+                            </p>
+                          </div>
+                        </button>
+                      </div>
+                    )}
+                  />
+                  {errors.userType && (
+                    <p className="text-sm text-destructive">
+                      {errors.userType.message}
+                    </p>
+                  )}
+                </motion.div>
+              )}
+
+              {currentKey === "clubBasics" && (
+                <motion.div
+                  key="clubBasics"
+                  className="space-y-4"
+                  custom={direction}
+                  variants={stepVariants}
+                  initial="enter"
+                  animate="center"
+                  exit="exit"
+                  transition={{ duration: 0.25, ease: "easeInOut" }}
+                >
+                  <div>
+                    <h2 className="text-base font-semibold mb-0.5">
+                      Tell us about your club
+                    </h2>
+                    <p className="text-sm text-muted-foreground">
+                      Primary contact information players will see.
                     </p>
                   </div>
                   <div className="flex flex-col gap-1">
-                    <Label htmlFor="name">Organization name *</Label>
+                    <Label htmlFor="name">Club name *</Label>
                     <div className="relative">
                       <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                       <Input
                         id="name"
                         className="pl-9"
-                        placeholder="Clínica San Martín"
+                        placeholder="Riverside Padel Club"
                         {...register("name")}
                         aria-invalid={!!errors.name}
                       />
@@ -240,6 +380,7 @@ export default function OnboardingPage() {
                         id="email"
                         type="email"
                         className="pl-9"
+                        placeholder="contact@riversidepadel.com"
                         {...register("email")}
                         aria-invalid={!!errors.email}
                       />
@@ -272,9 +413,9 @@ export default function OnboardingPage() {
                 </motion.div>
               )}
 
-              {step === 2 && (
+              {currentKey === "legalBilling" && (
                 <motion.div
-                  key={2}
+                  key="legalBilling"
                   className="space-y-4"
                   custom={direction}
                   variants={stepVariants}
@@ -296,7 +437,7 @@ export default function OnboardingPage() {
                     <Label htmlFor="legalName">Legal name *</Label>
                     <Input
                       id="legalName"
-                      placeholder="San Martín S.A."
+                      placeholder="Riverside Padel Club S.A."
                       {...register("legalName")}
                       aria-invalid={!!errors.legalName}
                     />
@@ -318,6 +459,36 @@ export default function OnboardingPage() {
                     {errors.taxId && (
                       <p className="text-sm text-destructive">
                         {errors.taxId.message}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="flex flex-col gap-1">
+                    <Label htmlFor="timezone">Timezone *</Label>
+                    <Controller
+                      control={control}
+                      name="timezone"
+                      render={({ field }) => (
+                        <Select
+                          value={field.value}
+                          onValueChange={field.onChange}
+                        >
+                          <SelectTrigger id="timezone">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {TIMEZONES.map((t) => (
+                              <SelectItem key={t.value} value={t.value}>
+                                {t.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
+                    {errors.timezone && (
+                      <p className="text-sm text-destructive">
+                        {errors.timezone.message}
                       </p>
                     )}
                   </div>
@@ -354,9 +525,67 @@ export default function OnboardingPage() {
                 </motion.div>
               )}
 
-              {step === 3 && (
+              {currentKey === "plan" && (
                 <motion.div
-                  key={3}
+                  key="plan"
+                  className="space-y-4"
+                  custom={direction}
+                  variants={stepVariants}
+                  initial="enter"
+                  animate="center"
+                  exit="exit"
+                  transition={{ duration: 0.25, ease: "easeInOut" }}
+                >
+                  <div>
+                    <h2 className="text-base font-semibold mb-0.5">
+                      How big is your club?
+                    </h2>
+                    <p className="text-sm text-muted-foreground">
+                      This helps us set you up with the right plan.
+                    </p>
+                  </div>
+
+                  <Controller
+                    control={control}
+                    name="courtRange"
+                    render={({ field }) => (
+                      <div className="flex flex-col gap-3">
+                        {COURT_RANGE_OPTIONS.map((option) => (
+                          <button
+                            key={option.value}
+                            type="button"
+                            onClick={() => field.onChange(option.value)}
+                            className={optionCardClass(
+                              field.value === option.value,
+                            )}
+                          >
+                            <LayoutGrid className="w-5 h-5 mt-0.5 shrink-0 text-primary" />
+                            <div>
+                              <p className="text-sm font-semibold">
+                                {option.label}
+                              </p>
+                              {option.note && (
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  {option.note}
+                                </p>
+                              )}
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  />
+                  {errors.courtRange && (
+                    <p className="text-sm text-destructive">
+                      {errors.courtRange.message}
+                    </p>
+                  )}
+                </motion.div>
+              )}
+
+              {currentKey === "profile" && (
+                <motion.div
+                  key="profile"
                   className="space-y-4"
                   custom={direction}
                   variants={stepVariants}
@@ -370,7 +599,7 @@ export default function OnboardingPage() {
                       Your profile
                     </h2>
                     <p className="text-sm text-muted-foreground">
-                      How your name appears inside the platform.
+                      How your name appears inside Play Padel.
                     </p>
                   </div>
 
@@ -396,10 +625,7 @@ export default function OnboardingPage() {
                     <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">
                       Summary
                     </p>
-                    <SummaryRow
-                      label="Organization"
-                      value={watchedValues.name ?? ""}
-                    />
+                    <SummaryRow label="Club" value={watchedValues.name ?? ""} />
                     <SummaryRow
                       label="Email"
                       value={watchedValues.email ?? ""}
@@ -417,18 +643,200 @@ export default function OnboardingPage() {
                       value={watchedValues.taxId ?? ""}
                     />
                     <SummaryRow
+                      label="Timezone"
+                      value={
+                        selectedTimezone?.label ?? watchedValues.timezone ?? ""
+                      }
+                    />
+                    <SummaryRow
                       label="Currency"
                       value={
                         selectedCurrency?.label ?? watchedValues.currency ?? ""
+                      }
+                    />
+                    <SummaryRow
+                      label="Courts"
+                      value={
+                        selectedCourtRange?.label ??
+                        watchedValues.courtRange ??
+                        ""
                       }
                     />
                   </div>
                 </motion.div>
               )}
 
-              {step === 4 && (
+              {currentKey === "playerProfile" && (
                 <motion.div
-                  key={4}
+                  key="playerProfile"
+                  className="space-y-4"
+                  custom={direction}
+                  variants={stepVariants}
+                  initial="enter"
+                  animate="center"
+                  exit="exit"
+                  transition={{ duration: 0.25, ease: "easeInOut" }}
+                >
+                  <div>
+                    <h2 className="text-base font-semibold mb-0.5">
+                      Your profile
+                    </h2>
+                    <p className="text-sm text-muted-foreground">
+                      Tell us a bit about yourself.
+                    </p>
+                  </div>
+
+                  <div className="flex flex-col gap-1">
+                    <Label htmlFor="firstName">First name *</Label>
+                    <Input
+                      id="firstName"
+                      {...register("firstName")}
+                      aria-invalid={!!errors.firstName}
+                    />
+                    {errors.firstName && (
+                      <p className="text-sm text-destructive">
+                        {errors.firstName.message}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="flex flex-col gap-1">
+                    <Label htmlFor="lastName">Last name *</Label>
+                    <Input
+                      id="lastName"
+                      {...register("lastName")}
+                      aria-invalid={!!errors.lastName}
+                    />
+                    {errors.lastName && (
+                      <p className="text-sm text-destructive">
+                        {errors.lastName.message}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="flex flex-col gap-1">
+                    <Label htmlFor="email">Email *</Label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <Input
+                        id="email"
+                        type="email"
+                        className="pl-9"
+                        placeholder="you@example.com"
+                        {...register("email")}
+                        aria-invalid={!!errors.email}
+                      />
+                    </div>
+                    {errors.email && (
+                      <p className="text-sm text-destructive">
+                        {errors.email.message}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="flex flex-col gap-1">
+                    <Label htmlFor="phone">Phone *</Label>
+                    <div className="relative">
+                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <Input
+                        id="phone"
+                        className="pl-9"
+                        placeholder="+54 11 1234-5678"
+                        {...register("phone")}
+                        aria-invalid={!!errors.phone}
+                      />
+                    </div>
+                    {errors.phone && (
+                      <p className="text-sm text-destructive">
+                        {errors.phone.message}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="flex flex-col gap-1">
+                    <Label htmlFor="address">Address</Label>
+                    <Input
+                      id="address"
+                      placeholder="Optional"
+                      {...register("address")}
+                      aria-invalid={!!errors.address}
+                    />
+                    {errors.address && (
+                      <p className="text-sm text-destructive">
+                        {errors.address.message}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="flex flex-col gap-1">
+                    <Label htmlFor="gender">Gender *</Label>
+                    <Controller
+                      control={control}
+                      name="gender"
+                      render={({ field }) => (
+                        <Select
+                          value={field.value ?? undefined}
+                          onValueChange={field.onChange}
+                        >
+                          <SelectTrigger id="gender" aria-invalid={!!errors.gender}>
+                            <SelectValue placeholder="Select an option" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {GENDER_OPTIONS.map((g) => (
+                              <SelectItem key={g.value} value={g.value}>
+                                {g.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
+                    {errors.gender && (
+                      <p className="text-sm text-destructive">
+                        {errors.gender.message}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="flex flex-col gap-1">
+                    <Label htmlFor="padelCategory">Padel category</Label>
+                    <p className="text-xs text-muted-foreground">
+                      Your skill-level ranking — Category 1 is the highest
+                      level, Category 8 is a beginner.
+                    </p>
+                    <Controller
+                      control={control}
+                      name="padelCategory"
+                      render={({ field }) => (
+                        <Select
+                          value={field.value ?? "unknown"}
+                          onValueChange={field.onChange}
+                        >
+                          <SelectTrigger id="padelCategory">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {PADEL_CATEGORY_OPTIONS.map((c) => (
+                              <SelectItem key={c.value} value={c.value}>
+                                {c.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
+                    {errors.padelCategory && (
+                      <p className="text-sm text-destructive">
+                        {errors.padelCategory.message}
+                      </p>
+                    )}
+                  </div>
+                </motion.div>
+              )}
+
+              {currentKey === "terms" && (
+                <motion.div
+                  key="terms"
                   className="space-y-4"
                   custom={direction}
                   variants={stepVariants}
@@ -442,7 +850,7 @@ export default function OnboardingPage() {
                       Terms and Conditions
                     </h2>
                     <p className="text-sm text-muted-foreground">
-                      Please review and accept before launching your workspace.
+                      Please review and accept before continuing.
                     </p>
                   </div>
 
@@ -485,26 +893,22 @@ export default function OnboardingPage() {
                 type="button"
                 variant="ghost"
                 onClick={handleBack}
-                disabled={step === 1}
+                disabled={stepIndex === 0}
               >
                 Back
               </Button>
 
-              {step < TOTAL_STEPS ? (
-                <Button
-                  type="button"
-                  onClick={handleNext}
-                  className="bg-[#2D8A60] hover:bg-[#236B4A] text-white"
-                >
+              {!isLastStep ? (
+                <Button type="button" onClick={handleNext}>
                   Continue
                 </Button>
               ) : (
-                <Button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="bg-[#2D8A60] hover:bg-[#236B4A] text-white"
-                >
-                  {isSubmitting ? "Creating…" : "Launch ERPFlow"}
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting
+                    ? "Setting up…"
+                    : watchedValues.userType === "owner"
+                      ? "Launch my club"
+                      : "Start playing"}
                 </Button>
               )}
             </div>
@@ -512,7 +916,7 @@ export default function OnboardingPage() {
         </div>
 
         <p className="text-center text-xs text-muted-foreground mt-4">
-          Step {step} of {TOTAL_STEPS}
+          Step {stepIndex + 1} of {flow.length}
         </p>
       </div>
     </div>

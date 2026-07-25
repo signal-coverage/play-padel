@@ -1,0 +1,61 @@
+- generic [ref=f10e1]:
+  - generic [ref=f10e144]:
+    - generic [ref=f10e145]:
+      - img "Play Padel" [ref=f10e147]
+      - heading "Set up your Play Padel account" [level=1] [ref=f10e148]
+      - paragraph [ref=f10e149]: This takes about 2 minutes.
+    - generic [ref=f10e150]:
+      - generic [ref=f10e151]:
+        - generic [ref=f10e152]: You
+        - generic [ref=f10e191]:
+          - generic [ref=f10e192]: "2"
+          - generic [ref=f10e193]: Club
+        - generic [ref=f10e196]:
+          - generic [ref=f10e197]: "3"
+          - generic [ref=f10e198]: Legal
+        - generic [ref=f10e201]:
+          - generic [ref=f10e202]: "4"
+          - generic [ref=f10e203]: Plan
+        - generic [ref=f10e206]:
+          - generic [ref=f10e207]: "5"
+          - generic [ref=f10e208]: Profile
+        - generic [ref=f10e163]:
+          - generic [ref=f10e164]: "6"
+          - generic [ref=f10e165]: Terms
+      - generic [ref=f10e166]:
+        - generic [ref=f10e212]:
+          - generic [ref=f10e213]:
+            - heading "Tell us about your club" [level=2] [ref=f10e214]
+            - paragraph [ref=f10e215]: Primary contact information players will see.
+          - generic [ref=f10e216]:
+            - generic [ref=f10e217] [cursor=pointer]: Club name *
+            - textbox "Club name *" [ref=f10e223]:
+              - /placeholder: Riverside Padel Club
+          - generic [ref=f10e224]:
+            - generic [ref=f10e225] [cursor=pointer]: Contact email *
+            - textbox "Contact email *" [ref=f10e230]
+          - generic [ref=f10e231]:
+            - generic [ref=f10e232] [cursor=pointer]: Phone *
+            - textbox "Phone *" [ref=f10e236]:
+              - /placeholder: +54 11 1234-5678
+        - generic [ref=f10e187]:
+          - button "Back" [ref=f10e237] [cursor=pointer]
+          - button "Continue" [active] [ref=f10e188] [cursor=pointer]
+    - paragraph [ref=f10e189]: Step 2 of 6
+  - region "Notifications alt+T"
+  - button "Open Next.js Dev Tools" [ref=f10e33] [cursor=pointer]
+  - alert [ref=f10e37]
+  - generic [ref=f10e38]:
+    - generic [ref=f10e39]:
+      - link "LocatorJS" [ref=f10e40] [cursor=pointer]:
+        - /url: https://www.locatorjs.com
+      - button "Settings" [ref=f10e48] [cursor=pointer]
+    - generic [ref=f10e49]:
+      - text: Go to component code with
+      - generic [ref=f10e50]: Alt
+      - text: +
+      - generic [ref=f10e51]: click
+    - generic [ref=f10e52]:
+      - link "What is Locator?" [ref=f10e53] [cursor=pointer]:
+        - /url: https://www.locatorjs.com
+      - generic [ref=f10e54] [cursor=pointer]: Stop showing this popup

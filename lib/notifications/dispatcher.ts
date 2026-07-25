@@ -25,7 +25,7 @@ export async function dispatch(params: DispatchParams): Promise<void> {
   try {
     // Step 1: persist PENDING row
     const notification = await createNotification({
-      organizationId: params.organizationId,
+      clubId: params.clubId,
       type: params.type,
       recipientId: params.recipientId,
       // Use a placeholder for missing email so the row is still created

@@ -96,7 +96,7 @@ export function AuthLeftPanel() {
             </svg>
           </div>
           <span className="text-white font-semibold text-sm tracking-tight">
-            ERPFlow
+            Play Padel
           </span>
         </motion.div>
 
@@ -111,20 +111,21 @@ export function AuthLeftPanel() {
             className="text-white font-bold leading-snug"
             style={{ fontSize: "22px", maxWidth: "290px" }}
           >
-            &ldquo;Simply all the tools that my team and I need.&rdquo;
+            &ldquo;Booking a court used to mean phone tag with the front desk.
+            Now it takes ten seconds.&rdquo;
           </p>
           <div>
             <p
               className="text-sm font-medium"
               style={{ color: "rgba(255,255,255,0.75)" }}
             >
-              Karen Yue
+              Marina López
             </p>
             <p
               className="text-xs mt-0.5"
               style={{ color: "rgba(255,255,255,0.48)" }}
             >
-              Director of Digital Marketing Technology
+              Owner, Level Up Padel Club
             </p>
           </div>
         </motion.div>

@@ -2,22 +2,29 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-// import { useOrganization } from "@/core/organizations/hooks/use-organization";
+import { useAuth } from "@/hooks/use-auth";
 import { Loader2 } from "lucide-react";
 import type { DashboardGuardProps } from "./types";
 
 export function DashboardGuard({ children }: DashboardGuardProps) {
-  // const { loading, needsOnboarding } = useOrganization();
+  const { user, profileLoading } = useAuth();
   const router = useRouter();
 
-  // useEffect(() => {
-  //   if (!loading && needsOnboarding) {
-  //     router.replace("/onboarding");
-  //   }
-  // }, [loading, needsOnboarding, router]);
+  // No UserProfile row at all (never onboarded) always needs onboarding;
+  // an owner specifically also needs it if their club was never created.
+  // No permission system beyond this one branch.
+  const needsOnboarding =
+    !profileLoading &&
+    (!user?.role || (user.role === "owner" && !user.clubId));
 
-  // if (loading) return <DashboardLoader />;
-  // if (needsOnboarding) return null;
+  useEffect(() => {
+    if (!profileLoading && needsOnboarding) {
+      router.replace("/onboarding");
+    }
+  }, [profileLoading, needsOnboarding, router]);
+
+  if (profileLoading) return <DashboardLoader />;
+  if (needsOnboarding) return null;
 
   return <>{children}</>;
 }

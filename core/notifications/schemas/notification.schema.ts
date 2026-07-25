@@ -1,17 +1,16 @@
 import { z } from "zod";
 
 export const notificationTypeSchema = z.enum([
-  "APPOINTMENT_REMINDER",
-  "APPOINTMENT_CANCELLED",
-  "INVOICE_PAID",
-  "PATIENT_BIRTHDAY",
+  "RESERVATION_REMINDER",
+  "RESERVATION_CANCELLED",
+  "PAYMENT_CONFIRMED",
 ]);
 
 export const notificationStatusSchema = z.enum(["PENDING", "SENT", "FAILED"]);
 
 export const dispatchParamsSchema = z.object({
   type: notificationTypeSchema,
-  organizationId: z.string().min(1),
+  clubId: z.string().min(1),
   recipientId: z.string().min(1),
   recipientEmail: z.string().email().nullable().optional(),
   recipientName: z.string().min(1),

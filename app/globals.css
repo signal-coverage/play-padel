@@ -84,36 +84,36 @@
 }
 
 .dark {
-  --background: #073d6b;
+  --background: #0a0a0a;
   --foreground: #f5f5f5;
-  --card: #0b4a82;
+  --card: #151515;
   --card-foreground: #f5f5f5;
-  --popover: #0b4a82;
+  --popover: #151515;
   --popover-foreground: #f5f5f5;
   --primary: #dffd36;
-  --primary-foreground: #073d6b;
-  --secondary: #61c9a8;
-  --secondary-foreground: #073d6b;
-  --muted: #0a3559;
-  --muted-foreground: #b0b8bf;
-  --accent: #dffd36;
-  --accent-foreground: #073d6b;
+  --primary-foreground: #111111;
+  --secondary: #073d6b;
+  --secondary-foreground: #f5f5f5;
+  --muted: #1e1e1e;
+  --muted-foreground: #a3a3a3;
+  --accent: #073d6b;
+  --accent-foreground: #f5f5f5;
   --destructive: #f24236;
-  --border: oklch(1 0 0 / 12%);
-  --input: oklch(1 0 0 / 15%);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 12%);
   --ring: #dffd36;
   --chart-1: #dffd36;
-  --chart-2: #61c9a8;
-  --chart-3: #f5f5f5;
+  --chart-2: #0b4a82;
+  --chart-3: #61c9a8;
   --chart-4: #f24236;
-  --chart-5: #b0b8bf;
-  --sidebar: #0b4a82;
+  --chart-5: #a3a3a3;
+  --sidebar: #111111;
   --sidebar-foreground: #f5f5f5;
   --sidebar-primary: #dffd36;
-  --sidebar-primary-foreground: #073d6b;
-  --sidebar-accent: #61c9a8;
-  --sidebar-accent-foreground: #073d6b;
-  --sidebar-border: oklch(1 0 0 / 12%);
+  --sidebar-primary-foreground: #111111;
+  --sidebar-accent: #073d6b;
+  --sidebar-accent-foreground: #f5f5f5;
+  --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: #dffd36;
 }
 
@@ -175,7 +175,14 @@
   background: #ffffff;
 }
 
-/* Card wrapper — borderless, shadowless; outer layout card provides structure */
+/* Card wrapper — borderless, shadowless; outer layout card provides structure.
+   Width is forced to 100%: Clerk's own default (25rem) otherwise overflows the
+   360px column these auth pages are laid out in. */
+[data-clerk-auth] .cl-rootBox,
+[data-clerk-auth] .cl-cardBox,
+[data-clerk-auth] .cl-card {
+  width: 100% !important;
+}
 [data-clerk-auth] .cl-card {
   padding: 0 !important;
   background: #ffffff !important;

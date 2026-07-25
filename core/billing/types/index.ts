@@ -11,7 +11,7 @@ export interface InvoiceItem {
 
 export interface Payment {
   id: string;
-  organizationId: string;
+  clubId: string;
   invoiceId: string;
   method: PaymentMethod;
   amount: number;
@@ -25,10 +25,10 @@ export interface Payment {
 
 export interface Invoice {
   id: string;
-  organizationId: string;
-  patientId: string;
-  patientName: string;
-  appointmentId?: string;
+  clubId: string;
+  userId: string;
+  userName: string;
+  reservationId?: string;
   number: number;
   status: InvoiceStatus;
   currency: string;
@@ -50,8 +50,8 @@ export interface Invoice {
 }
 
 export interface CreateInvoiceInput {
-  patientId: string;
-  appointmentId?: string;
+  userId: string;
+  reservationId?: string;
   currency: string;
   items: InvoiceItem[];
   tax?: number;
@@ -76,7 +76,7 @@ export interface RecordPaymentInput {
 
 export interface InvoiceFilters {
   status?: InvoiceStatus;
-  patientId?: string;
+  userId?: string;
   search?: string;
   page?: number;
   pageSize?: number;
@@ -110,9 +110,9 @@ export interface InvoiceReceiptData {
   tax: number;
   discount: number;
   currency: string;
-  patientName: string;
-  organizationName: string;
-  organizationEmail: string;
+  userName: string;
+  clubName: string;
+  clubEmail: string;
   items: {
     description: string;
     quantity: number;

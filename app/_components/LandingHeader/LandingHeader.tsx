@@ -71,7 +71,7 @@ export function LandingHeader() {
           transition={{ duration: 0.45, delay: 0.27, ease }}
         >
           <Link
-            href="#appointment"
+            href="/signup"
             className={`inline-flex items-center border-[1.5px] rounded-full px-5 py-2 text-sm font-semibold transition-all duration-300 ${
               isScrolled
                 ? "border-[#111111] text-[#111111] hover:bg-[#111111] hover:text-white"
@@ -79,6 +79,16 @@ export function LandingHeader() {
             }`}
           >
             Try for free
+          </Link>
+          <Link
+            href="/login"
+            className={`text-sm font-medium transition-colors duration-300 ${
+              isScrolled
+                ? "text-[#111111]/70 hover:text-[#111111]"
+                : "text-white/70 hover:text-white"
+            }`}
+          >
+            Log in
           </Link>
         </motion.div>
       </div>

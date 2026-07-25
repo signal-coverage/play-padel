@@ -28,12 +28,6 @@ export function LandingEvents() {
       </div>
 
       <EventShowcase />
-
-      <p className="mt-10 text-sm text-[#737373] leading-relaxed text-center">
-        Join paddle events.
-        <br />
-        Play more, connect better.
-      </p>
     </section>
   );
 }

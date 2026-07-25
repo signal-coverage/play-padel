@@ -1,0 +1,29 @@
+- generic [active] [ref=f34e1]:
+  - generic [ref=f34e3]:
+    - generic [ref=f34e9]:
+      - generic [ref=f34e10]: Play Padel
+      - generic [ref=f34e18]:
+        - paragraph [ref=f34e19]: “Booking a court used to mean phone tag with the front desk. Now it takes ten seconds.”
+        - generic [ref=f34e20]:
+          - paragraph [ref=f34e21]: Marina López
+          - paragraph [ref=f34e22]: Owner, Level Up Padel Club
+    - generic [ref=f34e25]:
+      - heading "Welcome back!" [level=1] [ref=f34e26]
+      - paragraph [ref=f34e27]: Sign in to your account to continue.
+  - region "Notifications alt+T"
+  - button "Open Next.js Dev Tools" [ref=f34e33] [cursor=pointer]
+  - alert [ref=f34e37]
+  - generic [ref=f34e38]:
+    - generic [ref=f34e39]:
+      - link "LocatorJS" [ref=f34e40] [cursor=pointer]:
+        - /url: https://www.locatorjs.com
+      - button "Settings" [ref=f34e48] [cursor=pointer]
+    - generic [ref=f34e49]:
+      - text: Go to component code with
+      - generic [ref=f34e50]: Alt
+      - text: +
+      - generic [ref=f34e51]: click
+    - generic [ref=f34e52]:
+      - link "What is Locator?" [ref=f34e53] [cursor=pointer]:
+        - /url: https://www.locatorjs.com
+      - generic [ref=f34e54] [cursor=pointer]: Stop showing this popup

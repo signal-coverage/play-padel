@@ -1,38 +1,28 @@
 export type CoreEventPayloads = {
-  "patient.created": {
-    patientId: string;
-    organizationId: string;
-    createdBy: string;
+  "reservation.created": {
+    reservationId: string;
+    clubId: string;
+    userId: string;
+    courtId: string;
   };
-  "patient.updated": {
-    patientId: string;
-    organizationId: string;
-    updatedBy: string;
-  };
-  "appointment.created": {
-    appointmentId: string;
-    organizationId: string;
-    patientId: string;
-    professionalId: string;
-  };
-  "appointment.status_changed": {
-    appointmentId: string;
-    organizationId: string;
-    patientId: string;
-    professionalId: string;
+  "reservation.status_changed": {
+    reservationId: string;
+    clubId: string;
+    userId: string;
+    courtId: string;
     status: string;
     previousStatus: string;
   };
   "invoice.issued": {
     invoiceId: string;
-    organizationId: string;
-    patientId: string;
+    clubId: string;
+    userId: string;
     amount: number;
   };
   "invoice.paid": {
     invoiceId: string;
-    organizationId: string;
-    patientId: string;
+    clubId: string;
+    userId: string;
     amount: number;
     method: string;
   };

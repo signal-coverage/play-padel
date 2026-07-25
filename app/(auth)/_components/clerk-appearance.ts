@@ -14,7 +14,7 @@ export const clerkAppearance = {
   },
   elements: {
     rootBox: "w-full",
-    cardBox: "!shadow-none !border-0 w-full",
+    cardBox: "!shadow-none !border-0 w-full px-2",
     card: "!pt-2",
     headerTitle: "!hidden",
     headerSubtitle: "!hidden",

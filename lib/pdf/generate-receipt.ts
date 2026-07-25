@@ -44,7 +44,7 @@ export function generateReceiptPdf(invoice: InvoiceReceiptData): Blob {
   doc.setFontSize(18);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(30, 30, 30);
-  doc.text(invoice.organizationName, margin, 25);
+  doc.text(invoice.clubName, margin, 25);
 
   doc.setFontSize(24);
   doc.setFont("helvetica", "bold");
@@ -76,7 +76,7 @@ export function generateReceiptPdf(invoice: InvoiceReceiptData): Blob {
   doc.text(formatDate(invoice.issuedAt ?? invoice.createdAt), col2, y);
   doc.text(invoice.status, col3, y);
 
-  // ── Patient info ─────────────────────────────────────────────────────
+  // ── User info ────────────────────────────────────────────────────────
   y += 16;
   doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
@@ -87,7 +87,7 @@ export function generateReceiptPdf(invoice: InvoiceReceiptData): Blob {
   doc.setFontSize(11);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(20, 20, 20);
-  doc.text(invoice.patientName, margin, y);
+  doc.text(invoice.userName, margin, y);
 
   // ── Items table ──────────────────────────────────────────────────────
   y += 14;
@@ -235,8 +235,8 @@ export function generateReceiptPdf(invoice: InvoiceReceiptData): Blob {
     align: "center",
   });
 
-  if (invoice.organizationEmail) {
-    doc.text(invoice.organizationEmail, pageWidth / 2, pageHeight - 13, {
+  if (invoice.clubEmail) {
+    doc.text(invoice.clubEmail, pageWidth / 2, pageHeight - 13, {
       align: "center",
     });
   }

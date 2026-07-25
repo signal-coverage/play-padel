@@ -1,0 +1,67 @@
+- generic:
+  - generic:
+    - generic:
+      - generic:
+        - generic:
+          - generic: Play Padel
+          - generic:
+            - generic:
+              - generic: Menu
+              - generic:
+                - list:
+                  - listitem:
+                    - link:
+                      - /url: /dashboard
+                      - generic: Dashboard
+                  - listitem:
+                    - link:
+                      - /url: /dashboard/browse
+                      - generic: Browse Courts
+                  - listitem:
+                    - link:
+                      - /url: /dashboard/my-reservations
+                      - generic: My Reservations
+            - generic:
+              - generic: Favorites
+              - generic:
+                - paragraph: No favorites yet
+          - generic:
+            - button [expanded]:
+              - generic: repro-login-flow+clerk_test@example.com
+    - generic:
+      - generic:
+        - banner:
+          - button:
+            - generic: Toggle Sidebar
+          - generic: Dashboard
+          - generic:
+            - button:
+              - generic: Toggle theme
+        - main:
+          - generic:
+            - generic:
+              - paragraph: Saturday, July 25
+  - region "Notifications alt+T"
+  - button "Open Next.js Dev Tools" [ref=f46e7] [cursor=pointer]
+  - alert
+  - generic [ref=f46e12]:
+    - generic [ref=f46e13]:
+      - link [ref=f46e87] [cursor=pointer]:
+        - /url: https://www.locatorjs.com
+      - button [ref=f46e88] [cursor=pointer]: Settings
+    - generic [ref=f46e23]:
+      - text: Go to component code with
+      - generic [ref=f46e24]: Alt
+      - text: +
+      - generic [ref=f46e25]: click
+    - generic [ref=f46e26]:
+      - link [ref=f46e89] [cursor=pointer]:
+        - /url: https://www.locatorjs.com
+        - text: What is Locator?
+      - generic [ref=f46e28] [cursor=pointer]: Stop showing this popup
+  - menu "R repro-login-flow+clerk_test@example.com" [active] [ref=f46e90]:
+    - menuitem "Account Settings" [ref=f46e91] [cursor=pointer]
+    - menuitem "Settings" [ref=f46e92] [cursor=pointer]
+    - menuitem "Help" [ref=f46e93] [cursor=pointer]
+    - separator [ref=f46e94]
+    - menuitem "Sign out" [ref=f46e95] [cursor=pointer]

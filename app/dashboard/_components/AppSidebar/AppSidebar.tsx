@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
@@ -33,7 +34,9 @@ export function AppSidebar() {
   const router = useRouter();
   const { user, signOut } = useAuth();
   const { openUserProfile } = useClerk();
-  const visibleNavItems = navItems.filter((item) => item);
+
+  const role = user?.role ?? "player";
+  const visibleNavItems = navItems.filter((item) => item.roles.includes(role));
 
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
@@ -43,7 +46,7 @@ export function AppSidebar() {
 
   async function handleSignOut() {
     await signOut();
-    router.push("/login");
+    router.push("/");
   }
 
   return (
@@ -55,11 +58,11 @@ export function AppSidebar() {
         <div
           className={`flex items-center py-0 ${collapsed ? "justify-center" : "gap-2 px-2"}`}
         >
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground font-semibold text-sm">
-            E
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center">
+            <Image src="/logo.svg" alt="Play Padel" width={24} height={24} />
           </div>
           {!collapsed && (
-            <span className="font-semibold text-sm truncate">ERPFlow</span>
+            <span className="font-semibold text-sm truncate">Play Padel</span>
           )}
         </div>
       </SidebarHeader>
@@ -67,13 +70,8 @@ export function AppSidebar() {
       <SidebarContent>
         {visibleNavItems.length > 0 && (
           <>
-            {/* {pluginNavItems.length > 0 && (
-              <SidebarSeparator className={`${collapsed && "ml-0"}`} />
-            )} */}
             <SidebarGroup className={collapsed ? "pl-1" : ""}>
-              {!collapsed && (
-                <SidebarGroupLabel>Administration</SidebarGroupLabel>
-              )}
+              {!collapsed && <SidebarGroupLabel>Menu</SidebarGroupLabel>}
               <SidebarGroupContent>
                 <SidebarMenu>
                   {visibleNavItems.map((item) => (
@@ -108,42 +106,6 @@ export function AppSidebar() {
 
         <SidebarSeparator className={`${collapsed && "ml-0"}`} />
 
-        {/* {pluginNavItems.length > 0 && (
-          <SidebarGroup className={collapsed ? "pl-1" : ""}>
-            {!collapsed && <SidebarGroupLabel>Plugins</SidebarGroupLabel>}
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {pluginNavItems.map((item) => (
-                  <SidebarMenuItem key={item.href}>
-                    <SidebarMenuButton
-                      asChild
-                      isActive={pathname === item.href}
-                    >
-                      <Link
-                        href={item.href}
-                        className={collapsed ? "justify-center" : ""}
-                      >
-                        {collapsed ? (
-                          <span className="flex items-center justify-center pointer-events-none">
-                            <item.icon className="h-5 w-5" />
-                          </span>
-                        ) : (
-                          <>
-                            <item.icon className="h-4 w-4" />
-                            <span>{item.title}</span>
-                          </>
-                        )}
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )} */}
-
-        <SidebarSeparator className={`${collapsed && "ml-0"}`} />
-
         {!collapsed && (
           <SidebarGroup>
             <SidebarGroupLabel>Favorites</SidebarGroupLabel>
@@ -156,7 +118,7 @@ export function AppSidebar() {
         )}
       </SidebarContent>
 
-      <SidebarFooter>
+      <SidebarFooter className={`py-2.5 ${collapsed && "px-0"}`}>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button
@@ -193,7 +155,7 @@ export function AppSidebar() {
               Account Settings
             </DropdownMenuItem>
             <DropdownMenuItem asChild className="cursor-pointer">
-              <Link href="/dashboard/settings/organization">
+              <Link href="/dashboard/settings/club">
                 <Settings className="h-4 w-4" />
                 Settings
               </Link>

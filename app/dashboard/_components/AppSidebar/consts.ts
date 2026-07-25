@@ -1,65 +1,56 @@
-// import type { PermissionKey } from "@/core/permissions/types";
 import {
   LayoutDashboard,
-  Users,
-  Activity,
-  Calendar,
-  CreditCard,
-  ClipboardList,
-  BarChart3,
-  ShieldCheck,
+  LayoutGrid,
+  CalendarClock,
+  CalendarCheck,
+  Settings2,
+  Compass,
   type LucideIcon,
 } from "lucide-react";
+import type { SystemRole } from "@/providers/auth-provider";
 
 export type NavItem = {
   title: string;
   href: string;
   icon: LucideIcon;
-  // // requiredPermission?: PermissionKey;
+  roles: SystemRole[];
 };
 
 export const navItems: NavItem[] = [
-  { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   {
-    title: "Patients",
-    href: "/dashboard/patients",
-    icon: Users,
-    // requiredPermission: "patients.read",
+    title: "Dashboard",
+    href: "/dashboard",
+    icon: LayoutDashboard,
+    roles: ["owner", "player"],
   },
   {
-    title: "Professionals",
-    href: "/dashboard/professionals",
-    icon: Activity,
-    // requiredPermission: "professionals.read",
+    title: "Courts",
+    href: "/dashboard/courts",
+    icon: LayoutGrid,
+    roles: ["owner"],
   },
   {
-    title: "Appointments",
-    href: "/dashboard/appointments",
-    icon: Calendar,
-    // requiredPermission: "appointments.read",
+    title: "Reservations",
+    href: "/dashboard/reservations",
+    icon: CalendarClock,
+    roles: ["owner"],
   },
   {
-    title: "Billing",
-    href: "/dashboard/billing",
-    icon: CreditCard,
-    // requiredPermission: "billing.read",
+    title: "Club Settings",
+    href: "/dashboard/settings/club",
+    icon: Settings2,
+    roles: ["owner"],
   },
   {
-    title: "Reports",
-    href: "/dashboard/reports",
-    icon: BarChart3,
-    // requiredPermission: "billing.read",
+    title: "Browse Courts",
+    href: "/dashboard/browse",
+    icon: Compass,
+    roles: ["player"],
   },
   {
-    title: "Audit Log",
-    href: "/dashboard/settings/audit",
-    icon: ClipboardList,
-    // requiredPermission: "settings.manage",
-  },
-  {
-    title: "Custom Roles",
-    href: "/dashboard/settings/custom-roles",
-    icon: ShieldCheck,
-    // requiredPermission: "settings.manage",
+    title: "My Reservations",
+    href: "/dashboard/my-reservations",
+    icon: CalendarCheck,
+    roles: ["player"],
   },
 ];

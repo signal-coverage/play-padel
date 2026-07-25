@@ -4,14 +4,6 @@ import { SignUp } from "@clerk/nextjs";
 import { motion } from "framer-motion";
 import { clerkAppearance } from "@/app/(auth)/_components/clerk-appearance";
 
-const signUpAppearance = {
-  ...clerkAppearance,
-  elements: {
-    ...clerkAppearance.elements,
-    card: "!pt-3",
-  },
-};
-
 export default function SignupPage() {
   return (
     <motion.div
@@ -26,15 +18,15 @@ export default function SignupPage() {
           Create your account
         </h1>
         <p className="text-sm text-gray-500 mt-2 leading-relaxed">
-          Get started with ERPFlow today.
+          Get started with Play Padel today.
         </p>
       </div>
 
       <SignUp
         routing="hash"
         signInUrl="/login"
-        fallbackRedirectUrl="/dashboard"
-        appearance={signUpAppearance}
+        fallbackRedirectUrl="/onboarding"
+        appearance={clerkAppearance}
       />
     </motion.div>
   );

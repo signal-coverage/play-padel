@@ -12,7 +12,7 @@ type NotificationRow = NonNullable<
 function toNotification(row: NotificationRow): Notification {
   return {
     id: row.id,
-    organizationId: row.organizationId,
+    clubId: row.clubId,
     type: row.type as NotificationType,
     recipientId: row.recipientId,
     recipientEmail: row.recipientEmail,
@@ -26,7 +26,7 @@ function toNotification(row: NotificationRow): Notification {
 }
 
 export interface CreateNotificationData {
-  organizationId: string;
+  clubId: string;
   type: NotificationType;
   recipientId: string;
   recipientEmail: string;
@@ -39,7 +39,7 @@ export async function createNotification(
 ): Promise<Notification> {
   const row = await prisma.notification.create({
     data: {
-      organizationId: data.organizationId,
+      clubId: data.clubId,
       type: data.type,
       recipientId: data.recipientId,
       recipientEmail: data.recipientEmail,
@@ -69,58 +69,63 @@ export async function updateNotificationStatus(
   return toNotification(row);
 }
 
+// Reminder window: a reservation becomes eligible for a RESERVATION_REMINDER
+// once its scheduledStart falls within the next 24h. This is an MVP default
+// (documented in docs/reservation-flow.md); tune once real usage data exists.
+const REMINDER_WINDOW_HOURS = 24;
+
 /**
- * Returns appointments with scheduled start in [windowStart, windowEnd]
- * that do NOT have an existing SENT APPOINTMENT_REMINDER notification.
+ * Returns CONFIRMED reservations with scheduledStart within the reminder
+ * window [now, now + REMINDER_WINDOW_HOURS] that do NOT already have a SENT
+ * RESERVATION_REMINDER notification created today (calendar day). The
+ * same-day dedupe mirrors the previous appointment-reminder behavior so a
+ * cron re-run within the same day doesn't double-send.
  */
-export async function getPendingReminders(
-  windowStart: Date,
-  windowEnd: Date,
+export async function getPendingReservationReminders(
+  now: Date = new Date(),
 ): Promise<
   Array<{
-    appointmentId: string;
-    organizationId: string;
-    patientId: string;
-    patientEmail: string | null;
-    patientName: string;
-    patientFirstName: string;
+    reservationId: string;
+    clubId: string;
+    userId: string;
+    userEmail: string | null;
+    userName: string;
     scheduledStart: Date;
-    professionalName: string | null;
-    location: string | null;
+    courtName: string;
   }>
 > {
-  // Find appointments in the time window with SCHEDULED status
-  const appointments = await prisma.appointment.findMany({
+  const windowStart = now;
+  const windowEnd = new Date(
+    now.getTime() + REMINDER_WINDOW_HOURS * 60 * 60 * 1000,
+  );
+
+  const reservations = await prisma.reservation.findMany({
     where: {
-      status: "SCHEDULED",
+      status: "CONFIRMED",
       scheduledStart: {
         gte: windowStart,
         lte: windowEnd,
       },
     },
     include: {
-      patient: {
-        select: { id: true, email: true, firstName: true, lastName: true },
+      user: {
+        select: { id: true, email: true, displayName: true },
       },
     },
   });
 
-  if (appointments.length === 0) return [];
+  if (reservations.length === 0) return [];
 
-  // For each appointment, check independently whether a reminder was already
-  // sent today (calendar day). This allows a patient with two appointments in
-  // the window to receive two reminders while preventing double-sends on
-  // cron re-runs within the same day.
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
   const results = [];
-  for (const a of appointments) {
+  for (const r of reservations) {
     const existing = await prisma.notification.findFirst({
       where: {
-        organizationId: a.organizationId,
-        type: "APPOINTMENT_REMINDER",
-        recipientId: a.patientId,
+        clubId: r.clubId,
+        type: "RESERVATION_REMINDER",
+        recipientId: r.userId,
         status: "SENT",
         createdAt: { gte: today },
       },
@@ -128,91 +133,17 @@ export async function getPendingReminders(
     if (existing) continue;
 
     results.push({
-      appointmentId: a.id,
-      organizationId: a.organizationId,
-      patientId: a.patientId,
-      patientEmail: a.patient.email,
-      patientName: `${a.patient.firstName} ${a.patient.lastName}`.trim(),
-      patientFirstName: a.patient.firstName,
-      scheduledStart: a.scheduledStart,
-      professionalName: a.professionalName,
-      location: a.location,
+      reservationId: r.id,
+      clubId: r.clubId,
+      userId: r.userId,
+      userEmail: r.user.email,
+      userName: r.user.displayName,
+      scheduledStart: r.scheduledStart,
+      courtName: r.courtName,
     });
   }
 
   return results;
-}
-
-/**
- * Returns patients with birth month+day matching the given month/day
- * that do NOT have a SENT PATIENT_BIRTHDAY notification in the current calendar year.
- */
-export async function getPendingBirthdays(
-  orgId: string,
-  month: number,
-  day: number,
-): Promise<
-  Array<{
-    patientId: string;
-    organizationId: string;
-    patientEmail: string | null;
-    patientFirstName: string;
-    patientName: string;
-  }>
-> {
-  // Fetch all active patients in the org with a non-null birthDate
-  const patients = await prisma.patient.findMany({
-    where: {
-      organizationId: orgId,
-      status: "ACTIVE",
-      birthDate: { not: null },
-    },
-    select: {
-      id: true,
-      email: true,
-      firstName: true,
-      lastName: true,
-      birthDate: true,
-    },
-  });
-
-  // Filter to those whose birth month+day matches in UTC
-  const birthdayPatients = patients.filter((p) => {
-    if (!p.birthDate) return false;
-    const bd = new Date(p.birthDate);
-    return bd.getUTCMonth() + 1 === month && bd.getUTCDate() === day;
-  });
-
-  if (birthdayPatients.length === 0) return [];
-
-  // Find patients that already got a SENT birthday this calendar year
-  const currentYearStart = new Date(
-    Date.UTC(new Date().getUTCFullYear(), 0, 1),
-  );
-  const patientIds = birthdayPatients.map((p) => p.id);
-
-  const sentThisYear = await prisma.notification.findMany({
-    where: {
-      type: "PATIENT_BIRTHDAY",
-      status: "SENT",
-      organizationId: orgId,
-      recipientId: { in: patientIds },
-      createdAt: { gte: currentYearStart },
-    },
-    select: { recipientId: true },
-  });
-
-  const alreadySentSet = new Set(sentThisYear.map((n) => n.recipientId));
-
-  return birthdayPatients
-    .filter((p) => !alreadySentSet.has(p.id))
-    .map((p) => ({
-      patientId: p.id,
-      organizationId: orgId,
-      patientEmail: p.email,
-      patientFirstName: p.firstName,
-      patientName: `${p.firstName} ${p.lastName}`.trim(),
-    }));
 }
 
 export interface NotificationFilters {
@@ -230,7 +161,7 @@ export interface PaginatedNotifications {
 }
 
 export async function listNotifications(
-  orgId: string,
+  clubId: string,
   filters: NotificationFilters = {},
   page = 1,
   pageSize = 20,
@@ -238,7 +169,7 @@ export async function listNotifications(
   const skip = (page - 1) * pageSize;
 
   const where = {
-    organizationId: orgId,
+    clubId,
     ...(filters.type ? { type: filters.type } : {}),
     ...(filters.status ? { status: filters.status } : {}),
     ...(filters.dateFrom || filters.dateTo

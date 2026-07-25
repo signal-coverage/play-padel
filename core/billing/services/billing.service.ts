@@ -4,7 +4,7 @@ import * as React from "react";
 import { prisma } from "@/infrastructure/db/client";
 import { Prisma } from "@/lib/generated/prisma/client";
 import { dispatch } from "@/lib/notifications/dispatcher";
-import { InvoicePaid } from "@/lib/email/templates/InvoicePaid";
+import { PaymentConfirmed } from "@/lib/email/templates/PaymentConfirmed";
 import type {
   Invoice,
   InvoiceItem,
@@ -41,7 +41,7 @@ function toInvoiceItem(raw: unknown): InvoiceItem {
 function toPayment(row: PaymentRow): Payment {
   return {
     id: row.id,
-    organizationId: row.organizationId,
+    clubId: row.clubId,
     invoiceId: row.invoiceId,
     method: row.method as PaymentMethod,
     amount: row.amount,
@@ -57,10 +57,10 @@ function toPayment(row: PaymentRow): Payment {
 function toInvoice(row: InvoiceRow): Invoice {
   return {
     id: row.id,
-    organizationId: row.organizationId,
-    patientId: row.patientId,
-    patientName: row.patientName,
-    appointmentId: row.appointmentId ?? undefined,
+    clubId: row.clubId,
+    userId: row.userId,
+    userName: row.userName,
+    reservationId: row.reservationId ?? undefined,
     number: row.number,
     status: row.status as Invoice["status"],
     currency: row.currency,
@@ -83,7 +83,7 @@ function toInvoice(row: InvoiceRow): Invoice {
 }
 
 export async function listInvoices(
-  orgId: string,
+  clubId: string,
   filters: InvoiceFilters,
   page = 1,
   pageSize = 20,
@@ -91,11 +91,11 @@ export async function listInvoices(
   const skip = (page - 1) * pageSize;
 
   const where: Prisma.InvoiceWhereInput = {
-    organizationId: orgId,
+    clubId,
     ...(filters.status ? { status: filters.status } : {}),
-    ...(filters.patientId ? { patientId: filters.patientId } : {}),
+    ...(filters.userId ? { userId: filters.userId } : {}),
     ...(filters.search
-      ? { patientName: { contains: filters.search, mode: "insensitive" } }
+      ? { userName: { contains: filters.search, mode: "insensitive" } }
       : {}),
   };
 
@@ -118,9 +118,9 @@ export async function listInvoices(
   };
 }
 
-export async function getInvoice(orgId: string, id: string): Promise<Invoice> {
+export async function getInvoice(clubId: string, id: string): Promise<Invoice> {
   const row = await prisma.invoice.findFirst({
-    where: { id, organizationId: orgId },
+    where: { id, clubId },
     include: { payments: true },
   });
   if (!row) throw new Error("Invoice not found");
@@ -128,16 +128,16 @@ export async function getInvoice(orgId: string, id: string): Promise<Invoice> {
 }
 
 export async function createInvoice(
-  orgId: string,
+  clubId: string,
   createdBy: string,
   input: CreateInvoiceInput,
 ): Promise<Invoice> {
-  const patient = await prisma.patient.findFirst({
-    where: { id: input.patientId, organizationId: orgId },
+  const user = await prisma.userProfile.findFirst({
+    where: { id: input.userId },
   });
-  if (!patient) throw new Error("Patient not found");
+  if (!user) throw new Error("User not found");
 
-  const patientName = `${patient.firstName} ${patient.lastName}`.trim();
+  const userName = user.displayName;
 
   const itemsWithTotals = input.items.map((item) => ({
     ...item,
@@ -153,10 +153,10 @@ export async function createInvoice(
   const total = Math.round((subtotal + tax - discount) * 100) / 100;
 
   const invoiceData = {
-    organizationId: orgId,
-    patientId: input.patientId,
-    patientName,
-    appointmentId: input.appointmentId ?? null,
+    clubId,
+    userId: input.userId,
+    userName,
+    reservationId: input.reservationId ?? null,
     currency: input.currency,
     items: itemsWithTotals as unknown as Prisma.InputJsonValue,
     subtotal,
@@ -172,7 +172,7 @@ export async function createInvoice(
   const createWithRetry = async () => {
     return await prisma.$transaction(async (tx) => {
       const last = await tx.invoice.findFirst({
-        where: { organizationId: orgId },
+        where: { clubId },
         orderBy: { number: "desc" },
         select: { number: true },
       });
@@ -200,13 +200,13 @@ export async function createInvoice(
 }
 
 export async function updateInvoice(
-  orgId: string,
+  clubId: string,
   id: string,
   updatedBy: string,
   input: UpdateInvoiceInput,
 ): Promise<Invoice> {
   const existing = await prisma.invoice.findFirst({
-    where: { id, organizationId: orgId },
+    where: { id, clubId },
   });
   if (!existing) throw new Error("Invoice not found");
   if (existing.status !== "DRAFT") {
@@ -266,7 +266,7 @@ export async function updateInvoice(
   }
 
   const row = await prisma.invoice.update({
-    where: { id, organizationId: orgId },
+    where: { id, clubId },
     data: updateData,
     include: { payments: true },
   });
@@ -274,12 +274,12 @@ export async function updateInvoice(
 }
 
 export async function issueInvoice(
-  orgId: string,
+  clubId: string,
   id: string,
   updatedBy: string,
 ): Promise<Invoice> {
   const existing = await prisma.invoice.findFirst({
-    where: { id, organizationId: orgId },
+    where: { id, clubId },
   });
   if (!existing) throw new Error("Invoice not found");
   if (existing.status !== "DRAFT") {
@@ -287,7 +287,7 @@ export async function issueInvoice(
   }
 
   const row = await prisma.invoice.update({
-    where: { id, organizationId: orgId },
+    where: { id, clubId },
     data: {
       status: "ISSUED",
       issuedAt: new Date(),
@@ -299,12 +299,12 @@ export async function issueInvoice(
 }
 
 export async function voidInvoice(
-  orgId: string,
+  clubId: string,
   id: string,
   voidedBy: string,
 ): Promise<Invoice> {
   const existing = await prisma.invoice.findFirst({
-    where: { id, organizationId: orgId },
+    where: { id, clubId },
   });
   if (!existing) throw new Error("Invoice not found");
   if (existing.status === "PAID") {
@@ -315,7 +315,7 @@ export async function voidInvoice(
   }
 
   const row = await prisma.invoice.update({
-    where: { id, organizationId: orgId },
+    where: { id, clubId },
     data: {
       status: "VOID",
       voidedAt: new Date(),
@@ -328,12 +328,12 @@ export async function voidInvoice(
 }
 
 export async function recordPayment(
-  orgId: string,
+  clubId: string,
   createdBy: string,
   input: RecordPaymentInput,
 ): Promise<Payment> {
   const invoice = await prisma.invoice.findFirst({
-    where: { id: input.invoiceId, organizationId: orgId },
+    where: { id: input.invoiceId, clubId },
   });
   if (!invoice) throw new Error("Invoice not found");
   if (invoice.status !== "ISSUED") {
@@ -353,7 +353,7 @@ export async function recordPayment(
   const [payment] = await prisma.$transaction([
     prisma.payment.create({
       data: {
-        organizationId: orgId,
+        clubId,
         invoiceId: input.invoiceId,
         method: input.method,
         amount: roundedAmount,
@@ -365,7 +365,7 @@ export async function recordPayment(
       },
     }),
     prisma.invoice.update({
-      where: { id: input.invoiceId, organizationId: orgId },
+      where: { id: input.invoiceId, clubId },
       data: {
         status: "PAID",
         paidAt,
@@ -374,20 +374,18 @@ export async function recordPayment(
     }),
   ]);
 
-  // Dispatch paid notification — non-throwing, does not affect return value
+  // Dispatch payment-confirmed notification — non-throwing, does not affect return value
   try {
-    const patient = await prisma.patient.findUnique({
-      where: { id: invoice.patientId },
-      select: { email: true, firstName: true, lastName: true },
+    const user = await prisma.userProfile.findUnique({
+      where: { id: invoice.userId },
+      select: { email: true, displayName: true },
     });
 
-    const patientName = patient
-      ? `${patient.firstName} ${patient.lastName}`.trim()
-      : invoice.patientName;
+    const userName = user?.displayName ?? invoice.userName;
 
     const html = await render(
-      React.createElement(InvoicePaid, {
-        patientName,
+      React.createElement(PaymentConfirmed, {
+        userName,
         invoiceNumber: invoice.number,
         total: roundedAmount,
         currency: input.currency,
@@ -395,11 +393,11 @@ export async function recordPayment(
     );
 
     await dispatch({
-      type: "INVOICE_PAID",
-      organizationId: orgId,
-      recipientId: invoice.patientId,
-      recipientEmail: patient?.email ?? null,
-      recipientName: patientName,
+      type: "PAYMENT_CONFIRMED",
+      clubId,
+      recipientId: invoice.userId,
+      recipientEmail: user?.email ?? null,
+      recipientName: userName,
       subject: `Payment received for invoice #${invoice.number}`,
       html,
     });
@@ -410,14 +408,14 @@ export async function recordPayment(
   return toPayment(payment);
 }
 
-export async function getDailyCash(orgId: string): Promise<DailyCashSummary> {
+export async function getDailyCash(clubId: string): Promise<DailyCashSummary> {
   const now = new Date();
   const utcStart = startOfDay(now);
   const utcEnd = endOfDay(now);
 
   const payments = await prisma.payment.findMany({
     where: {
-      organizationId: orgId,
+      clubId,
       status: "COMPLETED",
       paidAt: {
         gte: utcStart,

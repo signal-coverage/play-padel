@@ -1,0 +1,71 @@
+- generic [active] [ref=f20e1]:
+  - generic [ref=f20e3]:
+    - generic [ref=f20e9]:
+      - generic [ref=f20e10]: Play Padel
+      - generic [ref=f20e18]:
+        - paragraph [ref=f20e19]: “Booking a court used to mean phone tag with the front desk. Now it takes ten seconds.”
+        - generic [ref=f20e20]:
+          - paragraph [ref=f20e21]: Marina López
+          - paragraph [ref=f20e22]: Owner, Level Up Padel Club
+    - generic [ref=f20e24]:
+      - generic [ref=f20e25]:
+        - heading "Create your account" [level=1] [ref=f20e26]
+        - paragraph [ref=f20e27]: Get started with Play Padel today.
+      - generic [ref=f20e56]:
+        - generic [ref=f20e58]:
+          - generic [ref=f20e60]:
+            - button "Sign in with Google Continue with Google" [disabled]:
+              - generic:
+                - generic:
+                  - generic "Sign in with Google"
+                - generic: Continue with Google
+          - paragraph [ref=f20e68]: or
+          - generic [ref=f20e70]:
+            - generic [ref=f20e71]:
+              - generic [ref=f20e74]:
+                - generic [ref=f20e75]: Email address
+                - textbox "Email address" [disabled]:
+                  - /placeholder: Enter your email address
+                  - text: repro-loopfix+clerk_test@example.com
+              - generic [ref=f20e80]:
+                - generic [ref=f20e81]:
+                  - generic [ref=f20e82]: Password
+                  - generic [ref=f20e84]:
+                    - textbox "Password" [disabled]:
+                      - /placeholder: Create a password
+                      - text: Repro-Loopfix-2026!
+                    - button "Show password" [ref=f20e86] [cursor=pointer]
+                - generic [ref=f20e90]: Your password meets all the necessary requirements.
+                - paragraph [ref=f20e114]: Your password meets all the necessary requirements.
+            - generic [ref=f20e92]:
+              - button "Loading" [disabled]:
+                - generic:
+                  - generic "Loading"
+        - generic [ref=f20e97]:
+          - generic [ref=f20e98]:
+            - generic [ref=f20e99]: Already have an account?
+            - link "Sign in" [ref=f20e100] [cursor=pointer]:
+              - /url: http://localhost:3000/login
+          - generic [ref=f20e102]:
+            - generic [ref=f20e104]:
+              - paragraph [ref=f20e105]: Secured by
+              - link "Clerk logo" [ref=f20e106] [cursor=pointer]:
+                - /url: https://go.clerk.com/components
+            - paragraph [ref=f20e112]: Development mode
+  - region "Notifications alt+T"
+  - button "Open Next.js Dev Tools" [ref=f20e33] [cursor=pointer]
+  - alert [ref=f20e37]
+  - generic [ref=f20e38]:
+    - generic [ref=f20e39]:
+      - link "LocatorJS" [ref=f20e40] [cursor=pointer]:
+        - /url: https://www.locatorjs.com
+      - button "Settings" [ref=f20e48] [cursor=pointer]
+    - generic [ref=f20e49]:
+      - text: Go to component code with
+      - generic [ref=f20e50]: Alt
+      - text: +
+      - generic [ref=f20e51]: click
+    - generic [ref=f20e52]:
+      - link "What is Locator?" [ref=f20e53] [cursor=pointer]:
+        - /url: https://www.locatorjs.com
+      - generic [ref=f20e54] [cursor=pointer]: Stop showing this popup

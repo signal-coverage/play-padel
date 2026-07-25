@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const updateUserProfileSchema = z.object({
-  roleId: z.enum(["admin", "staff", "professional"]).optional(),
+  role: z.enum(["owner", "player"]).optional(),
   status: z.enum(["ACTIVE", "INACTIVE"]).optional(),
   displayName: z.string().min(1).optional(),
   phone: z.string().optional(),

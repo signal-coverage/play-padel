@@ -32,7 +32,7 @@ export function DetailPanel({
         </motion.div>
       </AnimatePresence>
 
-      <div className="flex items-center justify-end gap-3">
+      <div className="flex items-center justify-end gap-2">
         <span className="text-sm text-[#999999] tabular-nums mr-1">
           {String(index + 1).padStart(1, "0")} / {total}
         </span>

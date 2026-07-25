@@ -3,7 +3,7 @@ import { Prisma } from "@/lib/generated/prisma/client";
 import type { AuditAction, AuditFilters } from "../types";
 
 export async function logAudit(params: {
-  organizationId: string;
+  clubId: string;
   userId: string;
   userDisplayName: string;
   action: AuditAction;
@@ -25,7 +25,7 @@ export async function logAudit(params: {
 }
 
 export async function listAuditLogs(
-  organizationId: string,
+  clubId: string,
   filters: AuditFilters,
 ) {
   const page = filters.page ?? 1;
@@ -33,7 +33,7 @@ export async function listAuditLogs(
   const skip = (page - 1) * pageSize;
 
   const where = {
-    organizationId,
+    clubId,
     ...(filters.entity && { entity: filters.entity }),
     ...(filters.action && { action: filters.action }),
   };

@@ -24,7 +24,7 @@ export type AuditAction =
 
 export interface AuditLog {
   id: string;
-  organizationId: string;
+  clubId: string;
   userId: string;
   userDisplayName: string;
   action: AuditAction;

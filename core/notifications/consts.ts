@@ -4,10 +4,9 @@ import type {
 } from "@/core/notifications/types";
 
 export const NOTIFICATION_TYPE_LABELS: Record<NotificationType, string> = {
-  APPOINTMENT_REMINDER: "Appointment Reminder",
-  APPOINTMENT_CANCELLED: "Appointment Cancelled",
-  INVOICE_PAID: "Invoice Paid",
-  PATIENT_BIRTHDAY: "Patient Birthday",
+  RESERVATION_REMINDER: "Reservation Reminder",
+  RESERVATION_CANCELLED: "Reservation Cancelled",
+  PAYMENT_CONFIRMED: "Payment Confirmed",
 };
 
 export const NOTIFICATION_STATUS_LABELS: Record<NotificationStatus, string> = {
