@@ -39,7 +39,7 @@ export function LandingTrusted() {
             fun, inclusive, and energizing.
           </motion.h2>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-x-8 gap-y-10 mt-12">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-x-8 gap-y-8 sm:gap-y-10 mt-10 sm:mt-12">
             {STATS.map((stat, i) => (
               <motion.div
                 key={stat.label}
@@ -48,13 +48,13 @@ export function LandingTrusted() {
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: 0.12 + i * 0.08, ease }}
               >
-                <div className="text-4xl font-bold text-[#111111] tracking-tight">
+                <div className="text-3xl sm:text-4xl font-bold text-[#111111] tracking-tight">
                   {stat.value}
                 </div>
                 <div className="mt-1 text-[15px] font-semibold text-[#111111]">
                   {stat.label}
                 </div>
-                <p className="mt-2 text-sm text-[#999999] leading-relaxed max-w-60">
+                <p className="mt-2 text-sm text-[#999999] leading-relaxed max-w-none sm:max-w-60">
                   {stat.description}
                 </p>
               </motion.div>

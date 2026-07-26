@@ -4,7 +4,7 @@ import type { ImageStackProps } from "./types";
 
 export function ImageStack({ events, activeIndex, onSelect }: ImageStackProps) {
   return (
-    <div className="flex gap-3 h-full w-full">
+    <div className="flex gap-3 h-full w-full overflow-x-auto scrollbar-none">
       {events.map((event, index) => (
         <StackSlot
           key={event.title}

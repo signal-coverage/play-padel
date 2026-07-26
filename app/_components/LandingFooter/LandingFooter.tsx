@@ -21,7 +21,7 @@ export function LandingFooter() {
             {TAGLINE}
           </p>
 
-          <div className="grid grid-cols-1 sm:grid-cols-4 gap-14 text-right">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 sm:gap-10 md:gap-14 text-left sm:text-right">
             <div>
               <h4 className="text-[14px] font-semibold text-white/90 mb-5">
                 Let&apos;s Talk
@@ -69,7 +69,7 @@ export function LandingFooter() {
         </motion.div>
 
         <motion.div
-          className="flex items-end justify-between gap-6"
+          className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6"
           initial={shouldReduce ? false : { opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-60px" }}
@@ -84,7 +84,7 @@ export function LandingFooter() {
             </span>
           </div>
 
-          <div className="flex items-center gap-6 text-[13px] text-white/30 flex-wrap pb-12">
+          <div className="flex items-center gap-6 text-[13px] text-white/30 flex-wrap pb-6 sm:pb-12">
             <span>© 2026 Play Padel. All rights reserved.</span>
             <Link
               href="/privacy"

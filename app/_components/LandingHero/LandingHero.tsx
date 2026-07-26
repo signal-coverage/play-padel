@@ -29,7 +29,9 @@ export function LandingHero() {
         className="object-cover object-bottom"
       />
 
-      <div className={`${CONTAINER} flex items-end justify-between w-full`}>
+      <div
+        className={`${CONTAINER} flex flex-col md:flex-row md:items-end md:justify-between gap-10 md:gap-0 w-full`}
+      >
         <div className={`relative z-10 w-full ${CONTAINER}`}>
           <motion.div
             className="max-w-155"
@@ -59,7 +61,7 @@ export function LandingHero() {
                 <ArrowRight size={15} strokeWidth={2.5} />
               </Link>
             </motion.div>
-            <p className="mt-24 text-[17px] text-white/80 leading-[1.75] max-w-110">
+            <p className="mt-8 md:mt-24 text-[17px] text-white/80 leading-[1.75] max-w-110">
               Discover the fun, fast-paced world of paddle with top-notch
               courts, friendly matches, and a community built for connection.
             </p>

@@ -12,7 +12,7 @@ export function StackSlot({ event, isOpen, onClick }: StackSlotProps) {
       layout
       transition={TRANSITION}
       style={{ flexGrow: isOpen ? OPEN_FLEX : COLLAPSED_FLEX, flexBasis: 0 }}
-      className="relative h-full min-w-0 shrink-0 rounded-3xl overflow-hidden cursor-pointer"
+      className="relative h-full min-w-16 shrink-0 rounded-3xl overflow-hidden cursor-pointer"
     >
       <Image
         src={event.image}

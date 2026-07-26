@@ -903,7 +903,10 @@ export default function OnboardingPage() {
                   Continue
                 </Button>
               ) : (
-                <Button type="submit" disabled={isSubmitting}>
+                <Button
+                  type="submit"
+                  disabled={isSubmitting || !watchedValues.acceptedTerms}
+                >
                   {isSubmitting
                     ? "Setting up…"
                     : watchedValues.userType === "owner"

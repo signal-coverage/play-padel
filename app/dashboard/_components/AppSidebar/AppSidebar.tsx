@@ -38,7 +38,7 @@ export function AppSidebar() {
   const role = user?.role ?? "player";
   const visibleNavItems = navItems.filter((item) => item.roles.includes(role));
 
-  const { state } = useSidebar();
+  const { state, isMobile, setOpenMobile } = useSidebar();
   const collapsed = state === "collapsed";
   const email = user?.email ?? "";
   const initials = email.split("@")[0]?.[0]?.toUpperCase() ?? "U";
@@ -47,6 +47,12 @@ export function AppSidebar() {
   async function handleSignOut() {
     await signOut();
     router.push("/");
+  }
+
+  function handleNavClick() {
+    if (isMobile) {
+      setOpenMobile(false);
+    }
   }
 
   return (
@@ -82,6 +88,7 @@ export function AppSidebar() {
                       >
                         <Link
                           href={item.href}
+                          onClick={handleNavClick}
                           className={collapsed ? "justify-center" : ""}
                         >
                           {collapsed ? (

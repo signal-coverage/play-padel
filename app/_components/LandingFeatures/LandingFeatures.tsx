@@ -88,8 +88,8 @@ export function LandingFeatures() {
             </motion.h2>
           </div>
 
-          <div className="flex items-end justify-between gap-8">
-            <div className="max-w-70">
+          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6 sm:gap-8">
+            <div className="max-w-full sm:max-w-70">
               <AnimatePresence mode="wait" initial={false}>
                 <motion.div
                   key={current.title}
