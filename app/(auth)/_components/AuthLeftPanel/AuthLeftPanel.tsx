@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 export function AuthLeftPanel() {
   return (
     <div
-      className="relative overflow-hidden shrink-0 flex flex-col"
+      className="hidden md:flex md:flex-col relative overflow-hidden shrink-0"
       style={{ width: "34%" }}
     >
       {/* Photo simulation — replace with next/image when photo is available */}

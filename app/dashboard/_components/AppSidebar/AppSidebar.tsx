@@ -55,6 +55,17 @@ export function AppSidebar() {
     }
   }
 
+  function handleOpenUserProfile() {
+    // Clerk's profile modal is its own portal, not a Radix dialog, so it
+    // doesn't coordinate with the mobile sidebar's Sheet scroll-lock — left
+    // open, the Sheet's pointer-events:none on <body> makes the modal
+    // unclickable. Close the Sheet first so the lock releases.
+    if (isMobile) {
+      setOpenMobile(false);
+    }
+    openUserProfile();
+  }
+
   return (
     <Sidebar
       collapsible="icon"
@@ -155,7 +166,7 @@ export function AppSidebar() {
           </DropdownMenuTrigger>
           <DropdownMenuContent side="top" align="start" className="w-56">
             <DropdownMenuItem
-              onClick={() => openUserProfile()}
+              onClick={handleOpenUserProfile}
               className="cursor-pointer"
             >
               <User className="h-4 w-4" />

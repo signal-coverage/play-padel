@@ -5,6 +5,7 @@ import { motion, useReducedMotion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { ease } from "./consts";
 import { CONTAINER } from "@/lib/consts";
+import { scrollToSection } from "@/lib/utils/scroll-to-section";
 import heroImage from "@/assets/images/tennis-paddles-balls-arrangement.jpg";
 
 const PLAYERS: { name: string; photoUrl?: string }[] = [
@@ -55,6 +56,7 @@ export function LandingHero() {
             >
               <Link
                 href="#appointment"
+                onClick={(e) => scrollToSection(e, "#appointment")}
                 className="inline-flex items-center gap-2 bg-[#dffd36] text-[#073d6b] rounded-full px-6 py-3.5 text-[15px] font-semibold hover:-translate-y-0.5 hover:shadow-xl transition-all duration-200"
               >
                 Explore Clubs

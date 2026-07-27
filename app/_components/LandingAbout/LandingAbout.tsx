@@ -6,6 +6,7 @@ import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { ABOUT_ITEMS, ease } from "./consts";
 import { CONTAINER } from "@/lib/consts";
+import { scrollToSection } from "@/lib/utils/scroll-to-section";
 import communityImage from "@/assets/images/people-playing-padle-tennis-inside.jpg";
 
 export function LandingAbout() {
@@ -89,6 +90,7 @@ export function LandingAbout() {
           />
           <Link
             href="#appointment"
+            onClick={(e) => scrollToSection(e, "#appointment")}
             className="absolute left-5 bottom-5 inline-flex items-center gap-1.5 bg-white/90 backdrop-blur-sm text-[#111111] rounded-full px-4 py-2 text-sm font-semibold hover:bg-white transition-colors"
           >
             Learn More

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
 import { CONTACT, FOOTER_COLUMNS, TAGLINE, ease } from "./consts";
 import { CONTAINER } from "@/lib/consts";
+import { scrollToSection } from "@/lib/utils/scroll-to-section";
 
 export function LandingFooter() {
   const shouldReduce = useReducedMotion();
@@ -56,6 +57,7 @@ export function LandingFooter() {
                     <li key={link.label}>
                       <Link
                         href={link.href}
+                        onClick={(e) => scrollToSection(e, link.href)}
                         className="text-[14px] text-white/45 hover:text-white/80 transition-colors"
                       >
                         {link.label}

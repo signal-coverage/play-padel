@@ -1,11 +1,13 @@
 "use client";
-import { useState } from "react";
+import { useState, type MouseEvent } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion, useScroll, useMotionValueEvent } from "framer-motion";
 import { Menu } from "lucide-react";
 import { NAV, ease } from "./consts";
 import { CONTAINER } from "@/lib/consts";
+import { scrollToSection } from "@/lib/utils/scroll-to-section";
+import { useAuth } from "@/hooks/use-auth";
 import {
   Sheet,
   SheetClose,
@@ -21,10 +23,20 @@ export function LandingHeader() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { scrollY } = useScroll();
+  const { user, loading } = useAuth();
+  const isSignedIn = !loading && !!user;
 
   useMotionValueEvent(scrollY, "change", (latest) => {
     setIsScrolled(latest > SCROLL_THRESHOLD);
   });
+
+  function handleMobileNavLinkClick(
+    e: MouseEvent<HTMLAnchorElement>,
+    href: string,
+  ) {
+    scrollToSection(e, href);
+    setIsMenuOpen(false);
+  }
 
   return (
     <header
@@ -62,6 +74,7 @@ export function LandingHeader() {
             >
               <Link
                 href={link.href}
+                onClick={(e) => scrollToSection(e, link.href)}
                 className={`text-sm font-medium transition-colors duration-300 ${
                   isScrolled
                     ? "text-[#111111]/70 hover:text-[#111111]"
@@ -80,26 +93,42 @@ export function LandingHeader() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.45, delay: 0.27, ease }}
         >
-          <Link
-            href="/signup"
-            className={`inline-flex items-center border-[1.5px] rounded-full px-4 sm:px-5 py-2 text-sm font-semibold transition-all duration-300 ${
-              isScrolled
-                ? "border-[#111111] text-[#111111] hover:bg-[#111111] hover:text-white"
-                : "border-white text-white hover:bg-white hover:text-[#073d6b]"
-            }`}
-          >
-            Try for free
-          </Link>
-          <Link
-            href="/login"
-            className={`hidden md:inline-flex text-sm font-medium transition-colors duration-300 ${
-              isScrolled
-                ? "text-[#111111]/70 hover:text-[#111111]"
-                : "text-white/70 hover:text-white"
-            }`}
-          >
-            Log in
-          </Link>
+          {!loading &&
+            (isSignedIn ? (
+              <Link
+                href="/dashboard"
+                className={`inline-flex items-center border-[1.5px] rounded-full px-4 sm:px-5 py-2 text-sm font-semibold transition-all duration-300 ${
+                  isScrolled
+                    ? "border-[#111111] text-[#111111] hover:bg-[#111111] hover:text-white"
+                    : "border-white text-white hover:bg-white hover:text-[#073d6b]"
+                }`}
+              >
+                Go to app
+              </Link>
+            ) : (
+              <>
+                <Link
+                  href="/signup"
+                  className={`inline-flex items-center border-[1.5px] rounded-full px-4 sm:px-5 py-2 text-sm font-semibold transition-all duration-300 ${
+                    isScrolled
+                      ? "border-[#111111] text-[#111111] hover:bg-[#111111] hover:text-white"
+                      : "border-white text-white hover:bg-white hover:text-[#073d6b]"
+                  }`}
+                >
+                  Try for free
+                </Link>
+                <Link
+                  href="/login"
+                  className={`hidden md:inline-flex text-sm font-medium transition-colors duration-300 ${
+                    isScrolled
+                      ? "text-[#111111]/70 hover:text-[#111111]"
+                      : "text-white/70 hover:text-white"
+                  }`}
+                >
+                  Log in
+                </Link>
+              </>
+            ))}
 
           <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
             <SheetTrigger asChild>
@@ -124,31 +153,36 @@ export function LandingHeader() {
                   <SheetClose asChild key={link.label}>
                     <Link
                       href={link.href}
-                      className="py-3 text-[15px] font-medium text-[#111111]/80 border-b border-black/5 hover:text-[#111111]"
+                      onClick={(e) => handleMobileNavLinkClick(e, link.href)}
+                      className="py-3 text-[15px] font-medium text-foreground/80 border-b border-border hover:text-foreground"
                     >
                       {link.label}
                     </Link>
                   </SheetClose>
                 ))}
-                <SheetClose asChild>
-                  <Link
-                    href="/login"
-                    className="py-3 text-[15px] font-medium text-[#111111]/80 border-b border-black/5 hover:text-[#111111]"
-                  >
-                    Log in
-                  </Link>
-                </SheetClose>
+                {!isSignedIn && (
+                  <SheetClose asChild>
+                    <Link
+                      href="/login"
+                      className="py-3 text-[15px] font-medium text-foreground/80 border-b border-border hover:text-foreground"
+                    >
+                      Log in
+                    </Link>
+                  </SheetClose>
+                )}
               </nav>
-              <div className="px-4 pb-4 mt-auto">
-                <SheetClose asChild>
-                  <Link
-                    href="/signup"
-                    className="inline-flex w-full items-center justify-center bg-[#111111] text-white rounded-full px-5 py-3 text-sm font-semibold hover:bg-[#111111]/90"
-                  >
-                    Try for free
-                  </Link>
-                </SheetClose>
-              </div>
+              {!loading && (
+                <div className="px-4 pb-4 mt-auto">
+                  <SheetClose asChild>
+                    <Link
+                      href={isSignedIn ? "/dashboard" : "/signup"}
+                      className="inline-flex w-full items-center justify-center bg-primary text-primary-foreground rounded-full px-5 py-3 text-sm font-semibold hover:bg-primary/90"
+                    >
+                      {isSignedIn ? "Go to app" : "Try for free"}
+                    </Link>
+                  </SheetClose>
+                </div>
+              )}
             </SheetContent>
           </Sheet>
         </motion.div>
