@@ -3,6 +3,7 @@ import { useState } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { ArrowLeft, ArrowRight, ArrowUpRight } from "lucide-react";
+import { SlideCounter } from "@/app/_components/SlideCounter";
 import { FACILITIES, ease } from "./consts";
 import { CONTAINER } from "@/lib/consts";
 
@@ -45,7 +46,7 @@ export function LandingFeatures() {
                   alt={current.title}
                   fill
                   sizes="(min-width: 768px) 50vw, 100vw"
-                  className="object-cover"
+                  className="object-cover outline outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10"
                 />
               </motion.div>
             </AnimatePresence>
@@ -101,11 +102,11 @@ export function LandingFeatures() {
                   <h3 className="text-[17px] font-semibold text-[#111111] mb-2">
                     {current.title}
                   </h3>
-                  <p className="text-sm text-[#737373] leading-relaxed">
+                  <p className="text-sm text-[#737373] leading-relaxed text-pretty">
                     {current.description}
                   </p>
-                  <div className="mt-4 text-sm text-[#999999] tabular-nums">
-                    {String(index + 1).padStart(1, "0")} / {total}
+                  <div className="mt-4">
+                    <SlideCounter current={index + 1} total={total} />
                   </div>
                 </motion.div>
               </AnimatePresence>
@@ -130,7 +131,7 @@ export function LandingFeatures() {
                     alt={next.title}
                     fill
                     sizes="160px"
-                    className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.08]"
+                    className="object-cover outline outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10 transition-transform duration-500 ease-out group-hover:scale-[1.08]"
                   />
                   <span className="absolute left-1/2 -translate-x-1/2 bottom-3 max-w-[calc(100%-1.5rem)] inline-flex items-center gap-1 bg-white/90 backdrop-blur-sm text-[#111111] rounded-full px-3 py-1.5 text-xs font-semibold">
                     <span className="truncate min-w-0">{next.title}</span>

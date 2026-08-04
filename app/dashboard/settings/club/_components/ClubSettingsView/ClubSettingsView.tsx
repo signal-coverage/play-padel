@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Field, FieldLabel, FieldError } from "@/components/ui/field";
 import { Skeleton } from "@/components/ui/skeleton";
 import { clubSettingsFormSchema } from "./consts";
 import { clubToFormValues } from "./utils";
@@ -50,10 +50,10 @@ export function ClubSettingsView() {
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">
+        <h1 className="text-2xl font-semibold tracking-tight text-balance">
           Club Settings
         </h1>
-        <p className="text-sm text-muted-foreground mt-1">
+        <p className="text-sm text-muted-foreground mt-1 text-pretty">
           Manage your club&apos;s profile and business details.
         </p>
       </div>
@@ -62,39 +62,39 @@ export function ClubSettingsView() {
         onSubmit={handleSubmit(submit)}
         className="flex max-w-lg flex-col gap-4"
       >
-        <div className="flex flex-col gap-1">
-          <Label htmlFor="club-name">Name *</Label>
+        <Field>
+          <FieldLabel htmlFor="club-name">Name *</FieldLabel>
           <Input
             id="club-name"
             placeholder="Club Padel Norte"
             {...register("name")}
             aria-invalid={!!errors.name}
           />
-          {errors.name && (
-            <p className="text-sm text-destructive">{errors.name.message}</p>
-          )}
-        </div>
+          <FieldError errors={[errors.name]} />
+        </Field>
 
-        <div className="flex flex-col gap-1">
-          <Label htmlFor="club-legal-name">Legal name</Label>
+        <Field>
+          <FieldLabel htmlFor="club-legal-name">Legal name</FieldLabel>
           <Input
             id="club-legal-name"
             placeholder="Club Padel Norte S.A."
             {...register("legalName")}
           />
-        </div>
+          <FieldError errors={[errors.legalName]} />
+        </Field>
 
-        <div className="flex flex-col gap-1">
-          <Label htmlFor="club-tax-id">Tax ID</Label>
+        <Field>
+          <FieldLabel htmlFor="club-tax-id">Tax ID</FieldLabel>
           <Input
             id="club-tax-id"
             placeholder="30-12345678-9"
             {...register("taxId")}
           />
-        </div>
+          <FieldError errors={[errors.taxId]} />
+        </Field>
 
-        <div className="flex flex-col gap-1">
-          <Label htmlFor="club-email">Email *</Label>
+        <Field>
+          <FieldLabel htmlFor="club-email">Email *</FieldLabel>
           <Input
             id="club-email"
             type="email"
@@ -102,58 +102,50 @@ export function ClubSettingsView() {
             {...register("email")}
             aria-invalid={!!errors.email}
           />
-          {errors.email && (
-            <p className="text-sm text-destructive">{errors.email.message}</p>
-          )}
-        </div>
+          <FieldError errors={[errors.email]} />
+        </Field>
 
-        <div className="flex flex-col gap-1">
-          <Label htmlFor="club-phone">Phone</Label>
+        <Field>
+          <FieldLabel htmlFor="club-phone">Phone</FieldLabel>
           <Input
             id="club-phone"
             placeholder="+54 9 11 1234-5678"
             {...register("phone")}
           />
-        </div>
+          <FieldError errors={[errors.phone]} />
+        </Field>
 
-        <div className="flex flex-col gap-1">
-          <Label htmlFor="club-logo-url">Logo URL</Label>
+        <Field>
+          <FieldLabel htmlFor="club-logo-url">Logo URL</FieldLabel>
           <Input
             id="club-logo-url"
             placeholder="https://…"
             {...register("logoUrl")}
           />
-        </div>
+          <FieldError errors={[errors.logoUrl]} />
+        </Field>
 
-        <div className="flex flex-col gap-1">
-          <Label htmlFor="club-timezone">Timezone *</Label>
+        <Field>
+          <FieldLabel htmlFor="club-timezone">Timezone *</FieldLabel>
           <Input
             id="club-timezone"
             placeholder="America/Argentina/Buenos_Aires"
             {...register("timezone")}
             aria-invalid={!!errors.timezone}
           />
-          {errors.timezone && (
-            <p className="text-sm text-destructive">
-              {errors.timezone.message}
-            </p>
-          )}
-        </div>
+          <FieldError errors={[errors.timezone]} />
+        </Field>
 
-        <div className="flex flex-col gap-1">
-          <Label htmlFor="club-currency">Currency *</Label>
+        <Field>
+          <FieldLabel htmlFor="club-currency">Currency *</FieldLabel>
           <Input
             id="club-currency"
             placeholder="ARS"
             {...register("currency")}
             aria-invalid={!!errors.currency}
           />
-          {errors.currency && (
-            <p className="text-sm text-destructive">
-              {errors.currency.message}
-            </p>
-          )}
-        </div>
+          <FieldError errors={[errors.currency]} />
+        </Field>
 
         <div>
           <Button type="submit" disabled={updateClub.isPending}>

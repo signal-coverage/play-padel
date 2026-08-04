@@ -1,0 +1,1 @@
+export { PadelSideDiagram } from "./PadelSideDiagram";

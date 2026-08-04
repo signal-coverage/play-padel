@@ -1,0 +1,1 @@
+export { SlideCounter } from "./SlideCounter";

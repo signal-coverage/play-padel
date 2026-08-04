@@ -173,8 +173,7 @@ export const OWNER_FLOW = [
 ] as const;
 
 export type OnboardingStepKey =
-  | (typeof PLAYER_FLOW)[number]
-  | (typeof OWNER_FLOW)[number];
+  (typeof PLAYER_FLOW)[number] | (typeof OWNER_FLOW)[number];
 
 export const STEP_FIELDS: Record<
   OnboardingStepKey,

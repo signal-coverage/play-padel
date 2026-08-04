@@ -1,0 +1,1 @@
+export { LatestPartnerCard } from "./LatestPartnerCard";

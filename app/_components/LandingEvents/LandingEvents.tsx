@@ -11,7 +11,7 @@ export function LandingEvents() {
     <section id="modules" className={`${CONTAINER} py-12`}>
       <div className="flex flex-wrap items-start justify-between gap-6 mb-10">
         <motion.h2
-          className="text-3xl md:text-[34px] font-bold leading-tight tracking-tight max-w-2xl"
+          className="text-3xl md:text-[34px] font-bold leading-tight tracking-tight max-w-2xl text-balance"
           initial={shouldReduce ? false : { opacity: 0, y: 12 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}

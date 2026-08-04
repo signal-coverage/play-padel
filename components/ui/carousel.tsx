@@ -42,6 +42,37 @@ function useCarousel() {
   return context;
 }
 
+/**
+ * Reads a boolean off the embla API and keeps it in sync with embla's own
+ * "reInit"/"select" events via useSyncExternalStore, instead of mirroring it
+ * into local state from an effect (which would need a setState call right
+ * after subscribing, just to read the API's already-current position).
+ */
+function useEmblaBoolean(
+  api: CarouselApi,
+  read: (api: NonNullable<CarouselApi>) => boolean,
+) {
+  const subscribe = React.useCallback(
+    (callback: () => void) => {
+      if (!api) return () => {};
+      api.on("reInit", callback);
+      api.on("select", callback);
+      return () => {
+        api.off("reInit", callback);
+        api.off("select", callback);
+      };
+    },
+    [api],
+  );
+  const getSnapshot = React.useCallback(
+    () => (api ? read(api) : false),
+    [api, read],
+  );
+  const getServerSnapshot = React.useCallback(() => false, []);
+
+  return React.useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+}
+
 function Carousel({
   orientation = "horizontal",
   opts,
@@ -58,14 +89,8 @@ function Carousel({
     },
     plugins,
   );
-  const [canScrollPrev, setCanScrollPrev] = React.useState(false);
-  const [canScrollNext, setCanScrollNext] = React.useState(false);
-
-  const onSelect = React.useCallback((api: CarouselApi) => {
-    if (!api) return;
-    setCanScrollPrev(api.canScrollPrev());
-    setCanScrollNext(api.canScrollNext());
-  }, []);
+  const canScrollPrev = useEmblaBoolean(api, (a) => a.canScrollPrev());
+  const canScrollNext = useEmblaBoolean(api, (a) => a.canScrollNext());
 
   const scrollPrev = React.useCallback(() => {
     api?.scrollPrev();
@@ -92,17 +117,6 @@ function Carousel({
     if (!api || !setApi) return;
     setApi(api);
   }, [api, setApi]);
-
-  React.useEffect(() => {
-    if (!api) return;
-    onSelect(api);
-    api.on("reInit", onSelect);
-    api.on("select", onSelect);
-
-    return () => {
-      api?.off("select", onSelect);
-    };
-  }, [api, onSelect]);
 
   return (
     <CarouselContext.Provider

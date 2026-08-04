@@ -1,7 +1,5 @@
 export type NotificationType =
-  | "RESERVATION_REMINDER"
-  | "RESERVATION_CANCELLED"
-  | "PAYMENT_CONFIRMED";
+  "RESERVATION_REMINDER" | "RESERVATION_CANCELLED" | "PAYMENT_CONFIRMED";
 
 export type NotificationStatus = "PENDING" | "SENT" | "FAILED";
 

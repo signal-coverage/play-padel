@@ -1,0 +1,1 @@
+export { PlayerHero } from "./PlayerHero";

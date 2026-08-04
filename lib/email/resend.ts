@@ -25,7 +25,7 @@ export async function sendEmail({
 
   try {
     const result = await getResendClient().emails.send({
-      from: process.env.EMAIL_FROM ?? "noreply@erpflow.app",
+      from: process.env.EMAIL_FROM ?? "noreply@playpadel.app",
       to,
       subject,
       html,

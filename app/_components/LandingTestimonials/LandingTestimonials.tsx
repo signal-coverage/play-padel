@@ -51,7 +51,7 @@ export function LandingTestimonials() {
         </div>
       </motion.div>
 
-      <div className="max-w-[860px] mx-auto text-center">
+      <div className="max-w-215 mx-auto text-center">
         <AnimatePresence mode="wait" initial={false}>
           <motion.div
             key={current.name}

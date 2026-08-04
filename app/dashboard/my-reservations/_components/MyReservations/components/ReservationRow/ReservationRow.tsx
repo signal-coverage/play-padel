@@ -1,10 +1,8 @@
 "use client";
 
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { RESERVATION_STATUS_LABELS } from "@/core/reservations/consts";
-import { STATUS_BADGE_VARIANT } from "../../consts";
+import { ReservationStatusBadge } from "@/components/ReservationStatusBadge";
 import { formatReservationDateTime } from "../../utils";
 import type { ReservationRowProps } from "./types";
 
@@ -22,9 +20,7 @@ export function ReservationRow({ reservation, onCancel }: ReservationRowProps) {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <Badge variant={STATUS_BADGE_VARIANT[reservation.status]}>
-            {RESERVATION_STATUS_LABELS[reservation.status]}
-          </Badge>
+          <ReservationStatusBadge status={reservation.status} />
           {reservation.canSelfCancel && (
             <Button variant="destructive" size="sm" onClick={onCancel}>
               Cancel

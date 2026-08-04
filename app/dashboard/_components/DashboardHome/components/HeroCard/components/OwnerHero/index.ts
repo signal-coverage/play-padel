@@ -1,0 +1,1 @@
+export { OwnerHero } from "./OwnerHero";

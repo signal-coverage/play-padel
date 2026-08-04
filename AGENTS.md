@@ -32,3 +32,11 @@ Radix UI's `DismissableLayer` propagates "outside click" events up through its l
 - Using any Radix portal-based component (`Select`, `Popover`, `Combobox`, `DropdownMenu`, `Tooltip`) inside a `SheetContent`
 - Using `Dialog` inside a `Dialog` or `Sheet` inside a `Dialog` — the same layering issue can reappear and would need a similar `onPointerDownOutside` guard on the inner content
 - Upgrading `radix-ui` — verify the fix still works after major version bumps since the DismissableLayer internals may change
+
+## Code Organization Conventions
+
+### `index.ts` export order
+
+Every export inside an `index.ts` barrel file must be sorted alphabetically by the exported name (not by source path).
+
+**Why**: barrel files grow over time; alphabetical order makes it fast to check whether something is already exported and keeps diffs small when adding new entries.

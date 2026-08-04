@@ -8,16 +8,20 @@ import type { GridLoadingStateProps } from "./types";
 
 export function GridLoadingState({
   columnCount = DEFAULT_LOADING_SKELETON_COLUMN_COUNT,
+  rowCount = LOADING_SKELETON_ROW_COUNT,
 }: GridLoadingStateProps) {
-  const rows = Array.from({ length: LOADING_SKELETON_ROW_COUNT });
+  const rows = Array.from({ length: rowCount || LOADING_SKELETON_ROW_COUNT });
   const columns = Array.from({
     length: columnCount || DEFAULT_LOADING_SKELETON_COLUMN_COUNT,
   });
 
   return (
+    // Purely decorative — the accessible loading announcement lives in a
+    // single persistent `role="status"` region in CourtAvailabilityGrid that
+    // stays mounted across loading/loaded/empty, instead of this element
+    // (which mounts/unmounts with `isLoading`) firing its own.
     <div
-      role="status"
-      aria-label="Loading court availability"
+      aria-hidden="true"
       className="flex flex-col gap-2 rounded-lg border p-2"
     >
       {rows.map((_, rowIndex) => (

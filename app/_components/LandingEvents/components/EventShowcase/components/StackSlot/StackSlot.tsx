@@ -19,7 +19,7 @@ export function StackSlot({ event, isOpen, onClick }: StackSlotProps) {
         alt={event.title}
         fill
         sizes="(min-width: 768px) 40vw, 100vw"
-        className="object-cover"
+        className="object-cover outline outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10"
       />
       {!isOpen && (
         <span className="absolute inset-0 flex items-end justify-center pb-5">

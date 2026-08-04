@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Image from "next/image";
 import { useForm, Controller, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
@@ -19,10 +18,20 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import { OptionCard } from "./_components/OptionCard";
+import { Card } from "@/components/ui/card";
+import { LogoBadge } from "@/components/LogoBadge";
+import { MutedPanel } from "@/components/MutedPanel";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Field,
+  FieldLabel,
+  FieldDescription,
+  FieldError,
+} from "@/components/ui/field";
 import {
   Select,
   SelectContent,
@@ -56,15 +65,6 @@ const STEP_META: Record<
   playerProfile: { label: "Profile", icon: User },
   terms: { label: "Terms", icon: FileText },
 };
-
-function optionCardClass(selected: boolean) {
-  return [
-    "flex w-full items-start gap-3 rounded-xl border-2 p-4 text-left transition-colors duration-200",
-    selected
-      ? "border-primary bg-primary/5"
-      : "border-border hover:border-muted-foreground/30",
-  ].join(" ");
-}
 
 function StepIndicator({
   flow,
@@ -243,8 +243,7 @@ export default function OnboardingPage() {
     [watchedValues.timezone],
   );
   const selectedCourtRange = useMemo(
-    () =>
-      COURT_RANGE_OPTIONS.find((o) => o.value === watchedValues.courtRange),
+    () => COURT_RANGE_OPTIONS.find((o) => o.value === watchedValues.courtRange),
     [watchedValues.courtRange],
   );
 
@@ -252,9 +251,7 @@ export default function OnboardingPage() {
     <div className="min-h-screen flex items-center justify-center p-4 bg-muted">
       <div className="w-full max-w-xl">
         <div className="mb-6 text-center">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-white border border-black/10 mb-3 p-2">
-            <Image src="/logo.svg" alt="Play Padel" width={24} height={24} />
-          </div>
+          <LogoBadge size="md" className="mb-3" />
           <h1 className="text-2xl font-bold text-foreground">
             Set up your Play Padel account
           </h1>
@@ -263,7 +260,7 @@ export default function OnboardingPage() {
           </p>
         </div>
 
-        <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
+        <Card className="gap-0 rounded-2xl border border-border p-6 shadow-sm ring-0">
           <StepIndicator flow={flow} current={stepIndex} />
 
           <form onSubmit={handleSubmit(onSubmit)}>
@@ -293,36 +290,20 @@ export default function OnboardingPage() {
                     name="userType"
                     render={({ field }) => (
                       <div className="flex flex-col gap-3">
-                        <button
-                          type="button"
+                        <OptionCard
+                          icon={User}
+                          title="I'm a player"
+                          description="Browse clubs and reserve free courts."
+                          selected={field.value === "player"}
                           onClick={() => field.onChange("player")}
-                          className={optionCardClass(field.value === "player")}
-                        >
-                          <User className="w-5 h-5 mt-0.5 shrink-0 text-primary" />
-                          <div>
-                            <p className="text-sm font-semibold">
-                              I&apos;m a player
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              Browse clubs and reserve free courts.
-                            </p>
-                          </div>
-                        </button>
-                        <button
-                          type="button"
+                        />
+                        <OptionCard
+                          icon={Building2}
+                          title="I'm a club owner"
+                          description="Manage courts and availability for my club."
+                          selected={field.value === "owner"}
                           onClick={() => field.onChange("owner")}
-                          className={optionCardClass(field.value === "owner")}
-                        >
-                          <Building2 className="w-5 h-5 mt-0.5 shrink-0 text-primary" />
-                          <div>
-                            <p className="text-sm font-semibold">
-                              I&apos;m a club owner
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              Manage courts and availability for my club.
-                            </p>
-                          </div>
-                        </button>
+                        />
                       </div>
                     )}
                   />
@@ -353,8 +334,8 @@ export default function OnboardingPage() {
                       Primary contact information players will see.
                     </p>
                   </div>
-                  <div className="flex flex-col gap-1">
-                    <Label htmlFor="name">Club name *</Label>
+                  <Field>
+                    <FieldLabel htmlFor="name">Club name *</FieldLabel>
                     <div className="relative">
                       <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                       <Input
@@ -365,15 +346,11 @@ export default function OnboardingPage() {
                         aria-invalid={!!errors.name}
                       />
                     </div>
-                    {errors.name && (
-                      <p className="text-sm text-destructive">
-                        {errors.name.message}
-                      </p>
-                    )}
-                  </div>
+                    <FieldError errors={[errors.name]} />
+                  </Field>
 
-                  <div className="flex flex-col gap-1">
-                    <Label htmlFor="email">Contact email *</Label>
+                  <Field>
+                    <FieldLabel htmlFor="email">Contact email *</FieldLabel>
                     <div className="relative">
                       <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                       <Input
@@ -385,15 +362,11 @@ export default function OnboardingPage() {
                         aria-invalid={!!errors.email}
                       />
                     </div>
-                    {errors.email && (
-                      <p className="text-sm text-destructive">
-                        {errors.email.message}
-                      </p>
-                    )}
-                  </div>
+                    <FieldError errors={[errors.email]} />
+                  </Field>
 
-                  <div className="flex flex-col gap-1">
-                    <Label htmlFor="phone">Phone *</Label>
+                  <Field>
+                    <FieldLabel htmlFor="phone">Phone *</FieldLabel>
                     <div className="relative">
                       <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                       <Input
@@ -404,12 +377,8 @@ export default function OnboardingPage() {
                         aria-invalid={!!errors.phone}
                       />
                     </div>
-                    {errors.phone && (
-                      <p className="text-sm text-destructive">
-                        {errors.phone.message}
-                      </p>
-                    )}
-                  </div>
+                    <FieldError errors={[errors.phone]} />
+                  </Field>
                 </motion.div>
               )}
 
@@ -433,38 +402,30 @@ export default function OnboardingPage() {
                     </p>
                   </div>
 
-                  <div className="flex flex-col gap-1">
-                    <Label htmlFor="legalName">Legal name *</Label>
+                  <Field>
+                    <FieldLabel htmlFor="legalName">Legal name *</FieldLabel>
                     <Input
                       id="legalName"
                       placeholder="Riverside Padel Club S.A."
                       {...register("legalName")}
                       aria-invalid={!!errors.legalName}
                     />
-                    {errors.legalName && (
-                      <p className="text-sm text-destructive">
-                        {errors.legalName.message}
-                      </p>
-                    )}
-                  </div>
+                    <FieldError errors={[errors.legalName]} />
+                  </Field>
 
-                  <div className="flex flex-col gap-1">
-                    <Label htmlFor="taxId">Tax ID / CUIT *</Label>
+                  <Field>
+                    <FieldLabel htmlFor="taxId">Tax ID / CUIT *</FieldLabel>
                     <Input
                       id="taxId"
                       placeholder="30-12345678-9"
                       {...register("taxId")}
                       aria-invalid={!!errors.taxId}
                     />
-                    {errors.taxId && (
-                      <p className="text-sm text-destructive">
-                        {errors.taxId.message}
-                      </p>
-                    )}
-                  </div>
+                    <FieldError errors={[errors.taxId]} />
+                  </Field>
 
-                  <div className="flex flex-col gap-1">
-                    <Label htmlFor="timezone">Timezone *</Label>
+                  <Field>
+                    <FieldLabel htmlFor="timezone">Timezone *</FieldLabel>
                     <Controller
                       control={control}
                       name="timezone"
@@ -486,15 +447,11 @@ export default function OnboardingPage() {
                         </Select>
                       )}
                     />
-                    {errors.timezone && (
-                      <p className="text-sm text-destructive">
-                        {errors.timezone.message}
-                      </p>
-                    )}
-                  </div>
+                    <FieldError errors={[errors.timezone]} />
+                  </Field>
 
-                  <div className="flex flex-col gap-1">
-                    <Label htmlFor="currency">Currency *</Label>
+                  <Field>
+                    <FieldLabel htmlFor="currency">Currency *</FieldLabel>
                     <Controller
                       control={control}
                       name="currency"
@@ -516,12 +473,8 @@ export default function OnboardingPage() {
                         </Select>
                       )}
                     />
-                    {errors.currency && (
-                      <p className="text-sm text-destructive">
-                        {errors.currency.message}
-                      </p>
-                    )}
-                  </div>
+                    <FieldError errors={[errors.currency]} />
+                  </Field>
                 </motion.div>
               )}
 
@@ -551,26 +504,14 @@ export default function OnboardingPage() {
                     render={({ field }) => (
                       <div className="flex flex-col gap-3">
                         {COURT_RANGE_OPTIONS.map((option) => (
-                          <button
+                          <OptionCard
                             key={option.value}
-                            type="button"
+                            icon={LayoutGrid}
+                            title={option.label}
+                            description={option.note}
+                            selected={field.value === option.value}
                             onClick={() => field.onChange(option.value)}
-                            className={optionCardClass(
-                              field.value === option.value,
-                            )}
-                          >
-                            <LayoutGrid className="w-5 h-5 mt-0.5 shrink-0 text-primary" />
-                            <div>
-                              <p className="text-sm font-semibold">
-                                {option.label}
-                              </p>
-                              {option.note && (
-                                <p className="text-xs text-muted-foreground mt-1">
-                                  {option.note}
-                                </p>
-                              )}
-                            </div>
-                          </button>
+                          />
                         ))}
                       </div>
                     )}
@@ -603,8 +544,10 @@ export default function OnboardingPage() {
                     </p>
                   </div>
 
-                  <div className="flex flex-col gap-1">
-                    <Label htmlFor="displayName">Display name *</Label>
+                  <Field>
+                    <FieldLabel htmlFor="displayName">
+                      Display name *
+                    </FieldLabel>
                     <div className="relative">
                       <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                       <Input
@@ -614,14 +557,10 @@ export default function OnboardingPage() {
                         aria-invalid={!!errors.displayName}
                       />
                     </div>
-                    {errors.displayName && (
-                      <p className="text-sm text-destructive">
-                        {errors.displayName.message}
-                      </p>
-                    )}
-                  </div>
+                    <FieldError errors={[errors.displayName]} />
+                  </Field>
 
-                  <div className="mt-2 rounded-xl border border-border bg-muted/40 p-4 space-y-2">
+                  <MutedPanel bordered size="md" className="mt-2 space-y-2">
                     <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">
                       Summary
                     </p>
@@ -662,7 +601,7 @@ export default function OnboardingPage() {
                         ""
                       }
                     />
-                  </div>
+                  </MutedPanel>
                 </motion.div>
               )}
 
@@ -686,36 +625,28 @@ export default function OnboardingPage() {
                     </p>
                   </div>
 
-                  <div className="flex flex-col gap-1">
-                    <Label htmlFor="firstName">First name *</Label>
+                  <Field>
+                    <FieldLabel htmlFor="firstName">First name *</FieldLabel>
                     <Input
                       id="firstName"
                       {...register("firstName")}
                       aria-invalid={!!errors.firstName}
                     />
-                    {errors.firstName && (
-                      <p className="text-sm text-destructive">
-                        {errors.firstName.message}
-                      </p>
-                    )}
-                  </div>
+                    <FieldError errors={[errors.firstName]} />
+                  </Field>
 
-                  <div className="flex flex-col gap-1">
-                    <Label htmlFor="lastName">Last name *</Label>
+                  <Field>
+                    <FieldLabel htmlFor="lastName">Last name *</FieldLabel>
                     <Input
                       id="lastName"
                       {...register("lastName")}
                       aria-invalid={!!errors.lastName}
                     />
-                    {errors.lastName && (
-                      <p className="text-sm text-destructive">
-                        {errors.lastName.message}
-                      </p>
-                    )}
-                  </div>
+                    <FieldError errors={[errors.lastName]} />
+                  </Field>
 
-                  <div className="flex flex-col gap-1">
-                    <Label htmlFor="email">Email *</Label>
+                  <Field>
+                    <FieldLabel htmlFor="email">Email *</FieldLabel>
                     <div className="relative">
                       <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                       <Input
@@ -727,15 +658,11 @@ export default function OnboardingPage() {
                         aria-invalid={!!errors.email}
                       />
                     </div>
-                    {errors.email && (
-                      <p className="text-sm text-destructive">
-                        {errors.email.message}
-                      </p>
-                    )}
-                  </div>
+                    <FieldError errors={[errors.email]} />
+                  </Field>
 
-                  <div className="flex flex-col gap-1">
-                    <Label htmlFor="phone">Phone *</Label>
+                  <Field>
+                    <FieldLabel htmlFor="phone">Phone *</FieldLabel>
                     <div className="relative">
                       <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                       <Input
@@ -746,30 +673,22 @@ export default function OnboardingPage() {
                         aria-invalid={!!errors.phone}
                       />
                     </div>
-                    {errors.phone && (
-                      <p className="text-sm text-destructive">
-                        {errors.phone.message}
-                      </p>
-                    )}
-                  </div>
+                    <FieldError errors={[errors.phone]} />
+                  </Field>
 
-                  <div className="flex flex-col gap-1">
-                    <Label htmlFor="address">Address</Label>
+                  <Field>
+                    <FieldLabel htmlFor="address">Address</FieldLabel>
                     <Input
                       id="address"
                       placeholder="Optional"
                       {...register("address")}
                       aria-invalid={!!errors.address}
                     />
-                    {errors.address && (
-                      <p className="text-sm text-destructive">
-                        {errors.address.message}
-                      </p>
-                    )}
-                  </div>
+                    <FieldError errors={[errors.address]} />
+                  </Field>
 
-                  <div className="flex flex-col gap-1">
-                    <Label htmlFor="gender">Gender *</Label>
+                  <Field>
+                    <FieldLabel htmlFor="gender">Gender *</FieldLabel>
                     <Controller
                       control={control}
                       name="gender"
@@ -778,7 +697,10 @@ export default function OnboardingPage() {
                           value={field.value ?? undefined}
                           onValueChange={field.onChange}
                         >
-                          <SelectTrigger id="gender" aria-invalid={!!errors.gender}>
+                          <SelectTrigger
+                            id="gender"
+                            aria-invalid={!!errors.gender}
+                          >
                             <SelectValue placeholder="Select an option" />
                           </SelectTrigger>
                           <SelectContent>
@@ -791,19 +713,17 @@ export default function OnboardingPage() {
                         </Select>
                       )}
                     />
-                    {errors.gender && (
-                      <p className="text-sm text-destructive">
-                        {errors.gender.message}
-                      </p>
-                    )}
-                  </div>
+                    <FieldError errors={[errors.gender]} />
+                  </Field>
 
-                  <div className="flex flex-col gap-1">
-                    <Label htmlFor="padelCategory">Padel category</Label>
-                    <p className="text-xs text-muted-foreground">
+                  <Field>
+                    <FieldLabel htmlFor="padelCategory">
+                      Padel category
+                    </FieldLabel>
+                    <FieldDescription>
                       Your skill-level ranking — Category 1 is the highest
                       level, Category 8 is a beginner.
-                    </p>
+                    </FieldDescription>
                     <Controller
                       control={control}
                       name="padelCategory"
@@ -825,12 +745,8 @@ export default function OnboardingPage() {
                         </Select>
                       )}
                     />
-                    {errors.padelCategory && (
-                      <p className="text-sm text-destructive">
-                        {errors.padelCategory.message}
-                      </p>
-                    )}
-                  </div>
+                    <FieldError errors={[errors.padelCategory]} />
+                  </Field>
                 </motion.div>
               )}
 
@@ -854,9 +770,13 @@ export default function OnboardingPage() {
                     </p>
                   </div>
 
-                  <div className="max-h-56 overflow-y-auto rounded-xl border border-border bg-muted/40 p-4 text-xs text-muted-foreground leading-relaxed whitespace-pre-line">
+                  <MutedPanel
+                    bordered
+                    size="md"
+                    className="max-h-56 overflow-y-auto text-xs text-muted-foreground leading-relaxed whitespace-pre-line"
+                  >
                     {TERMS_AND_CONDITIONS_TEXT}
-                  </div>
+                  </MutedPanel>
 
                   <Controller
                     control={control}
@@ -916,7 +836,7 @@ export default function OnboardingPage() {
               )}
             </div>
           </form>
-        </div>
+        </Card>
 
         <p className="text-center text-xs text-muted-foreground mt-4">
           Step {stepIndex + 1} of {flow.length}

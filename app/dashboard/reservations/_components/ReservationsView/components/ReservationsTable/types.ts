@@ -1,7 +1,4 @@
-import type {
-  ReservationActionKind,
-  ReservationRecord,
-} from "../../types";
+import type { ReservationActionKind, ReservationRecord } from "../../types";
 
 export type ReservationsTableProps = {
   reservations: ReservationRecord[];

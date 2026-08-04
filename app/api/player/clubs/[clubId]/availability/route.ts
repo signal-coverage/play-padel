@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import { listCourtsByClub, getCourtSlots } from "@/core/courts/services/courts.service";
+import {
+  listCourtsByClub,
+  getCourtSlots,
+} from "@/core/courts/services/courts.service";
 
 // Player-facing composed view: a club's active courts plus each court's
 // computed slots for one calendar day, shaped directly for

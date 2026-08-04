@@ -8,8 +8,7 @@ export type OwnerContext = {
 };
 
 export type RequireOwnerResult =
-  | { ok: true; context: OwnerContext }
-  | { ok: false; response: NextResponse };
+  { ok: true; context: OwnerContext } | { ok: false; response: NextResponse };
 
 /**
  * Resolves the current Clerk user's own club ownership, ignoring any

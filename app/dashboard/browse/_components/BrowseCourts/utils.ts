@@ -20,3 +20,19 @@ export function toDateKey(date: Date): string {
   const d = String(date.getDate()).padStart(2, "0");
   return `${y}-${m}-${d}`;
 }
+
+/**
+ * Counts distinct slot start times across all courts (mirrors how
+ * `CourtAvailabilityGrid`'s `buildTimeRows` derives its row count, without
+ * needing the full row objects). Used to cache a "last known" skeleton row
+ * count per club so the loading state doesn't have to guess.
+ */
+export function countUniqueSlotStarts(courts: CourtColumn[]): number {
+  const starts = new Set<number>();
+  for (const court of courts) {
+    for (const slot of court.slots) {
+      starts.add(slot.start.getTime());
+    }
+  }
+  return starts.size;
+}

@@ -1,7 +1,7 @@
 "use client";
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { ReservationStatusBadge } from "@/components/ReservationStatusBadge";
+import { StatValue } from "@/components/StatValue";
 import {
   Dialog,
   DialogContent,
@@ -10,9 +10,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { RESERVATION_STATUS_LABELS } from "@/core/reservations/consts";
-import { STATUS_BADGE_VARIANT } from "../ReservationsTable/consts";
 import { formatTimeRange, isActionable } from "../../utils";
+import { ReservationActionButtons } from "../ReservationActionButtons";
 import type { SlotDetailsDialogProps } from "./types";
 
 export function SlotDetailsDialog({
@@ -26,8 +25,10 @@ export function SlotDetailsDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Reservation details</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-balance">
+            Reservation details
+          </DialogTitle>
+          <DialogDescription className="text-pretty">
             {reservation
               ? "This slot is booked."
               : "Reservation details are unavailable for this slot."}
@@ -36,65 +37,50 @@ export function SlotDetailsDialog({
 
         {reservation && (
           <div className="flex flex-col gap-2 text-sm">
-            <Row label="Player" value={reservation.userName} />
-            <Row label="Court" value={reservation.courtName} />
-            <Row
+            <StatValue
+              variant="row"
+              label="Player"
+              value={reservation.userName}
+            />
+            <StatValue
+              variant="row"
+              label="Court"
+              value={reservation.courtName}
+            />
+            <StatValue
+              variant="row"
               label="Time"
               value={formatTimeRange(
                 reservation.scheduledStart,
                 reservation.scheduledEnd,
               )}
             />
-            <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">Status</span>
-              <Badge variant={STATUS_BADGE_VARIANT[reservation.status]}>
-                {RESERVATION_STATUS_LABELS[reservation.status]}
-              </Badge>
-            </div>
+            <StatValue
+              variant="row"
+              label="Status"
+              value={reservation.status}
+              valueSlot={<ReservationStatusBadge status={reservation.status} />}
+            />
             {reservation.notes && (
-              <Row label="Notes" value={reservation.notes} />
+              <StatValue
+                variant="row"
+                label="Notes"
+                value={reservation.notes}
+              />
             )}
           </div>
         )}
 
         {reservation && isActionable(reservation.status) && (
           <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              disabled={isPending}
-              onClick={() => onAction(reservation.id, "complete")}
-            >
-              Complete
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              disabled={isPending}
-              onClick={() => onAction(reservation.id, "noShow")}
-            >
-              No-show
-            </Button>
-            <Button
-              type="button"
-              variant="destructive"
-              disabled={isPending}
-              onClick={() => onAction(reservation.id, "cancel")}
-            >
-              Cancel
-            </Button>
+            <ReservationActionButtons
+              reservationId={reservation.id}
+              onAction={onAction}
+              isPending={isPending}
+            />
           </DialogFooter>
         )}
       </DialogContent>
     </Dialog>
-  );
-}
-
-function Row({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-center justify-between gap-4">
-      <span className="text-muted-foreground">{label}</span>
-      <span className="font-medium text-right">{value}</span>
-    </div>
   );
 }

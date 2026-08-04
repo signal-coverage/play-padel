@@ -21,8 +21,14 @@ const timeRegex = /^([01]\d|2[0-3]):[0-5]\d$/;
 
 const availabilityEntrySchema = z
   .object({
-    dayOfWeek: z.number().int().min(0, "Day of week must be 0-6").max(6, "Day of week must be 0-6"),
-    startTime: z.string().regex(timeRegex, "Start time must be in HH:mm format"),
+    dayOfWeek: z
+      .number()
+      .int()
+      .min(0, "Day of week must be 0-6")
+      .max(6, "Day of week must be 0-6"),
+    startTime: z
+      .string()
+      .regex(timeRegex, "Start time must be in HH:mm format"),
     endTime: z.string().regex(timeRegex, "End time must be in HH:mm format"),
   })
   .refine((entry) => entry.endTime > entry.startTime, {
@@ -30,4 +36,6 @@ const availabilityEntrySchema = z
     path: ["endTime"],
   });
 
-export const weeklyAvailabilityTemplateSchema = z.array(availabilityEntrySchema);
+export const weeklyAvailabilityTemplateSchema = z.array(
+  availabilityEntrySchema,
+);

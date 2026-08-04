@@ -5,7 +5,7 @@ import {
 } from "@/core/notifications/services/notifications.service";
 import type { DispatchParams } from "@/core/notifications/types";
 
-const FROM_ADDRESS = "noreply@erpflow.app";
+const FROM_ADDRESS = "noreply@playpadel.app";
 
 /**
  * Persist-then-send dispatcher.

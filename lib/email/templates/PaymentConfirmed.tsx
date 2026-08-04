@@ -38,8 +38,7 @@ export function PaymentConfirmed({
           <Heading style={h1}>Payment Received</Heading>
           <Text style={text}>Hello {userName},</Text>
           <Text style={text}>
-            We have received your payment for your court reservation. Thank
-            you!
+            We have received your payment for your court reservation. Thank you!
           </Text>
           <Section style={infoBox}>
             <Text style={infoLine}>

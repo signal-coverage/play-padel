@@ -18,6 +18,8 @@ export async function GET(request: NextRequest) {
   if (!authResult.ok) return authResult.response;
 
   const dateParam = request.nextUrl.searchParams.get("date");
+  const fromParam = request.nextUrl.searchParams.get("from");
+  const toParam = request.nextUrl.searchParams.get("to");
   const courtId = request.nextUrl.searchParams.get("courtId") ?? undefined;
 
   let date: Date | undefined;
@@ -32,11 +34,25 @@ export async function GET(request: NextRequest) {
     date = parsed;
   }
 
+  let dateFrom: Date | undefined;
+  let dateTo: Date | undefined;
+  if (fromParam || toParam) {
+    dateFrom = parseDateParam(fromParam) ?? undefined;
+    dateTo = parseDateParam(toParam) ?? undefined;
+    if (!dateFrom || !dateTo) {
+      return NextResponse.json(
+        { error: "Invalid from/to query param (expected YYYY-MM-DD)" },
+        { status: 400 },
+      );
+    }
+  }
+
   try {
     const reservations = await listReservationsByClub(
       authResult.context.clubId,
       {
         ...(date && { date }),
+        ...(dateFrom && dateTo && { dateFrom, dateTo }),
         ...(courtId && { courtId }),
         status: ALL_STATUSES,
       },

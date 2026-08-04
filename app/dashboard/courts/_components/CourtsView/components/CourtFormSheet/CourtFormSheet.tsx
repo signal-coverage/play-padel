@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Field, FieldLabel, FieldError } from "@/components/ui/field";
 import { Switch } from "@/components/ui/switch";
 import { courtToFormValues } from "../../utils";
 import { courtFormSchema } from "./consts";
@@ -71,51 +71,49 @@ export function CourtFormSheet({
           onSubmit={handleSubmit(submit)}
           className="flex flex-1 flex-col gap-4 overflow-y-auto px-4"
         >
-          <div className="flex flex-col gap-1">
-            <Label htmlFor="court-name">Name *</Label>
+          <Field>
+            <FieldLabel htmlFor="court-name">Name *</FieldLabel>
             <Input
               id="court-name"
               placeholder="Court 1"
               {...register("name")}
               aria-invalid={!!errors.name}
             />
-            {errors.name && (
-              <p className="text-sm text-destructive">{errors.name.message}</p>
-            )}
-          </div>
+            <FieldError errors={[errors.name]} />
+          </Field>
 
-          <div className="flex flex-col gap-1">
-            <Label htmlFor="court-surface">Surface</Label>
+          <Field>
+            <FieldLabel htmlFor="court-surface">Surface</FieldLabel>
             <Input
               id="court-surface"
               placeholder="Artificial turf"
               {...register("surface")}
             />
-          </div>
+          </Field>
 
-          <div className="flex flex-col gap-1">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="court-indoor">Indoor court</Label>
-              <Switch
-                id="court-indoor"
-                checked={indoor}
-                onCheckedChange={(checked) => setValue("indoor", checked)}
-              />
-            </div>
-          </div>
+          <Field orientation="horizontal">
+            <FieldLabel htmlFor="court-indoor">Indoor court</FieldLabel>
+            <Switch
+              id="court-indoor"
+              checked={indoor}
+              onCheckedChange={(checked) => setValue("indoor", checked)}
+            />
+          </Field>
 
-          <div className="flex flex-col gap-1">
-            <Label htmlFor="court-color">Color</Label>
+          <Field>
+            <FieldLabel htmlFor="court-color">Color</FieldLabel>
             <Input
               id="court-color"
               type="color"
               className="h-8 w-16 p-1"
               {...register("color")}
             />
-          </div>
+          </Field>
 
-          <div className="flex flex-col gap-1">
-            <Label htmlFor="court-slot-duration">Slot duration (minutes) *</Label>
+          <Field>
+            <FieldLabel htmlFor="court-slot-duration">
+              Slot duration (minutes) *
+            </FieldLabel>
             <Input
               id="court-slot-duration"
               type="number"
@@ -124,30 +122,32 @@ export function CourtFormSheet({
               {...register("slotDurationMinutes", { valueAsNumber: true })}
               aria-invalid={!!errors.slotDurationMinutes}
             />
-            {errors.slotDurationMinutes && (
-              <p className="text-sm text-destructive">
-                {errors.slotDurationMinutes.message}
-              </p>
-            )}
-          </div>
+            <FieldError errors={[errors.slotDurationMinutes]} />
+          </Field>
 
           {isEditMode && (
-            <div className="flex flex-col gap-1">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="court-active">Active</Label>
-                <Switch
-                  id="court-active"
-                  checked={active}
-                  onCheckedChange={(checked) => setValue("active", checked)}
-                />
-              </div>
-            </div>
+            <Field orientation="horizontal">
+              <FieldLabel htmlFor="court-active">Active</FieldLabel>
+              <Switch
+                id="court-active"
+                checked={active}
+                onCheckedChange={(checked) => setValue("active", checked)}
+              />
+            </Field>
           )}
         </form>
 
         <SheetFooter>
-          <Button type="button" onClick={handleSubmit(submit)} disabled={isSubmitting}>
-            {isSubmitting ? "Saving…" : isEditMode ? "Save changes" : "Create court"}
+          <Button
+            type="button"
+            onClick={handleSubmit(submit)}
+            disabled={isSubmitting}
+          >
+            {isSubmitting
+              ? "Saving…"
+              : isEditMode
+                ? "Save changes"
+                : "Create court"}
           </Button>
         </SheetFooter>
       </SheetContent>

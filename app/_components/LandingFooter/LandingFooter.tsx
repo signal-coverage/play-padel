@@ -18,7 +18,7 @@ export function LandingFooter() {
           viewport={{ once: true, margin: "-60px" }}
           transition={{ duration: 0.55, ease }}
         >
-          <p className="text-[22px] md:text-[26px] leading-snug text-white/90 max-w-85">
+          <p className="text-[22px] md:text-[26px] leading-snug text-white/90 max-w-85 text-pretty">
             {TAGLINE}
           </p>
 

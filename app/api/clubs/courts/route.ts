@@ -1,5 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { createCourt, listCourtsByClub } from "@/core/courts/services/courts.service";
+import {
+  createCourt,
+  listCourtsByClub,
+} from "@/core/courts/services/courts.service";
 import { createCourtSchema } from "@/core/courts/schemas/court.schema";
 import { requireOwnerClub } from "../_lib/require-owner";
 

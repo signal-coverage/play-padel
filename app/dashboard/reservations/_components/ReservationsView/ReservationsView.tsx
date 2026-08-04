@@ -1,7 +1,11 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { CourtAvailabilityGrid, type Slot } from "@/components/CourtAvailabilityGrid";
+import {
+  CourtAvailabilityGrid,
+  type Slot,
+} from "@/components/CourtAvailabilityGrid";
+import { useGuardedDialogClose } from "@/hooks/use-guarded-dialog-close";
 import { ReservationsTable } from "./components/ReservationsTable";
 import { SlotDetailsDialog } from "./components/SlotDetailsDialog";
 import {
@@ -27,6 +31,10 @@ export function ReservationsView() {
     useDayReservations(selectedDate);
 
   const reservationAction = useReservationAction();
+  const handleDialogClose = useGuardedDialogClose(
+    reservationAction.isPending,
+    () => setDialogOpen(false),
+  );
 
   const courtColumns = useMemo(
     () => buildCourtColumns(courts, slotQueries),
@@ -39,7 +47,7 @@ export function ReservationsView() {
 
   const slotsLoading = slotQueries.some((query) => query.isLoading);
   const selectedReservation = selectedReservationId
-    ? reservationMap.get(selectedReservationId) ?? null
+    ? (reservationMap.get(selectedReservationId) ?? null)
     : null;
 
   function handleSlotClick(_courtId: string, slot: Slot) {
@@ -61,16 +69,17 @@ export function ReservationsView() {
     );
   }
 
-  const pendingReservationId =
-    reservationAction.isPending
-      ? (reservationAction.variables?.reservationId ?? null)
-      : null;
+  const pendingReservationId = reservationAction.isPending
+    ? (reservationAction.variables?.reservationId ?? null)
+    : null;
 
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Reservations</h1>
-        <p className="text-sm text-muted-foreground mt-1">
+        <h1 className="text-2xl font-semibold tracking-tight text-balance">
+          Reservations
+        </h1>
+        <p className="text-sm text-muted-foreground mt-1 text-pretty">
           View court availability and manage the day&apos;s bookings.
         </p>
       </div>
@@ -93,7 +102,7 @@ export function ReservationsView() {
 
       <SlotDetailsDialog
         open={dialogOpen}
-        onOpenChange={setDialogOpen}
+        onOpenChange={handleDialogClose}
         reservation={selectedReservation}
         onAction={handleAction}
         isPending={reservationAction.isPending}

@@ -9,6 +9,7 @@ export type SystemRole = "owner" | "player";
 interface UserProfileSummary {
   role: SystemRole;
   clubId: string | null;
+  padelCategory: number | null;
 }
 
 export interface AppUser {
@@ -21,6 +22,9 @@ export interface AppUser {
   // land — see DashboardGuard for how that gap is currently handled).
   role: SystemRole | null;
   clubId: string | null;
+  // Player-only self-reported skill level (1 = highest, 8 = beginner);
+  // always null for owners and for players who skipped it during onboarding.
+  padelCategory: number | null;
 }
 
 interface AuthContextValue {
@@ -38,20 +42,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const { user: clerkUser, isLoaded } = useUser();
   const { signOut } = useClerk();
   const [profile, setProfile] = useState<UserProfileSummary | null>(null);
+  // Tracks the in-flight /api/me fetch only for the "clerkUser present"
+  // case. The logged-out/not-yet-hydrated case is derived below instead of
+  // being written here, so this never needs a synchronous setState in the
+  // effect's early-return branch.
   const [profileLoading, setProfileLoading] = useState(true);
 
   useEffect(() => {
-    if (!isLoaded) return;
-
-    if (!clerkUser) {
-      // `user` below already collapses to null whenever there's no
-      // clerkUser, so a stale `profile` from a previous session is never
-      // exposed — just stop showing a loading state.
-      setProfileLoading(false);
-      return;
-    }
+    // No clerkUser (still hydrating, or logged out) means there's nothing to
+    // fetch. `profileLoading` below is derived to `false` for the logged-out
+    // case directly during render, so this effect just skips scheduling —
+    // no setState needed for that branch.
+    if (!isLoaded || !clerkUser) return;
 
     let cancelled = false;
+    // Kicks off the /api/me fetch and tracks its loading state — the
+    // recognized "start fetching, subscribe to its result" effect pattern,
+    // not a response to a state change.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setProfileLoading(true);
 
     // Thin lookup of this user's own UserProfile.role/clubId. Reads Prisma
@@ -85,6 +93,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             imageUrl: clerkUser.imageUrl ?? null,
             role: profile?.role ?? null,
             clubId: profile?.clubId ?? null,
+            padelCategory: profile?.padelCategory ?? null,
           }
         : null,
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -97,14 +106,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     ],
   );
 
+  // Mirrors the old effect-driven value exactly: still hydrating -> true;
+  // hydrated with no clerkUser (logged out) -> false; hydrated with a
+  // clerkUser -> whatever the in-flight fetch state is.
+  const isProfileLoading = !isLoaded
+    ? true
+    : clerkUser
+      ? profileLoading
+      : false;
+
   const value = useMemo(
     () => ({
       user: isLoaded ? user : null,
       loading: !isLoaded,
-      profileLoading,
+      profileLoading: isProfileLoading,
       signOut: () => signOut(),
     }),
-    [user, isLoaded, profileLoading, signOut],
+    [user, isLoaded, isProfileLoading, signOut],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
