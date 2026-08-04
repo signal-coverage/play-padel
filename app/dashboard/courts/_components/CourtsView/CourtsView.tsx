@@ -5,7 +5,6 @@ import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -13,6 +12,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { GuardedActionButton } from "@/components/GuardedActionButton";
+import { useGuardedDialogClose } from "@/hooks/use-guarded-dialog-close";
 import { CourtsTable } from "./components/CourtsTable";
 import { CourtFormSheet } from "./components/CourtFormSheet";
 import { AvailabilitySheet } from "./components/AvailabilitySheet";
@@ -34,12 +35,15 @@ export function CourtsView() {
   const [editingCourt, setEditingCourt] = useState<CourtRecord | null>(null);
 
   const [availabilityOpen, setAvailabilityOpen] = useState(false);
-  const [availabilityCourt, setAvailabilityCourt] = useState<CourtRecord | null>(
-    null,
-  );
+  const [availabilityCourt, setAvailabilityCourt] =
+    useState<CourtRecord | null>(null);
 
   const [courtPendingDeletion, setCourtPendingDeletion] =
     useState<CourtRecord | null>(null);
+  const handleDeleteDialogClose = useGuardedDialogClose(
+    deleteCourt.isPending,
+    () => setCourtPendingDeletion(null),
+  );
 
   function openCreateForm() {
     setEditingCourt(null);
@@ -58,7 +62,10 @@ export function CourtsView() {
 
   async function handleFormSubmit(values: CourtFormValues) {
     if (editingCourt) {
-      await updateCourt.mutateAsync({ courtId: editingCourt.id, input: values });
+      await updateCourt.mutateAsync({
+        courtId: editingCourt.id,
+        input: values,
+      });
     } else {
       await createCourt.mutateAsync(values);
     }
@@ -66,16 +73,23 @@ export function CourtsView() {
 
   async function confirmDelete() {
     if (!courtPendingDeletion) return;
-    await deleteCourt.mutateAsync(courtPendingDeletion.id);
-    setCourtPendingDeletion(null);
+    try {
+      await deleteCourt.mutateAsync(courtPendingDeletion.id);
+      setCourtPendingDeletion(null);
+    } catch {
+      // useDeleteCourt's onError already surfaces a toast; keep the dialog
+      // open so the user can retry or cancel.
+    }
   }
 
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Courts</h1>
-          <p className="text-sm text-muted-foreground mt-1">
+          <h1 className="text-2xl font-semibold tracking-tight text-balance">
+            Courts
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1 text-pretty">
             Manage your club&apos;s courts and weekly availability.
           </p>
         </div>
@@ -91,7 +105,9 @@ export function CourtsView() {
         onEdit={openEditForm}
         onEditAvailability={openAvailability}
         onDelete={setCourtPendingDeletion}
-        deletingCourtId={deleteCourt.isPending ? deleteCourt.variables ?? null : null}
+        deletingCourtId={
+          deleteCourt.isPending ? (deleteCourt.variables ?? null) : null
+        }
       />
 
       <CourtFormSheet
@@ -110,7 +126,7 @@ export function CourtsView() {
 
       <AlertDialog
         open={Boolean(courtPendingDeletion)}
-        onOpenChange={(open) => !open && setCourtPendingDeletion(null)}
+        onOpenChange={handleDeleteDialogClose}
       >
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -123,9 +139,24 @@ export function CourtsView() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete}>
-              Deactivate
-            </AlertDialogAction>
+            {/*
+              AlertDialogAction wraps Radix's Dialog.Close: its onClick is
+              composed with an unconditional close via composeEventHandlers,
+              so preventDefault() has to run synchronously on the same click
+              that starts the mutation — before isPending can ever flip to
+              true — which made the dialog close instantly regardless of
+              mutation outcome. GuardedActionButton renders a plain Button
+              (no Dialog.Close), so nothing closes the dialog on click; only
+              the explicit setCourtPendingDeletion(null) in confirmDelete's
+              success path (via useGuardedDialogClose's onOpenChange for
+              Escape/overlay, or here for the button) does.
+            */}
+            <GuardedActionButton
+              isPending={deleteCourt.isPending}
+              onClick={confirmDelete}
+            >
+              {deleteCourt.isPending ? "Deactivating…" : "Deactivate"}
+            </GuardedActionButton>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

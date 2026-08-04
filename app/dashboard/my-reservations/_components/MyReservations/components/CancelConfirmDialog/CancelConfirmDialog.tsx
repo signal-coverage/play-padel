@@ -9,6 +9,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { GuardedActionButton } from "@/components/GuardedActionButton";
 import type { CancelConfirmDialogProps } from "./types";
 import { formatCancelTargetDateTime } from "./utils";
 
@@ -38,9 +39,13 @@ export function CancelConfirmDialog({
           >
             Keep reservation
           </Button>
-          <Button variant="destructive" onClick={onConfirm} disabled={isSubmitting}>
+          <GuardedActionButton
+            variant="destructive"
+            isPending={isSubmitting}
+            onClick={onConfirm}
+          >
             {isSubmitting ? "Cancelling…" : "Cancel reservation"}
-          </Button>
+          </GuardedActionButton>
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -25,7 +25,7 @@ export function LandingTrusted() {
 
         <div className="flex-1">
           <motion.h2
-            className="text-2xl md:text-[28px] leading-snug text-[#111111] max-w-2xl"
+            className="text-2xl md:text-[28px] leading-snug text-[#111111] max-w-2xl text-balance"
             initial={shouldReduce ? false : { opacity: 0, y: 12 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -54,7 +54,7 @@ export function LandingTrusted() {
                 <div className="mt-1 text-[15px] font-semibold text-[#111111]">
                   {stat.label}
                 </div>
-                <p className="mt-2 text-sm text-[#999999] leading-relaxed max-w-none sm:max-w-60">
+                <p className="mt-2 text-sm text-[#999999] leading-relaxed max-w-none sm:max-w-60 text-pretty">
                   {stat.description}
                 </p>
               </motion.div>

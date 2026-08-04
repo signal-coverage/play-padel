@@ -56,14 +56,19 @@ export function SearchableSelect({
   const resolvedIdRef = useRef<string | undefined>(undefined);
   /** Always-current reference to onSearch so effects don't need it in deps. */
   const onSearchRef = useRef(onSearch);
-  onSearchRef.current = onSearch;
+  // Ref writes must happen outside render; this keeps onSearchRef "always
+  // current" without reading/writing `.current` during the render itself.
+  useEffect(() => {
+    onSearchRef.current = onSearch;
+  });
 
   // When the value prop changes and we don't have a label for it yet, resolve it.
   useEffect(() => {
     if (resolvedIdRef.current === value) return;
 
     if (!value) {
-      setResolvedLabel(undefined);
+      // No state to sync here — `label` below derives to undefined whenever
+      // `value` is falsy, so we only need to mark this (empty) id as synced.
       resolvedIdRef.current = value;
       return;
     }
@@ -83,6 +88,10 @@ export function SearchableSelect({
   // Load initial results whenever the popover opens.
   useEffect(() => {
     if (!open) return;
+    // Kicks off an async fetch and tracks its loading state — the
+    // recognized "start fetching, subscribe to its result" effect pattern,
+    // not a response to a state change.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
     onSearchRef
       .current("")
@@ -91,7 +100,7 @@ export function SearchableSelect({
         setLoading(false);
       })
       .catch(() => setLoading(false));
-  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [open]);
 
   function handleSearchChange(query: string) {
     clearTimeout(debounceRef.current);
@@ -115,7 +124,9 @@ export function SearchableSelect({
   }
 
   // displayValue prop takes precedence; fall back to the resolved label.
-  const label = displayValue ?? resolvedLabel;
+  // (resolvedLabel is only meaningful once `value` is non-empty — see the
+  // resolve effect above.)
+  const label = displayValue ?? (value ? resolvedLabel : undefined);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>

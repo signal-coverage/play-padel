@@ -1,27 +1,27 @@
 - generic [active] [ref=e1]:
-  - region "Notifications alt+T":
-    - list:
-      - listitem [ref=e233]:
-        - generic [ref=e238]: You're all set. Welcome to Play Padel!
-  - button "Open Next.js Dev Tools" [ref=e240] [cursor=pointer]:
-    - generic [ref=e243]:
-      - text: Rendering
-      - generic [ref=e244]:
-        - generic [ref=e245]: .
-        - generic [ref=e246]: .
-        - generic [ref=e247]: .
-  - alert [ref=e37]
-  - generic [ref=e38]:
-    - generic [ref=e39]:
-      - link "LocatorJS" [ref=e40] [cursor=pointer]:
-        - /url: https://www.locatorjs.com
-      - button "Settings" [ref=e48] [cursor=pointer]
-    - generic [ref=e49]:
-      - text: Go to component code with
-      - generic [ref=e50]: Alt
-      - text: +
-      - generic [ref=e51]: click
-    - generic [ref=e52]:
-      - link "What is Locator?" [ref=e53] [cursor=pointer]:
-        - /url: https://www.locatorjs.com
-      - generic [ref=e54] [cursor=pointer]: Stop showing this popup
+    - region "Notifications alt+T":
+        - list:
+            - listitem [ref=e233]:
+                - generic [ref=e238]: You're all set. Welcome to Play Padel!
+    - button "Open Next.js Dev Tools" [ref=e240] [cursor=pointer]:
+        - generic [ref=e243]:
+            - text: Rendering
+            - generic [ref=e244]:
+                - generic [ref=e245]: .
+                - generic [ref=e246]: .
+                - generic [ref=e247]: .
+    - alert [ref=e37]
+    - generic [ref=e38]:
+        - generic [ref=e39]:
+            - link "LocatorJS" [ref=e40] [cursor=pointer]:
+                - /url: https://www.locatorjs.com
+            - button "Settings" [ref=e48] [cursor=pointer]
+        - generic [ref=e49]:
+            - text: Go to component code with
+            - generic [ref=e50]: Alt
+            - text: +
+            - generic [ref=e51]: click
+        - generic [ref=e52]:
+            - link "What is Locator?" [ref=e53] [cursor=pointer]:
+                - /url: https://www.locatorjs.com
+            - generic [ref=e54] [cursor=pointer]: Stop showing this popup

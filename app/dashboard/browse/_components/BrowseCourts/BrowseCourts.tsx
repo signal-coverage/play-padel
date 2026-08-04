@@ -4,6 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { CourtAvailabilityGrid } from "@/components/CourtAvailabilityGrid";
 import type { Slot } from "@/components/CourtAvailabilityGrid";
+import { useGuardedDialogClose } from "@/hooks/use-guarded-dialog-close";
 import { ClubPicker } from "./components/ClubPicker";
 import { BookingConfirmDialog } from "./components/BookingConfirmDialog";
 import { useActiveClubs, useClubAvailability, useBookSlot } from "./hooks";
@@ -15,11 +16,18 @@ export function BrowseCourts() {
   const [selected, setSelected] = useState<SelectedSlot | null>(null);
 
   const { data: clubs, isLoading: clubsLoading } = useActiveClubs();
-  const { data: courts, isLoading: availabilityLoading } = useClubAvailability(
-    clubId,
-    date,
-  );
+  const {
+    data: courts,
+    isLoading: availabilityLoading,
+    isUpdating: availabilityUpdating,
+    isError: availabilityError,
+    columnCount,
+    rowCount,
+  } = useClubAvailability(clubId, date);
   const bookSlot = useBookSlot();
+  const handleDialogClose = useGuardedDialogClose(bookSlot.isPending, () =>
+    setSelected(null),
+  );
 
   function handleSlotClick(courtId: string, slot: Slot) {
     if (slot.status !== "free") return;
@@ -36,7 +44,7 @@ export function BrowseCourts() {
         scheduledStart: selected.slot.start.toISOString(),
         scheduledEnd: selected.slot.end.toISOString(),
       });
-      toast.success("Court reserved!");
+      toast.success("Reservation confirmed.");
       setSelected(null);
     } catch (err) {
       toast.error(
@@ -46,11 +54,9 @@ export function BrowseCourts() {
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Browse Courts
-        </h1>
+    <div className="flex flex-col gap-6 lg:h-full">
+      <div className="shrink-0">
+        <h1 className="text-2xl font-semibold tracking-tight">Browse Courts</h1>
         <p className="text-sm text-muted-foreground mt-1">
           Pick a club and reserve a free slot.
         </p>
@@ -63,24 +69,30 @@ export function BrowseCourts() {
         isLoading={clubsLoading}
       />
 
-      {clubId ? (
-        <CourtAvailabilityGrid
-          date={date}
-          courts={courts ?? []}
-          variant="player"
-          onSlotClick={handleSlotClick}
-          onDateChange={setDate}
-          isLoading={availabilityLoading}
-        />
-      ) : (
-        <p className="text-sm text-muted-foreground">
-          Select a club to see court availability.
-        </p>
-      )}
+      <div className="lg:min-h-0 lg:flex-1 lg:overflow-y-auto">
+        {clubId ? (
+          <CourtAvailabilityGrid
+            date={date}
+            courts={courts ?? []}
+            variant="player"
+            onSlotClick={handleSlotClick}
+            onDateChange={setDate}
+            isLoading={availabilityLoading}
+            isUpdating={availabilityUpdating}
+            isError={availabilityError}
+            columnCount={columnCount}
+            rowCount={rowCount}
+          />
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            Select a club to see court availability.
+          </p>
+        )}
+      </div>
 
       <BookingConfirmDialog
         open={!!selected}
-        onOpenChange={(open) => !open && setSelected(null)}
+        onOpenChange={handleDialogClose}
         courtName={selected?.courtName ?? ""}
         slot={selected?.slot ?? null}
         isSubmitting={bookSlot.isPending}

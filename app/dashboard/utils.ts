@@ -4,3 +4,11 @@ export function getGreeting(): string {
   if (h < 18) return "Good afternoon";
   return "Good evening";
 }
+
+export function getFormattedDate(): string {
+  return new Date().toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+  });
+}

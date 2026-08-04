@@ -58,7 +58,9 @@ export function buildCourtColumns(
 export function buildReservationMap(
   reservations: ReservationRecord[],
 ): Map<string, ReservationRecord> {
-  return new Map(reservations.map((reservation) => [reservation.id, reservation]));
+  return new Map(
+    reservations.map((reservation) => [reservation.id, reservation]),
+  );
 }
 
 export function formatTimeRange(start: Date, end: Date): string {

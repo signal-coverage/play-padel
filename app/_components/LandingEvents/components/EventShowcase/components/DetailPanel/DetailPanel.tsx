@@ -1,6 +1,7 @@
 "use client";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ArrowLeft, ArrowRight } from "lucide-react";
+import { SlideCounter } from "@/app/_components/SlideCounter";
 import { ease } from "../../../../consts";
 import type { DetailPanelProps } from "./types";
 
@@ -26,16 +27,14 @@ export function DetailPanel({
           <h3 className="text-2xl font-bold text-[#111111] mb-3">
             {event.title}
           </h3>
-          <p className="text-sm text-[#737373] leading-relaxed">
+          <p className="text-sm text-[#737373] leading-relaxed text-pretty">
             {event.description}
           </p>
         </motion.div>
       </AnimatePresence>
 
       <div className="flex items-center justify-end gap-2">
-        <span className="text-sm text-[#999999] tabular-nums mr-1">
-          {String(index + 1).padStart(1, "0")} / {total}
-        </span>
+        <SlideCounter current={index + 1} total={total} className="mr-1" />
         <button
           type="button"
           onClick={onPrev}

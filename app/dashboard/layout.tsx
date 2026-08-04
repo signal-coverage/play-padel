@@ -3,10 +3,12 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
-import { SidebarProvider } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/app/dashboard/_components/AppSidebar";
-import { AppHeader } from "@/app/dashboard/_components/AppHeader";
+import {
+  AppNavbar,
+  MobileBottomNav,
+} from "@/app/dashboard/_components/AppNavbar";
 import { DashboardGuard } from "@/app/dashboard/_components/DashboardGuard";
+import { DashboardLoader } from "@/app/dashboard/_components/DashboardLoader";
 import { ReactQueryProvider } from "@/providers/query-provider";
 
 export default function DashboardLayout({
@@ -23,22 +25,23 @@ export default function DashboardLayout({
     }
   }, [user, loading, router]);
 
-  if (loading || !user) return null;
+  if (loading || !user) return <DashboardLoader />;
 
   return (
     <ReactQueryProvider>
       <DashboardGuard>
-        <SidebarProvider className="bg-sidebar">
-          <AppSidebar />
-          <div className="h-svh overflow-hidden lg:p-2 w-full">
-            <div className="lg:border lg:rounded-xl overflow-hidden flex flex-col bg-background h-full w-full">
-              <AppHeader />
-              <main className="flex-1 overflow-y-auto p-4 md:p-6">
-                {children}
-              </main>
-            </div>
+        <div className="h-svh overflow-hidden bg-muted p-2 lg:p-3">
+          <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-background">
+            <AppNavbar />
+            <main className="flex flex-1 justify-center overflow-y-auto p-3 scrollbar-none md:overflow-hidden md:p-4">
+              <div className="h-full w-full max-w-7xl">{children}</div>
+            </main>
+            <MobileBottomNav
+              role={user.role ?? "player"}
+              className="md:hidden"
+            />
           </div>
-        </SidebarProvider>
+        </div>
       </DashboardGuard>
     </ReactQueryProvider>
   );

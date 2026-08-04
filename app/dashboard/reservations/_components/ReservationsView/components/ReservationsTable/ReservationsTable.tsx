@@ -1,7 +1,7 @@
 "use client";
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { ReservationStatusBadge } from "@/components/ReservationStatusBadge";
+import { StatusBox } from "@/components/StatusBox";
 import {
   Table,
   TableBody,
@@ -10,9 +10,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { RESERVATION_STATUS_LABELS } from "@/core/reservations/consts";
 import { formatTimeRange, isActionable } from "../../utils";
-import { STATUS_BADGE_VARIANT } from "./consts";
+import { ReservationActionButtons } from "../ReservationActionButtons";
 import type { ReservationsTableProps } from "./types";
 
 export function ReservationsTable({
@@ -22,19 +21,11 @@ export function ReservationsTable({
   pendingReservationId,
 }: ReservationsTableProps) {
   if (isLoading) {
-    return (
-      <div className="rounded-lg border p-8 text-center text-sm text-muted-foreground">
-        Loading reservations…
-      </div>
-    );
+    return <StatusBox>Loading reservations…</StatusBox>;
   }
 
   if (reservations.length === 0) {
-    return (
-      <div className="rounded-lg border p-8 text-center text-sm text-muted-foreground">
-        No reservations for this day.
-      </div>
-    );
+    return <StatusBox>No reservations for this day.</StatusBox>;
   }
 
   return (
@@ -67,40 +58,17 @@ export function ReservationsTable({
                   )}
                 </TableCell>
                 <TableCell>
-                  <Badge variant={STATUS_BADGE_VARIANT[reservation.status]}>
-                    {RESERVATION_STATUS_LABELS[reservation.status]}
-                  </Badge>
+                  <ReservationStatusBadge status={reservation.status} />
                 </TableCell>
                 <TableCell className="text-right">
                   {actionable ? (
                     <div className="flex justify-end gap-1">
-                      <Button
-                        type="button"
-                        variant="outline"
+                      <ReservationActionButtons
+                        reservationId={reservation.id}
+                        onAction={onAction}
+                        isPending={isPending}
                         size="sm"
-                        disabled={isPending}
-                        onClick={() => onAction(reservation.id, "complete")}
-                      >
-                        Complete
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        disabled={isPending}
-                        onClick={() => onAction(reservation.id, "noShow")}
-                      >
-                        No-show
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        size="sm"
-                        disabled={isPending}
-                        onClick={() => onAction(reservation.id, "cancel")}
-                      >
-                        Cancel
-                      </Button>
+                      />
                     </div>
                   ) : (
                     <span className="text-xs text-muted-foreground">—</span>

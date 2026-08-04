@@ -1,0 +1,17 @@
+- generic [active] [ref=f31e1]:
+    - generic [ref=f31e3]:
+        - generic [ref=f31e9]:
+            - generic [ref=f31e10]:
+                - img "Play Padel" [ref=f31e12]
+                - generic [ref=f31e13]: Play Padel
+            - generic [ref=f31e14]:
+                - paragraph [ref=f31e15]: “Booking a court used to mean phone tag with the front desk. Now it takes ten seconds.”
+                - generic [ref=f31e16]:
+                    - paragraph [ref=f31e17]: Marina López
+                    - paragraph [ref=f31e18]: Owner, Level Up Padel Club
+        - generic [ref=f31e21]:
+            - heading "Create your account" [level=1] [ref=f31e22]
+            - paragraph [ref=f31e23]: Get started with Play Padel today.
+    - region "Notifications alt+T"
+    - button "Open Next.js Dev Tools" [ref=f31e29] [cursor=pointer]
+    - alert [ref=f31e33]

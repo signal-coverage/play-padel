@@ -1,71 +1,71 @@
 - generic [active] [ref=f34e1]:
-  - generic [ref=f34e3]:
-    - generic [ref=f34e9]:
-      - generic [ref=f34e10]: Play Padel
-      - generic [ref=f34e18]:
-        - paragraph [ref=f34e19]: “Booking a court used to mean phone tag with the front desk. Now it takes ten seconds.”
-        - generic [ref=f34e20]:
-          - paragraph [ref=f34e21]: Marina López
-          - paragraph [ref=f34e22]: Owner, Level Up Padel Club
-    - generic [ref=f34e24]:
-      - generic [ref=f34e25]:
-        - heading "Welcome back!" [level=1] [ref=f34e26]
-        - paragraph [ref=f34e27]: Sign in to your account to continue.
-      - generic [ref=f34e56]:
-        - generic [ref=f34e58]:
-          - button "Sign in with Google Continue with Google" [ref=f34e61] [cursor=pointer]:
-            - generic [ref=f34e62]:
-              - generic "Sign in with Google" [ref=f34e64]
-              - generic [ref=f34e65]: Continue with Google
-          - paragraph [ref=f34e68]: or
-          - generic [ref=f34e70]:
-            - generic [ref=f34e71]:
-              - generic [ref=f34e73]:
-                - generic [ref=f34e74]:
-                  - generic [ref=f34e75]:
-                    - generic [ref=f34e76] [cursor=pointer]: Email address
-                    - generic [ref=f34e77]: Last used
-                  - textbox "Email address" [invalid] [ref=f34e78]:
-                    - /placeholder: Enter your email address
-                    - text: repro-owner+clerk_test@example.com
-                - generic [ref=f34e79]: Couldn't find your account.
-                - paragraph [ref=f34e115]: Couldn't find your account.
-              - generic [ref=f34e82]:
-                - generic [ref=f34e83]:
-                  - generic [ref=f34e84] [cursor=pointer]: Password
-                  - link "Forgot password?" [ref=f34e85] [cursor=pointer]:
-                    - /url: ""
-                - generic [ref=f34e86]:
-                  - textbox "Password" [ref=f34e87]:
-                    - /placeholder: Enter your password
-                    - text: Repro-Owner-2026!
-                  - button "Show password" [ref=f34e88] [cursor=pointer]
-            - button [ref=f34e94] [cursor=pointer]
-        - generic [ref=f34e98]:
-          - generic [ref=f34e99]:
-            - generic [ref=f34e100]: Don’t have an account?
-            - link "Sign up" [ref=f34e101] [cursor=pointer]:
-              - /url: http://localhost:3000/signup
-          - generic [ref=f34e103]:
-            - generic [ref=f34e105]:
-              - paragraph [ref=f34e106]: Secured by
-              - link "Clerk logo" [ref=f34e107] [cursor=pointer]:
-                - /url: https://go.clerk.com/components
-            - paragraph [ref=f34e113]: Development mode
-  - region "Notifications alt+T"
-  - button "Open Next.js Dev Tools" [ref=f34e33] [cursor=pointer]
-  - alert [ref=f34e37]
-  - generic [ref=f34e38]:
-    - generic [ref=f34e39]:
-      - link "LocatorJS" [ref=f34e40] [cursor=pointer]:
-        - /url: https://www.locatorjs.com
-      - button "Settings" [ref=f34e48] [cursor=pointer]
-    - generic [ref=f34e49]:
-      - text: Go to component code with
-      - generic [ref=f34e50]: Alt
-      - text: +
-      - generic [ref=f34e51]: click
-    - generic [ref=f34e52]:
-      - link "What is Locator?" [ref=f34e53] [cursor=pointer]:
-        - /url: https://www.locatorjs.com
-      - generic [ref=f34e54] [cursor=pointer]: Stop showing this popup
+    - generic [ref=f34e3]:
+        - generic [ref=f34e9]:
+            - generic [ref=f34e10]: Play Padel
+            - generic [ref=f34e18]:
+                - paragraph [ref=f34e19]: “Booking a court used to mean phone tag with the front desk. Now it takes ten seconds.”
+                - generic [ref=f34e20]:
+                    - paragraph [ref=f34e21]: Marina López
+                    - paragraph [ref=f34e22]: Owner, Level Up Padel Club
+        - generic [ref=f34e24]:
+            - generic [ref=f34e25]:
+                - heading "Welcome back!" [level=1] [ref=f34e26]
+                - paragraph [ref=f34e27]: Sign in to your account to continue.
+            - generic [ref=f34e56]:
+                - generic [ref=f34e58]:
+                    - button "Sign in with Google Continue with Google" [ref=f34e61] [cursor=pointer]:
+                        - generic [ref=f34e62]:
+                            - generic "Sign in with Google" [ref=f34e64]
+                            - generic [ref=f34e65]: Continue with Google
+                    - paragraph [ref=f34e68]: or
+                    - generic [ref=f34e70]:
+                        - generic [ref=f34e71]:
+                            - generic [ref=f34e73]:
+                                - generic [ref=f34e74]:
+                                    - generic [ref=f34e75]:
+                                        - generic [ref=f34e76] [cursor=pointer]: Email address
+                                        - generic [ref=f34e77]: Last used
+                                    - textbox "Email address" [invalid] [ref=f34e78]:
+                                        - /placeholder: Enter your email address
+                                        - text: repro-owner+clerk_test@example.com
+                                - generic [ref=f34e79]: Couldn't find your account.
+                                - paragraph [ref=f34e115]: Couldn't find your account.
+                            - generic [ref=f34e82]:
+                                - generic [ref=f34e83]:
+                                    - generic [ref=f34e84] [cursor=pointer]: Password
+                                    - link "Forgot password?" [ref=f34e85] [cursor=pointer]:
+                                        - /url: ""
+                                - generic [ref=f34e86]:
+                                    - textbox "Password" [ref=f34e87]:
+                                        - /placeholder: Enter your password
+                                        - text: Repro-Owner-2026!
+                                    - button "Show password" [ref=f34e88] [cursor=pointer]
+                        - button [ref=f34e94] [cursor=pointer]
+                - generic [ref=f34e98]:
+                    - generic [ref=f34e99]:
+                        - generic [ref=f34e100]: Don’t have an account?
+                        - link "Sign up" [ref=f34e101] [cursor=pointer]:
+                            - /url: http://localhost:3000/signup
+                    - generic [ref=f34e103]:
+                        - generic [ref=f34e105]:
+                            - paragraph [ref=f34e106]: Secured by
+                            - link "Clerk logo" [ref=f34e107] [cursor=pointer]:
+                                - /url: https://go.clerk.com/components
+                        - paragraph [ref=f34e113]: Development mode
+    - region "Notifications alt+T"
+    - button "Open Next.js Dev Tools" [ref=f34e33] [cursor=pointer]
+    - alert [ref=f34e37]
+    - generic [ref=f34e38]:
+        - generic [ref=f34e39]:
+            - link "LocatorJS" [ref=f34e40] [cursor=pointer]:
+                - /url: https://www.locatorjs.com
+            - button "Settings" [ref=f34e48] [cursor=pointer]
+        - generic [ref=f34e49]:
+            - text: Go to component code with
+            - generic [ref=f34e50]: Alt
+            - text: +
+            - generic [ref=f34e51]: click
+        - generic [ref=f34e52]:
+            - link "What is Locator?" [ref=f34e53] [cursor=pointer]:
+                - /url: https://www.locatorjs.com
+            - generic [ref=f34e54] [cursor=pointer]: Stop showing this popup

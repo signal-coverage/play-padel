@@ -126,7 +126,9 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error("POST /api/onboarding failed:", error);
     return NextResponse.json(
-      { error: "Something went wrong completing onboarding. Please try again." },
+      {
+        error: "Something went wrong completing onboarding. Please try again.",
+      },
       { status: 500 },
     );
   }

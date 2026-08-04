@@ -1,6 +1,7 @@
 "use client";
 
 import { CalendarClock, Pencil, Trash2 } from "lucide-react";
+import { StatusBox } from "@/components/StatusBox";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,18 +24,14 @@ export function CourtsTable({
   deletingCourtId,
 }: CourtsTableProps) {
   if (isLoading) {
-    return (
-      <div className="rounded-lg border p-8 text-center text-sm text-muted-foreground">
-        Loading courts…
-      </div>
-    );
+    return <StatusBox>Loading courts…</StatusBox>;
   }
 
   if (courts.length === 0) {
     return (
-      <div className="rounded-lg border p-8 text-center text-sm text-muted-foreground">
+      <StatusBox>
         No courts yet. Create your first court to get started.
-      </div>
+      </StatusBox>
     );
   }
 
@@ -71,11 +68,11 @@ export function CourtsTable({
                 </Badge>
               </TableCell>
               <TableCell className="text-right">
-                <div className="flex justify-end gap-1">
+                <div className="flex justify-end gap-1.5">
                   <Button
                     type="button"
                     variant="ghost"
-                    size="icon-sm"
+                    size="icon"
                     aria-label={`Edit availability for ${court.name}`}
                     onClick={() => onEditAvailability(court)}
                   >
@@ -84,7 +81,7 @@ export function CourtsTable({
                   <Button
                     type="button"
                     variant="ghost"
-                    size="icon-sm"
+                    size="icon"
                     aria-label={`Edit ${court.name}`}
                     onClick={() => onEdit(court)}
                   >
@@ -93,7 +90,7 @@ export function CourtsTable({
                   <Button
                     type="button"
                     variant="ghost"
-                    size="icon-sm"
+                    size="icon"
                     aria-label={`Deactivate ${court.name}`}
                     disabled={!court.active || deletingCourtId === court.id}
                     onClick={() => onDelete(court)}

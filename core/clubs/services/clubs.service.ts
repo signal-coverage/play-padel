@@ -1,5 +1,9 @@
 import { prisma } from "@/infrastructure/db/client";
-import type { Club, CreateClubInput, UpdateClubInput } from "@/core/clubs/types";
+import type {
+  Club,
+  CreateClubInput,
+  UpdateClubInput,
+} from "@/core/clubs/types";
 
 type ClubRow = NonNullable<Awaited<ReturnType<typeof prisma.club.findUnique>>>;
 

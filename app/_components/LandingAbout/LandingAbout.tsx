@@ -63,7 +63,7 @@ export function LandingAbout() {
                       transition={{ duration: 0.3, ease }}
                       className="overflow-hidden"
                     >
-                      <p className="pb-5 text-sm text-[#737373] leading-relaxed max-w-md">
+                      <p className="pb-5 text-sm text-[#737373] leading-relaxed max-w-md text-pretty">
                         {item.description}
                       </p>
                     </motion.div>
@@ -86,7 +86,7 @@ export function LandingAbout() {
             alt="Players sharing a moment at the net after a match"
             fill
             sizes="(min-width: 768px) 50vw, 100vw"
-            className="object-cover"
+            className="object-cover outline outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10"
           />
           <Link
             href="#appointment"

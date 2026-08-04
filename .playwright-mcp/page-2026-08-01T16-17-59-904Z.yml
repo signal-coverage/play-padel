@@ -1,0 +1,7 @@
+- generic [active] [ref=f54e1]:
+    - generic [ref=f54e2]:
+        - status "Loading" [ref=f54e3]
+        - paragraph [ref=f54e5]: Loading your workspace…
+    - region "Notifications alt+T"
+    - button "Open Next.js Dev Tools" [ref=f54e11] [cursor=pointer]
+    - alert [ref=f54e15]

@@ -24,10 +24,7 @@ export async function logAudit(params: {
     .catch(() => null);
 }
 
-export async function listAuditLogs(
-  clubId: string,
-  filters: AuditFilters,
-) {
+export async function listAuditLogs(clubId: string, filters: AuditFilters) {
   const page = filters.page ?? 1;
   const pageSize = filters.pageSize ?? 20;
   const skip = (page - 1) * pageSize;

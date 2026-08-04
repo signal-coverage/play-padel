@@ -22,7 +22,7 @@ export function LandingCtaBanner() {
           alt=""
           fill
           sizes="(min-width: 1400px) 1400px, 100vw"
-          className="object-cover"
+          className="object-cover outline outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10"
         />
         <div className="absolute inset-0 bg-linear-to-b from-black/70 via-black/55 to-black/70" />
 

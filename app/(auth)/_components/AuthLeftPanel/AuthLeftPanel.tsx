@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { LogoBadge } from "@/components/LogoBadge";
 
 export function AuthLeftPanel() {
   return (
@@ -50,51 +51,7 @@ export function AuthLeftPanel() {
           transition={{ duration: 0.45, ease: "easeOut" }}
           className="flex items-center gap-2.5"
         >
-          <div
-            className="w-7 h-7 rounded-md flex items-center justify-center shrink-0"
-            style={{
-              background: "rgba(255,255,255,0.18)",
-              border: "1px solid rgba(255,255,255,0.22)",
-              backdropFilter: "blur(8px)",
-            }}
-          >
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 14 14"
-              fill="none"
-              aria-hidden="true"
-            >
-              <rect x="1" y="1" width="5" height="5" rx="1" fill="white" />
-              <rect
-                x="8"
-                y="1"
-                width="5"
-                height="5"
-                rx="1"
-                fill="white"
-                fillOpacity="0.7"
-              />
-              <rect
-                x="1"
-                y="8"
-                width="5"
-                height="5"
-                rx="1"
-                fill="white"
-                fillOpacity="0.7"
-              />
-              <rect
-                x="8"
-                y="8"
-                width="5"
-                height="5"
-                rx="1"
-                fill="white"
-                fillOpacity="0.4"
-              />
-            </svg>
-          </div>
+          <LogoBadge size="sm" />
           <span className="text-white font-semibold text-sm tracking-tight">
             Play Padel
           </span>

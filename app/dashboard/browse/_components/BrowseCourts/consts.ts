@@ -5,6 +5,9 @@ export const playerClubAvailabilityBaseKey = [
   "club-availability",
 ] as const;
 
-export function playerClubAvailabilityQueryKey(clubId: string, dateKey: string) {
+export function playerClubAvailabilityQueryKey(
+  clubId: string,
+  dateKey: string,
+) {
   return [...playerClubAvailabilityBaseKey, clubId, dateKey] as const;
 }

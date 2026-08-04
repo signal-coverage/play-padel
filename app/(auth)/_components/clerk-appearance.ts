@@ -1,6 +1,6 @@
 export const clerkAppearance = {
   variables: {
-    colorPrimary: "#7C5CFF",
+    colorPrimary: "#073d6b",
     colorText: "#111827",
     colorTextSecondary: "#6B7280",
     colorBackground: "#ffffff",
@@ -26,7 +26,7 @@ export const clerkAppearance = {
     dividerLine: "!bg-gray-200",
     dividerText: "!text-gray-400 !text-xs",
     footer: "!bg-white",
-    footerPagesLink: "!text-[#7C5CFF]",
-    identityPreviewEditButton: "!text-[#7C5CFF]",
+    footerPagesLink: "!text-[#073d6b]",
+    identityPreviewEditButton: "!text-[#073d6b]",
   },
 } as const;

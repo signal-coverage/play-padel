@@ -1,0 +1,37 @@
+- generic [active] [ref=e1]:
+    - generic [ref=e3]:
+        - generic [ref=e4]:
+            - generic [ref=e5]:
+                - generic [ref=e6]: Player Overview
+                - generic [ref=e7]: Right-handed
+            - generic [ref=e10]:
+                - generic [ref=e11]:
+                    - 'img "Preferred side: forehand (right side of the court)" [ref=e12]'
+                    - generic [ref=e13]:
+                        - paragraph [ref=e14]: Preferred side
+                        - paragraph [ref=e15]: forehand
+                - button "SM Sofía Martínez Latest partner" [ref=e16] [cursor=pointer]:
+                    - generic [ref=e17]: SM
+                    - generic [ref=e19]:
+                        - paragraph [ref=e20]: Sofía Martínez
+                        - paragraph [ref=e21]: Latest partner
+        - generic [ref=e24]:
+            - generic [ref=e25]: Performance Summary
+            - generic [ref=e28]:
+                - generic [ref=e29]:
+                    - generic [ref=e37]:
+                        - generic [ref=e38]: Tournaments
+                        - generic [ref=e39]: 5/12
+                    - generic [ref=e40]:
+                        - generic [ref=e41]: Position
+                        - generic [ref=e42]: forehand
+                - generic [ref=e43]:
+                    - paragraph [ref=e44]: Summer Open 2026
+                    - generic [ref=e45]:
+                        - generic [ref=e46]: W
+                        - generic [ref=e47]: W
+                        - generic [ref=e48]: L
+                        - generic [ref=e49]: W
+    - region "Notifications alt+T"
+    - button "Open Next.js Dev Tools" [ref=e55] [cursor=pointer]
+    - alert [ref=e59]

@@ -1,73 +1,73 @@
 - generic [ref=f10e1]:
-  - generic [ref=f10e144]:
-    - generic [ref=f10e145]:
-      - img "Play Padel" [ref=f10e147]
-      - heading "Set up your Play Padel account" [level=1] [ref=f10e148]
-      - paragraph [ref=f10e149]: This takes about 2 minutes.
-    - generic [ref=f10e150]:
-      - generic [ref=f10e151]:
-        - generic [ref=f10e152]: You
-        - generic [ref=f10e190]: Club
-        - generic [ref=f10e195]: Legal
-        - generic [ref=f10e200]: Plan
-        - generic [ref=f10e206]:
-          - generic [ref=f10e207]: "5"
-          - generic [ref=f10e208]: Profile
-        - generic [ref=f10e163]:
-          - generic [ref=f10e164]: "6"
-          - generic [ref=f10e165]: Terms
-      - generic [ref=f10e166]:
-        - generic [ref=f10e300]:
-          - generic [ref=f10e301]:
-            - heading "Your profile" [level=2] [ref=f10e302]
-            - paragraph [ref=f10e303]: How your name appears inside Play Padel.
-          - generic [ref=f10e304]:
-            - generic [ref=f10e305] [cursor=pointer]: Display name *
-            - textbox "Display name *" [ref=f10e310]
-          - generic [ref=f10e311]:
-            - paragraph [ref=f10e312]: Summary
-            - generic [ref=f10e313]:
-              - generic [ref=f10e314]: Club
-              - generic [ref=f10e315]: Repro Padel Club
-            - generic [ref=f10e316]:
-              - generic [ref=f10e317]: Email
-              - generic [ref=f10e318]: club@repro-owner.example.com
-            - generic [ref=f10e319]:
-              - generic [ref=f10e320]: Phone
-              - generic [ref=f10e321]: "+5491100000001"
-            - generic [ref=f10e322]:
-              - generic [ref=f10e323]: Legal name
-              - generic [ref=f10e324]: Repro Padel Club S.A.
-            - generic [ref=f10e325]:
-              - generic [ref=f10e326]: Tax ID
-              - generic [ref=f10e327]: 30-99999999-1
-            - generic [ref=f10e328]:
-              - generic [ref=f10e329]: Timezone
-              - generic [ref=f10e330]: Buenos Aires (GMT-3)
-            - generic [ref=f10e331]:
-              - generic [ref=f10e332]: Currency
-              - generic [ref=f10e333]: ARS — Argentine Peso
-            - generic [ref=f10e334]:
-              - generic [ref=f10e335]: Courts
-              - generic [ref=f10e336]: 3–5 courts
-        - generic [ref=f10e187]:
-          - button "Back" [ref=f10e237] [cursor=pointer]
-          - button "Continue" [active] [ref=f10e188] [cursor=pointer]
-    - paragraph [ref=f10e189]: Step 5 of 6
-  - region "Notifications alt+T"
-  - button "Open Next.js Dev Tools" [ref=f10e33] [cursor=pointer]
-  - alert [ref=f10e37]
-  - generic [ref=f10e38]:
-    - generic [ref=f10e39]:
-      - link "LocatorJS" [ref=f10e40] [cursor=pointer]:
-        - /url: https://www.locatorjs.com
-      - button "Settings" [ref=f10e48] [cursor=pointer]
-    - generic [ref=f10e49]:
-      - text: Go to component code with
-      - generic [ref=f10e50]: Alt
-      - text: +
-      - generic [ref=f10e51]: click
-    - generic [ref=f10e52]:
-      - link "What is Locator?" [ref=f10e53] [cursor=pointer]:
-        - /url: https://www.locatorjs.com
-      - generic [ref=f10e54] [cursor=pointer]: Stop showing this popup
+    - generic [ref=f10e144]:
+        - generic [ref=f10e145]:
+            - img "Play Padel" [ref=f10e147]
+            - heading "Set up your Play Padel account" [level=1] [ref=f10e148]
+            - paragraph [ref=f10e149]: This takes about 2 minutes.
+        - generic [ref=f10e150]:
+            - generic [ref=f10e151]:
+                - generic [ref=f10e152]: You
+                - generic [ref=f10e190]: Club
+                - generic [ref=f10e195]: Legal
+                - generic [ref=f10e200]: Plan
+                - generic [ref=f10e206]:
+                    - generic [ref=f10e207]: "5"
+                    - generic [ref=f10e208]: Profile
+                - generic [ref=f10e163]:
+                    - generic [ref=f10e164]: "6"
+                    - generic [ref=f10e165]: Terms
+            - generic [ref=f10e166]:
+                - generic [ref=f10e300]:
+                    - generic [ref=f10e301]:
+                        - heading "Your profile" [level=2] [ref=f10e302]
+                        - paragraph [ref=f10e303]: How your name appears inside Play Padel.
+                    - generic [ref=f10e304]:
+                        - generic [ref=f10e305] [cursor=pointer]: Display name *
+                        - textbox "Display name *" [ref=f10e310]
+                    - generic [ref=f10e311]:
+                        - paragraph [ref=f10e312]: Summary
+                        - generic [ref=f10e313]:
+                            - generic [ref=f10e314]: Club
+                            - generic [ref=f10e315]: Repro Padel Club
+                        - generic [ref=f10e316]:
+                            - generic [ref=f10e317]: Email
+                            - generic [ref=f10e318]: club@repro-owner.example.com
+                        - generic [ref=f10e319]:
+                            - generic [ref=f10e320]: Phone
+                            - generic [ref=f10e321]: "+5491100000001"
+                        - generic [ref=f10e322]:
+                            - generic [ref=f10e323]: Legal name
+                            - generic [ref=f10e324]: Repro Padel Club S.A.
+                        - generic [ref=f10e325]:
+                            - generic [ref=f10e326]: Tax ID
+                            - generic [ref=f10e327]: 30-99999999-1
+                        - generic [ref=f10e328]:
+                            - generic [ref=f10e329]: Timezone
+                            - generic [ref=f10e330]: Buenos Aires (GMT-3)
+                        - generic [ref=f10e331]:
+                            - generic [ref=f10e332]: Currency
+                            - generic [ref=f10e333]: ARS — Argentine Peso
+                        - generic [ref=f10e334]:
+                            - generic [ref=f10e335]: Courts
+                            - generic [ref=f10e336]: 3–5 courts
+                - generic [ref=f10e187]:
+                    - button "Back" [ref=f10e237] [cursor=pointer]
+                    - button "Continue" [active] [ref=f10e188] [cursor=pointer]
+        - paragraph [ref=f10e189]: Step 5 of 6
+    - region "Notifications alt+T"
+    - button "Open Next.js Dev Tools" [ref=f10e33] [cursor=pointer]
+    - alert [ref=f10e37]
+    - generic [ref=f10e38]:
+        - generic [ref=f10e39]:
+            - link "LocatorJS" [ref=f10e40] [cursor=pointer]:
+                - /url: https://www.locatorjs.com
+            - button "Settings" [ref=f10e48] [cursor=pointer]
+        - generic [ref=f10e49]:
+            - text: Go to component code with
+            - generic [ref=f10e50]: Alt
+            - text: +
+            - generic [ref=f10e51]: click
+        - generic [ref=f10e52]:
+            - link "What is Locator?" [ref=f10e53] [cursor=pointer]:
+                - /url: https://www.locatorjs.com
+            - generic [ref=f10e54] [cursor=pointer]: Stop showing this popup

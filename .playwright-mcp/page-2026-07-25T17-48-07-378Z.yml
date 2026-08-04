@@ -1,29 +1,29 @@
 - generic [active] [ref=f10e1]:
-  - generic [ref=f10e3]:
-    - generic [ref=f10e9]:
-      - generic [ref=f10e10]: Play Padel
-      - generic [ref=f10e18]:
-        - paragraph [ref=f10e19]: “Booking a court used to mean phone tag with the front desk. Now it takes ten seconds.”
-        - generic [ref=f10e20]:
-          - paragraph [ref=f10e21]: Marina López
-          - paragraph [ref=f10e22]: Owner, Level Up Padel Club
-    - generic [ref=f10e25]:
-      - heading "Create your account" [level=1] [ref=f10e26]
-      - paragraph [ref=f10e27]: Get started with Play Padel today.
-  - region "Notifications alt+T"
-  - button "Open Next.js Dev Tools" [ref=f10e33] [cursor=pointer]
-  - alert [ref=f10e37]
-  - generic [ref=f10e38]:
-    - generic [ref=f10e39]:
-      - link "LocatorJS" [ref=f10e40] [cursor=pointer]:
-        - /url: https://www.locatorjs.com
-      - button "Settings" [ref=f10e48] [cursor=pointer]
-    - generic [ref=f10e49]:
-      - text: Go to component code with
-      - generic [ref=f10e50]: Alt
-      - text: +
-      - generic [ref=f10e51]: click
-    - generic [ref=f10e52]:
-      - link "What is Locator?" [ref=f10e53] [cursor=pointer]:
-        - /url: https://www.locatorjs.com
-      - generic [ref=f10e54] [cursor=pointer]: Stop showing this popup
+    - generic [ref=f10e3]:
+        - generic [ref=f10e9]:
+            - generic [ref=f10e10]: Play Padel
+            - generic [ref=f10e18]:
+                - paragraph [ref=f10e19]: “Booking a court used to mean phone tag with the front desk. Now it takes ten seconds.”
+                - generic [ref=f10e20]:
+                    - paragraph [ref=f10e21]: Marina López
+                    - paragraph [ref=f10e22]: Owner, Level Up Padel Club
+        - generic [ref=f10e25]:
+            - heading "Create your account" [level=1] [ref=f10e26]
+            - paragraph [ref=f10e27]: Get started with Play Padel today.
+    - region "Notifications alt+T"
+    - button "Open Next.js Dev Tools" [ref=f10e33] [cursor=pointer]
+    - alert [ref=f10e37]
+    - generic [ref=f10e38]:
+        - generic [ref=f10e39]:
+            - link "LocatorJS" [ref=f10e40] [cursor=pointer]:
+                - /url: https://www.locatorjs.com
+            - button "Settings" [ref=f10e48] [cursor=pointer]
+        - generic [ref=f10e49]:
+            - text: Go to component code with
+            - generic [ref=f10e50]: Alt
+            - text: +
+            - generic [ref=f10e51]: click
+        - generic [ref=f10e52]:
+            - link "What is Locator?" [ref=f10e53] [cursor=pointer]:
+                - /url: https://www.locatorjs.com
+            - generic [ref=f10e54] [cursor=pointer]: Stop showing this popup

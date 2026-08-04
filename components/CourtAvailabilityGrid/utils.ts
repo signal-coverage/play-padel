@@ -1,7 +1,12 @@
 import { format } from "date-fns";
 
 import { HEADER_DATE_FORMAT, TIME_LABEL_FORMAT } from "./consts";
-import type { CourtAvailabilityGridVariant, CourtColumn, Slot, TimeRow } from "./types";
+import type {
+  CourtAvailabilityGridVariant,
+  CourtColumn,
+  Slot,
+  TimeRow,
+} from "./types";
 
 export function formatSlotTime(date: Date): string {
   return format(date, TIME_LABEL_FORMAT);

@@ -1,4 +1,7 @@
-import { DAY_LABELS, DEFAULT_SLOT_DURATION_MINUTES } from "@/core/courts/consts";
+import {
+  DAY_LABELS,
+  DEFAULT_SLOT_DURATION_MINUTES,
+} from "@/core/courts/consts";
 import type { AvailabilityEntry, CourtAvailability } from "@/core/courts/types";
 import type { AvailabilityDayRow, CourtFormValues, CourtRecord } from "./types";
 

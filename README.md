@@ -1,45 +1,37 @@
-# ERPFlow
+# Play Padel
 
-**ERPFlow** is a modular, multi-tenant ERP platform designed for healthcare organizations, built with React and Firebase.
+**Play Padel** is a padel-club booking platform: players browse clubs and courts and book available time slots, while club owners manage their courts, weekly availability, and reservations.
 
-It provides a shared Core for authentication, patient management, scheduling, billing, reporting, and role-based access control (RBAC), while extending functionality through a plugin-based architecture for medical specialties such as Dentistry, Nutrition, Psychology, Cardiology, and more.
+Two user roles, one app:
 
-Designed with scalability in mind, ERPFlow supports everyone from independent healthcare professionals to multi-specialty clinics, hospitals, and healthcare providers. Each organization can enable only the modules they need while sharing a secure, scalable SaaS infrastructure.
+- **Players** — browse clubs, see real-time court availability, book and cancel their own reservations.
+- **Owners** — manage their club's profile, courts, weekly availability templates, and every reservation made against their club.
 
-## Features
+See [`docs/PROJECT_STATUS.md`](docs/PROJECT_STATUS.md) for a full breakdown of what's implemented versus mocked/placeholder, and [`docs/roadmap.md`](docs/roadmap.md) for planned next steps.
 
-- 🏥 Multi-tenant SaaS architecture
-- 🔐 Authentication with Role-Based Access Control (RBAC)
-- 👥 Patient and Professional management
-- 📅 Appointment scheduling and calendar
-- 💳 Billing and payment management
-- 📊 Customizable dashboard with dynamic widgets
-- 🧩 Plugin-based architecture for medical specialties
-- 📝 Audit logs and activity tracking
-- ☁️ Firebase-powered backend (Authentication, Firestore, Storage, Cloud Functions)
-- ⚛️ Built with React, TypeScript, Vite, Tailwind CSS, and shadcn/ui
+## Tech stack
 
-## Tech Stack
+- [Next.js](https://nextjs.org) (App Router) + TypeScript
+- [Clerk](https://clerk.com) — authentication
+- [Prisma](https://www.prisma.io) + [Neon](https://neon.tech) Postgres — database
+- Tailwind CSS + [shadcn/ui](https://ui.shadcn.com)
+- [Resend](https://resend.com) — transactional email
 
-**Frontend**
+## Getting started
 
-- React
-- TypeScript
-- Vite
-- React Router
-- TanStack Query
-- Tailwind CSS
-- shadcn/ui
+```bash
+npm install
+npm run dev
+```
 
-**Backend**
+Copy `.env.example` to `.env.local` and fill in the required Clerk, database, and Resend credentials before running the app.
 
-- Firebase Authentication
-- Cloud Firestore
-- Cloud Storage
-- Cloud Functions
+Open [http://localhost:3000](http://localhost:3000) to view it.
 
-## Vision
+## Project structure
 
-ERPFlow aims to become a flexible ERP platform where the Core remains stable while new business domains are added as independent plugins. Although the first implementation focuses on healthcare, the long-term architecture is designed to support additional industries through the same modular foundation.
-
-**Build once. Extend forever.**
+- `app/` — routes (App Router), split into public pages, `(auth)` pages, and the authenticated `dashboard/` area (player and owner views)
+- `core/` — domain logic per business area (`clubs`, `courts`, `reservations`, `users`, `billing`, `notifications`, `audit`, `events`), each with its own `services`, `schemas`, `types`, and `consts`
+- `components/ui/` — shadcn/ui primitives
+- `prisma/schema.prisma` — database schema
+- `lib/` — cross-cutting utilities (email, PDF generation, notification dispatch)

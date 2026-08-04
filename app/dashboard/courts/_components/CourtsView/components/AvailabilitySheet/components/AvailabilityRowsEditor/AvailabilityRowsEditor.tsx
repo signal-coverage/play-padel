@@ -2,13 +2,17 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils/utils";
 import { DAY_LABELS } from "@/core/courts/consts";
 import { SheetFooter } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { availabilityRowsToEntries, buildAvailabilityRows } from "../../../../utils";
+import {
+  availabilityRowsToEntries,
+  buildAvailabilityRows,
+} from "../../../../utils";
 import type { AvailabilityDayRow } from "../../../../types";
 import type { AvailabilityRowsEditorProps } from "./types";
 
@@ -65,30 +69,43 @@ export function AvailabilityRowsEditor({
               />
             </div>
 
-            {row.active && (
-              <div className="flex items-center gap-2">
-                <div className="flex flex-1 flex-col gap-1">
-                  <Label className="text-xs text-muted-foreground">Start</Label>
-                  <Input
-                    type="time"
-                    value={row.startTime}
-                    onChange={(e) =>
-                      updateRow(row.dayOfWeek, { startTime: e.target.value })
-                    }
-                  />
-                </div>
-                <div className="flex flex-1 flex-col gap-1">
-                  <Label className="text-xs text-muted-foreground">End</Label>
-                  <Input
-                    type="time"
-                    value={row.endTime}
-                    onChange={(e) =>
-                      updateRow(row.dayOfWeek, { endTime: e.target.value })
-                    }
-                  />
+            <div
+              className={cn(
+                "grid transition-[grid-template-rows,opacity] duration-200 ease-[cubic-bezier(0.2,0,0,1)]",
+                row.active
+                  ? "grid-rows-[1fr] opacity-100"
+                  : "grid-rows-[0fr] opacity-0",
+              )}
+            >
+              <div className="min-h-0 overflow-hidden">
+                <div className="flex items-center gap-2">
+                  <div className="flex flex-1 flex-col gap-1">
+                    <Label className="text-xs text-muted-foreground">
+                      Start
+                    </Label>
+                    <Input
+                      type="time"
+                      value={row.startTime}
+                      onChange={(e) =>
+                        updateRow(row.dayOfWeek, { startTime: e.target.value })
+                      }
+                      disabled={!row.active}
+                    />
+                  </div>
+                  <div className="flex flex-1 flex-col gap-1">
+                    <Label className="text-xs text-muted-foreground">End</Label>
+                    <Input
+                      type="time"
+                      value={row.endTime}
+                      onChange={(e) =>
+                        updateRow(row.dayOfWeek, { endTime: e.target.value })
+                      }
+                      disabled={!row.active}
+                    />
+                  </div>
                 </div>
               </div>
-            )}
+            </div>
           </div>
         ))}
       </div>

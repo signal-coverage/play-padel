@@ -1,0 +1,1 @@
+export { MutedPanel } from "./MutedPanel";

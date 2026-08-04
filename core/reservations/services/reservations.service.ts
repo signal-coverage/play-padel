@@ -1,6 +1,6 @@
 import { prisma } from "@/infrastructure/db/client";
 import { Prisma } from "@/lib/generated/prisma/client";
-import { startOfDay, endOfDay } from "date-fns";
+import { startOfDay, endOfDay, eachDayOfInterval, format } from "date-fns";
 import { render } from "@react-email/render";
 import * as React from "react";
 import type {
@@ -89,13 +89,16 @@ export async function getReservation(
 
 /**
  * Owner's dashboard view: all reservations for a club, optionally narrowed to
- * a single calendar day, a specific court, and/or a set of statuses. With no
+ * a single calendar day (via `date`) or an inclusive multi-day range (via
+ * `dateFrom`/`dateTo`), a specific court, and/or a set of statuses. With no
  * opts, returns upcoming active (SCHEDULED/CONFIRMED) reservations.
  */
 export async function listReservationsByClub(
   clubId: string,
   opts?: {
     date?: Date;
+    dateFrom?: Date;
+    dateTo?: Date;
     courtId?: string;
     status?: ReservationStatus[];
   },
@@ -109,7 +112,14 @@ export async function listReservationsByClub(
             lte: endOfDay(opts.date),
           },
         }
-      : { scheduledStart: { gte: new Date() } }),
+      : opts?.dateFrom && opts?.dateTo
+        ? {
+            scheduledStart: {
+              gte: startOfDay(opts.dateFrom),
+              lte: endOfDay(opts.dateTo),
+            },
+          }
+        : { scheduledStart: { gte: new Date() } }),
     ...(opts?.courtId ? { courtId: opts.courtId } : {}),
     status: { in: opts?.status ?? [...ACTIVE_STATUSES] },
   };
@@ -120,6 +130,38 @@ export async function listReservationsByClub(
   });
 
   return rows.map(toReservation);
+}
+
+/**
+ * Pure aggregation for the owner's dashboard summary: buckets `reservations`
+ * by calendar day across the inclusive [from, to] range, including days with
+ * zero reservations, counting both the total booked and how many of those
+ * were cancelled per day.
+ */
+export function summarizeReservationsByDay(
+  reservations: Reservation[],
+  from: Date,
+  to: Date,
+): { date: string; total: number; cancelled: number }[] {
+  const days = eachDayOfInterval({
+    start: startOfDay(from),
+    end: startOfDay(to),
+  });
+
+  return days.map((day) => {
+    const dateStr = format(day, "yyyy-MM-dd");
+    const sameDay = reservations.filter(
+      (reservation) =>
+        format(reservation.scheduledStart, "yyyy-MM-dd") === dateStr,
+    );
+    return {
+      date: dateStr,
+      total: sameDay.length,
+      cancelled: sameDay.filter(
+        (reservation) => reservation.status === "CANCELLED",
+      ).length,
+    };
+  });
 }
 
 /**
@@ -248,10 +290,12 @@ export async function createReservation(
   ]);
 
   if (courtConflict) {
-    throw new Error("This slot is no longer available");
+    throw new Error("This slot is no longer available. Pick another time.");
   }
   if (userConflict) {
-    throw new Error("You already have a reservation that overlaps this time");
+    throw new Error(
+      "You already have a reservation at this time. Cancel it or pick a different slot.",
+    );
   }
 
   // MVP rule: instant confirmation, no owner-approval step (docs/reservation-flow.md)
@@ -332,7 +376,11 @@ export async function updateReservation(
 export function canSelfCancel(
   reservation: Pick<Reservation, "status" | "scheduledStart">,
 ): boolean {
-  if (!ACTIVE_STATUSES.includes(reservation.status as (typeof ACTIVE_STATUSES)[number])) {
+  if (
+    !ACTIVE_STATUSES.includes(
+      reservation.status as (typeof ACTIVE_STATUSES)[number],
+    )
+  ) {
     return false;
   }
   const cutoffMs = SELF_CANCEL_CUTOFF_HOURS * 60 * 60 * 1000;

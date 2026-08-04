@@ -1,0 +1,211 @@
+- generic:
+    - generic:
+        - generic:
+            - banner:
+                - link:
+                    - /url: /dashboard
+                - generic:
+                    - button:
+                        - generic: Toggle theme
+                    - button [disabled]
+                    - button
+            - main:
+                - generic:
+                    - generic:
+                        - generic:
+                            - heading [level=1]: Welcome, Nicolas Rafael Sanchez
+                            - generic:
+                                - generic:
+                                    - textbox:
+                                        - /placeholder: Search cards…
+                        - generic:
+                            - button:
+                                - generic:
+                                    - generic:
+                                        - paragraph: Your player overview
+                                        - paragraph: Preferred side, partner & stats
+                                    - generic: SM
+                            - generic:
+                                - generic:
+                                    - generic:
+                                        - generic:
+                                            - generic:
+                                                - heading [level=2]: You don't have any matches booked yet
+                                                - paragraph: Find a court and lock in your first session.
+                                            - link:
+                                                - /url: /dashboard/browse
+                                        - link:
+                                            - /url: /dashboard/browse
+                                            - text: Browse Courts
+                                - generic:
+                                    - generic: Skill Overview
+                                    - generic:
+                                        - generic:
+                                            - generic:
+                                                - generic: Skill level
+                                                - generic: Category 8 — beginner
+                                        - generic: Book a few matches to start seeing your activity here.
+                                - generic:
+                                    - generic:
+                                        - generic:
+                                            - generic: Session Load
+                                            - generic: Last 8 weeks
+                                        - generic:
+                                            - generic:
+                                                - generic:
+                                                    - generic:
+                                                        - generic:
+                                                            - application
+                                                - generic: 0/8
+                                            - generic: Low
+                                    - generic:
+                                        - generic: Progress & Goals
+                                        - generic:
+                                            - generic:
+                                                - generic:
+                                                    - generic:
+                                                        - generic: Active days
+                                                        - generic: 0/30
+                                                    - generic:
+                                                        - generic: Total sessions
+                                                        - generic: "0"
+                                - generic:
+                                    - generic:
+                                        - generic: Schedule
+                                        - generic: 0 reservations today
+                                    - generic:
+                                        - generic:
+                                            - generic:
+                                                - navigation:
+                                                    - button [disabled]
+                                                    - button [disabled]
+                                                - generic:
+                                                    - generic:
+                                                        - status: August 2026
+                                                    - grid:
+                                                        - rowgroup:
+                                                            - row:
+                                                                - columnheader: Su
+                                                                - columnheader: Mo
+                                                                - columnheader: Tu
+                                                                - columnheader: We
+                                                                - columnheader: Th
+                                                                - columnheader: Fr
+                                                                - columnheader: Sa
+                                                        - rowgroup:
+                                                            - row:
+                                                                - gridcell:
+                                                                    - button: "1"
+                                                            - row:
+                                                                - gridcell:
+                                                                    - button: "2"
+                                                                - gridcell:
+                                                                    - button: "3"
+                                                                - gridcell:
+                                                                    - button: "4"
+                                                                - gridcell:
+                                                                    - button: "5"
+                                                                - gridcell:
+                                                                    - button: "6"
+                                                                - gridcell:
+                                                                    - button: "7"
+                                                                - gridcell:
+                                                                    - button: "8"
+                                                            - row:
+                                                                - gridcell:
+                                                                    - button: "9"
+                                                                - gridcell:
+                                                                    - button: "10"
+                                                                - gridcell:
+                                                                    - button: "11"
+                                                                - gridcell:
+                                                                    - button: "12"
+                                                                - gridcell:
+                                                                    - button: "13"
+                                                                - gridcell:
+                                                                    - button: "14"
+                                                                - gridcell:
+                                                                    - button: "15"
+                                                            - row:
+                                                                - gridcell:
+                                                                    - button: "16"
+                                                                - gridcell:
+                                                                    - button: "17"
+                                                                - gridcell:
+                                                                    - button: "18"
+                                                                - gridcell:
+                                                                    - button: "19"
+                                                                - gridcell:
+                                                                    - button: "20"
+                                                                - gridcell:
+                                                                    - button: "21"
+                                                                - gridcell:
+                                                                    - button: "22"
+                                                            - row:
+                                                                - gridcell:
+                                                                    - button: "23"
+                                                                - gridcell:
+                                                                    - button: "24"
+                                                                - gridcell:
+                                                                    - button: "25"
+                                                                - gridcell:
+                                                                    - button: "26"
+                                                                - gridcell:
+                                                                    - button: "27"
+                                                                - gridcell:
+                                                                    - button: "28"
+                                                                - gridcell:
+                                                                    - button: "29"
+                                                            - row:
+                                                                - gridcell:
+                                                                    - button: "30"
+                                                                - gridcell:
+                                                                    - button: "31"
+                                        - generic:
+                                            - generic: No upcoming reservations
+                                            - generic: Booked courts will show up here.
+            - navigation:
+                - link:
+                    - /url: /dashboard
+                    - generic: Dashboard
+                - link:
+                    - /url: /dashboard/browse
+                    - generic: Browse Courts
+                - link:
+                    - /url: /dashboard/my-reservations
+                    - generic: My Reservations
+    - region "Notifications alt+T"
+    - button "Open Next.js Dev Tools" [ref=f59e11] [cursor=pointer]
+    - alert
+    - dialog [ref=f59e267]:
+        - heading "Player Overview" [level=2] [ref=f59e269]
+        - generic [ref=f59e271]:
+            - generic [ref=f59e272]:
+                - generic [ref=f59e273]:
+                    - 'img "Preferred side: forehand (right side of the court)" [ref=f59e274]':
+                        - generic [ref=f59e284]: BH
+                        - generic [ref=f59e285]: FH
+                    - generic [ref=f59e286]:
+                        - paragraph [ref=f59e287]: Preferred side
+                        - paragraph [ref=f59e288]: forehand
+                - button "SM Sofía Martínez Latest partner" [active] [ref=f59e289] [cursor=pointer]:
+                    - generic [ref=f59e290]: SM
+                    - generic [ref=f59e292]:
+                        - paragraph [ref=f59e293]: Sofía Martínez
+                        - paragraph [ref=f59e294]: Latest partner
+            - generic [ref=f59e297]:
+                - generic [ref=f59e298]:
+                    - generic [ref=f59e306]:
+                        - generic [ref=f59e307]: Tournaments
+                        - generic [ref=f59e308]: 5/12
+                    - generic [ref=f59e309]:
+                        - generic [ref=f59e310]: Position
+                        - generic [ref=f59e311]: forehand
+                - generic [ref=f59e312]:
+                    - paragraph [ref=f59e313]: Summer Open 2026
+                    - generic [ref=f59e314]:
+                        - generic [ref=f59e315]: W
+                        - generic [ref=f59e316]: W
+                        - generic [ref=f59e317]: L
+                        - generic [ref=f59e318]: W
+        - button "Close" [ref=f59e319] [cursor=pointer]

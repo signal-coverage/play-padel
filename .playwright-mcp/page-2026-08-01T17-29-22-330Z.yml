@@ -1,0 +1,222 @@
+- generic [ref=f70e1]:
+    - generic [ref=f70e17]:
+        - banner [ref=f70e18]:
+            - link "Play Padel Play Padel" [ref=f70e19] [cursor=pointer]:
+                - /url: /dashboard
+                - img "Play Padel" [ref=f70e20]
+                - generic [ref=f70e21]: Play Padel
+            - navigation [ref=f70e22]:
+                - link "Dashboard" [ref=f70e23] [cursor=pointer]:
+                    - /url: /dashboard
+                - link "Browse Courts" [ref=f70e31] [cursor=pointer]:
+                    - /url: /dashboard/browse
+                - link "My Reservations" [ref=f70e36] [cursor=pointer]:
+                    - /url: /dashboard/my-reservations
+            - generic [ref=f70e41]:
+                - button "Toggle theme" [active] [ref=f70e42] [cursor=pointer]
+                - button "Notifications — coming soon" [disabled]
+                - button [ref=f70e44] [cursor=pointer]:
+                    - img "N" [ref=f70e45]
+        - main [ref=f70e46]:
+            - generic [ref=f70e48]:
+                - generic [ref=f70e49]:
+                    - heading "Welcome, Nicolas Rafael Sanchez" [level=1] [ref=f70e50]
+                    - textbox "Search cards…" [ref=f70e53]
+                - generic [ref=f70e54]:
+                    - generic [ref=f70e55]:
+                        - generic [ref=f70e56]:
+                            - generic [ref=f70e57]: Player Overview
+                            - generic [ref=f70e60]:
+                                - generic [ref=f70e61]:
+                                    - 'img "Preferred side: forehand (right side of the court)" [ref=f70e62]':
+                                        - generic [ref=f70e72]: BH
+                                        - generic [ref=f70e73]: FH
+                                    - generic [ref=f70e74]:
+                                        - paragraph [ref=f70e75]: Preferred side
+                                        - paragraph [ref=f70e76]: forehand
+                                - button "SM Sofía Martínez Latest partner" [ref=f70e77] [cursor=pointer]:
+                                    - generic [ref=f70e78]: SM
+                                    - generic [ref=f70e80]:
+                                        - paragraph [ref=f70e81]: Sofía Martínez
+                                        - paragraph [ref=f70e82]: Latest partner
+                        - generic [ref=f70e85]:
+                            - generic [ref=f70e86]: Performance Summary
+                            - generic [ref=f70e89]:
+                                - generic [ref=f70e90]:
+                                    - generic [ref=f70e98]:
+                                        - generic [ref=f70e99]: Tournaments
+                                        - generic [ref=f70e100]: 5/12
+                                    - generic [ref=f70e101]:
+                                        - generic [ref=f70e102]: Position
+                                        - generic [ref=f70e103]: forehand
+                                - generic [ref=f70e104]:
+                                    - paragraph [ref=f70e105]: Summer Open 2026
+                                    - generic [ref=f70e106]:
+                                        - generic [ref=f70e107]: W
+                                        - generic [ref=f70e108]: W
+                                        - generic [ref=f70e109]: L
+                                        - generic [ref=f70e110]: W
+                    - generic [ref=f70e111]:
+                        - generic [ref=f70e114]:
+                            - generic [ref=f70e115]:
+                                - generic [ref=f70e116]:
+                                    - heading "You don't have any matches booked yet" [level=2] [ref=f70e117]
+                                    - paragraph [ref=f70e118]: Find a court and lock in your first session.
+                                - link [ref=f70e119] [cursor=pointer]:
+                                    - /url: /dashboard/browse
+                            - link "Browse Courts" [ref=f70e123] [cursor=pointer]:
+                                - /url: /dashboard/browse
+                        - generic [ref=f70e124]:
+                            - generic [ref=f70e125]: Skill Overview
+                            - generic [ref=f70e127]:
+                                - generic [ref=f70e129]:
+                                    - generic [ref=f70e130]: Skill level
+                                    - generic [ref=f70e131]: Category 8 — beginner
+                                - generic [ref=f70e132]: Book a few matches to start seeing your activity here.
+                        - generic [ref=f70e133]:
+                            - generic [ref=f70e134]:
+                                - generic [ref=f70e135]:
+                                    - generic [ref=f70e136]: Session Load
+                                    - generic [ref=f70e137]: Last 8 weeks
+                                - generic [ref=f70e138]:
+                                    - generic [ref=f70e139]:
+                                        - application [ref=f70e143]
+                                        - generic [ref=f70e167]: 0/8
+                                    - generic [ref=f70e169]: Low
+                            - generic [ref=f70e170]:
+                                - generic [ref=f70e171]: Progress & Goals
+                                - generic [ref=f70e174]:
+                                    - generic [ref=f70e175]:
+                                        - generic "Jul 3" [ref=f70e176]
+                                        - generic "Jul 4" [ref=f70e177]
+                                        - generic "Jul 5" [ref=f70e178]
+                                        - generic "Jul 6" [ref=f70e179]
+                                        - generic "Jul 7" [ref=f70e180]
+                                        - generic "Jul 8" [ref=f70e181]
+                                        - generic "Jul 9" [ref=f70e182]
+                                        - generic "Jul 10" [ref=f70e183]
+                                        - generic "Jul 11" [ref=f70e184]
+                                        - generic "Jul 12" [ref=f70e185]
+                                        - generic "Jul 13" [ref=f70e186]
+                                        - generic "Jul 14" [ref=f70e187]
+                                        - generic "Jul 15" [ref=f70e188]
+                                        - generic "Jul 16" [ref=f70e189]
+                                        - generic "Jul 17" [ref=f70e190]
+                                        - generic "Jul 18" [ref=f70e191]
+                                        - generic "Jul 19" [ref=f70e192]
+                                        - generic "Jul 20" [ref=f70e193]
+                                        - generic "Jul 21" [ref=f70e194]
+                                        - generic "Jul 22" [ref=f70e195]
+                                        - generic "Jul 23" [ref=f70e196]
+                                        - generic "Jul 24" [ref=f70e197]
+                                        - generic "Jul 25" [ref=f70e198]
+                                        - generic "Jul 26" [ref=f70e199]
+                                        - generic "Jul 27" [ref=f70e200]
+                                        - generic "Jul 28" [ref=f70e201]
+                                        - generic "Jul 29" [ref=f70e202]
+                                        - generic "Jul 30" [ref=f70e203]
+                                        - generic "Jul 31" [ref=f70e204]
+                                        - generic "Aug 1" [ref=f70e205]
+                                    - generic [ref=f70e206]:
+                                        - generic [ref=f70e207]:
+                                            - generic [ref=f70e208]: Active days
+                                            - generic [ref=f70e209]: 0/30
+                                        - generic [ref=f70e210]:
+                                            - generic [ref=f70e211]: Total sessions
+                                            - generic [ref=f70e212]: "0"
+                        - generic [ref=f70e213]:
+                            - generic [ref=f70e214]:
+                                - generic [ref=f70e215]: Schedule
+                                - generic [ref=f70e216]: 0 reservations today
+                            - generic [ref=f70e217]:
+                                - generic [ref=f70e329]:
+                                    - navigation "Navigation bar" [ref=f70e330]:
+                                        - button "Go to the Previous Month" [disabled] [ref=f70e331] [cursor=pointer]
+                                        - button "Go to the Next Month" [disabled] [ref=f70e332] [cursor=pointer]
+                                    - generic [ref=f70e333]:
+                                        - status [ref=f70e335]: August 2026
+                                        - grid "August 2026" [ref=f70e336]:
+                                            - rowgroup [ref=f70e337]:
+                                                - row [ref=f70e338]:
+                                                    - columnheader [ref=f70e339]: Su
+                                                    - columnheader [ref=f70e340]: Mo
+                                                    - columnheader [ref=f70e341]: Tu
+                                                    - columnheader [ref=f70e342]: We
+                                                    - columnheader [ref=f70e343]: Th
+                                                    - columnheader [ref=f70e344]: Fr
+                                                    - columnheader [ref=f70e345]: Sa
+                                            - rowgroup [ref=f70e346]:
+                                                - row [ref=f70e347]:
+                                                    - gridcell [ref=f70e348]:
+                                                        - button "Today, Saturday, August 1st, 2026" [ref=f70e349] [cursor=pointer]: "1"
+                                                - row [ref=f70e350]:
+                                                    - gridcell [ref=f70e351]:
+                                                        - button "Sunday, August 2nd, 2026" [ref=f70e352] [cursor=pointer]: "2"
+                                                    - gridcell [ref=f70e353]:
+                                                        - button "Monday, August 3rd, 2026" [ref=f70e354] [cursor=pointer]: "3"
+                                                    - gridcell [ref=f70e355]:
+                                                        - button "Tuesday, August 4th, 2026" [ref=f70e356] [cursor=pointer]: "4"
+                                                    - gridcell [ref=f70e357]:
+                                                        - button "Wednesday, August 5th, 2026" [ref=f70e358] [cursor=pointer]: "5"
+                                                    - gridcell [ref=f70e359]:
+                                                        - button "Thursday, August 6th, 2026" [ref=f70e360] [cursor=pointer]: "6"
+                                                    - gridcell [ref=f70e361]:
+                                                        - button "Friday, August 7th, 2026" [ref=f70e362] [cursor=pointer]: "7"
+                                                    - gridcell [ref=f70e363]:
+                                                        - button "Saturday, August 8th, 2026" [ref=f70e364] [cursor=pointer]: "8"
+                                                - row [ref=f70e365]:
+                                                    - gridcell [ref=f70e366]:
+                                                        - button "Sunday, August 9th, 2026" [ref=f70e367] [cursor=pointer]: "9"
+                                                    - gridcell [ref=f70e368]:
+                                                        - button "Monday, August 10th, 2026" [ref=f70e369] [cursor=pointer]: "10"
+                                                    - gridcell [ref=f70e370]:
+                                                        - button "Tuesday, August 11th, 2026" [ref=f70e371] [cursor=pointer]: "11"
+                                                    - gridcell [ref=f70e372]:
+                                                        - button "Wednesday, August 12th, 2026" [ref=f70e373] [cursor=pointer]: "12"
+                                                    - gridcell [ref=f70e374]:
+                                                        - button "Thursday, August 13th, 2026" [ref=f70e375] [cursor=pointer]: "13"
+                                                    - gridcell [ref=f70e376]:
+                                                        - button "Friday, August 14th, 2026" [ref=f70e377] [cursor=pointer]: "14"
+                                                    - gridcell [ref=f70e378]:
+                                                        - button "Saturday, August 15th, 2026" [ref=f70e379] [cursor=pointer]: "15"
+                                                - row [ref=f70e380]:
+                                                    - gridcell [ref=f70e381]:
+                                                        - button "Sunday, August 16th, 2026" [ref=f70e382] [cursor=pointer]: "16"
+                                                    - gridcell [ref=f70e383]:
+                                                        - button "Monday, August 17th, 2026" [ref=f70e384] [cursor=pointer]: "17"
+                                                    - gridcell [ref=f70e385]:
+                                                        - button "Tuesday, August 18th, 2026" [ref=f70e386] [cursor=pointer]: "18"
+                                                    - gridcell [ref=f70e387]:
+                                                        - button "Wednesday, August 19th, 2026" [ref=f70e388] [cursor=pointer]: "19"
+                                                    - gridcell [ref=f70e389]:
+                                                        - button "Thursday, August 20th, 2026" [ref=f70e390] [cursor=pointer]: "20"
+                                                    - gridcell [ref=f70e391]:
+                                                        - button "Friday, August 21st, 2026" [ref=f70e392] [cursor=pointer]: "21"
+                                                    - gridcell [ref=f70e393]:
+                                                        - button "Saturday, August 22nd, 2026" [ref=f70e394] [cursor=pointer]: "22"
+                                                - row [ref=f70e395]:
+                                                    - gridcell [ref=f70e396]:
+                                                        - button "Sunday, August 23rd, 2026" [ref=f70e397] [cursor=pointer]: "23"
+                                                    - gridcell [ref=f70e398]:
+                                                        - button "Monday, August 24th, 2026" [ref=f70e399] [cursor=pointer]: "24"
+                                                    - gridcell [ref=f70e400]:
+                                                        - button "Tuesday, August 25th, 2026" [ref=f70e401] [cursor=pointer]: "25"
+                                                    - gridcell [ref=f70e402]:
+                                                        - button "Wednesday, August 26th, 2026" [ref=f70e403] [cursor=pointer]: "26"
+                                                    - gridcell [ref=f70e404]:
+                                                        - button "Thursday, August 27th, 2026" [ref=f70e405] [cursor=pointer]: "27"
+                                                    - gridcell [ref=f70e406]:
+                                                        - button "Friday, August 28th, 2026" [ref=f70e407] [cursor=pointer]: "28"
+                                                    - gridcell [ref=f70e408]:
+                                                        - button "Saturday, August 29th, 2026" [ref=f70e409] [cursor=pointer]: "29"
+                                                - row [ref=f70e410]:
+                                                    - gridcell [ref=f70e411]:
+                                                        - button "Sunday, August 30th, 2026" [ref=f70e412] [cursor=pointer]: "30"
+                                                    - gridcell [ref=f70e413]:
+                                                        - button "Monday, August 31st, 2026" [ref=f70e414] [cursor=pointer]: "31"
+                                - generic [ref=f70e305]:
+                                    - generic [ref=f70e307]: No upcoming reservations
+                                    - generic [ref=f70e308]: Booked courts will show up here.
+    - region "Notifications alt+T"
+    - button "Open Next.js Dev Tools" [ref=f70e11] [cursor=pointer]
+    - alert [ref=f70e15]
