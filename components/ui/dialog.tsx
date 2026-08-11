@@ -56,10 +56,12 @@ function DialogContent({
 }: React.ComponentProps<typeof DialogPrimitive.Content> & {
   showCloseButton?: boolean;
 }) {
+  const contentRef = React.useRef<React.ComponentRef<typeof DialogPrimitive.Content>>(null);
   return (
     <DialogPortal>
       <DialogOverlay />
       <DialogPrimitive.Content
+        ref={contentRef}
         data-slot="dialog-content"
         className={cn(
           "fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 rounded-xl bg-popover p-4 text-sm text-popover-foreground ring-1 ring-foreground/10 duration-100 outline-none sm:max-w-sm data-open:animate-in data-open:fade-in-0 motion-safe:data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 motion-safe:data-closed:zoom-out-95",
@@ -70,8 +72,17 @@ function DialogContent({
           // stack. When a child portal (Select, Popover, Calendar) dismisses, the
           // Dialog's layer also fires even if the original click target is inside
           // the Dialog. Guard by checking the real click target.
+          //
+          // IMPORTANT: e.currentTarget here resolves to the Overlay element, NOT
+          // the Content element — verified via a live repro, not an assumption.
+          // A genuine outside click lands ON the overlay, so target === currentTarget
+          // and `currentTarget.contains(target)` is trivially true (a node always
+          // contains itself), which used to make every real outside click look like
+          // a false positive and silently block all dismissal. Use a ref to the
+          // actual Content node instead, which is what this check always meant to
+          // test against.
           const target = e.detail.originalEvent.target as Element | null;
-          const current = e.currentTarget as Element | null;
+          const current = contentRef.current as Element | null;
           if (target && current?.contains(target)) {
             e.preventDefault();
             return;

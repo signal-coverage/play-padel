@@ -7,6 +7,9 @@ const isPublicRoute = createRouteMatcher([
   "/sso-callback(.*)",
   "/onboarding(.*)",
   "/api/webhooks(.*)",
+  // Vercel Cron calls this with no Clerk session — it carries its own
+  // CRON_SECRET bearer check instead (see app/api/cron/notifications/route.ts).
+  "/api/cron/(.*)",
   "/invite-error(.*)",
 ]);
 

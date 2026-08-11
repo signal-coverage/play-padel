@@ -12,15 +12,18 @@ import type {
   CreateReservationInput,
   UpdateReservationInput,
 } from "@/core/reservations/schemas/reservation.schema";
-import { SELF_CANCEL_CUTOFF_HOURS } from "@/core/reservations/consts";
+import {
+  SELF_CANCEL_CUTOFF_HOURS,
+  ACTIVE_RESERVATION_STATUSES,
+  PAYMENT_HOLD_MINUTES,
+} from "@/core/reservations/consts";
 import { dispatch } from "@/lib/notifications/dispatcher";
 import { ReservationCancelled } from "@/lib/email/templates/ReservationCancelled";
+import { logAudit } from "@/core/audit/services/audit.service";
 
 type ReservationRow = NonNullable<
   Awaited<ReturnType<typeof prisma.reservation.findUnique>>
 >;
-
-const ACTIVE_STATUSES = ["SCHEDULED", "CONFIRMED"] as const;
 
 function toReservation(row: ReservationRow): Reservation {
   return {
@@ -34,6 +37,7 @@ function toReservation(row: ReservationRow): Reservation {
     scheduledStart: row.scheduledStart,
     scheduledEnd: row.scheduledEnd,
     notes: row.notes ?? undefined,
+    paymentExpiresAt: row.paymentExpiresAt ?? undefined,
     cancelledAt: row.cancelledAt ?? undefined,
     cancelledBy: row.cancelledBy ?? undefined,
     createdAt: row.createdAt,
@@ -121,7 +125,7 @@ export async function listReservationsByClub(
           }
         : { scheduledStart: { gte: new Date() } }),
     ...(opts?.courtId ? { courtId: opts.courtId } : {}),
-    status: { in: opts?.status ?? [...ACTIVE_STATUSES] },
+    status: { in: opts?.status ?? [...ACTIVE_RESERVATION_STATUSES] },
   };
 
   const rows = await prisma.reservation.findMany({
@@ -135,14 +139,14 @@ export async function listReservationsByClub(
 /**
  * Pure aggregation for the owner's dashboard summary: buckets `reservations`
  * by calendar day across the inclusive [from, to] range, including days with
- * zero reservations, counting both the total booked and how many of those
- * were cancelled per day.
+ * zero reservations, counting the total booked, how many were cancelled, and
+ * how many were no-shows per day.
  */
 export function summarizeReservationsByDay(
   reservations: Reservation[],
   from: Date,
   to: Date,
-): { date: string; total: number; cancelled: number }[] {
+): { date: string; total: number; cancelled: number; noShow: number }[] {
   const days = eachDayOfInterval({
     start: startOfDay(from),
     end: startOfDay(to),
@@ -160,6 +164,8 @@ export function summarizeReservationsByDay(
       cancelled: sameDay.filter(
         (reservation) => reservation.status === "CANCELLED",
       ).length,
+      noShow: sameDay.filter((reservation) => reservation.status === "NO_SHOW")
+        .length,
     };
   });
 }
@@ -179,7 +185,7 @@ export async function listReservationsByUser(
       ? {}
       : {
           scheduledStart: { gte: new Date() },
-          status: { in: [...ACTIVE_STATUSES] },
+          status: { in: [...ACTIVE_RESERVATION_STATUSES] },
         }),
   };
 
@@ -212,11 +218,18 @@ export async function checkCourtConflict({
     where: {
       clubId,
       courtId,
-      status: { in: [...ACTIVE_STATUSES] },
+      status: { in: [...ACTIVE_RESERVATION_STATUSES] },
       ...(excludeId ? { id: { not: excludeId } } : {}),
       // Overlap condition: existing.start < new.end AND existing.end > new.start
       scheduledStart: { lt: scheduledEnd },
       scheduledEnd: { gt: scheduledStart },
+      // A SCHEDULED (pending-payment) hold that's past its expiry no longer
+      // blocks the slot — treated as lapsed rather than actively cancelled
+      // (see docs: Payments spec, "Handled lazily").
+      NOT: {
+        status: "SCHEDULED",
+        paymentExpiresAt: { lt: new Date() },
+      },
     },
     select: { id: true },
   });
@@ -242,19 +255,56 @@ export async function checkUserOverlapConflict({
   const conflict = await prisma.reservation.findFirst({
     where: {
       userId,
-      status: { in: [...ACTIVE_STATUSES] },
+      status: { in: [...ACTIVE_RESERVATION_STATUSES] },
       ...(excludeId ? { id: { not: excludeId } } : {}),
       scheduledStart: { lt: scheduledEnd },
       scheduledEnd: { gt: scheduledStart },
+      // A SCHEDULED (pending-payment) hold that's past its expiry no longer
+      // blocks the slot — treated as lapsed rather than actively cancelled
+      // (see docs: Payments spec, "Handled lazily").
+      NOT: {
+        status: "SCHEDULED",
+        paymentExpiresAt: { lt: new Date() },
+      },
     },
     select: { id: true },
   });
   return conflict !== null;
 }
 
+/**
+ * Is this court closed (an active CourtClosure) for any part of the given
+ * time range? Returns the closure's reason if so, for a specific error
+ * message — unlike the boolean checkCourtConflict/checkUserOverlapConflict,
+ * since "This court is closed: {reason}" is meaningfully more useful to a
+ * player than a generic conflict message.
+ */
+export async function checkCourtClosureConflict({
+  courtId,
+  scheduledStart,
+  scheduledEnd,
+}: {
+  courtId: string;
+  scheduledStart: Date;
+  scheduledEnd: Date;
+}): Promise<string | null> {
+  const closure = await prisma.courtClosure.findFirst({
+    where: {
+      courtId,
+      cancelledAt: null,
+      startsAt: { lt: scheduledEnd },
+      endsAt: { gt: scheduledStart },
+    },
+    select: { reason: true },
+    orderBy: { startsAt: "asc" },
+  });
+  return closure?.reason ?? null;
+}
+
 export async function createReservation(
   createdBy: string,
   input: CreateReservationInput,
+  opts?: { pendingPayment?: boolean },
 ): Promise<Reservation> {
   const court = await prisma.court.findUnique({
     where: { id: input.courtId },
@@ -275,7 +325,7 @@ export async function createReservation(
   const scheduledStart = new Date(input.scheduledStart);
   const scheduledEnd = new Date(input.scheduledEnd);
 
-  const [courtConflict, userConflict] = await Promise.all([
+  const [courtConflict, userConflict, closureReason] = await Promise.all([
     checkCourtConflict({
       clubId: court.clubId,
       courtId: court.id,
@@ -284,6 +334,11 @@ export async function createReservation(
     }),
     checkUserOverlapConflict({
       userId: input.userId,
+      scheduledStart,
+      scheduledEnd,
+    }),
+    checkCourtClosureConflict({
+      courtId: court.id,
       scheduledStart,
       scheduledEnd,
     }),
@@ -297,8 +352,15 @@ export async function createReservation(
       "You already have a reservation at this time. Cancel it or pick a different slot.",
     );
   }
+  if (closureReason) {
+    throw new Error(`This court is closed: ${closureReason}`);
+  }
 
-  // MVP rule: instant confirmation, no owner-approval step (docs/reservation-flow.md)
+  const pendingPayment = opts?.pendingPayment ?? false;
+
+  // MVP rule: instant confirmation, no owner-approval step (docs/reservation-flow.md).
+  // Exception: a club that requires prepayment gets a SCHEDULED hold instead,
+  // confirmed later by the Mercado Pago webhook (see Payments spec).
   const row = await prisma.reservation.create({
     data: {
       clubId: court.clubId,
@@ -306,13 +368,26 @@ export async function createReservation(
       userName: user.displayName,
       courtId: court.id,
       courtName: court.name,
-      status: "CONFIRMED",
+      status: pendingPayment ? "SCHEDULED" : "CONFIRMED",
       scheduledStart,
       scheduledEnd,
       notes: input.notes ?? null,
+      paymentExpiresAt: pendingPayment
+        ? new Date(Date.now() + PAYMENT_HOLD_MINUTES * 60_000)
+        : null,
       createdBy,
       updatedBy: createdBy,
     },
+  });
+
+  logAudit({
+    clubId: row.clubId,
+    userId: createdBy,
+    userDisplayName: user.displayName,
+    action: "reservation.created",
+    entity: "Reservation",
+    entityId: row.id,
+    metadata: { courtId: row.courtId, courtName: row.courtName },
   });
 
   return toReservation(row);
@@ -377,8 +452,8 @@ export function canSelfCancel(
   reservation: Pick<Reservation, "status" | "scheduledStart">,
 ): boolean {
   if (
-    !ACTIVE_STATUSES.includes(
-      reservation.status as (typeof ACTIVE_STATUSES)[number],
+    !ACTIVE_RESERVATION_STATUSES.includes(
+      reservation.status as (typeof ACTIVE_RESERVATION_STATUSES)[number],
     )
   ) {
     return false;
@@ -431,7 +506,50 @@ export async function cancelReservation(
     // notification failure must not affect reservation cancellation
   }
 
+  const actor = await prisma.userProfile.findUnique({
+    where: { id: cancelledBy },
+    select: { displayName: true },
+  });
+  logAudit({
+    clubId: row.clubId,
+    userId: cancelledBy,
+    userDisplayName: actor?.displayName ?? row.userName,
+    action: "reservation.cancelled",
+    entity: "Reservation",
+    entityId: row.id,
+    metadata: { courtId: row.courtId, courtName: row.courtName },
+  });
+
   return toReservation(row);
+}
+
+// Transitions a pending-payment hold to CONFIRMED once Mercado Pago confirms
+// the payment (called only from the webhook route). No audit-log call here —
+// core/billing's recordPayment (called right before this in the webhook
+// handler) already logs the "payment.confirmed" audit event for the same
+// transaction; logging reservation.created already covers the reservation's
+// own audit trail from when the hold was created.
+export async function confirmReservationPayment(
+  id: string,
+): Promise<Reservation> {
+  const row = await prisma.reservation.update({
+    where: { id },
+    data: {
+      status: "CONFIRMED",
+      updatedBy: "system:mercadopago-webhook",
+    },
+  });
+  return toReservation(row);
+}
+
+// Club-agnostic lookup — the only caller is the Mercado Pago webhook route,
+// which doesn't know which club a payment belongs to until after this
+// lookup. Not used by (and must not be exposed through) any public API route.
+export async function findReservationById(
+  id: string,
+): Promise<Reservation | null> {
+  const row = await prisma.reservation.findUnique({ where: { id } });
+  return row ? toReservation(row) : null;
 }
 
 export async function completeReservation(
@@ -446,6 +564,21 @@ export async function completeReservation(
       updatedBy,
     },
   });
+
+  const actor = await prisma.userProfile.findUnique({
+    where: { id: updatedBy },
+    select: { displayName: true },
+  });
+  logAudit({
+    clubId: row.clubId,
+    userId: updatedBy,
+    userDisplayName: actor?.displayName ?? row.userName,
+    action: "reservation.completed",
+    entity: "Reservation",
+    entityId: row.id,
+    metadata: { courtId: row.courtId, courtName: row.courtName },
+  });
+
   return toReservation(row);
 }
 
@@ -461,6 +594,21 @@ export async function noShowReservation(
       updatedBy,
     },
   });
+
+  const actor = await prisma.userProfile.findUnique({
+    where: { id: updatedBy },
+    select: { displayName: true },
+  });
+  logAudit({
+    clubId: row.clubId,
+    userId: updatedBy,
+    userDisplayName: actor?.displayName ?? row.userName,
+    action: "reservation.no_show",
+    entity: "Reservation",
+    entityId: row.id,
+    metadata: { courtId: row.courtId, courtName: row.courtName },
+  });
+
   return toReservation(row);
 }
 

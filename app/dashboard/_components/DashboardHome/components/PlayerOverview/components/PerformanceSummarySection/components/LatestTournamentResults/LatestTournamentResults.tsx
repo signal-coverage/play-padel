@@ -8,7 +8,7 @@ export function LatestTournamentResults({
   return (
     <div className="flex flex-col gap-1.5">
       <p className="truncate text-xs text-muted-foreground">{tournamentName}</p>
-      <div className="flex gap-1">
+      <div className="flex flex-wrap gap-1.5">
         {results.map((result, index) => (
           <span
             key={index}
@@ -16,7 +16,7 @@ export function LatestTournamentResults({
               "flex size-5 items-center justify-center rounded-full text-[10px] font-semibold",
               result === "W"
                 ? "bg-success text-success-foreground"
-                : "bg-destructive text-white",
+                : "bg-destructive text-destructive-foreground",
             )}
           >
             {result}

@@ -3,8 +3,6 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { HeroCard } from "../HeroCard";
 import { SkillOverviewCard } from "../SkillOverviewCard";
-import { SessionLoadCard } from "../SessionLoadCard";
-import { ProgressGoalsCard } from "../ProgressGoalsCard";
 import { ScheduleCard } from "../ScheduleCard";
 import { ScrollHintBadge } from "./components/ScrollHintBadge";
 import { useScrollAffordance } from "./hooks";
@@ -79,21 +77,11 @@ export function SearchableCardsGrid({ role, query }: SearchableCardsGridProps) {
         >
           <div
             ref={bentoScrollRef}
-            className="grid h-full grid-cols-1 gap-3 md:auto-rows-[minmax(max-content,auto)] md:overflow-y-auto md:scrollbar-none min-[1300px]:grid-cols-3 min-[1300px]:grid-rows-[minmax(max-content,1fr)_minmax(max-content,1fr)] min-[1300px]:gap-4"
+            className="grid h-full grid-cols-1 gap-3 md:auto-rows-[minmax(max-content,auto)] md:overflow-y-auto md:scrollbar-none min-[1300px]:grid-cols-3 min-[1300px]:gap-4"
           >
-            <HeroCard role={role} className="min-[1300px]:col-span-2" />
+            <HeroCard role={role} className="min-[1300px]:col-span-3" />
             <SkillOverviewCard role={role} />
-            <div className="flex min-h-0 flex-row gap-3 min-[1300px]:flex-col min-[1300px]:gap-4">
-              <SessionLoadCard
-                role={role}
-                className="min-w-0 flex-1 min-[1300px]:min-h-52"
-              />
-              <ProgressGoalsCard
-                role={role}
-                className="min-w-0 flex-1 min-[1300px]:min-h-0"
-              />
-            </div>
-            <ScheduleCard role={role} className="min-[1300px]:col-span-2" />
+            <ScheduleCard role={role} className="min-[1300px]:col-span-3" />
           </div>
           {bentoCanScrollMore && <ScrollHintBadge />}
         </motion.div>

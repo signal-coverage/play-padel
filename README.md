@@ -7,7 +7,7 @@ Two user roles, one app:
 - **Players** — browse clubs, see real-time court availability, book and cancel their own reservations.
 - **Owners** — manage their club's profile, courts, weekly availability templates, and every reservation made against their club.
 
-See [`docs/PROJECT_STATUS.md`](docs/PROJECT_STATUS.md) for a full breakdown of what's implemented versus mocked/placeholder, and [`docs/roadmap.md`](docs/roadmap.md) for planned next steps.
+See [`docs/README.md`](docs/README.md) for the full documentation index — feature status, architecture, API reference, database schema, roadmap, setup, and security.
 
 ## Tech stack
 

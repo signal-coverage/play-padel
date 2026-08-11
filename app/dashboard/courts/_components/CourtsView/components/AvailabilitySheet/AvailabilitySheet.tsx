@@ -35,7 +35,7 @@ export function AvailabilitySheet({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent>
+      <SheetContent onPointerDownOutside={(e) => e.preventDefault()}>
         <SheetHeader>
           <SheetTitle>Weekly availability</SheetTitle>
           <SheetDescription>

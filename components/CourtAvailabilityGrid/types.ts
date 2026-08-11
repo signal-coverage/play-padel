@@ -1,10 +1,11 @@
-export type SlotStatus = "free" | "locked";
+export type SlotStatus = "free" | "locked" | "closed";
 
 export type Slot = {
   start: Date;
   end: Date;
   status: SlotStatus;
   reservationId?: string;
+  closureReason?: string;
 };
 
 export type CourtColumn = {

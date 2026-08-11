@@ -1,14 +1,16 @@
 "use client";
 
-import { Bar, BarChart } from "recharts";
-import { ChartContainer } from "@/components/ui/chart";
 import { StatValue } from "@/components/StatValue";
-import { MutedPanel } from "@/components/MutedPanel";
 import { useMyReservations } from "@/app/dashboard/my-reservations/_components/MyReservations/hooks";
 import { useAuth } from "@/hooks/use-auth";
 import { getWeekStarts, getWeeklyCounts } from "../../../../utils";
-import { OVERVIEW_CHART_CONFIG, PLAYER_RANGE_WEEKS } from "../../consts";
-import { getBusiestWeekday, getPadelCategoryLabel } from "../../utils";
+import { PLAYER_RANGE_WEEKS } from "../../consts";
+import {
+  getBusiestTimeOfDay,
+  getBusiestWeekday,
+  getPadelCategoryLabel,
+} from "../../utils";
+import { OverviewChart } from "../OverviewChart";
 
 export function PlayerOverview() {
   const { user } = useAuth();
@@ -26,12 +28,22 @@ export function PlayerOverview() {
   }));
   const hasActivity = chartData.some((week) => week.total > 0);
 
-  const busiest =
-    nonCancelled.length >= 3
-      ? getBusiestWeekday(
-          nonCancelled.map((r) => ({ date: r.scheduledStart, weight: 1 })),
-        )
-      : null;
+  const hasEnoughForPatterns = nonCancelled.length >= 3;
+  const busiest = hasEnoughForPatterns
+    ? getBusiestWeekday(
+        nonCancelled.map((r) => ({ date: r.scheduledStart, weight: 1 })),
+      )
+    : null;
+  const busiestTimeOfDay = hasEnoughForPatterns
+    ? getBusiestTimeOfDay(nonCancelled.map((r) => r.scheduledStart))
+    : null;
+
+  const patternText =
+    busiest && busiestTimeOfDay
+      ? `You play most often on ${busiest}s, usually in the ${busiestTimeOfDay}.`
+      : busiest
+        ? `You play most often on ${busiest}s.`
+        : null;
 
   return (
     <>
@@ -43,18 +55,12 @@ export function PlayerOverview() {
           valueClassName="font-semibold"
         />
       </div>
-      {hasActivity && (
-        <ChartContainer config={OVERVIEW_CHART_CONFIG} className="h-20 w-full">
-          <BarChart data={chartData}>
-            <Bar dataKey="total" fill="var(--color-total)" radius={4} />
-          </BarChart>
-        </ChartContainer>
-      )}
-      <MutedPanel className="text-xs text-muted-foreground">
-        {busiest
-          ? `You play most often on ${busiest}s.`
-          : "Book a few matches to start seeing your activity here."}
-      </MutedPanel>
+      <OverviewChart
+        chartData={chartData}
+        hasActivity={hasActivity}
+        caption={patternText}
+        emptyMessage="Book a few matches and we'll start showing your play patterns here — busiest day, time of day, and more."
+      />
     </>
   );
 }

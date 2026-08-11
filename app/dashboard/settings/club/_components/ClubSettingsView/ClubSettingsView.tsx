@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Field, FieldLabel, FieldError } from "@/components/ui/field";
+import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
 import { clubSettingsFormSchema } from "./consts";
 import { clubToFormValues } from "./utils";
@@ -20,11 +21,15 @@ export function ClubSettingsView() {
     register,
     handleSubmit,
     reset,
+    control,
+    setValue,
     formState: { errors },
   } = useForm<ClubSettingsFormValues>({
     resolver: zodResolver(clubSettingsFormSchema),
     defaultValues: clubToFormValues(club),
   });
+
+  const requiresPrepayment = useWatch({ control, name: "requiresPrepayment" });
 
   // Re-seed the form once the club data arrives (the form mounts before the
   // query resolves) and whenever it changes underneath us after a save.
@@ -145,6 +150,19 @@ export function ClubSettingsView() {
             aria-invalid={!!errors.currency}
           />
           <FieldError errors={[errors.currency]} />
+        </Field>
+
+        <Field orientation="horizontal">
+          <FieldLabel htmlFor="club-requires-prepayment">
+            Require online payment at booking
+          </FieldLabel>
+          <Switch
+            id="club-requires-prepayment"
+            checked={requiresPrepayment}
+            onCheckedChange={(checked) =>
+              setValue("requiresPrepayment", checked)
+            }
+          />
         </Field>
 
         <div>

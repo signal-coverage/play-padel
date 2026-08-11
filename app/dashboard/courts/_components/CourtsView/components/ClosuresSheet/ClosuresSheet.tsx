@@ -1,0 +1,128 @@
+"use client";
+
+import { toast } from "sonner";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import {
+  useCancelCourtClosure,
+  useCourtClosures,
+  useCreateCourtClosure,
+} from "../../hooks";
+import { ClosuresList } from "./components/ClosuresList";
+import { NewClosureForm } from "./components/NewClosureForm";
+import type { NewClosureFormValues } from "./components/NewClosureForm/types";
+import type { ClosuresSheetProps } from "./types";
+
+export function ClosuresSheet({
+  open,
+  onOpenChange,
+  court,
+  courts,
+}: ClosuresSheetProps) {
+  const courtId = court?.id ?? null;
+  const { data: closures, isLoading } = useCourtClosures(
+    open ? courtId : null,
+  );
+  const createClosure = useCreateCourtClosure();
+  const cancelClosure = useCancelCourtClosure();
+
+  async function handleCreate(
+    values: NewClosureFormValues,
+  ): Promise<boolean> {
+    const targetCourtIds = values.applyToAllCourts
+      ? courts.filter((c) => c.active).map((c) => c.id)
+      : courtId
+        ? [courtId]
+        : [];
+
+    if (targetCourtIds.length === 0) return false;
+
+    const input = {
+      startsAt: new Date(values.startsAt).toISOString(),
+      endsAt: new Date(values.endsAt).toISOString(),
+      reason: values.reason,
+    };
+
+    const results = await Promise.allSettled(
+      targetCourtIds.map((id) =>
+        createClosure.mutateAsync({ courtId: id, input }),
+      ),
+    );
+    const failures = results.filter(
+      (r): r is PromiseRejectedResult => r.status === "rejected",
+    );
+
+    if (failures.length === 0) {
+      toast.success(
+        targetCourtIds.length > 1
+          ? `Closure created for ${targetCourtIds.length} courts`
+          : "Closure created",
+      );
+    } else if (failures.length === targetCourtIds.length) {
+      toast.error(
+        failures[0].reason instanceof Error
+          ? failures[0].reason.message
+          : "Failed to create closure",
+      );
+    } else {
+      toast.error(
+        `Created for ${targetCourtIds.length - failures.length} of ${targetCourtIds.length} courts. ${failures.length} conflicted — check each court's closures.`,
+      );
+    }
+
+    return failures.length === 0;
+  }
+
+  async function handleCancel(closureId: string) {
+    if (!courtId) return;
+    try {
+      await cancelClosure.mutateAsync({ courtId, closureId });
+    } catch {
+      // useCancelCourtClosure's onError already surfaces a toast
+    }
+  }
+
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent onPointerDownOutside={(e) => e.preventDefault()}>
+        <SheetHeader>
+          <SheetTitle>Closures</SheetTitle>
+          <SheetDescription>
+            {court
+              ? `Block ${court.name} for maintenance, events, or planned closures.`
+              : "Block this court for maintenance, events, or planned closures."}
+          </SheetDescription>
+        </SheetHeader>
+
+        <div className="flex flex-1 flex-col gap-4 overflow-y-auto px-4">
+          <NewClosureForm
+            onSubmit={handleCreate}
+            isSubmitting={createClosure.isPending}
+            showApplyToAllCourts={courts.length > 1}
+          />
+
+          {isLoading || !closures ? (
+            <p className="text-sm text-muted-foreground">
+              Loading closures…
+            </p>
+          ) : (
+            <ClosuresList
+              closures={closures}
+              onCancel={handleCancel}
+              cancellingClosureId={
+                cancelClosure.isPending
+                  ? (cancelClosure.variables?.closureId ?? null)
+                  : null
+              }
+            />
+          )}
+        </div>
+      </SheetContent>
+    </Sheet>
+  );
+}

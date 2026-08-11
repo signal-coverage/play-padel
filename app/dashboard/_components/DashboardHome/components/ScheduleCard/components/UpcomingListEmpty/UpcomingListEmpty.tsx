@@ -1,4 +1,4 @@
-import { CalendarX2 } from "lucide-react";
+import { CalendarClock } from "lucide-react";
 import {
   EmptyDescription,
   EmptyMedia,
@@ -7,9 +7,9 @@ import {
 
 export function UpcomingListEmpty() {
   return (
-    <div className="flex flex-1 flex-col items-center justify-center gap-1 border-l p-4 text-center">
-      <EmptyMedia variant="icon">
-        <CalendarX2 />
+    <div className="flex flex-1 flex-col items-center justify-center gap-2 py-10 text-center">
+      <EmptyMedia variant="icon" className="size-9 rounded-full">
+        <CalendarClock className="size-5" />
       </EmptyMedia>
       <EmptyTitle>No upcoming reservations</EmptyTitle>
       <EmptyDescription className="text-xs">

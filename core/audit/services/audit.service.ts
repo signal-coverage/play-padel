@@ -3,7 +3,7 @@ import { Prisma } from "@/lib/generated/prisma/client";
 import type { AuditAction, AuditFilters } from "../types";
 
 export async function logAudit(params: {
-  clubId: string;
+  clubId: string | null;
   userId: string;
   userDisplayName: string;
   action: AuditAction;

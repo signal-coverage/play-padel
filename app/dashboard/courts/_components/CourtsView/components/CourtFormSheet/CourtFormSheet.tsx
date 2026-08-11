@@ -57,7 +57,7 @@ export function CourtFormSheet({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent>
+      <SheetContent onPointerDownOutside={(e) => e.preventDefault()}>
         <SheetHeader>
           <SheetTitle>{isEditMode ? "Edit court" : "New court"}</SheetTitle>
           <SheetDescription>
@@ -123,6 +123,22 @@ export function CourtFormSheet({
               aria-invalid={!!errors.slotDurationMinutes}
             />
             <FieldError errors={[errors.slotDurationMinutes]} />
+          </Field>
+
+          <Field>
+            <FieldLabel htmlFor="court-price">Price (per reservation)</FieldLabel>
+            <Input
+              id="court-price"
+              type="number"
+              min={0}
+              step={0.01}
+              placeholder="5000"
+              {...register("price", {
+                setValueAs: (v) => (v === "" ? undefined : Number(v)),
+              })}
+              aria-invalid={!!errors.price}
+            />
+            <FieldError errors={[errors.price]} />
           </Field>
 
           {isEditMode && (

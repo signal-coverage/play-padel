@@ -5,6 +5,7 @@ export type CourtsTableProps = {
   isLoading: boolean;
   onEdit: (court: CourtRecord) => void;
   onEditAvailability: (court: CourtRecord) => void;
+  onEditClosures: (court: CourtRecord) => void;
   onDelete: (court: CourtRecord) => void;
   deletingCourtId: string | null;
 };

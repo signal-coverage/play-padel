@@ -19,12 +19,12 @@ export function StatValue({
 }: StatValueProps) {
   if (variant === "pill") {
     return (
-      <div className="flex items-center gap-1 rounded-full bg-background/15 px-2.5 py-1 text-xs text-primary-foreground backdrop-blur-sm">
-        <span className="text-primary-foreground/70">{label}</span>
-        <span className={cn("font-semibold tabular-nums", valueClassName)}>
+      <span className="rounded-full border border-[#f5f5f5]/20 bg-[#f5f5f5]/10 px-3 py-1.5 font-mono text-[11px] uppercase tracking-wider text-[#f5f5f5]/85 backdrop-blur-md">
+        {label}:{" "}
+        <span className={cn("font-bold text-[#dffd36] tabular-nums", valueClassName)}>
           {value}
         </span>
-      </div>
+      </span>
     );
   }
 

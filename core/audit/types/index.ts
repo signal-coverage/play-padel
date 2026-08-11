@@ -1,30 +1,22 @@
 export type AuditAction =
-  | "patient.created"
-  | "patient.updated"
-  | "patient.deleted"
-  | "appointment.created"
-  | "appointment.updated"
-  | "appointment.cancelled"
-  | "appointment.completed"
-  | "appointment.no_show"
-  | "invoice.created"
-  | "invoice.issued"
-  | "invoice.voided"
-  | "invoice.paid"
-  | "professional.created"
-  | "professional.updated"
-  | "professional.deactivated"
-  | "user.invited"
-  | "user.updated"
-  | "user.deleted"
-  | "organization.updated"
-  | "organization.plan_changed"
-  | "plugin.installed"
-  | "plugin.uninstalled";
+  | "reservation.created"
+  | "reservation.cancelled"
+  | "reservation.completed"
+  | "reservation.no_show"
+  | "court.created"
+  | "court.updated"
+  | "court.deactivated"
+  | "court.closure_created"
+  | "court.closure_cancelled"
+  | "club.created"
+  | "club.updated"
+  | "user.created"
+  | "payment.confirmed"
+  | "payment.refunded";
 
 export interface AuditLog {
   id: string;
-  clubId: string;
+  clubId: string | null;
   userId: string;
   userDisplayName: string;
   action: AuditAction;

@@ -5,6 +5,8 @@ import { prisma } from "@/infrastructure/db/client";
 import { Prisma } from "@/lib/generated/prisma/client";
 import { dispatch } from "@/lib/notifications/dispatcher";
 import { PaymentConfirmed } from "@/lib/email/templates/PaymentConfirmed";
+import { logAudit } from "@/core/audit/services/audit.service";
+import { refundMercadoPagoPayment } from "@/lib/mercadopago/refunds";
 import type {
   Invoice,
   InvoiceItem,
@@ -374,6 +376,16 @@ export async function recordPayment(
     }),
   ]);
 
+  logAudit({
+    clubId,
+    userId: createdBy,
+    userDisplayName: createdBy,
+    action: "payment.confirmed",
+    entity: "Payment",
+    entityId: payment.id,
+    metadata: { invoiceId: input.invoiceId, amount: roundedAmount },
+  });
+
   // Dispatch payment-confirmed notification — non-throwing, does not affect return value
   try {
     const user = await prisma.userProfile.findUnique({
@@ -439,4 +451,65 @@ export async function getDailyCash(clubId: string): Promise<DailyCashSummary> {
     total,
     byMethod,
   };
+}
+
+export async function getInvoiceByReservationId(
+  reservationId: string,
+): Promise<Invoice | null> {
+  const row = await prisma.invoice.findFirst({
+    where: { reservationId },
+    include: { payments: true },
+    orderBy: { createdAt: "desc" },
+  });
+  return row ? toInvoice(row as InvoiceRow) : null;
+}
+
+// Refunds the invoice's COMPLETED payment via Mercado Pago, then marks it
+// REFUNDED. Invoice.status is intentionally left as PAID — Payment.status is
+// the source of truth for "this specific payment was later refunded"; there
+// is no separate InvoiceStatus for "paid then refunded".
+export async function refundPayment(
+  clubId: string,
+  invoiceId: string,
+  refundedBy: string,
+): Promise<Payment> {
+  const invoice = await prisma.invoice.findFirst({
+    where: { id: invoiceId, clubId },
+    include: { payments: true },
+  });
+  if (!invoice) throw new Error("Invoice not found");
+
+  const completedPayment = invoice.payments.find(
+    (p) => p.status === "COMPLETED",
+  );
+  if (!completedPayment) {
+    throw new Error("No completed payment to refund for this invoice");
+  }
+  if (!completedPayment.reference) {
+    throw new Error("Payment has no Mercado Pago reference to refund");
+  }
+
+  await refundMercadoPagoPayment(completedPayment.reference);
+
+  const row = await prisma.payment.update({
+    where: { id: completedPayment.id },
+    data: { status: "REFUNDED" },
+  });
+
+  const actor = await prisma.userProfile.findUnique({
+    where: { id: refundedBy },
+    select: { displayName: true },
+  });
+
+  logAudit({
+    clubId,
+    userId: refundedBy,
+    userDisplayName: actor?.displayName ?? refundedBy,
+    action: "payment.refunded",
+    entity: "Payment",
+    entityId: row.id,
+    metadata: { invoiceId, amount: row.amount },
+  });
+
+  return toPayment(row);
 }

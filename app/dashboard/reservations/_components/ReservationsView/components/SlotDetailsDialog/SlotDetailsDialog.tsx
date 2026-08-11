@@ -23,7 +23,17 @@ export function SlotDetailsDialog({
 }: SlotDetailsDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent
+        onPointerDownOutside={(e) => {
+          // Only reservations with action buttons in the footer (Complete /
+          // No-show / Cancel) should resist an accidental outside click —
+          // a read-only reservation view (no actionable status) stays
+          // dismissible like any plain info dialog.
+          if (reservation && isActionable(reservation.status)) {
+            e.preventDefault();
+          }
+        }}
+      >
         <DialogHeader>
           <DialogTitle className="text-balance">
             Reservation details

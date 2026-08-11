@@ -1,12 +1,10 @@
 "use client";
 
 import { subDays } from "date-fns";
-import { Bar, BarChart } from "recharts";
-import { ChartContainer } from "@/components/ui/chart";
-import { MutedPanel } from "@/components/MutedPanel";
 import { useOwnerReservationSummary } from "../../../../hooks";
-import { OVERVIEW_CHART_CONFIG, OWNER_RANGE_DAYS } from "../../consts";
+import { OWNER_RANGE_DAYS } from "../../consts";
 import { getBusiestWeekday } from "../../utils";
+import { OverviewChart } from "../OverviewChart";
 
 export function OwnerOverview() {
   const today = new Date();
@@ -20,19 +18,13 @@ export function OwnerOverview() {
   );
 
   return (
-    <>
-      {hasActivity && (
-        <ChartContainer config={OVERVIEW_CHART_CONFIG} className="h-20 w-full">
-          <BarChart data={chartData}>
-            <Bar dataKey="total" fill="var(--color-total)" radius={4} />
-          </BarChart>
-        </ChartContainer>
-      )}
-      <MutedPanel className="text-xs text-muted-foreground">
-        {busiest
-          ? `${busiest}s are your busiest day this period.`
-          : "No bookings yet this period."}
-      </MutedPanel>
-    </>
+    <OverviewChart
+      chartData={chartData}
+      hasActivity={hasActivity}
+      caption={
+        busiest ? `${busiest}s are your busiest day this period.` : null
+      }
+      emptyMessage="Once bookings come in, we'll show your club's busiest days here."
+    />
   );
 }

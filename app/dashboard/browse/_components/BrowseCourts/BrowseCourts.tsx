@@ -29,6 +29,8 @@ export function BrowseCourts() {
     setSelected(null),
   );
 
+  const currentClub = clubs?.find((c) => c.id === clubId);
+
   function handleSlotClick(courtId: string, slot: Slot) {
     if (slot.status !== "free") return;
     const court = courts?.find((c) => c.id === courtId);
@@ -39,11 +41,17 @@ export function BrowseCourts() {
   async function handleConfirm() {
     if (!selected) return;
     try {
-      await bookSlot.mutateAsync({
+      const result = (await bookSlot.mutateAsync({
         courtId: selected.courtId,
         scheduledStart: selected.slot.start.toISOString(),
         scheduledEnd: selected.slot.end.toISOString(),
-      });
+      })) as { checkoutUrl?: string };
+
+      if (result.checkoutUrl) {
+        window.location.href = result.checkoutUrl;
+        return;
+      }
+
       toast.success("Reservation confirmed.");
       setSelected(null);
     } catch (err) {
@@ -96,6 +104,7 @@ export function BrowseCourts() {
         courtName={selected?.courtName ?? ""}
         slot={selected?.slot ?? null}
         isSubmitting={bookSlot.isPending}
+        requiresPrepayment={currentClub?.requiresPrepayment ?? false}
         onConfirm={handleConfirm}
       />
     </div>

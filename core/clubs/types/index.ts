@@ -13,6 +13,7 @@ export interface Club {
   currency: string;
   plan: Plan;
   status: ClubStatus;
+  requiresPrepayment: boolean;
   createdAt: Date;
   updatedAt: Date;
   createdBy: string;
@@ -42,4 +43,5 @@ export interface UpdateClubInput {
   currency?: string;
   plan?: Plan;
   status?: ClubStatus;
+  requiresPrepayment?: boolean;
 }

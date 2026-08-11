@@ -45,7 +45,9 @@ export function buildTimeRows(courts: CourtColumn[]): TimeRow[] {
 /**
  * Free slots are interactive whenever a click handler is provided, for both
  * variants. Locked slots are only interactive for the "owner" variant, which
- * uses the click to inspect/cancel the existing reservation.
+ * uses the click to inspect/cancel the existing reservation. Closed slots are
+ * never interactive for either variant — there's no reservation to inspect,
+ * and closure management happens in the Closures sheet, not this grid.
  */
 export function isSlotInteractive(
   slot: Slot,
@@ -54,5 +56,6 @@ export function isSlotInteractive(
 ): boolean {
   if (!hasClickHandler) return false;
   if (slot.status === "free") return true;
+  if (slot.status === "closed") return false;
   return variant === "owner";
 }

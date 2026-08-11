@@ -23,6 +23,7 @@ export const updateClubSchema = z.object({
   currency: z.string().optional(),
   plan: z.enum(["FREE", "BASIC", "PRO", "CUSTOM"]).optional(),
   status: z.enum(["ACTIVE", "INACTIVE", "SUSPENDED", "DISABLED"]).optional(),
+  requiresPrepayment: z.boolean().optional(),
 });
 
 export type CreateClubSchemaInput = z.infer<typeof createClubSchema>;

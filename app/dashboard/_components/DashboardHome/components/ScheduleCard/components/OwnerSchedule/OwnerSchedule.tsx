@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { addDays, endOfMonth, startOfMonth } from "date-fns";
 import { useOwnerReservationSummary } from "../../../../hooks";
 import { UPCOMING_LIST_LIMIT, UPCOMING_WINDOW_DAYS } from "../../consts";
@@ -11,8 +12,9 @@ import { UpcomingList } from "../UpcomingList";
 
 export function OwnerSchedule() {
   const today = new Date();
-  const monthStart = startOfMonth(today);
-  const monthEnd = endOfMonth(today);
+  const [month, setMonth] = useState(() => today);
+  const monthStart = startOfMonth(month);
+  const monthEnd = endOfMonth(month);
   const { data: days = [] } = useOwnerReservationSummary(monthStart, monthEnd);
   const markers = buildMarkersFromSummary(days);
 
@@ -25,11 +27,18 @@ export function OwnerSchedule() {
       id: r.id,
       courtName: r.courtName,
       scheduledStart: r.scheduledStart,
+      scheduledEnd: r.scheduledEnd,
+      notes: r.notes,
+      // The inline self-cancel action is a player-only affordance (this app's
+      // owner-cancel flow has different semantics — see ReservationsView's
+      // Complete/No-show/Cancel actions — not a quick inline "X" here).
+      canSelfCancel: false,
+      userName: r.userName,
     }));
 
   return (
     <>
-      <MarkedCalendar markers={markers} />
+      <MarkedCalendar markers={markers} month={month} onMonthChange={setMonth} />
       <UpcomingList items={upcoming} />
     </>
   );

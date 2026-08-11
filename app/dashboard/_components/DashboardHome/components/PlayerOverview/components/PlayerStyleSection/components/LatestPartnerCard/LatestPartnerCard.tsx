@@ -1,60 +1,55 @@
 import { ChevronRight } from "lucide-react";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
+import { PlayerProfileCard } from "@/components/PlayerProfileCard";
+import { getPreferredSideLabel } from "@/core/users/consts";
+import { getPadelCategoryLabel } from "@/app/dashboard/_components/DashboardHome/components/SkillOverviewCard/utils";
 import { getInitials } from "../../../../utils";
 import type { LatestPartnerCardProps } from "./types";
 
 export function LatestPartnerCard({ partner }: LatestPartnerCardProps) {
   return (
-    <Popover>
-      <PopoverTrigger asChild>
+    <Dialog>
+      <DialogTrigger asChild>
         <button
           type="button"
-          className="flex w-full items-center gap-2 rounded-lg border border-border p-2 text-left transition-colors hover:bg-muted/50"
+          className="flex w-full items-center gap-3 rounded-2xl border border-border bg-muted/40 p-3 text-left transition-colors hover:bg-muted/70"
         >
-          <Avatar size="sm">
-            {partner.avatarUrl && (
-              <AvatarImage src={partner.avatarUrl} alt="" />
-            )}
-            <AvatarFallback>{getInitials(partner.name)}</AvatarFallback>
-          </Avatar>
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-xs font-medium">{partner.name}</p>
-            <p className="text-[11px] text-muted-foreground">Latest partner</p>
-          </div>
-          <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
-        </button>
-      </PopoverTrigger>
-      <PopoverContent className="w-64">
-        <div className="flex items-center gap-3">
           <Avatar size="lg">
             {partner.avatarUrl && (
               <AvatarImage src={partner.avatarUrl} alt="" />
             )}
-            <AvatarFallback>{getInitials(partner.name)}</AvatarFallback>
+            <AvatarFallback className="bg-primary/15 font-bold text-primary">
+              {getInitials(partner.name)}
+            </AvatarFallback>
           </Avatar>
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-semibold">{partner.name}</p>
-            <p className="text-xs text-muted-foreground">
-              Played together {partner.timesPlayedTogether} times
-            </p>
-            <p className="text-xs text-muted-foreground">
-              Last played {partner.lastPlayedLabel}
+            <p className="truncate text-xs text-muted-foreground">
+              {getPadelCategoryLabel(partner.padelCategory)} •{" "}
+              {getPreferredSideLabel(partner.preferredSide)}
             </p>
           </div>
-        </div>
-        <Button variant="outline" size="sm" className="mt-3 w-full" disabled>
-          View full profile
-        </Button>
-        <p className="mt-1 text-center text-[11px] text-muted-foreground">
-          Coming soon
-        </p>
-      </PopoverContent>
-    </Popover>
+          <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+        </button>
+      </DialogTrigger>
+      <DialogContent>
+        <PlayerProfileCard
+          player={{
+            displayName: partner.name,
+            avatarUrl: partner.avatarUrl,
+            padelCategory: partner.padelCategory,
+            preferredSide: partner.preferredSide,
+            dominantHand: partner.dominantHand,
+            email: partner.email,
+            phone: partner.phone,
+            individualWinRate: partner.individualWinRate,
+            individualMatchesPlayed: partner.individualMatchesPlayed,
+            coupleWinRate: partner.coupleWinRate,
+            coupleMatchesPlayed: partner.timesPlayedTogether,
+          }}
+        />
+      </DialogContent>
+    </Dialog>
   );
 }

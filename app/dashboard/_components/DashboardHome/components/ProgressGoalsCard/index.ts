@@ -1,1 +1,0 @@
-export { ProgressGoalsCard } from "./ProgressGoalsCard";

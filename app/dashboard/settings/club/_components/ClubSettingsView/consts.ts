@@ -12,4 +12,5 @@ export const clubSettingsFormSchema = z.object({
   logoUrl: z.string(),
   timezone: z.string().min(1, "Timezone is required"),
   currency: z.string().min(1, "Currency is required"),
+  requiresPrepayment: z.boolean(),
 });

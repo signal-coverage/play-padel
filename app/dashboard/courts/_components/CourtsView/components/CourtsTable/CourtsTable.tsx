@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarClock, Pencil, Trash2 } from "lucide-react";
+import { CalendarClock, CalendarOff, Pencil, Trash2 } from "lucide-react";
 import { StatusBox } from "@/components/StatusBox";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,7 @@ export function CourtsTable({
   isLoading,
   onEdit,
   onEditAvailability,
+  onEditClosures,
   onDelete,
   deletingCourtId,
 }: CourtsTableProps) {
@@ -77,6 +78,15 @@ export function CourtsTable({
                     onClick={() => onEditAvailability(court)}
                   >
                     <CalendarClock />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    aria-label={`Manage closures for ${court.name}`}
+                    onClick={() => onEditClosures(court)}
+                  >
+                    <CalendarOff />
                   </Button>
                   <Button
                     type="button"

@@ -15,7 +15,9 @@ export function BannerPreview({ partnerInitials }: BannerPreviewProps) {
         </p>
       </div>
       <Avatar size="sm">
-        <AvatarFallback>{partnerInitials}</AvatarFallback>
+        <AvatarFallback className="bg-primary/15 font-bold text-primary">
+          {partnerInitials}
+        </AvatarFallback>
       </Avatar>
       <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
     </div>

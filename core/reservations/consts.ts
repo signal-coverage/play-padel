@@ -1,5 +1,17 @@
 import type { ReservationStatus } from "@/core/reservations/types";
 
+// Single source of truth for "does this status still block a slot / count as
+// an active reservation" — shared by reservations.service.ts and
+// courts.service.ts (previously two independently-maintained copies).
+export const ACTIVE_RESERVATION_STATUSES: readonly ReservationStatus[] = [
+  "SCHEDULED",
+  "CONFIRMED",
+];
+
+// How long an unpaid SCHEDULED (pending-payment) reservation holds its slot
+// before it's treated as lapsed. See docs: Payments spec, "Slot-hold-with-expiry".
+export const PAYMENT_HOLD_MINUTES = 15;
+
 export const RESERVATION_STATUS_LABELS: Record<ReservationStatus, string> = {
   SCHEDULED: "Scheduled",
   CONFIRMED: "Confirmed",

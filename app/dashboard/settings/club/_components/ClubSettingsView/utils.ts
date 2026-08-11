@@ -12,5 +12,6 @@ export function clubToFormValues(
     logoUrl: club?.logoUrl ?? "",
     timezone: club?.timezone ?? "",
     currency: club?.currency ?? "",
+    requiresPrepayment: club?.requiresPrepayment ?? false,
   };
 }

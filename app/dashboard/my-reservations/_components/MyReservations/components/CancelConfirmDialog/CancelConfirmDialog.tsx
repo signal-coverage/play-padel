@@ -22,7 +22,7 @@ export function CancelConfirmDialog({
 }: CancelConfirmDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent onPointerDownOutside={(e) => e.preventDefault()}>
         <DialogHeader>
           <DialogTitle>Cancel reservation?</DialogTitle>
           <DialogDescription>

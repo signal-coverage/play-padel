@@ -1,4 +1,5 @@
 import { prisma } from "@/infrastructure/db/client";
+import { logAudit } from "@/core/audit/services/audit.service";
 import type {
   Club,
   CreateClubInput,
@@ -20,6 +21,7 @@ function toClub(row: ClubRow): Club {
     currency: row.currency,
     plan: row.plan as Club["plan"],
     status: row.status as Club["status"],
+    requiresPrepayment: row.requiresPrepayment,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
     createdBy: row.createdBy,
@@ -66,6 +68,21 @@ export async function updateClub(
     where: { id },
     data: { ...input, updatedBy },
   });
+
+  const actor = await prisma.userProfile.findUnique({
+    where: { id: updatedBy },
+    select: { displayName: true },
+  });
+  logAudit({
+    clubId: row.id,
+    userId: updatedBy,
+    userDisplayName: actor?.displayName ?? updatedBy,
+    action: "club.updated",
+    entity: "Club",
+    entityId: row.id,
+    metadata: { ...input },
+  });
+
   return toClub(row);
 }
 

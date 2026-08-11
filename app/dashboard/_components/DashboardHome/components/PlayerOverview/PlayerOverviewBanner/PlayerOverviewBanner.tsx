@@ -24,16 +24,17 @@ export function PlayerOverviewBanner({ className }: PlayerOverviewBannerProps) {
         type="button"
         onClick={() => setOpen(true)}
         className={cn(
-          "flex items-center rounded-2xl border border-border bg-card p-3",
+          "animate-fade-up flex items-center rounded-2xl border border-border bg-card p-3",
           className,
         )}
+        style={{ animationDelay: "180ms" }}
       >
         <BannerPreview partnerInitials={getInitials(partner.name)} />
       </button>
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetContent side="bottom">
           <SheetHeader>
-            <SheetTitle>Player Overview</SheetTitle>
+            <SheetTitle className="label-mono!">Player Overview</SheetTitle>
           </SheetHeader>
           <div className="overflow-y-auto px-4 pb-4">
             <PlayerOverviewContent />
