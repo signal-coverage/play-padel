@@ -12,7 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { HelpCircle, Settings, User } from "lucide-react";
+import { HelpCircle, LogOut, Settings, User } from "lucide-react";
 import { getInitials } from "../../utils";
 
 export function UserMenu() {
@@ -32,7 +32,7 @@ export function UserMenu() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary text-xs font-medium text-primary-foreground outline-none transition-[opacity,scale] duration-150 ease-out hover:opacity-90 focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.96]">
+        <button className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-sm bg-primary text-xs leading-none font-medium text-primary-foreground outline-none transition-[opacity,scale] duration-150 ease-out hover:opacity-90 focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-[0.96]">
           {imageUrl ? (
             <Image
               src={imageUrl}
@@ -48,30 +48,37 @@ export function UserMenu() {
           )}
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent side="bottom" align="end" className="w-56">
+      <DropdownMenuContent side="bottom" align="end" className="w-56 rounded-sm">
         <DropdownMenuItem
           onClick={() => openUserProfile()}
-          className="cursor-pointer"
+          className="cursor-pointer py-2 rounded-sm"
         >
-          <User className="h-4 w-4" />
+          <User className="h-4 w-4 text-muted-foreground" strokeWidth={1.5} />
           Account Settings
         </DropdownMenuItem>
         {isOwner && (
-          <DropdownMenuItem asChild className="cursor-pointer">
+          <DropdownMenuItem asChild className="cursor-pointer py-2 rounded-sm">
             <Link href="/dashboard/settings/club">
-              <Settings className="h-4 w-4" />
+              <Settings
+                className="h-4 w-4 text-muted-foreground"
+                strokeWidth={1.5}
+              />
               Club Settings
             </Link>
           </DropdownMenuItem>
         )}
-        <DropdownMenuItem asChild className="cursor-pointer">
+        <DropdownMenuItem asChild className="cursor-pointer py-2 rounded-sm">
           <Link href="/dashboard/help">
-            <HelpCircle className="h-4 w-4" />
+            <HelpCircle
+              className="h-4 w-4 text-muted-foreground"
+              strokeWidth={1.5}
+            />
             Help
           </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer">
+        <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer py-2 rounded-sm">
+          <LogOut className="h-4 w-4 text-muted-foreground" strokeWidth={1.5} />
           Sign out
         </DropdownMenuItem>
       </DropdownMenuContent>

@@ -14,7 +14,7 @@ export function AppNavbar() {
   const role = user?.role ?? "player";
 
   return (
-    <header className="flex items-center justify-between gap-4 border-b border-border bg-background px-4 py-3 md:px-6">
+    <header className="flex items-center justify-between gap-4 border-b border-border bg-background px-6 py-4 md:px-6">
       <div className="flex min-w-0 items-center gap-8">
         <Link
           href="/dashboard"

@@ -33,7 +33,7 @@ export default function DashboardLayout({
         <div className="h-svh overflow-hidden bg-muted p-2 lg:p-3">
           <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-background">
             <AppNavbar />
-            <main className="flex flex-1 justify-center overflow-y-auto p-3 scrollbar-none md:overflow-hidden md:p-4">
+            <main className="flex flex-1 justify-center overflow-y-auto p-6 scrollbar-none md:overflow-hidden md:p-4 md:px-6">
               <div className="h-full w-full max-w-7xl">{children}</div>
             </main>
             <MobileBottomNav
