@@ -1,13 +1,4 @@
-import type {
-  DominantHand,
-  PreferredSide,
-  SystemRole,
-} from "@/core/users/types";
-
-export const ROLE_LABEL: Record<SystemRole, string> = {
-  owner: "Owner",
-  player: "Player",
-};
+import type { DominantHand, PreferredSide } from "@/core/users/types";
 
 export const PREFERRED_SIDE_OPTIONS: { value: PreferredSide; label: string }[] =
   [

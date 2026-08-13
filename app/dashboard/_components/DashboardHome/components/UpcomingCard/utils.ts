@@ -1,10 +1,9 @@
 import { format, isToday, isTomorrow } from "date-fns";
 import type { UpcomingItem } from "./types";
 
-// Duplicated from ScheduleCard/utils.ts intentionally: UpcomingCard and
-// ScheduleCard are independent sibling grid items (each fetches its own
-// data), so this keeps the two folders self-contained rather than reaching
-// across sibling card boundaries for a one-line date-key formatter.
+// Kept as a local helper intentionally: UpcomingCard is a self-contained
+// grid item (fetches its own data), so this one-line date-key formatter
+// stays local rather than being shared from elsewhere.
 function dayKey(date: Date): string {
   return format(date, "yyyy-MM-dd");
 }

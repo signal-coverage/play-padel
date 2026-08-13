@@ -1,1 +1,0 @@
-export { MarkedCalendar } from "./MarkedCalendar";
