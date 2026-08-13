@@ -1,6 +1,6 @@
-import type { PreferredSide } from "../../../../types";
+import type { PreferredSide } from "@/core/users/types";
 
 export type PadelSideDiagramProps = {
-  side: PreferredSide;
+  side: PreferredSide | null;
   className?: string;
 };

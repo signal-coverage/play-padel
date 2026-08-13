@@ -1,53 +1,30 @@
-# Play Padel: Suggested Roadmap
+# Roadmap
 
-Based on what's confirmed so far: two user types (regular users who reserve courts, owners who manage a club's courts), a list-based UI showing free/locked slots, and real-time updates for owners "if possible." The reservation flow itself hasn't been detailed yet, so later steps here are intentionally coarse and will need revisiting once that's defined.
+The core booking product (browse → book → cancel for players; courts/availability/reservations for owners) is done and fully real — see [PROJECT_STATUS.md](PROJECT_STATUS.md). What's below is what's genuinely still open, grouped by rough priority.
 
-## 1. Strip the legacy boilerplate domain
+## Phase 1 — close out what's half-built
 
-- Delete any remaining unused healthcare-domain models, enums, and files (`Patient`, `Consultation`, `Treatment`, `NutritionPlan*`, `PsychologySession*`, `PluginRegistry`, related enums, `ClientBirthday` template, `.templates/**`).
-- Regenerate the Prisma client after trimming the schema.
+- ~~**Payments**~~ — done. Mercado Pago Checkout Pro wired at booking time: clubs can require prepayment (`Club.requiresPrepayment`), which creates a 15-minute `SCHEDULED` hold + invoice and redirects to checkout; `POST /api/webhooks/mercadopago` confirms or voids based on the signature-verified payment outcome, and both self-cancel and owner-cancel refund `COMPLETED` payments before cancelling.
+- ~~**Audit logging**~~ — fully done, end to end. `logAudit()` is called from reservations, courts, club, and player-onboarding mutations; `GET /api/clubs/audit-logs` exposes it; and `/dashboard/audit-logs` (owner nav) renders it with entity/action filters and pagination.
+- ~~**Notifications cleanup**~~ — done. Deleted the orphaned `core/events/event-bus.ts` and `core/notifications/handlers/notification.handlers.tsx` (the one non-duplicated handler misused the "reminder" email template as a booking confirmation, so it wasn't worth wiring as-is). Wired the real, correctly-designed reminder feature instead: `GET /api/cron/notifications` (Vercel Cron, daily) calls the already-correct `getPendingReservationReminders()` and dispatches emails.
+- **Real-time court availability** — currently 15s polling via React Query. `ws`/`@types/ws` are installed but unused. Decide between a WebSocket server, Server-Sent Events, or just tuning the polling interval, before investing more here.
+- ~~**Court closures**~~ — done. Owners can block a court for a date/time range with a required reason (`CourtClosure` model), optionally applied to all courts at once; closed slots render distinctly to players and booking one is rejected server-side. Blocked (not auto-resolved) if it overlaps active reservations. The other three court-management sub-features from the original idea remain queued as separate future work: minimum reservation duration, court characteristics/tags, and bulk edit across courts.
 
-## 2. Rework the data model
+## Phase 2 — player identity & social features
 
-- `Organization` → `Club`, `Professional` + `WorkingHours` → `Court` + `CourtAvailability`, `Appointment` → `Reservation` (see field-level detail in `migration-analysis.md`).
-- Remap `SystemRole` to `owner | player` (defer `staff` sub-accounts and the `CustomRole` machinery unless a concrete need shows up).
+All of this is currently mocked UI with no backing schema (see the Player Overview section of [PROJECT_STATUS.md](PROJECT_STATUS.md)):
 
-## 3. Rebrand the authenticated shell
+- ~~Player style (preferred side, dominant hand) as real, editable profile data.~~ — done.
+- Doubles partner history (who you've played with, how often).
+- Tournaments, match history, and player rankings — no `Tournament`/`Match` model exists yet at all; this is new schema, not a rewire.
 
-- `AppSidebar.tsx` (logo + brand text), `AppSidebar/consts.ts` (nav items), `app/(auth)/**` copy, `app/onboarding/**` copy — remove any remaining legacy boilerplate branding and replace the clinic-onboarding wizard with two branches: player signup (simple) vs. club owner signup (club + first court creation).
-- Wire `DashboardGuard` to real "does this user own a club yet" logic instead of the current stubbed-out placeholder.
+## Phase 3 — hardening
 
-## 4. Build the core padel modules (following the existing `core/{domain}` service/schema/types/consts pattern)
+- **Security** — no rate limiting, no CSRF-specific review, no API throttling, no CAPTCHA on public forms. See [SECURITY.md](SECURITY.md).
+- **Landing page** — every section is placeholder marketing copy (fake testimonials, events, stats). Needs real content once there's something real to show.
 
-- `core/clubs` — club CRUD for owners.
-- `core/courts` — court CRUD + availability template (recurring weekly hours, rename from `WorkingHours`).
-- `core/reservations` — adapted from `core/appointments`; this is where the not-yet-defined booking flow will live once specced.
+## Longer-term / aspirational
 
-## 5. Regular-user experience
-
-- Public/authenticated list view: clubs → courts → free/locked slots. `components/ui/calendar.tsx` is only a bare date-picker today — a real **availability grid** component needs to be built (nothing like it exists yet).
-
-## 6. Owner experience
-
-- Per-club dashboard: courts and their slot grid (free/locked), ideally live-updating.
-- **Real-time decision needed**: `ws`/`@types/ws` are installed but nothing uses them yet, and there's no WebSocket server/client code anywhere in the repo. Before building this, decide between:
-  - WebSocket server (the dependency is already there, but nothing is wired — real work either way)
-  - Server-Sent Events (simpler one-way push, fits "slot became locked" style updates well)
-  - Polling via React Query (`refetchInterval`) — lowest effort, good enough for an MVP, easy to upgrade later
-  - Recommendation: start with React Query polling for the MVP, keep `core/events/event-bus.ts` as the seam so it can be swapped for a real push mechanism later without touching UI code.
-
-## 7. Reservation flow
-
-- Deliberately left coarse — come back to this once the actual reservation rules are defined (lock duration, cancellation policy, who can see whose reservations, etc.). `core/appointments` gives a working conflict-check/status-transition skeleton to adapt.
-
-## 8. Payments
-
-- No gateway is wired in today. Once the reservation flow is defined, decide whether payment happens at booking time or later, then integrate a real gateway (Mercado Pago is a strong default given the domain and there's already a scaffolding skill available for it in this environment) — replace the current manual `core/billing/services/billing.service.ts` recording with real charge/webhook handling.
-
-## 9. Notifications
-
-- Rewrite `NotificationType` and the email templates (`AppointmentReminder` → reservation reminder, `AppointmentCancelled` → reservation cancelled, add payment-confirmed) once the reservation flow is defined — the dispatch pattern itself doesn't need to change.
-
-## Suggested next concrete step
-
-Steps 1–3 (strip healthcare domain, rework schema, rebrand shell) are mechanical and can start immediately without any further product decisions. Step 4 onward needs the reservation flow fleshed out first — worth locking that down before writing `core/reservations`.
+- Mobile app.
+- Push notifications.
+- Player search / discovery.

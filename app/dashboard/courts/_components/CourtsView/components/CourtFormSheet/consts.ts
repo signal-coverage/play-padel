@@ -13,5 +13,9 @@ export const courtFormSchema = z.object({
     .number({ message: "Slot duration must be a number" })
     .int()
     .positive("Slot duration must be greater than 0"),
+  price: z
+    .number({ message: "Price must be a number" })
+    .nonnegative("Price cannot be negative")
+    .optional(),
   active: z.boolean(),
 });

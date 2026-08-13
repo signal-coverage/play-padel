@@ -12,7 +12,7 @@ import {
 
 export default function HomePage() {
   return (
-    <div className="font-(family-name:--font-jakarta) bg-white">
+    <div className="theme-light font-(family-name:--font-jakarta) bg-white">
       <LandingHeader />
       <LandingHero />
       <LandingTrusted />

@@ -19,6 +19,7 @@ model Club {
   currency  String
   plan      Plan       @default(FREE)
   status    ClubStatus @default(ACTIVE)
+  requiresPrepayment Boolean @default(false)
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
   createdBy String
@@ -65,6 +66,16 @@ enum Gender {
   PREFER_NOT_TO_SAY
 }
 
+enum PreferredSide {
+  forehand
+  backhand
+}
+
+enum DominantHand {
+  right
+  left
+}
+
 model UserProfile {
   id            String      @id
   role          SystemRole  @default(player)
@@ -79,6 +90,8 @@ model UserProfile {
   address       String?
   gender        Gender?
   padelCategory Int?
+  preferredSide PreferredSide?
+  dominantHand  DominantHand?
   status        UserStatus  @default(ACTIVE)
   lastLogin     DateTime?
   createdAt     DateTime    @default(now())
@@ -101,6 +114,7 @@ model Court {
   indoor              Boolean   @default(false)
   color               String?
   slotDurationMinutes Int       @default(90)
+  price               Float?
   active              Boolean   @default(true)
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
@@ -110,6 +124,7 @@ model Court {
   deletedBy           String?
 
   availability CourtAvailability[]
+  closures     CourtClosure[]
   reservations Reservation[]
 
   @@index([clubId, active])
@@ -128,6 +143,22 @@ model CourtAvailability {
 
   @@index([courtId, dayOfWeek])
   @@map("court_availability")
+}
+
+model CourtClosure {
+  id          String    @id @default(cuid())
+  courtId     String
+  court       Court     @relation(fields: [courtId], references: [id])
+  startsAt    DateTime
+  endsAt      DateTime
+  reason      String
+  createdAt   DateTime  @default(now())
+  createdBy   String
+  cancelledAt DateTime?
+  cancelledBy String?
+
+  @@index([courtId, startsAt, endsAt])
+  @@map("court_closures")
 }
 
 enum ReservationStatus {
@@ -152,6 +183,7 @@ model Reservation {
   scheduledStart DateTime
   scheduledEnd   DateTime
   notes          String?
+  paymentExpiresAt DateTime?
   cancelledAt    DateTime?
   cancelledBy    String?
   createdAt      DateTime          @default(now())
@@ -274,7 +306,7 @@ model Notification {
 
 model AuditLog {
   id              String   @id @default(cuid())
-  clubId          String
+  clubId          String?
   userId          String
   userDisplayName String   @default("")
   action          String

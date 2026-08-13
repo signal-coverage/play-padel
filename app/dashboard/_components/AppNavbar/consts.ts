@@ -5,6 +5,8 @@ import {
   CalendarCheck,
   Settings2,
   Compass,
+  Users,
+  ScrollText,
   type LucideIcon,
 } from "lucide-react";
 import type { SystemRole } from "@/providers/auth-provider";
@@ -42,6 +44,12 @@ export const navItems: NavItem[] = [
     roles: ["owner"],
   },
   {
+    title: "Audit Log",
+    href: "/dashboard/audit-logs",
+    icon: ScrollText,
+    roles: ["owner"],
+  },
+  {
     title: "Browse Courts",
     href: "/dashboard/browse",
     icon: Compass,
@@ -51,6 +59,12 @@ export const navItems: NavItem[] = [
     title: "My Reservations",
     href: "/dashboard/my-reservations",
     icon: CalendarCheck,
+    roles: ["player"],
+  },
+  {
+    title: "Players",
+    href: "/dashboard/players",
+    icon: Users,
     roles: ["player"],
   },
 ];

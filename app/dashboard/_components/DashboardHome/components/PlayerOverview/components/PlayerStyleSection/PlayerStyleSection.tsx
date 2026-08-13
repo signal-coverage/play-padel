@@ -1,5 +1,7 @@
 import { PadelSideDiagram } from "./components/PadelSideDiagram";
 import { LatestPartnerCard } from "./components/LatestPartnerCard";
+import { EditPlayerStyleDialog } from "./components/EditPlayerStyleDialog";
+import { getDominantHandLabel } from "@/core/users/consts";
 import type { PlayerStyleSectionProps } from "./types";
 
 export function PlayerStyleSection({
@@ -7,20 +9,23 @@ export function PlayerStyleSection({
   partner,
 }: PlayerStyleSectionProps) {
   return (
-    <div className="flex flex-col gap-3">
-      <div className="flex items-center gap-3">
-        <PadelSideDiagram
-          side={playerStyle.preferredSide}
-          className="h-28 w-28"
-        />
-        <div>
-          <p className="text-xs text-muted-foreground">Preferred side</p>
-          <p className="text-sm font-semibold capitalize">
-            {playerStyle.preferredSide}
-          </p>
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-3">
+        <PadelSideDiagram side={playerStyle.preferredSide} />
+        <div className="flex items-center justify-between text-sm">
+          <span className="text-muted-foreground">Dominant hand</span>
+          <div className="flex items-center gap-1.5">
+            <span className="font-semibold">
+              {getDominantHandLabel(playerStyle.dominantHand)}
+            </span>
+            <EditPlayerStyleDialog />
+          </div>
         </div>
       </div>
-      <LatestPartnerCard partner={partner} />
+      <div className="flex flex-col gap-2">
+        <p className="label-mono">Latest partner</p>
+        <LatestPartnerCard partner={partner} />
+      </div>
     </div>
   );
 }

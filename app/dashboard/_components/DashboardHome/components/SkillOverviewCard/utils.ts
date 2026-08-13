@@ -33,3 +33,30 @@ function getIsoDayIndex(date: Date): number {
   const day = date.getDay(); // 0 (Sun) .. 6 (Sat)
   return day === 0 ? 6 : day - 1; // 0 (Mon) .. 6 (Sun)
 }
+
+const TIME_OF_DAY_LABELS = ["morning", "afternoon", "evening"] as const;
+
+/** Most frequent time-of-day bucket (morning < 12:00, afternoon < 18:00, else evening). Null when empty. */
+export function getBusiestTimeOfDay(
+  dates: Date[],
+): (typeof TIME_OF_DAY_LABELS)[number] | null {
+  if (dates.length === 0) return null;
+
+  const totals = [0, 0, 0];
+  for (const date of dates) {
+    totals[getTimeOfDayIndex(date)] += 1;
+  }
+
+  let busiestIndex = 0;
+  for (let index = 1; index < totals.length; index++) {
+    if (totals[index] > totals[busiestIndex]) busiestIndex = index;
+  }
+  return TIME_OF_DAY_LABELS[busiestIndex];
+}
+
+function getTimeOfDayIndex(date: Date): number {
+  const hour = date.getHours();
+  if (hour < 12) return 0;
+  if (hour < 18) return 1;
+  return 2;
+}

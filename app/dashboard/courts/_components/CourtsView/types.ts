@@ -5,6 +5,7 @@ export type CourtRecord = {
   indoor: boolean;
   color?: string;
   slotDurationMinutes: number;
+  price?: number;
   active: boolean;
 };
 
@@ -14,6 +15,7 @@ export type CourtFormValues = {
   indoor: boolean;
   color: string;
   slotDurationMinutes: number;
+  price?: number;
   active: boolean;
 };
 
@@ -22,4 +24,16 @@ export type AvailabilityDayRow = {
   active: boolean;
   startTime: string;
   endTime: string;
+};
+
+export type RawCourtClosure = {
+  id: string;
+  courtId: string;
+  startsAt: string;
+  endsAt: string;
+  reason: string;
+  createdAt: string;
+  createdBy?: string;
+  cancelledAt?: string;
+  cancelledBy?: string;
 };

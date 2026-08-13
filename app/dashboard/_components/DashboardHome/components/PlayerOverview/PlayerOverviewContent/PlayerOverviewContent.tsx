@@ -7,10 +7,16 @@ export function PlayerOverviewContent() {
   const { playerStyle, partner, performance } = usePlayerOverviewData();
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-6">
       <PlayerStyleSection playerStyle={playerStyle} partner={partner} />
       <Separator />
-      <PerformanceSummarySection performance={performance} />
+      <div className="flex flex-col gap-3">
+        <p className="label-mono">Performance</p>
+        <PerformanceSummarySection
+          performance={performance}
+          preferredSide={playerStyle.preferredSide}
+        />
+      </div>
     </div>
   );
 }

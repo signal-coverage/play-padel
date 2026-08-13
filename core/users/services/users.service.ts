@@ -14,6 +14,8 @@ function toUserProfile(row: UserProfileRow): UserProfile {
     email: row.email,
     photoURL: row.photoURL ?? undefined,
     phone: row.phone ?? undefined,
+    preferredSide: row.preferredSide ?? undefined,
+    dominantHand: row.dominantHand ?? undefined,
     status: row.status as UserProfile["status"],
     lastLogin: row.lastLogin ?? undefined,
     createdAt: row.createdAt,

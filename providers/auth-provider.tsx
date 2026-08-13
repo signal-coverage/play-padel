@@ -1,7 +1,15 @@
 "use client";
 
-import { createContext, useEffect, useMemo, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  useRef,
+} from "react";
 import { useUser, useClerk } from "@clerk/nextjs";
+import type { DominantHand, PreferredSide } from "@/core/users/types";
 
 // Mirrors prisma/schema.prisma's SystemRole enum.
 export type SystemRole = "owner" | "player";
@@ -10,6 +18,10 @@ interface UserProfileSummary {
   role: SystemRole;
   clubId: string | null;
   padelCategory: number | null;
+  preferredSide: PreferredSide | null;
+  dominantHand: DominantHand | null;
+  // Raw ISO string as returned by JSON — parsed into a Date on AppUser.
+  createdAt: string;
 }
 
 export interface AppUser {
@@ -25,6 +37,13 @@ export interface AppUser {
   // Player-only self-reported skill level (1 = highest, 8 = beginner);
   // always null for owners and for players who skipped it during onboarding.
   padelCategory: number | null;
+  // Player-only play-style fields, editable from the Player Overview card.
+  // Always null for owners and for players who haven't set them yet.
+  preferredSide: PreferredSide | null;
+  dominantHand: DominantHand | null;
+  // When this UserProfile row was created — null until the profile lookup
+  // resolves, same as every other profile-derived field here.
+  createdAt: Date | null;
 }
 
 interface AuthContextValue {
@@ -34,6 +53,11 @@ interface AuthContextValue {
   // from `loading`, which only tracks Clerk's own hydration.
   profileLoading: boolean;
   signOut: () => Promise<void>;
+  // Re-runs the /api/me lookup and updates `user` in place — call after any
+  // mutation that changes the caller's own UserProfile (e.g. editing
+  // preferredSide/dominantHand) so the new value shows up everywhere
+  // without a full page reload.
+  refetchProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -47,6 +71,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // being written here, so this never needs a synchronous setState in the
   // effect's early-return branch.
   const [profileLoading, setProfileLoading] = useState(true);
+
+  const latestRequestRef = useRef(0);
+
+  // Thin lookup of this user's own UserProfile fields. Reads Prisma
+  // directly (see app/api/me/route.ts) rather than going through
+  // core/users, which is mid-migration to the new owner|player enum.
+  // Guards against out-of-order responses: if a newer call to
+  // fetchProfile starts before this one resolves, this one's result is
+  // discarded so a stale response can never overwrite fresher state.
+  const fetchProfile = useCallback(async () => {
+    const requestId = ++latestRequestRef.current;
+    try {
+      const res = await fetch("/api/me");
+      const data = res.ok ? await res.json() : { profile: null };
+      if (latestRequestRef.current === requestId) {
+        setProfile(data?.profile ?? null);
+      }
+    } catch {
+      if (latestRequestRef.current === requestId) {
+        setProfile(null);
+      }
+    }
+  }, []);
 
   useEffect(() => {
     // No clerkUser (still hydrating, or logged out) means there's nothing to
@@ -62,20 +109,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setProfileLoading(true);
 
-    // Thin lookup of this user's own UserProfile.role/clubId. Reads Prisma
-    // directly (see app/api/me/route.ts) rather than going through
-    // core/users, which is mid-migration to the new owner|player enum.
-    fetch("/api/me")
-      .then((res) => (res.ok ? res.json() : { profile: null }))
-      .then((data) => {
-        if (!cancelled) setProfile(data?.profile ?? null);
-      })
-      .catch(() => {
-        if (!cancelled) setProfile(null);
-      })
-      .finally(() => {
-        if (!cancelled) setProfileLoading(false);
-      });
+    fetchProfile().finally(() => {
+      if (!cancelled) setProfileLoading(false);
+    });
 
     return () => {
       cancelled = true;
@@ -94,6 +130,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             role: profile?.role ?? null,
             clubId: profile?.clubId ?? null,
             padelCategory: profile?.padelCategory ?? null,
+            preferredSide: profile?.preferredSide ?? null,
+            dominantHand: profile?.dominantHand ?? null,
+            createdAt: profile?.createdAt ? new Date(profile.createdAt) : null,
           }
         : null,
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -121,8 +160,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       loading: !isLoaded,
       profileLoading: isProfileLoading,
       signOut: () => signOut(),
+      refetchProfile: fetchProfile,
     }),
-    [user, isLoaded, isProfileLoading, signOut],
+    [user, isLoaded, isProfileLoading, signOut, fetchProfile],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

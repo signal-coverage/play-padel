@@ -25,6 +25,7 @@ export function toSlot(raw: RawSlot): Slot {
     end: new Date(raw.end),
     status: raw.status,
     ...(raw.reservationId && { reservationId: raw.reservationId }),
+    ...(raw.closureReason && { closureReason: raw.closureReason }),
   };
 }
 

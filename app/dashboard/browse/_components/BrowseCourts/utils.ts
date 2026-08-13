@@ -10,6 +10,7 @@ export function toCourtColumns(raw: RawCourt[]): CourtColumn[] {
       end: new Date(slot.end),
       status: slot.status,
       ...(slot.reservationId && { reservationId: slot.reservationId }),
+      ...(slot.closureReason && { closureReason: slot.closureReason }),
     })),
   }));
 }

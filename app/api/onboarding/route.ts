@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { prisma } from "@/infrastructure/db/client";
 import { createClub } from "@/core/clubs/services/clubs.service";
+import { logAudit } from "@/core/audit/services/audit.service";
 import {
   onboardingFormSchema,
   COURT_RANGE_OPTIONS,
@@ -53,6 +54,11 @@ export async function POST(request: Request) {
           ? Number(data.padelCategory)
           : null;
 
+      const existingProfile = await prisma.userProfile.findUnique({
+        where: { id: userId },
+        select: { id: true },
+      });
+
       await prisma.userProfile.upsert({
         where: { id: userId },
         create: {
@@ -81,6 +87,19 @@ export async function POST(request: Request) {
           updatedBy: userId,
         },
       });
+
+      if (!existingProfile) {
+        logAudit({
+          clubId: null,
+          userId,
+          userDisplayName: displayName,
+          action: "user.created",
+          entity: "UserProfile",
+          entityId: userId,
+          metadata: { role: "player" },
+        });
+      }
+
       return NextResponse.json({ role: "player", clubId: null });
     }
 
@@ -120,6 +139,16 @@ export async function POST(request: Request) {
         displayName: data.displayName!,
         updatedBy: userId,
       },
+    });
+
+    logAudit({
+      clubId: club.id,
+      userId,
+      userDisplayName: data.displayName!,
+      action: "club.created",
+      entity: "Club",
+      entityId: club.id,
+      metadata: { name: club.name, plan },
     });
 
     return NextResponse.json({ role: "owner", clubId: club.id });

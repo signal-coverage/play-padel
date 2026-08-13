@@ -6,6 +6,7 @@ export const createCourtSchema = z.object({
   indoor: z.boolean().optional(),
   color: z.string().optional(),
   slotDurationMinutes: z.number().int().positive().optional(),
+  price: z.number().nonnegative().optional(),
 });
 
 export const updateCourtSchema = z.object({
@@ -14,6 +15,7 @@ export const updateCourtSchema = z.object({
   indoor: z.boolean().optional(),
   color: z.string().optional(),
   slotDurationMinutes: z.number().int().positive().optional(),
+  price: z.number().nonnegative().optional(),
   active: z.boolean().optional(),
 });
 
@@ -39,3 +41,18 @@ const availabilityEntrySchema = z
 export const weeklyAvailabilityTemplateSchema = z.array(
   availabilityEntrySchema,
 );
+
+export const createClosureSchema = z
+  .object({
+    startsAt: z.string().min(1, "Start is required"),
+    endsAt: z.string().min(1, "End is required"),
+    reason: z.string().min(1, "Reason is required"),
+  })
+  .refine((data) => new Date(data.endsAt) > new Date(data.startsAt), {
+    message: "End must be after start",
+    path: ["endsAt"],
+  })
+  .refine((data) => new Date(data.endsAt) > new Date(), {
+    message: "Closure must not be entirely in the past",
+    path: ["endsAt"],
+  });

@@ -2,8 +2,17 @@ import {
   DAY_LABELS,
   DEFAULT_SLOT_DURATION_MINUTES,
 } from "@/core/courts/consts";
-import type { AvailabilityEntry, CourtAvailability } from "@/core/courts/types";
-import type { AvailabilityDayRow, CourtFormValues, CourtRecord } from "./types";
+import type {
+  AvailabilityEntry,
+  CourtAvailability,
+  CourtClosure,
+} from "@/core/courts/types";
+import type {
+  AvailabilityDayRow,
+  CourtFormValues,
+  CourtRecord,
+  RawCourtClosure,
+} from "./types";
 
 export const DEFAULT_COURT_COLOR = "#2D8A60";
 
@@ -15,6 +24,7 @@ export function courtToFormValues(court?: CourtRecord | null): CourtFormValues {
     color: court?.color ?? DEFAULT_COURT_COLOR,
     slotDurationMinutes:
       court?.slotDurationMinutes ?? DEFAULT_SLOT_DURATION_MINUTES,
+    price: court?.price,
     active: court?.active ?? true,
   };
 }
@@ -54,4 +64,18 @@ export function availabilityRowsToEntries(
       startTime: row.startTime,
       endTime: row.endTime,
     }));
+}
+
+export function toCourtClosure(raw: RawCourtClosure): CourtClosure {
+  return {
+    id: raw.id,
+    courtId: raw.courtId,
+    startsAt: new Date(raw.startsAt),
+    endsAt: new Date(raw.endsAt),
+    reason: raw.reason,
+    createdAt: new Date(raw.createdAt),
+    createdBy: raw.createdBy,
+    cancelledAt: raw.cancelledAt ? new Date(raw.cancelledAt) : undefined,
+    cancelledBy: raw.cancelledBy,
+  };
 }

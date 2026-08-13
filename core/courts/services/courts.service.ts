@@ -1,6 +1,7 @@
 import { prisma } from "@/infrastructure/db/client";
 import { Prisma } from "@/lib/generated/prisma/client";
-import { startOfDay, endOfDay, addMinutes } from "date-fns";
+import { logAudit } from "@/core/audit/services/audit.service";
+import { startOfDay, endOfDay, addMinutes, format } from "date-fns";
 import type {
   Court,
   CourtAvailability,
@@ -8,7 +9,10 @@ import type {
   Slot,
   CreateCourtInput,
   UpdateCourtInput,
+  CourtClosure,
+  CreateClosureInput,
 } from "@/core/courts/types";
+import { ACTIVE_RESERVATION_STATUSES } from "@/core/reservations/consts";
 
 type CourtRow = NonNullable<
   Awaited<ReturnType<typeof prisma.court.findUnique>>
@@ -16,8 +20,9 @@ type CourtRow = NonNullable<
 type CourtAvailabilityRow = NonNullable<
   Awaited<ReturnType<typeof prisma.courtAvailability.findUnique>>
 >;
-
-const ACTIVE_RESERVATION_STATUSES = ["SCHEDULED", "CONFIRMED"] as const;
+type CourtClosureRow = NonNullable<
+  Awaited<ReturnType<typeof prisma.courtClosure.findUnique>>
+>;
 
 function toCourt(row: CourtRow): Court {
   return {
@@ -28,6 +33,7 @@ function toCourt(row: CourtRow): Court {
     indoor: row.indoor,
     color: row.color ?? undefined,
     slotDurationMinutes: row.slotDurationMinutes,
+    price: row.price ?? undefined,
     active: row.active,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
@@ -50,6 +56,20 @@ function toCourtAvailability(row: CourtAvailabilityRow): CourtAvailability {
   };
 }
 
+function toCourtClosure(row: CourtClosureRow): CourtClosure {
+  return {
+    id: row.id,
+    courtId: row.courtId,
+    startsAt: row.startsAt,
+    endsAt: row.endsAt,
+    reason: row.reason,
+    createdAt: row.createdAt,
+    createdBy: row.createdBy ?? undefined,
+    cancelledAt: row.cancelledAt ?? undefined,
+    cancelledBy: row.cancelledBy ?? undefined,
+  };
+}
+
 export async function createCourt(
   clubId: string,
   input: CreateCourtInput,
@@ -65,10 +85,26 @@ export async function createCourt(
       ...(input.slotDurationMinutes !== undefined && {
         slotDurationMinutes: input.slotDurationMinutes,
       }),
+      price: input.price ?? null,
       createdBy,
       updatedBy: createdBy,
     },
   });
+
+  const creator = await prisma.userProfile.findUnique({
+    where: { id: createdBy },
+    select: { displayName: true },
+  });
+  logAudit({
+    clubId,
+    userId: createdBy,
+    userDisplayName: creator?.displayName ?? createdBy,
+    action: "court.created",
+    entity: "Court",
+    entityId: row.id,
+    metadata: { name: row.name },
+  });
+
   return toCourt(row);
 }
 
@@ -87,10 +123,26 @@ export async function updateCourt(
       ...(input.slotDurationMinutes !== undefined && {
         slotDurationMinutes: input.slotDurationMinutes,
       }),
+      ...(input.price !== undefined && { price: input.price }),
       ...(input.active !== undefined && { active: input.active }),
       updatedBy,
     },
   });
+
+  const actor = await prisma.userProfile.findUnique({
+    where: { id: updatedBy },
+    select: { displayName: true },
+  });
+  logAudit({
+    clubId: row.clubId,
+    userId: updatedBy,
+    userDisplayName: actor?.displayName ?? updatedBy,
+    action: "court.updated",
+    entity: "Court",
+    entityId: row.id,
+    metadata: { ...input },
+  });
+
   return toCourt(row);
 }
 
@@ -107,6 +159,21 @@ export async function softDeleteCourt(
       updatedBy: deletedBy,
     },
   });
+
+  const actor = await prisma.userProfile.findUnique({
+    where: { id: deletedBy },
+    select: { displayName: true },
+  });
+  logAudit({
+    clubId: row.clubId,
+    userId: deletedBy,
+    userDisplayName: actor?.displayName ?? deletedBy,
+    action: "court.deactivated",
+    entity: "Court",
+    entityId: row.id,
+    metadata: { name: row.name },
+  });
+
   return toCourt(row);
 }
 
@@ -172,6 +239,118 @@ export async function getCourtAvailability(
   return rows.map(toCourtAvailability);
 }
 
+export async function listClosuresByCourt(
+  courtId: string,
+): Promise<CourtClosure[]> {
+  const rows = await prisma.courtClosure.findMany({
+    where: { courtId },
+    orderBy: { startsAt: "desc" },
+  });
+  return rows.map(toCourtClosure);
+}
+
+// Refuses to create a closure that overlaps any active reservation on this
+// court — the owner cancels/reschedules those manually first (existing
+// cancel-with-refund flow), then retries. No automatic cancellation here.
+export async function createClosure(
+  clubId: string,
+  courtId: string,
+  input: CreateClosureInput,
+  createdBy: string,
+): Promise<CourtClosure> {
+  const startsAt = new Date(input.startsAt);
+  const endsAt = new Date(input.endsAt);
+
+  const conflicts = await prisma.reservation.findMany({
+    where: {
+      courtId,
+      status: { in: [...ACTIVE_RESERVATION_STATUSES] },
+      scheduledStart: { lt: endsAt },
+      scheduledEnd: { gt: startsAt },
+      NOT: {
+        status: "SCHEDULED",
+        paymentExpiresAt: { lt: new Date() },
+      },
+      // Only reservations that haven't already ended count as conflicts —
+      // otherwise a same-day closure ("close this court starting now") is
+      // spuriously rejected by a match that was played and finished earlier
+      // that same day.
+      AND: { scheduledEnd: { gt: new Date() } },
+    },
+    select: { scheduledStart: true, scheduledEnd: true },
+    orderBy: { scheduledStart: "asc" },
+  });
+
+  if (conflicts.length > 0) {
+    const list = conflicts
+      .map(
+        (c) =>
+          `${format(c.scheduledStart, "MMM d, HH:mm")}–${format(c.scheduledEnd, "HH:mm")}`,
+      )
+      .join(", ");
+    throw new Error(
+      `This closure overlaps ${conflicts.length} active reservation(s): ${list}. Cancel them first, then retry.`,
+    );
+  }
+
+  const row = await prisma.courtClosure.create({
+    data: { courtId, startsAt, endsAt, reason: input.reason, createdBy },
+  });
+
+  const creator = await prisma.userProfile.findUnique({
+    where: { id: createdBy },
+    select: { displayName: true },
+  });
+  logAudit({
+    clubId,
+    userId: createdBy,
+    userDisplayName: creator?.displayName ?? createdBy,
+    action: "court.closure_created",
+    entity: "CourtClosure",
+    entityId: row.id,
+    metadata: { courtId, reason: input.reason },
+  });
+
+  return toCourtClosure(row);
+}
+
+export async function cancelClosure(
+  clubId: string,
+  courtId: string,
+  closureId: string,
+  cancelledBy: string,
+): Promise<CourtClosure> {
+  const existing = await prisma.courtClosure.findFirst({
+    where: { id: closureId, courtId },
+  });
+  if (!existing) throw new Error("Closure not found");
+  if (existing.cancelledAt) throw new Error("Closure is already cancelled");
+  if (existing.endsAt <= new Date()) {
+    throw new Error("Cannot cancel a closure that has already ended");
+  }
+
+  const row = await prisma.courtClosure.update({
+    where: { id: closureId },
+    data: { cancelledAt: new Date(), cancelledBy },
+  });
+
+  const actor = await prisma.userProfile.findUnique({
+    where: { id: cancelledBy },
+    select: { displayName: true },
+  });
+  logAudit({
+    clubId,
+    userId: cancelledBy,
+    userDisplayName: actor?.displayName ?? cancelledBy,
+    action: "court.closure_cancelled",
+    entity: "CourtClosure",
+    entityId: row.id,
+    metadata: { courtId },
+  });
+
+  return toCourtClosure(row);
+}
+
 function timeToDateOnDay(day: Date, time: string): Date {
   const [hours, minutes] = time.split(":").map(Number);
   const result = startOfDay(day);
@@ -213,8 +392,25 @@ export async function getCourtSlots(
       courtId,
       status: { in: [...ACTIVE_RESERVATION_STATUSES] },
       scheduledStart: { gte: startOfDay(date), lte: endOfDay(date) },
+      // A SCHEDULED (pending-payment) hold that's past its expiry no longer
+      // blocks the slot — treated as lapsed rather than actively cancelled
+      // (see docs: Payments spec, "Handled lazily").
+      NOT: {
+        status: "SCHEDULED",
+        paymentExpiresAt: { lt: new Date() },
+      },
     },
     select: { id: true, scheduledStart: true, scheduledEnd: true },
+  });
+
+  const closures = await prisma.courtClosure.findMany({
+    where: {
+      courtId,
+      cancelledAt: null,
+      startsAt: { lte: endOfDay(date) },
+      endsAt: { gte: startOfDay(date) },
+    },
+    select: { startsAt: true, endsAt: true, reason: true },
   });
 
   const slots: Slot[] = [];
@@ -227,6 +423,9 @@ export async function getCourtSlots(
     while (addMinutes(slotStart, court.slotDurationMinutes) <= windowEnd) {
       const slotEnd = addMinutes(slotStart, court.slotDurationMinutes);
 
+      const closure = closures.find(
+        (c) => c.startsAt < slotEnd && c.endsAt > slotStart,
+      );
       const overlapping = reservations.find(
         (reservation) =>
           reservation.scheduledStart < slotEnd &&
@@ -236,8 +435,9 @@ export async function getCourtSlots(
       slots.push({
         start: slotStart,
         end: slotEnd,
-        status: overlapping ? "locked" : "free",
-        ...(overlapping && { reservationId: overlapping.id }),
+        status: closure ? "closed" : overlapping ? "locked" : "free",
+        ...(closure && { closureReason: closure.reason }),
+        ...(!closure && overlapping && { reservationId: overlapping.id }),
       });
 
       slotStart = slotEnd;
@@ -245,4 +445,9 @@ export async function getCourtSlots(
   }
 
   return slots.sort((a, b) => a.start.getTime() - b.start.getTime());
+}
+
+export async function getCourtById(id: string): Promise<Court | null> {
+  const row = await prisma.court.findUnique({ where: { id } });
+  return row ? toCourt(row) : null;
 }

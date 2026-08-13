@@ -8,6 +8,7 @@ export type ClubRecord = {
   logoUrl?: string;
   timezone: string;
   currency: string;
+  requiresPrepayment: boolean;
 };
 
 export type ClubSettingsFormValues = {
@@ -19,4 +20,5 @@ export type ClubSettingsFormValues = {
   logoUrl: string;
   timezone: string;
   currency: string;
+  requiresPrepayment: boolean;
 };

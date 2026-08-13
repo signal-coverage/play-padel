@@ -6,5 +6,6 @@ export type BookingConfirmDialogProps = {
   courtName: string;
   slot: Slot | null;
   isSubmitting: boolean;
+  requiresPrepayment: boolean;
   onConfirm: () => void;
 };

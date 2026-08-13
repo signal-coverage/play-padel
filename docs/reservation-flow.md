@@ -24,13 +24,13 @@ These are the rules I'm using to drive the schema and `core/reservations` design
 
 ## Payment
 
-- **No payment required to book** in the MVP — reservations are confirmed without a charge; payment happens in person at the club. This defers the "no gateway installed yet" gap noted in `docs/migration-analysis.md` without blocking the booking flow.
+- **No payment required to book** in the MVP — reservations are confirmed without a charge; payment happens in person at the club. This defers the "no gateway installed yet" gap noted in `docs/ROADMAP.md` without blocking the booking flow.
 - `Invoice`/`Payment` models stay in the schema (a club may still want to record a cash/card payment against a reservation after the fact) but nothing in the booking path requires them to succeed.
-- Real gateway integration (Mercado Pago) becomes a later phase, per `docs/roadmap.md`, once/if upfront payment is required.
+- Real gateway integration (Mercado Pago) becomes a later phase, per `docs/ROADMAP.md`, once/if upfront payment is required.
 
 ## Real-time
 
-- Owners' court view should reflect new/cancelled reservations without a manual refresh. Per `docs/roadmap.md`, the MVP approach is React Query polling (`refetchInterval`) rather than WebSockets, since no real-time infra exists yet and polling is far less work to ship correctly.
+- Owners' court view should reflect new/cancelled reservations without a manual refresh. Per `docs/ROADMAP.md`, the MVP approach is React Query polling (`refetchInterval`) rather than WebSockets, since no real-time infra exists yet and polling is far less work to ship correctly.
 
 ## Explicitly out of scope for MVP
 

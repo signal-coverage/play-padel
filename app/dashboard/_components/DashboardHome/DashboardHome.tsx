@@ -13,13 +13,14 @@ import { SearchableCardsGrid } from "./components/SearchableCardsGrid";
 import { PlayerOverviewCard } from "./components/PlayerOverview/PlayerOverviewCard";
 import { PlayerOverviewBanner } from "./components/PlayerOverview/PlayerOverviewBanner";
 import { Separator } from "@/components/ui/separator";
+import { DashboardLoader } from "@/app/dashboard/_components/DashboardLoader";
 
 export function DashboardHome() {
   const { user, loading } = useAuth();
   const isMobile = useIsMobile();
   const [query, setQuery] = useState("");
 
-  if (loading || !user || !user.role) return null;
+  if (loading || !user || !user.role) return <DashboardLoader />;
 
   const name = user.displayName ?? user.email ?? "";
   const role = user.role;
@@ -27,7 +28,7 @@ export function DashboardHome() {
   return (
     <div className="flex flex-col gap-3 md:h-full">
       <div className="flex shrink-0 flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-xl font-semibold tracking-tight">
+        <h1 className="font-heading text-xl font-semibold tracking-tight">
           {role === "owner" ? (
             <Image
               src={tennisCourt.default}
@@ -51,7 +52,7 @@ export function DashboardHome() {
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Search cards…"
-              className="w-full pl-8"
+              className="w-full rounded-sm pl-8"
             />
           </div>
           {role === "owner" && (
@@ -66,10 +67,18 @@ export function DashboardHome() {
       </div>
 
       {role === "player" ? (
-        <div className="grid grid-cols-1 gap-3 md:min-h-0 md:flex-1 md:grid-cols-[minmax(0,1fr)_auto_2fr] md:grid-rows-[minmax(0,1fr)] md:gap-4">
-          {isMobile ? <PlayerOverviewBanner /> : <PlayerOverviewCard />}
+        <div className="flex w-full flex-col gap-3 md:min-h-0 md:flex-1 md:flex-row md:gap-4">
+          <SearchableCardsGrid
+            role={role}
+            query={query}
+            className="min-w-0 md:flex-1 md:basis-0"
+          />
           <Separator orientation={isMobile ? "horizontal" : "vertical"} />
-          <SearchableCardsGrid role={role} query={query} />
+          {isMobile ? (
+            <PlayerOverviewBanner />
+          ) : (
+            <PlayerOverviewCard className="md:w-70 md:shrink-0" />
+          )}
         </div>
       ) : (
         <SearchableCardsGrid role={role} query={query} />

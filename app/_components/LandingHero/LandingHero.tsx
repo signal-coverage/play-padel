@@ -3,17 +3,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
-import { ease } from "./consts";
+import { ease, PLAYERS } from "./consts";
 import { CONTAINER } from "@/lib/consts";
 import { scrollToSection } from "@/lib/utils/scroll-to-section";
 import heroImage from "@/assets/images/tennis-paddles-balls-arrangement.jpg";
-
-const PLAYERS: { name: string; photoUrl?: string }[] = [
-  { name: "Ana" },
-  { name: "Carlos" },
-  { name: "Marta" },
-  { name: "Sofia" },
-];
 
 export function LandingHero() {
   const shouldReduce = useReducedMotion();
@@ -29,6 +22,10 @@ export function LandingHero() {
         sizes="100vw"
         className="object-cover object-bottom"
       />
+      {/* Readability scrim — same pattern as LandingCtaBanner's white-text-on-photo
+        overlay, adapted to a bottom-anchored gradient since the hero's text
+        sits at the bottom of the image rather than centered over it. */}
+      <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/35 to-transparent" />
 
       <div
         className={`${CONTAINER} flex flex-col md:flex-row md:items-end md:justify-between gap-10 md:gap-0 w-full`}
@@ -41,11 +38,11 @@ export function LandingHero() {
             transition={{ duration: 0.6, ease }}
           >
             <h1 className="text-[clamp(36px,5vw,58px)] font-extrabold leading-[1.08] tracking-[-0.035em] text-white">
-              Play. <span className="text-[#dffd36]">Connect.</span> Elevate
+              Play. <span className="text-accent">Connect.</span> Improve
               <br />
               Your Game with Our
               <br />
-              <span className="text-[#dffd36]">Paddle Clubs.</span>
+              <span className="text-accent">Paddle Clubs.</span>
             </h1>
 
             <motion.div
@@ -57,7 +54,7 @@ export function LandingHero() {
               <Link
                 href="#appointment"
                 onClick={(e) => scrollToSection(e, "#appointment")}
-                className="inline-flex items-center gap-2 bg-[#dffd36] text-[#073d6b] rounded-full px-6 py-3.5 text-[15px] font-semibold hover:-translate-y-0.5 hover:shadow-xl transition-all duration-200"
+                className="inline-flex items-center gap-2 bg-accent text-accent-foreground rounded-full px-6 py-3.5 text-[15px] font-semibold hover:-translate-y-0.5 hover:shadow-xl transition-all duration-200"
               >
                 Explore Clubs
                 <ArrowRight size={15} strokeWidth={2.5} />
@@ -82,7 +79,7 @@ export function LandingHero() {
               {PLAYERS.map((player, i) => (
                 <div
                   key={player.name}
-                  className="relative w-7 h-7 rounded-full overflow-hidden flex items-center justify-center text-[11px] font-bold text-[#073d6b] bg-[#dffd36] border-2 border-white/80"
+                  className="relative w-7 h-7 rounded-full overflow-hidden flex items-center justify-center text-[11px] font-bold text-accent-foreground bg-accent border-2 border-white/80"
                   style={{ marginLeft: i === 0 ? 0 : -8 }}
                 >
                   {player.photoUrl ? (

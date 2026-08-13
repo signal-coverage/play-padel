@@ -17,12 +17,12 @@ export function LandingEvents() {
           viewport={{ once: true }}
           transition={{ duration: 0.5, ease }}
         >
-          <span className="text-[#A3A3A3]">
+          <span className="text-muted-foreground">
             Rally, Learn, and Celebrate with{" "}
           </span>
-          <span className="text-[#111111]">Our Paddle Community Events</span>
+          <span className="text-foreground">Our Paddle Community Events</span>
         </motion.h2>
-        <span className="shrink-0 inline-flex items-center bg-[#111111] text-white rounded-full px-4 py-2 text-[13px] font-semibold">
+        <span className="shrink-0 inline-flex items-center bg-foreground text-white rounded-full px-4 py-2 text-[13px] font-semibold">
           Play Together, Grow Together
         </span>
       </div>

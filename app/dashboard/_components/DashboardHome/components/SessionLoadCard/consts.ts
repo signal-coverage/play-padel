@@ -1,14 +1,9 @@
-import type { ChartConfig } from "@/components/ui/chart";
+/** Owner: current/previous cancellation-rate comparison windows, in days. */
+export const OWNER_SESSION_RANGE_DAYS = 14;
 
-export const OWNER_UTILIZATION_RANGE_DAYS = 14;
-export const PLAYER_CONSISTENCY_WEEKS = 8;
+/** Player: weeks considered in the "session load" window, split into two
+ * equal halves to compare recent vs prior activity for the trend line. */
+export const PLAYER_SESSION_RANGE_WEEKS = 8;
 
-// Simple fixed heuristics, not a computed/ML threshold.
-export const CANCELLATION_RATE_GOOD_MAX = 0.1;
-export const CANCELLATION_RATE_WATCH_MAX = 0.25;
-export const CONSISTENCY_GREAT_MIN = 6;
-export const CONSISTENCY_OKAY_MIN = 3;
-
-export const UTILIZATION_CHART_CONFIG: ChartConfig = {
-  value: { label: "Rate" },
-};
+export const GAUGE_RADIUS = 42;
+export const GAUGE_STROKE_WIDTH = 8;

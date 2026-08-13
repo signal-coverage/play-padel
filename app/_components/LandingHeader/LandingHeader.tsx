@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { motion, useScroll, useMotionValueEvent } from "framer-motion";
 import { Menu } from "lucide-react";
-import { NAV, ease } from "./consts";
+import { NAV, ease, SCROLL_THRESHOLD } from "./consts";
 import { CONTAINER } from "@/lib/consts";
 import { scrollToSection } from "@/lib/utils/scroll-to-section";
 import { useAuth } from "@/hooks/use-auth";
@@ -16,8 +16,6 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-
-const SCROLL_THRESHOLD = 40;
 
 export function LandingHeader() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -56,7 +54,7 @@ export function LandingHeader() {
             <Image src="/logo.svg" alt="Play Padel" width={20} height={20} />
             <span
               className={`font-bold text-[15px] tracking-tight transition-colors duration-300 ${
-                isScrolled ? "text-[#111111]" : "text-white"
+                isScrolled ? "text-foreground" : "text-white"
               }`}
             >
               Play Padel
@@ -77,7 +75,7 @@ export function LandingHeader() {
                 onClick={(e) => scrollToSection(e, link.href)}
                 className={`text-sm font-medium transition-colors duration-300 ${
                   isScrolled
-                    ? "text-[#111111]/70 hover:text-[#111111]"
+                    ? "text-foreground/70 hover:text-foreground"
                     : "text-white/70 hover:text-white"
                 }`}
               >
@@ -99,8 +97,8 @@ export function LandingHeader() {
                 href="/dashboard"
                 className={`inline-flex items-center border-[1.5px] rounded-full px-4 sm:px-5 py-2 text-sm font-semibold transition-all duration-300 ${
                   isScrolled
-                    ? "border-[#111111] text-[#111111] hover:bg-[#111111] hover:text-white"
-                    : "border-white text-white hover:bg-white hover:text-[#073d6b]"
+                    ? "border-foreground text-foreground hover:bg-foreground hover:text-white"
+                    : "border-white text-white hover:bg-white hover:text-primary"
                 }`}
               >
                 Go to app
@@ -111,8 +109,8 @@ export function LandingHeader() {
                   href="/signup"
                   className={`inline-flex items-center border-[1.5px] rounded-full px-4 sm:px-5 py-2 text-sm font-semibold transition-all duration-300 ${
                     isScrolled
-                      ? "border-[#111111] text-[#111111] hover:bg-[#111111] hover:text-white"
-                      : "border-white text-white hover:bg-white hover:text-[#073d6b]"
+                      ? "border-foreground text-foreground hover:bg-foreground hover:text-white"
+                      : "border-white text-white hover:bg-white hover:text-primary"
                   }`}
                 >
                   Try for free
@@ -121,7 +119,7 @@ export function LandingHeader() {
                   href="/login"
                   className={`hidden md:inline-flex text-sm font-medium transition-colors duration-300 ${
                     isScrolled
-                      ? "text-[#111111]/70 hover:text-[#111111]"
+                      ? "text-foreground/70 hover:text-foreground"
                       : "text-white/70 hover:text-white"
                   }`}
                 >
@@ -137,7 +135,7 @@ export function LandingHeader() {
                 aria-label="Open menu"
                 className={`md:hidden inline-flex items-center justify-center w-10 h-10 rounded-full border-[1.5px] transition-colors duration-300 ${
                   isScrolled
-                    ? "border-[#111111] text-[#111111]"
+                    ? "border-foreground text-foreground"
                     : "border-white text-white"
                 }`}
               >

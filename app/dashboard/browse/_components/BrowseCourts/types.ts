@@ -15,8 +15,9 @@ export type SelectedSlot = {
 export type RawSlot = {
   start: string;
   end: string;
-  status: "free" | "locked";
+  status: "free" | "locked" | "closed";
   reservationId?: string;
+  closureReason?: string;
 };
 
 export type RawCourt = {

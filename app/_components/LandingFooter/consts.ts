@@ -22,20 +22,6 @@ export const FOOTER_COLUMNS: FooterLinkColumn[] = [
   },
   {
     title: "Support",
-    links: [
-      { label: "FAQs", href: "#faq" },
-      { label: "Contact", href: "#appointment" },
-      { label: "Help Center", href: "#" },
-      { label: "Live Chat Support", href: "#" },
-    ],
-  },
-  {
-    title: "Social Media",
-    links: [
-      { label: "Facebook", href: "#" },
-      { label: "Instagram", href: "#" },
-      { label: "Youtube", href: "#" },
-      { label: "LinkedIn", href: "#" },
-    ],
+    links: [{ label: "Contact", href: "#appointment" }],
   },
 ];

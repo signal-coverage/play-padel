@@ -3,8 +3,13 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import type { CreateCourtInput, UpdateCourtInput } from "@/core/courts/types";
-import type { AvailabilityEntry, CourtAvailability } from "@/core/courts/types";
-import type { CourtRecord } from "./types";
+import type {
+  AvailabilityEntry,
+  CourtAvailability,
+  CreateClosureInput,
+} from "@/core/courts/types";
+import type { CourtRecord, RawCourtClosure } from "./types";
+import { toCourtClosure } from "./utils";
 
 const COURTS_QUERY_KEY = ["courts", "manage"] as const;
 
@@ -116,6 +121,72 @@ export function useSetCourtAvailability() {
         queryKey: ["court-availability", variables.courtId],
       });
       toast.success("Weekly availability saved");
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+}
+
+export function useCourtClosures(courtId: string | null) {
+  return useQuery({
+    queryKey: ["court-closures", courtId],
+    queryFn: () =>
+      fetchJson<{ closures: RawCourtClosure[] }>(
+        `/api/clubs/courts/${courtId}/closures`,
+      ).then((data) => data.closures.map(toCourtClosure)),
+    enabled: Boolean(courtId),
+  });
+}
+
+// No onSuccess/onError toast here, unlike this file's other mutations —
+// ClosuresSheet's "apply to all courts" option calls this once per court via
+// Promise.allSettled and needs to aggregate the per-court outcomes into a
+// single summary toast itself; a toast fired from here per court would be
+// redundant (or misleading) alongside that aggregate message.
+export function useCreateCourtClosure() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      courtId,
+      input,
+    }: {
+      courtId: string;
+      input: CreateClosureInput;
+    }) =>
+      fetchJson<{ closure: RawCourtClosure }>(
+        `/api/clubs/courts/${courtId}/closures`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(input),
+        },
+      ).then((data) => ({ closure: toCourtClosure(data.closure) })),
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ["court-closures", variables.courtId],
+      });
+    },
+  });
+}
+
+export function useCancelCourtClosure() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      courtId,
+      closureId,
+    }: {
+      courtId: string;
+      closureId: string;
+    }) =>
+      fetchJson<{ closure: RawCourtClosure }>(
+        `/api/clubs/courts/${courtId}/closures/${closureId}/cancel`,
+        { method: "POST" },
+      ).then((data) => ({ closure: toCourtClosure(data.closure) })),
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ["court-closures", variables.courtId],
+      });
+      toast.success("Closure cancelled");
     },
     onError: (error: Error) => toast.error(error.message),
   });

@@ -1,1 +1,0 @@
-export { OwnerActivity } from "./OwnerActivity";

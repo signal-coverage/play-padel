@@ -6,6 +6,7 @@ export interface Court {
   indoor: boolean;
   color?: string;
   slotDurationMinutes: number;
+  price?: number;
   active: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -31,6 +32,7 @@ export interface CreateCourtInput {
   indoor?: boolean;
   color?: string;
   slotDurationMinutes?: number;
+  price?: number;
 }
 
 export interface UpdateCourtInput {
@@ -39,6 +41,7 @@ export interface UpdateCourtInput {
   indoor?: boolean;
   color?: string;
   slotDurationMinutes?: number;
+  price?: number;
   active?: boolean;
 }
 
@@ -48,11 +51,30 @@ export interface AvailabilityEntry {
   endTime: string;
 }
 
-export type SlotStatus = "free" | "locked";
+export interface CourtClosure {
+  id: string;
+  courtId: string;
+  startsAt: Date;
+  endsAt: Date;
+  reason: string;
+  createdAt: Date;
+  createdBy?: string;
+  cancelledAt?: Date;
+  cancelledBy?: string;
+}
+
+export interface CreateClosureInput {
+  startsAt: string;
+  endsAt: string;
+  reason: string;
+}
+
+export type SlotStatus = "free" | "locked" | "closed";
 
 export interface Slot {
   start: Date;
   end: Date;
   status: SlotStatus;
   reservationId?: string;
+  closureReason?: string;
 }

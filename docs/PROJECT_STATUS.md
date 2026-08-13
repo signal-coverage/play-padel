@@ -1,40 +1,14 @@
 # Play Padel — Project Status
 
-_Last updated: 2026-08-04_
+_Last updated: 2026-08-11_
 
 A padel-club booking platform: players browse clubs/courts and book time slots; club owners manage their courts, availability, and reservations.
 
 Convention used below: a feature described in plain text is fully wired to a real Prisma-backed API. Where a `(mocked: ...)` note is present, that feature's data is hardcoded/placeholder and needs real backend work before it's production-ready.
 
-## Tech stack
+Related docs: [ARCHITECTURE.md](ARCHITECTURE.md) (stack, diagrams, folder structure), [API.md](API.md) (full route list), [DATABASE.md](DATABASE.md) (Prisma models + ERD), [ROADMAP.md](ROADMAP.md) (what's next), [SECURITY.md](SECURITY.md).
 
-- Next.js (App Router) + TypeScript
-- Clerk — authentication
-- Prisma + Neon Postgres — database
-- Tailwind CSS + shadcn/ui
-- Resend — transactional email
-
-## Data model (Prisma — `prisma/schema.prisma`)
-
-- `Club` — a padel club/tenant (name, contact, timezone, currency, plan, status)
-- `UserProfile` — a person (owner or player), optionally linked to a `Club`
-- `Court` — a physical court belonging to a club
-- `CourtAvailability` — weekly recurring open-hours template for a court
-- `Reservation` — a booking of a court by a user, with a status lifecycle (SCHEDULED/CONFIRMED/CANCELLED/COMPLETED/NO_SHOW)
-- `Invoice` — a billing document for a user
-- `Payment` — a manually recorded payment against an invoice
-- `Notification` — a persisted record of an outbound notification attempt
-- `AuditLog` — a generic audit trail row
-
-No model exists yet for tournaments, matches, doubles partners, or player style/handedness — this is why the features listed under "not yet backed by the schema" below are mocked.
-
-## Routes
-
-- **Public**: `/` (landing), `/login`, `/signup`, `/sso-callback`, `/invite-error`, `/onboarding`
-- **Player**: `/dashboard`, `/dashboard/browse`, `/dashboard/my-reservations`
-- **Owner**: `/dashboard`, `/dashboard/courts`, `/dashboard/reservations`, `/dashboard/settings/club`
-
-Route protection (`proxy.ts`): Clerk middleware protects every route except the public list above.
+No model exists yet for tournaments, matches, doubles partners, or player style/handedness — this is why the Player Overview features below are mocked.
 
 ## Auth & Onboarding
 
@@ -61,14 +35,15 @@ Entirely a marketing shell — every content section below is placeholder copy, 
 
 **Bento cards (Hero, Skill Overview, Session Load, Progress & Goals, Schedule)** — all fully real, computed from the player's actual reservation history via `useMyReservations()`.
 
-**Player Overview sidebar/banner** — the whole section is currently mocked:
+**Player Overview sidebar/banner**:
 
-- Player style card (preferred side + dominant-hand badge). (mocked: `preferredSide`, `dominantHand` — hardcoded in `MOCK_PLAYER_STYLE`, `PlayerOverview/consts.ts`)
-- Latest partner card (name, avatar, times played together, last played). (mocked: entire `PartnerSummary` — `MOCK_LATEST_PARTNER`, same file; its "View full profile" button is also disabled with a "Coming soon" label since no profile page exists)
+- Player style card (preferred side + dominant-hand badge) — real, editable data. `preferredSide`/`dominantHand` are nullable `UserProfile` columns; a pencil icon opens `EditPlayerStyleDialog` to set them via `PATCH /api/me`, and unset values render "Not set yet". Served through `usePlayerOverviewData()` (`PlayerOverview/hooks.ts`) reading `useAuth().user`.
+- Latest partner card (name, avatar, times played together, last played) — clicking it opens the shared `PlayerProfileCard` (skill level, side, handedness, email, phone). (mocked: the partner itself is still `MOCK_LATEST_PARTNER`, `PlayerOverview/consts.ts` — no real partner-history model exists yet, so the card is fed extended mock data rather than a real player)
 - Performance summary (tournament record, preferred position, latest results). (mocked: entire `PerformanceSummary` — `MOCK_PERFORMANCE`, same file)
-- All three are served through `usePlayerOverviewData()` (`PlayerOverview/hooks.ts`), which returns the mock constants directly with no API call at all.
 
-**Browse Courts** (`/dashboard/browse`) — fully real: club picker, per-court availability grid (15s live poll), and the book-slot flow all hit real Prisma-backed endpoints with server-side conflict checks.
+**Players directory** (`/dashboard/players`) — fully real: a public, searchable (client-side, by name) list of every active player, backed by `GET /api/players`. Each row opens the same `PlayerProfileCard` used by the Latest Partner card, populated from real `UserProfile` data.
+
+**Browse Courts** (`/dashboard/browse`) — fully real: club picker, per-court availability grid (15s live poll), and the book-slot flow all hit real Prisma-backed endpoints with server-side conflict checks. If the club has `requiresPrepayment` set, booking a slot creates a 15-minute `SCHEDULED` hold and redirects to a real Mercado Pago Checkout Pro session instead of confirming instantly; `BookingConfirmDialog` branches its copy/button label accordingly. A slot inside an active court closure renders distinctly (dashed border, non-clickable) with its reason shown on hover, and booking it is also rejected server-side. `/dashboard/browse/payment-return` polls the player's own reservation list to show a processing/success/failed state after returning from checkout.
 
 **My Reservations** (`/dashboard/my-reservations`) — fully real: reservation list and self-cancel flow (2-hour cutoff enforced server-side).
 
@@ -76,21 +51,14 @@ Entirely a marketing shell — every content section below is placeholder copy, 
 
 Everything here is fully real — no mocked data found on the owner side.
 
-- **Courts** (`/dashboard/courts`) — court list/table, create/edit form, deactivate (soft delete), and weekly availability editor. All backed by `/api/clubs/courts*`.
-- **Reservations** (`/dashboard/reservations`) — availability grid, reservations table, slot details dialog, and Complete/No-show/Cancel actions. All backed by `/api/clubs/reservations*`.
-- **Club Settings** (`/dashboard/settings/club`) — club profile form (name, legal name, tax ID, contact, timezone, currency), 1:1 with the `Club` model. Note: there's no club-wide "operating hours" concept — scheduling is only expressed per-court.
+- **Courts** (`/dashboard/courts`) — court list/table, create/edit form (including a "Price (per reservation)" field, used when the club requires prepayment), deactivate (soft delete), weekly availability editor, and a "Closures" action per court that opens a drawer to block the court for a date/time range with a required reason (shown to players); lists past/upcoming closures with cancel actions, and an "apply to all courts" checkbox loops the create call across every active court. Creating a closure is blocked (409) if it overlaps active reservations. All backed by `/api/clubs/courts*`.
+- **Reservations** (`/dashboard/reservations`) — availability grid, reservations table, slot details dialog, and Complete/No-show/Cancel actions (owner-cancel refunds any `COMPLETED` payment via Mercado Pago first). All backed by `/api/clubs/reservations*`.
+- **Club Settings** (`/dashboard/settings/club`) — club profile form (name, legal name, tax ID, contact, timezone, currency, a "Require online payment at booking" toggle for `requiresPrepayment`), 1:1 with the `Club` model. Note: there's no club-wide "operating hours" concept — scheduling is only expressed per-court.
 - **Dashboard Home owner cards** (Hero, Schedule, Utilization, Overview, Activity) — all computed from a shared `useOwnerReservationSummary()` hook hitting real reservation data.
+- **Audit Log** (`/dashboard/audit-logs`) — fully real: filterable (entity, action), paginated table over `GET /api/clubs/audit-logs`.
 
 ## Backend domains (`core/`)
 
-- `clubs`, `courts`, `reservations`, `users` — real Prisma-backed services, all reachable from `app/api` routes, all exercised by the UI described above.
-- `billing` — invoice/payment logic (create/issue/void invoices, record payments, cash summaries) is implemented against real `Invoice`/`Payment` models. (mocked: no external payment gateway is wired anywhere — Stripe/MercadoPago were grepped for repo-wide with zero hits; only manual cash/card/transfer entries are supported. Additionally, **no `app/api` route calls this domain at all** — it's unreachable from the HTTP layer entirely, `core/billing/services/billing.service.ts`)
-- `notifications` — persisting `Notification` rows and actual email delivery (via Resend) both work for the two flows that call them (reservation cancellation, invoice paid). (mocked/dead: `getPendingReservationReminders` has no cron/route caller anywhere, so reminder notifications never fire in practice; separately, `core/notifications/handlers/notification.handlers.tsx` registers event-bus listeners that are never imported by anything, making them dead code)
-- `audit` — `logAudit()`/`listAuditLogs()` do real Prisma I/O against `AuditLog`, but (mocked/dead: nothing in the codebase ever calls `logAudit()` — the model, service, and DB table all exist, but no audit row is ever written)
-- `events` — a working generic pub/sub event bus, but (mocked/dead: nothing ever calls `.emit()`, and its only registered consumer is never imported — fully orphaned)
-
-No HTTP routes exist for `billing`, `notifications`, or `audit` — these three domains have real service-layer code but zero API surface exposing them.
-
-## Notes
-
-- `README.md` at the repo root previously contained leftover boilerplate from the template this project started from; it has since been rewritten to describe Play Padel accurately.
+- `clubs`, `courts`, `reservations`, `users`, `audit` — real Prisma-backed services, all reachable from `app/api` routes, all exercised by real mutations or the UI described above. `logAudit()` is called from every real owner/player mutation: reservations (created/cancelled/completed/no_show), courts (created/updated/deactivated), court closures (created/cancelled), club (created at owner onboarding, updated via Club Settings), and player onboarding (created). `AuditLog.clubId` is nullable to allow club-less events like player-profile creation. `GET /api/clubs/audit-logs` and the `/dashboard/audit-logs` page let an owner view their club's trail with filters and pagination.
+- `billing` — invoice/payment logic (create/issue/void invoices, record payments, refunds, cash summaries) is implemented against real `Invoice`/`Payment` models, and is now reachable from the HTTP layer: `POST /api/player/reservations` creates and issues an invoice when a club requires prepayment, and `POST /api/webhooks/mercadopago` records the resulting `DIGITAL` payment (and logs a `"payment.confirmed"` audit event) or voids the invoice, depending on the payment outcome. Real Mercado Pago integration lives in `lib/mercadopago/` (`client.ts`, `preferences.ts`, `payments.ts`, `webhookSignature.ts`, `refunds.ts`) — thin wrappers around the `mercadopago` npm SDK. Both self-cancel and owner-cancel now refund any `COMPLETED` payment via Mercado Pago before cancelling; a refund failure blocks the cancellation instead of silently proceeding.
+- `notifications` — persisting `Notification` rows and actual email delivery (via Resend) work for all three flows now: reservation cancellation, invoice paid, and reservation reminders. `GET /api/cron/notifications` (Vercel Cron, daily at 08:00, see `vercel.json`) calls `getPendingReservationReminders()` and dispatches a `RESERVATION_REMINDER` email per pending reservation; dedup (no more than one reminder per user per calendar day) is handled inside that function. The route isn't Clerk-authenticated (Cron has no session) — it checks its own `CRON_SECRET` bearer token instead, and `proxy.ts` allowlists `/api/cron/*` accordingly.

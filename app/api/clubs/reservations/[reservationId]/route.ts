@@ -5,6 +5,10 @@ import {
   getReservation,
   noShowReservation,
 } from "@/core/reservations/services/reservations.service";
+import {
+  getInvoiceByReservationId,
+  refundPayment,
+} from "@/core/billing/services/billing.service";
 import { requireOwnerClub } from "../../_lib/require-owner";
 
 type RouteParams = { params: Promise<{ reservationId: string }> };
@@ -35,6 +39,23 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
   try {
     switch (action) {
       case "cancel": {
+        // Same refund-before-cancel rule as the player self-cancel route —
+        // "this reservation was paid for and is being cancelled" applies
+        // regardless of who initiates the cancellation.
+        const invoice = await getInvoiceByReservationId(reservationId);
+        const completedPayment = invoice?.payments.find(
+          (p) => p.status === "COMPLETED",
+        );
+        if (invoice && completedPayment) {
+          try {
+            await refundPayment(clubId, invoice.id, userId);
+          } catch (err) {
+            const message =
+              err instanceof Error ? err.message : "Could not process refund";
+            return NextResponse.json({ error: message }, { status: 502 });
+          }
+        }
+
         const reservation = await cancelReservation(reservationId, userId);
         return NextResponse.json({ reservation });
       }

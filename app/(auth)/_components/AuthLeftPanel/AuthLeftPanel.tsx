@@ -14,15 +14,15 @@ export function AuthLeftPanel() {
         className="absolute inset-0"
         style={{
           background:
-            "linear-gradient(145deg, #1a0f2e 0%, #2e1a4a 25%, #1e1535 55%, #0f0a1e 100%)",
+            "linear-gradient(145deg, var(--primary) 0%, color-mix(in oklch, var(--primary) 75%, black) 55%, color-mix(in oklch, var(--primary) 45%, black) 100%)",
         }}
       />
-      {/* Warm desk-lamp light */}
+      {/* Accent glow */}
       <div
         className="absolute inset-0"
         style={{
           background:
-            "radial-gradient(ellipse at 72% 28%, rgba(210,135,55,0.20) 0%, rgba(180,95,35,0.09) 38%, transparent 65%)",
+            "radial-gradient(ellipse at 72% 28%, color-mix(in oklch, var(--accent) 35%, transparent) 0%, color-mix(in oklch, var(--accent) 14%, transparent) 38%, transparent 65%)",
         }}
       />
       {/* Cool ambient fill */}
@@ -30,7 +30,7 @@ export function AuthLeftPanel() {
         className="absolute inset-0"
         style={{
           background:
-            "radial-gradient(ellipse at 25% 72%, rgba(100,70,165,0.18) 0%, transparent 52%)",
+            "radial-gradient(ellipse at 25% 72%, color-mix(in oklch, var(--secondary) 22%, transparent) 0%, transparent 52%)",
         }}
       />
       {/* Reading-gradient overlay for text contrast */}

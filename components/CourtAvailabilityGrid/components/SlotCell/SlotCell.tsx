@@ -15,11 +15,28 @@ export function SlotCell({
     return <div className={emptySlotClassName} aria-hidden="true" />;
   }
 
-  const label = slot.status === "free" ? "Free" : "Locked";
+  const label =
+    slot.status === "free"
+      ? "Free"
+      : slot.status === "closed"
+        ? "Closed"
+        : "Locked";
   const interactive = isSlotInteractive(slot, variant, Boolean(onSlotClick));
 
   if (!interactive) {
-    return <div className={getSlotClassName(slot.status, false)}>{label}</div>;
+    return (
+      <div
+        className={getSlotClassName(slot.status, false)}
+        title={slot.status === "closed" ? slot.closureReason : undefined}
+        aria-label={
+          slot.status === "closed" && slot.closureReason
+            ? `Closed: ${slot.closureReason}`
+            : undefined
+        }
+      >
+        {label}
+      </div>
+    );
   }
 
   const startTime = formatSlotTime(slot.start);

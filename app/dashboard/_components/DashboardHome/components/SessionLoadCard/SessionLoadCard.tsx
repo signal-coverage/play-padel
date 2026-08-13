@@ -1,18 +1,8 @@
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils/utils";
 import type { SystemRole } from "@/providers/auth-provider";
-import { OwnerUtilization } from "./components/OwnerUtilization";
-import { PlayerUtilization } from "./components/PlayerUtilization";
-import {
-  OWNER_UTILIZATION_RANGE_DAYS,
-  PLAYER_CONSISTENCY_WEEKS,
-} from "./consts";
+import { OwnerSessionLoad } from "./components/OwnerSessionLoad";
+import { PlayerSessionLoad } from "./components/PlayerSessionLoad";
 
 export function SessionLoadCard({
   role,
@@ -24,19 +14,19 @@ export function SessionLoadCard({
   return (
     <Card
       size="sm"
-      className={cn("rounded-xl [--card-spacing:--spacing(4)]", className)}
+      className={cn(
+        "animate-fade-up rounded-sm border-primary px-2 py-5 [--card-spacing:--spacing(4)]",
+        className,
+      )}
+      style={{ animationDelay: "160ms" }}
     >
       <CardHeader>
-        <CardTitle>Session Load</CardTitle>
-        <CardDescription>
-          Last{" "}
-          {role === "owner"
-            ? `${OWNER_UTILIZATION_RANGE_DAYS} days`
-            : `${PLAYER_CONSISTENCY_WEEKS} weeks`}
-        </CardDescription>
+        <CardTitle className="label-mono!">
+          {role === "owner" ? "Cancellation rate" : "Session load"}
+        </CardTitle>
       </CardHeader>
-      <CardContent className="flex flex-1 flex-col items-center justify-center gap-1.5">
-        {role === "owner" ? <OwnerUtilization /> : <PlayerUtilization />}
+      <CardContent className="flex flex-1 flex-col justify-center gap-3">
+        {role === "owner" ? <OwnerSessionLoad /> : <PlayerSessionLoad />}
       </CardContent>
     </Card>
   );

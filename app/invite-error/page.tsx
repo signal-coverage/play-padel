@@ -1,6 +1,6 @@
 export default function InviteErrorPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
+    <div className="min-h-dvh flex items-center justify-center p-4">
       <div className="max-w-md w-full text-center space-y-4">
         <h1 className="text-2xl font-semibold text-destructive">
           Profile setup failed

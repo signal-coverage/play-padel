@@ -3,8 +3,16 @@ import { auth } from "@clerk/nextjs/server";
 import {
   listReservationsByUser,
   createReservation,
+  cancelReservation,
   canSelfCancel,
 } from "@/core/reservations/services/reservations.service";
+import { getCourtById } from "@/core/courts/services/courts.service";
+import { getClubById } from "@/core/clubs/services/clubs.service";
+import {
+  createInvoice,
+  issueInvoice,
+} from "@/core/billing/services/billing.service";
+import { createCheckoutPreference } from "@/lib/mercadopago/preferences";
 
 // Player's "my reservations" list, across all clubs. Each row also carries a
 // server-computed canSelfCancel flag (docs/reservation-flow.md: self-cancel
@@ -27,11 +35,13 @@ export async function GET(request: NextRequest) {
   return NextResponse.json({ reservations: withFlag });
 }
 
-// Instant CONFIRMED booking, no owner approval (docs/reservation-flow.md).
-// createReservation already runs both the court-level and user-level
-// (all-clubs) overlap conflict checks internally, so this route does not
-// duplicate that logic — it only forwards the caller's own Clerk userId
-// rather than trusting one from the request body.
+// Instant CONFIRMED booking (docs/reservation-flow.md), unless the court's
+// club requires prepayment — in that case this creates a 15-minute SCHEDULED
+// hold plus an ISSUED invoice, and returns a Mercado Pago checkoutUrl instead
+// of an immediately-confirmed reservation. createReservation already runs
+// both the court-level and user-level (all-clubs) overlap conflict checks
+// internally, so this route does not duplicate that logic — it only forwards
+// the caller's own Clerk userId rather than trusting one from the request body.
 export async function POST(request: NextRequest) {
   const { userId } = await auth();
   if (!userId) {
@@ -52,16 +62,90 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid input" }, { status: 400 });
   }
 
+  const court = await getCourtById(courtId);
+  if (!court) {
+    return NextResponse.json({ error: "Court not found" }, { status: 404 });
+  }
+
+  const club = await getClubById(court.clubId);
+  if (!club) {
+    return NextResponse.json({ error: "Club not found" }, { status: 404 });
+  }
+
+  if (!club.requiresPrepayment) {
+    try {
+      const reservation = await createReservation(userId, {
+        userId,
+        courtId,
+        scheduledStart,
+        scheduledEnd,
+        notes,
+      });
+      return NextResponse.json({ reservation }, { status: 201 });
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Could not create reservation";
+      return NextResponse.json({ error: message }, { status: 409 });
+    }
+  }
+
+  if (!court.price) {
+    return NextResponse.json(
+      {
+        error: "This court doesn't have a price set yet — contact the club",
+      },
+      { status: 422 },
+    );
+  }
+
+  let reservation: Awaited<ReturnType<typeof createReservation>> | undefined;
   try {
-    const reservation = await createReservation(userId, {
+    reservation = await createReservation(
       userId,
-      courtId,
-      scheduledStart,
-      scheduledEnd,
-      notes,
+      { userId, courtId, scheduledStart, scheduledEnd, notes },
+      { pendingPayment: true },
+    );
+
+    const invoice = await createInvoice(court.clubId, userId, {
+      userId,
+      reservationId: reservation.id,
+      currency: club.currency,
+      items: [
+        {
+          description: `${court.name} reservation`,
+          quantity: 1,
+          unitPrice: court.price,
+          total: court.price,
+        },
+      ],
+      tax: 0,
+      discount: 0,
     });
-    return NextResponse.json({ reservation }, { status: 201 });
+    await issueInvoice(court.clubId, invoice.id, userId);
+
+    const { checkoutUrl } = await createCheckoutPreference({
+      reservationId: reservation.id,
+      courtName: court.name,
+      price: court.price,
+      currency: club.currency,
+    });
+
+    return NextResponse.json({ reservation, checkoutUrl }, { status: 201 });
   } catch (err) {
+    // If the reservation hold was created before a later step (invoice,
+    // issue, or checkout preference) threw, roll it back so no orphaned
+    // SCHEDULED reservation is left behind waiting on a payment the player
+    // was never given a way to complete. A rollback failure here must not
+    // mask the original error — it's swallowed and the original error
+    // response is returned regardless.
+    if (reservation) {
+      try {
+        await cancelReservation(reservation.id, userId);
+      } catch {
+        // Best-effort rollback; original error below still applies.
+      }
+    }
+
     const message =
       err instanceof Error ? err.message : "Could not create reservation";
     return NextResponse.json({ error: message }, { status: 409 });

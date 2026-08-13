@@ -12,6 +12,7 @@ export interface Reservation {
   scheduledStart: Date;
   scheduledEnd: Date;
   notes?: string;
+  paymentExpiresAt?: Date;
   cancelledAt?: Date;
   cancelledBy?: string;
   createdAt: Date;

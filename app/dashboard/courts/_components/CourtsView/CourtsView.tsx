@@ -17,6 +17,7 @@ import { useGuardedDialogClose } from "@/hooks/use-guarded-dialog-close";
 import { CourtsTable } from "./components/CourtsTable";
 import { CourtFormSheet } from "./components/CourtFormSheet";
 import { AvailabilitySheet } from "./components/AvailabilitySheet";
+import { ClosuresSheet } from "./components/ClosuresSheet";
 import {
   useCreateCourt,
   useDeleteCourt,
@@ -38,6 +39,9 @@ export function CourtsView() {
   const [availabilityCourt, setAvailabilityCourt] =
     useState<CourtRecord | null>(null);
 
+  const [closuresOpen, setClosuresOpen] = useState(false);
+  const [closuresCourt, setClosuresCourt] = useState<CourtRecord | null>(null);
+
   const [courtPendingDeletion, setCourtPendingDeletion] =
     useState<CourtRecord | null>(null);
   const handleDeleteDialogClose = useGuardedDialogClose(
@@ -58,6 +62,11 @@ export function CourtsView() {
   function openAvailability(court: CourtRecord) {
     setAvailabilityCourt(court);
     setAvailabilityOpen(true);
+  }
+
+  function openClosures(court: CourtRecord) {
+    setClosuresCourt(court);
+    setClosuresOpen(true);
   }
 
   async function handleFormSubmit(values: CourtFormValues) {
@@ -104,6 +113,7 @@ export function CourtsView() {
         isLoading={isLoading}
         onEdit={openEditForm}
         onEditAvailability={openAvailability}
+        onEditClosures={openClosures}
         onDelete={setCourtPendingDeletion}
         deletingCourtId={
           deleteCourt.isPending ? (deleteCourt.variables ?? null) : null
@@ -122,6 +132,13 @@ export function CourtsView() {
         open={availabilityOpen}
         onOpenChange={setAvailabilityOpen}
         court={availabilityCourt}
+      />
+
+      <ClosuresSheet
+        open={closuresOpen}
+        onOpenChange={setClosuresOpen}
+        court={closuresCourt}
+        courts={courts}
       />
 
       <AlertDialog

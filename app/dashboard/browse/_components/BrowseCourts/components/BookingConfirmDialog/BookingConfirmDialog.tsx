@@ -19,11 +19,12 @@ export function BookingConfirmDialog({
   courtName,
   slot,
   isSubmitting,
+  requiresPrepayment,
   onConfirm,
 }: BookingConfirmDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent onPointerDownOutside={(e) => e.preventDefault()}>
         <DialogHeader>
           <DialogTitle>Confirm reservation</DialogTitle>
           <DialogDescription className="text-base font-semibold text-foreground">
@@ -33,8 +34,9 @@ export function BookingConfirmDialog({
           </DialogDescription>
         </DialogHeader>
         <p className="text-xs text-muted-foreground">
-          No payment is required now — you pay at the club. You can cancel for
-          free up to 2 hours before your reservation.
+          {requiresPrepayment
+            ? "This club requires payment to confirm your booking. You'll be redirected to Mercado Pago to complete it — your slot is held for 15 minutes."
+            : "No payment is required now — you pay at the club. You can cancel for free up to 2 hours before your reservation."}
         </p>
         <DialogFooter>
           <Button
@@ -45,7 +47,11 @@ export function BookingConfirmDialog({
             Cancel
           </Button>
           <GuardedActionButton isPending={isSubmitting} onClick={onConfirm}>
-            {isSubmitting ? "Booking…" : "Book court"}
+            {isSubmitting
+              ? "Booking…"
+              : requiresPrepayment
+                ? "Continue to payment"
+                : "Book court"}
           </GuardedActionButton>
         </DialogFooter>
       </DialogContent>

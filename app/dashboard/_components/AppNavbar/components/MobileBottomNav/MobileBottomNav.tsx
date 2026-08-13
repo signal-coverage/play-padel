@@ -23,8 +23,9 @@ export function MobileBottomNav({ role, className }: NavLinksProps) {
           <Link
             key={item.href}
             href={item.href}
+            aria-current={active ? "page" : undefined}
             className={cn(
-              "flex min-w-0 flex-col items-center gap-0.5 px-2 py-1 text-[10px] leading-none font-medium",
+              "flex min-h-11 min-w-0 flex-col items-center gap-0.5 px-2 py-1 text-[10px] leading-none font-medium",
               active ? "text-primary" : "text-muted-foreground",
             )}
           >

@@ -56,10 +56,13 @@ function SheetContent({
   side?: "top" | "right" | "bottom" | "left";
   showCloseButton?: boolean;
 }) {
+  const contentRef =
+    React.useRef<React.ComponentRef<typeof SheetPrimitive.Content>>(null);
   return (
     <SheetPortal>
       <SheetOverlay />
       <SheetPrimitive.Content
+        ref={contentRef}
         data-slot="sheet-content"
         data-side={side}
         className={cn(
@@ -71,8 +74,17 @@ function SheetContent({
           // stack. When a child portal (Select, Popover, Calendar) dismisses, the
           // Sheet's layer also fires even if the original click target is inside
           // the Sheet. Guard by checking the real click target.
+          //
+          // IMPORTANT: e.currentTarget here resolves to the Overlay element, NOT
+          // the Content element — verified via a live repro, not an assumption.
+          // A genuine outside click lands ON the overlay, so target === currentTarget
+          // and `currentTarget.contains(target)` is trivially true (a node always
+          // contains itself), which used to make every real outside click look like
+          // a false positive and silently block all dismissal. Use a ref to the
+          // actual Content node instead, which is what this check always meant to
+          // test against.
           const target = e.detail.originalEvent.target as Element | null;
-          const current = e.currentTarget as Element | null;
+          const current = contentRef.current as Element | null;
           if (target && current?.contains(target)) {
             e.preventDefault();
             return;

@@ -1,5 +1,6 @@
-export type UtilizationBand = {
-  label: string;
-  fillClassName: string;
-  textClassName: string;
+export type GaugeTone = "good" | "watch" | "bad";
+
+export type GaugeTrend = {
+  direction: "up" | "down";
+  text: string;
 };
