@@ -40,7 +40,7 @@ export function UserMenu() {
               width={36}
               height={36}
               unoptimized
-              className="h-full w-full object-cover outline outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10"
+              className="h-full w-full object-cover outline -outline-offset-1 outline-black/10 dark:outline-white/10"
               referrerPolicy="no-referrer"
             />
           ) : (
