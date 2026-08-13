@@ -10,11 +10,11 @@ the current state.
 The next step is not adding more technical details, but improving
 organization, discoverability, and long-term maintainability.
 
-------------------------------------------------------------------------
+---
 
 # 1. High-Level Architecture
 
-``` text
+```text
 Client (Next.js)
       │
       ▼
@@ -44,35 +44,37 @@ External Services
  └── Resend
 ```
 
-------------------------------------------------------------------------
+---
 
 # 2. Production Readiness
 
-  Area               Status
-  ------------------ --------------------------
-  Authentication     ✅ Ready
-  Booking            ✅ Ready
-  Court Management   ✅ Ready
-  Billing            ⚠ Service exists, no API
-  Payments           ❌ Manual only
-  Notifications      ⚠ Partial
-  Audit Logs         ⚠ Not wired
-  Landing Page       ⚠ Placeholder content
-  Analytics          ❌ Missing
-  Tests              ❌ Missing
+Area Status
 
-------------------------------------------------------------------------
+---
+
+Authentication ✅ Ready
+Booking ✅ Ready
+Court Management ✅ Ready
+Billing ⚠ Service exists, no API
+Payments ❌ Manual only
+Notifications ⚠ Partial
+Audit Logs ⚠ Not wired
+Landing Page ⚠ Placeholder content
+Analytics ❌ Missing
+Tests ❌ Missing
+
+---
 
 # 3. Booking Rules
 
--   Prevent double booking of the same court.
--   Server-side conflict validation.
--   Players can cancel up to **2 hours** before the reservation.
--   Court availability is generated from recurring schedules.
--   Soft-deleted courts cannot receive new reservations.
--   Reservation lifecycle:
+- Prevent double booking of the same court.
+- Server-side conflict validation.
+- Players can cancel up to **2 hours** before the reservation.
+- Court availability is generated from recurring schedules.
+- Soft-deleted courts cannot receive new reservations.
+- Reservation lifecycle:
 
-``` text
+```text
 SCHEDULED
    ↓
 CONFIRMED
@@ -88,7 +90,7 @@ or
 NO_SHOW
 ```
 
-------------------------------------------------------------------------
+---
 
 # 4. Multi-Tenancy
 
@@ -100,11 +102,11 @@ Players can browse all active clubs.
 
 `UserProfile` optionally belongs to a `Club`.
 
-------------------------------------------------------------------------
+---
 
 # 5. API Surface
 
-``` text
+```text
 Authentication
 POST /api/onboarding
 
@@ -123,21 +125,21 @@ GET    /api/clubs/reservations
 PATCH  /api/clubs/reservations/:id
 ```
 
-------------------------------------------------------------------------
+---
 
 # 6. Environment Variables
 
--   CLERK_SECRET_KEY
--   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
--   DATABASE_URL
--   RESEND_API_KEY
--   NEXT_PUBLIC_APP_URL
+- CLERK_SECRET_KEY
+- NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+- DATABASE_URL
+- RESEND_API_KEY
+- NEXT_PUBLIC_APP_URL
 
-------------------------------------------------------------------------
+---
 
 # 7. Development Setup
 
-``` bash
+```bash
 pnpm install
 pnpm prisma migrate dev
 pnpm dev
@@ -145,17 +147,17 @@ pnpm dev
 
 Useful commands:
 
-``` bash
+```bash
 pnpm lint
 pnpm test
 pnpm prisma studio
 ```
 
-------------------------------------------------------------------------
+---
 
 # 8. Folder Structure
 
-``` text
+```text
 app/
 core/
 components/
@@ -164,42 +166,42 @@ prisma/
 public/
 ```
 
-------------------------------------------------------------------------
+---
 
 # 9. Known Limitations
 
--   No tournaments
--   No player rankings
--   No payment gateway
--   No reminder scheduler
--   No audit logging
--   Landing page uses placeholder content
--   No player profiles
--   No partner history
+- No tournaments
+- No player rankings
+- No payment gateway
+- No reminder scheduler
+- No audit logging
+- Landing page uses placeholder content
+- No player profiles
+- No partner history
 
-------------------------------------------------------------------------
+---
 
 # 10. Roadmap
 
 ## Phase 1
 
--   Stripe
--   Mercado Pago
--   Audit logging
+- Stripe
+- Mercado Pago
+- Audit logging
 
 ## Phase 2
 
--   Tournaments
--   Rankings
--   Match history
+- Tournaments
+- Rankings
+- Match history
 
 ## Phase 3
 
--   Mobile app
--   Push notifications
--   Player search
+- Mobile app
+- Push notifications
+- Player search
 
-------------------------------------------------------------------------
+---
 
 # 11. Security
 
@@ -209,7 +211,7 @@ courts
 
 Missing: - Rate limiting - CSRF review - API throttling - CAPTCHA
 
-------------------------------------------------------------------------
+---
 
 # 12. Testing
 
@@ -217,34 +219,36 @@ Current: - Manual QA
 
 Planned: - Vitest - Playwright - Integration tests
 
-------------------------------------------------------------------------
+---
 
 # 13. Performance
 
--   Browse page polls every 15 seconds.
--   Reservation conflict detection is always server-side.
--   Availability is computed dynamically.
+- Browse page polls every 15 seconds.
+- Reservation conflict detection is always server-side.
+- Availability is computed dynamically.
 
-------------------------------------------------------------------------
+---
 
 # 14. Feature Matrix
 
-  Feature           UI   API   DB   Ready
-  ---------------- ---- ----- ---- -------
-  Browse Clubs      ✅   ✅    ✅    ✅
-  Reservations      ✅   ✅    ✅    ✅
-  Courts            ✅   ✅    ✅    ✅
-  Billing           ❌   ❌    ✅     ⚠
-  Notifications     ⚠     ⚠    ✅     ⚠
-  Audit             ❌   ❌    ✅    ❌
-  Events            ❌   ❌    ❌    ❌
-  Player Profile    ⚠    ❌    ❌    ❌
+Feature UI API DB Ready
 
-------------------------------------------------------------------------
+---
+
+Browse Clubs ✅ ✅ ✅ ✅
+Reservations ✅ ✅ ✅ ✅
+Courts ✅ ✅ ✅ ✅
+Billing ❌ ❌ ✅ ⚠
+Notifications ⚠ ⚠ ✅ ⚠
+Audit ❌ ❌ ✅ ❌
+Events ❌ ❌ ❌ ❌
+Player Profile ⚠ ❌ ❌ ❌
+
+---
 
 # 15. Database Diagram
 
-``` text
+```text
 Club
  ├── Court
  │     ├── CourtAvailability
@@ -258,7 +262,7 @@ UserProfile
  └── Payment
 ```
 
-------------------------------------------------------------------------
+---
 
 # Suggested Documentation Structure
 

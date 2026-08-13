@@ -17,7 +17,7 @@ export const ABOUT_ITEMS = [
       "From social tournaments to themed nights, every visit is built around connection, not just the scoreboard.",
   },
   {
-    title: "Spaces That Elevate Your Game",
+    title: "Spaces Built to Improve Your Game",
     description:
       "Premium indoor and outdoor courts designed for consistent bounce, great lighting, and a setting that makes you want to play longer.",
   },

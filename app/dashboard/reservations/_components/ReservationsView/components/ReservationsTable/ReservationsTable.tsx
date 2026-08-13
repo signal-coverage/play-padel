@@ -2,6 +2,7 @@
 
 import { ReservationStatusBadge } from "@/components/ReservationStatusBadge";
 import { StatusBox } from "@/components/StatusBox";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
   TableBody,
@@ -12,6 +13,7 @@ import {
 } from "@/components/ui/table";
 import { formatTimeRange, isActionable } from "../../utils";
 import { ReservationActionButtons } from "../ReservationActionButtons";
+import { LOADING_SKELETON_ROW_COUNT } from "./consts";
 import type { ReservationsTableProps } from "./types";
 
 export function ReservationsTable({
@@ -21,7 +23,50 @@ export function ReservationsTable({
   pendingReservationId,
 }: ReservationsTableProps) {
   if (isLoading) {
-    return <StatusBox>Loading reservations…</StatusBox>;
+    return (
+      <div className="overflow-x-auto rounded-lg border">
+        <span className="sr-only" role="status">
+          Loading reservations…
+        </span>
+        <Table aria-hidden="true">
+          <TableHeader>
+            <TableRow>
+              <TableHead>Player</TableHead>
+              <TableHead>Court</TableHead>
+              <TableHead>Time</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {Array.from({ length: LOADING_SKELETON_ROW_COUNT }).map(
+              (_, index) => (
+                <TableRow key={index}>
+                  <TableCell>
+                    <Skeleton className="h-4 w-28" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-4 w-20" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-4 w-24" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-5 w-20 rounded-full" />
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex justify-end gap-1.5">
+                      <Skeleton className="h-8 w-16 rounded-md" />
+                      <Skeleton className="h-8 w-16 rounded-md" />
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ),
+            )}
+          </TableBody>
+        </Table>
+      </div>
+    );
   }
 
   if (reservations.length === 0) {
@@ -51,7 +96,7 @@ export function ReservationsTable({
                   {reservation.userName}
                 </TableCell>
                 <TableCell>{reservation.courtName}</TableCell>
-                <TableCell>
+                <TableCell className="tabular-nums">
                   {formatTimeRange(
                     reservation.scheduledStart,
                     reservation.scheduledEnd,

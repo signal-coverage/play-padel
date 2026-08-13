@@ -1,7 +1,11 @@
 import { BarChart3 } from "lucide-react";
 import { Bar, BarChart, Cell } from "recharts";
 import { ChartContainer } from "@/components/ui/chart";
-import { EmptyDescription, EmptyMedia } from "@/components/ui/empty";
+import {
+  EmptyDescription,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
 import { OVERVIEW_CHART_CONFIG } from "../../consts";
 import type { OverviewChartProps } from "./types";
 
@@ -14,9 +18,10 @@ export function OverviewChart({
   if (!hasActivity) {
     return (
       <div className="flex h-24 flex-col items-center justify-center gap-2 text-center">
-        <EmptyMedia variant="icon" className="size-8 rounded-full">
+        <EmptyMedia variant="icon" className="mb-0 size-8 rounded-full">
           <BarChart3 className="size-4" />
         </EmptyMedia>
+        <EmptyTitle className="text-xs">No patterns yet</EmptyTitle>
         <EmptyDescription className="text-xs">{emptyMessage}</EmptyDescription>
       </div>
     );
@@ -29,16 +34,18 @@ export function OverviewChart({
       <ChartContainer config={OVERVIEW_CHART_CONFIG} className="h-24 w-full">
         <BarChart data={chartData}>
           <Bar dataKey="total" radius={2}>
-            {chartData.map((day) => (
-              <Cell
-                key={day.date}
-                fill={
-                  peak > 0 && day.total === peak
-                    ? "var(--color-total)"
-                    : "var(--muted)"
-                }
-              />
-            ))}
+            {chartData.map((day) => {
+              const isPeak = peak > 0 && day.total === peak;
+              return (
+                <Cell
+                  key={day.date}
+                  fill={
+                    isPeak ? "var(--color-total)" : "var(--muted-foreground)"
+                  }
+                  fillOpacity={isPeak ? 1 : 0.35}
+                />
+              );
+            })}
           </Bar>
         </BarChart>
       </ChartContainer>

@@ -7,6 +7,7 @@ import { scrollToSection } from "@/lib/utils/scroll-to-section";
 
 export function LandingFooter() {
   const shouldReduce = useReducedMotion();
+  const currentYear = new Date().getFullYear();
 
   return (
     <footer className="bg-[#0A0A0A] text-white overflow-hidden">
@@ -22,7 +23,7 @@ export function LandingFooter() {
             {TAGLINE}
           </p>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 sm:gap-10 md:gap-14 text-left sm:text-right">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 sm:gap-10 md:gap-14 text-left sm:text-right">
             <div>
               <h4 className="text-[14px] font-semibold text-white/90 mb-5">
                 Let&apos;s Talk
@@ -87,7 +88,7 @@ export function LandingFooter() {
           </div>
 
           <div className="flex items-center gap-6 text-[13px] text-white/30 flex-wrap pb-6 sm:pb-12">
-            <span>© 2026 Play Padel. All rights reserved.</span>
+            <span>© {currentYear} Play Padel. All rights reserved.</span>
             <Link
               href="/privacy"
               className="hover:text-white/60 transition-colors"

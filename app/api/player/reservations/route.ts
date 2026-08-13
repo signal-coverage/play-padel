@@ -92,8 +92,7 @@ export async function POST(request: NextRequest) {
   if (!court.price) {
     return NextResponse.json(
       {
-        error:
-          "This court doesn't have a price set yet — contact the club",
+        error: "This court doesn't have a price set yet — contact the club",
       },
       { status: 422 },
     );

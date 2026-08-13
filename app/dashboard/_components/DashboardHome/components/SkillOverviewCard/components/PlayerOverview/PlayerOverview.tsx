@@ -52,7 +52,7 @@ export function PlayerOverview() {
           variant="row"
           label="Skill level"
           value={getPadelCategoryLabel(user?.padelCategory ?? null)}
-          valueClassName="font-semibold"
+          valueClassName="font-semibold text-accent-foreground bg-accent rounded-full px-2 py-0.5"
         />
       </div>
       <OverviewChart

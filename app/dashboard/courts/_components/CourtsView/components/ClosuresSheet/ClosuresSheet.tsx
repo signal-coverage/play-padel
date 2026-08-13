@@ -25,15 +25,11 @@ export function ClosuresSheet({
   courts,
 }: ClosuresSheetProps) {
   const courtId = court?.id ?? null;
-  const { data: closures, isLoading } = useCourtClosures(
-    open ? courtId : null,
-  );
+  const { data: closures, isLoading } = useCourtClosures(open ? courtId : null);
   const createClosure = useCreateCourtClosure();
   const cancelClosure = useCancelCourtClosure();
 
-  async function handleCreate(
-    values: NewClosureFormValues,
-  ): Promise<boolean> {
+  async function handleCreate(values: NewClosureFormValues): Promise<boolean> {
     const targetCourtIds = values.applyToAllCourts
       ? courts.filter((c) => c.active).map((c) => c.id)
       : courtId
@@ -107,9 +103,7 @@ export function ClosuresSheet({
           />
 
           {isLoading || !closures ? (
-            <p className="text-sm text-muted-foreground">
-              Loading closures…
-            </p>
+            <p className="text-sm text-muted-foreground">Loading closures…</p>
           ) : (
             <ClosuresList
               closures={closures}

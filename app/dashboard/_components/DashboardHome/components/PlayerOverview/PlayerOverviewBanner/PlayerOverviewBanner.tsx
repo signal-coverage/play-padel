@@ -24,7 +24,7 @@ export function PlayerOverviewBanner({ className }: PlayerOverviewBannerProps) {
         type="button"
         onClick={() => setOpen(true)}
         className={cn(
-          "animate-fade-up flex items-center rounded-2xl border border-border bg-card p-3",
+          "animate-fade-up flex items-center rounded-2xl bg-card p-3 shadow-card",
           className,
         )}
         style={{ animationDelay: "180ms" }}

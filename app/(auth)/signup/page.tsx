@@ -14,10 +14,10 @@ export default function SignupPage() {
       transition={{ duration: 0.35, ease: "easeOut" }}
     >
       <div className="mb-4 text-center">
-        <h1 className="text-[26px] font-bold text-gray-900 tracking-tight">
+        <h1 className="text-[26px] font-bold text-foreground tracking-tight">
           Create your account
         </h1>
-        <p className="text-sm text-gray-500 mt-2 leading-relaxed">
+        <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
           Get started with Play Padel today.
         </p>
       </div>

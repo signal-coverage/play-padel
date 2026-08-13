@@ -24,9 +24,11 @@
 ### Task 1: Schema — `requiresPrepayment`, `price`, `paymentExpiresAt`
 
 **Files:**
+
 - Modify: `prisma/schema.prisma`
 
 **Interfaces:**
+
 - Produces: `Club.requiresPrepayment: boolean`, `Court.price: number | null`, `Reservation.paymentExpiresAt: Date | null` — consumed by every later task.
 
 - [ ] **Step 1: Add the three fields**
@@ -129,10 +131,12 @@ model Reservation {
 - [ ] **Step 2: Regenerate the Prisma client and push the schema**
 
 Run:
+
 ```bash
 npx prisma generate
 npx prisma db push
 ```
+
 Expected: both commands complete with no errors; `db push` reports the three new columns added.
 
 - [ ] **Step 3: Verify**
@@ -145,6 +149,7 @@ Expected: no new errors (existing code doesn't reference the new fields yet, so 
 ### Task 2: `lib/mercadopago/` — SDK client, preferences, payment lookup, signature verification, refunds
 
 **Files:**
+
 - Create: `lib/mercadopago/client.ts`
 - Create: `lib/mercadopago/preferences.ts`
 - Create: `lib/mercadopago/payments.ts`
@@ -154,6 +159,7 @@ Expected: no new errors (existing code doesn't reference the new fields yet, so 
 - Modify: `package.json` (add `mercadopago` dependency)
 
 **Interfaces:**
+
 - Produces:
   - `getMercadoPagoClient(): MercadoPagoConfig`
   - `createCheckoutPreference(params: { reservationId: string; courtName: string; price: number; currency: string }): Promise<{ checkoutUrl: string }>`
@@ -169,6 +175,7 @@ Expected: `mercadopago` appears in `package.json` dependencies and `package-lock
 - [ ] **Step 2: Add env var placeholders**
 
 Append to `.env.example`:
+
 ```
 # Mercado Pago (Payments)
 MERCADOPAGO_ACCESS_TOKEN=
@@ -179,6 +186,7 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 - [ ] **Step 3: SDK client singleton**
 
 Create `lib/mercadopago/client.ts`:
+
 ```ts
 import { MercadoPagoConfig } from "mercadopago";
 
@@ -199,6 +207,7 @@ export function getMercadoPagoClient(): MercadoPagoConfig {
 - [ ] **Step 4: Checkout Pro preference creation**
 
 Create `lib/mercadopago/preferences.ts`:
+
 ```ts
 import { Preference } from "mercadopago";
 import { getMercadoPagoClient } from "./client";
@@ -256,6 +265,7 @@ export async function createCheckoutPreference(params: {
 - [ ] **Step 5: Payment lookup**
 
 Create `lib/mercadopago/payments.ts`:
+
 ```ts
 import { Payment as MercadoPagoPayment } from "mercadopago";
 import { getMercadoPagoClient } from "./client";
@@ -287,6 +297,7 @@ export async function getMercadoPagoPayment(
 - [ ] **Step 6: Webhook signature verification**
 
 Create `lib/mercadopago/webhookSignature.ts`:
+
 ```ts
 import {
   WebhookSignatureValidator,
@@ -320,6 +331,7 @@ export function verifyMercadoPagoSignature(params: {
 - [ ] **Step 7: Refunds**
 
 Create `lib/mercadopago/refunds.ts`. The class-based v2 SDK doesn't expose a stable, documented refund class name across versions, so this calls Mercado Pago's documented REST endpoint directly:
+
 ```ts
 // Calls Mercado Pago's refund endpoint directly (POST
 // /v1/payments/{id}/refunds) rather than going through an SDK class, since
@@ -344,9 +356,7 @@ export async function refundMercadoPagoPayment(
 
   if (!response.ok) {
     const body = await response.text();
-    throw new Error(
-      `Mercado Pago refund failed (${response.status}): ${body}`,
-    );
+    throw new Error(`Mercado Pago refund failed (${response.status}): ${body}`);
   }
 }
 ```
@@ -361,10 +371,12 @@ Expected: no errors. (Live calls to these functions can't be verified until `MER
 ### Task 3: `core/billing` — refund + reservation-linked invoice lookup
 
 **Files:**
+
 - Modify: `core/billing/services/billing.service.ts`
 - Modify: `core/audit/types/index.ts`
 
 **Interfaces:**
+
 - Consumes: `refundMercadoPagoPayment` (Task 2), `logAudit` (existing, `core/audit/services/audit.service.ts`)
 - Produces:
   - `getInvoiceByReservationId(reservationId: string): Promise<Invoice | null>`
@@ -374,6 +386,7 @@ Expected: no errors. (Live calls to these functions can't be verified until `MER
 - [ ] **Step 1: Extend `AuditAction`**
 
 In `core/audit/types/index.ts`, add two new literals:
+
 ```ts
 export type AuditAction =
   | "reservation.created"
@@ -393,9 +406,11 @@ export type AuditAction =
 - [ ] **Step 2: Add audit logging to `recordPayment`**
 
 In `core/billing/services/billing.service.ts`, add `logAudit` (import it) right after the `$transaction` call inside `recordPayment`, before the existing notification-dispatch `try` block:
+
 ```ts
 import { logAudit } from "@/core/audit/services/audit.service";
 ```
+
 ```ts
   const [payment] = await prisma.$transaction([
     prisma.payment.create({
@@ -435,14 +450,17 @@ import { logAudit } from "@/core/audit/services/audit.service";
   try {
     ...
 ```
+
 (Leave the rest of `recordPayment` — the notification-dispatch block and return statement — unchanged.)
 
 - [ ] **Step 3: Add `getInvoiceByReservationId` and `refundPayment`**
 
 At the end of `core/billing/services/billing.service.ts`, add:
+
 ```ts
 import { refundMercadoPagoPayment } from "@/lib/mercadopago/refunds";
 ```
+
 ```ts
 export async function getInvoiceByReservationId(
   reservationId: string,
@@ -511,12 +529,14 @@ Expected: no errors.
 ### Task 4: `core/reservations` — pending-payment hold, lapsed-hold exclusion, payment confirmation
 
 **Files:**
+
 - Modify: `core/reservations/consts.ts`
 - Modify: `core/reservations/types/index.ts`
 - Modify: `core/reservations/services/reservations.service.ts`
 - Modify: `core/courts/services/courts.service.ts`
 
 **Interfaces:**
+
 - Produces:
   - `ACTIVE_RESERVATION_STATUSES` (exported const, moved from being duplicated inline in two files)
   - `PAYMENT_HOLD_MINUTES` (exported const, value `15`)
@@ -528,6 +548,7 @@ Expected: no errors.
 - [ ] **Step 1: Consolidate the active-status list and add the hold duration**
 
 In `core/reservations/consts.ts`, add (near the top, after the import):
+
 ```ts
 // Single source of truth for "does this status still block a slot / count as
 // an active reservation" — shared by reservations.service.ts and
@@ -545,6 +566,7 @@ export const PAYMENT_HOLD_MINUTES = 15;
 - [ ] **Step 2: Add `paymentExpiresAt` to the `Reservation` type**
 
 In `core/reservations/types/index.ts`:
+
 ```ts
 export interface Reservation {
   id: string;
@@ -570,6 +592,7 @@ export interface Reservation {
 - [ ] **Step 3: Update `reservations.service.ts`**
 
 Replace the module-private const and import the shared one:
+
 ```ts
 import {
   SELF_CANCEL_CUTOFF_HOURS,
@@ -577,13 +600,17 @@ import {
   PAYMENT_HOLD_MINUTES,
 } from "@/core/reservations/consts";
 ```
+
 Delete this line (no longer needed — replaced by the import above):
+
 ```ts
 const ACTIVE_STATUSES = ["SCHEDULED", "CONFIRMED"] as const;
 ```
+
 Everywhere `ACTIVE_STATUSES` was used (`listReservationsByClub`, `listReservationsByUser`, `checkCourtConflict`, `checkUserOverlapConflict`, `canSelfCancel`), replace it with `ACTIVE_RESERVATION_STATUSES` — e.g. `status: { in: [...ACTIVE_STATUSES] }` becomes `status: { in: [...ACTIVE_RESERVATION_STATUSES] }`. Keep the `[...]` spread exactly as it was: `ACTIVE_RESERVATION_STATUSES` is typed `readonly ReservationStatus[]`, and Prisma's `in` filter wants a mutable array type at the type level, so the spread is still required even though nothing is actually mutated.
 
 Add the lapsed-hold exclusion to both conflict checks. In `checkCourtConflict`:
+
 ```ts
 export async function checkCourtConflict({
   clubId,
@@ -620,9 +647,11 @@ export async function checkCourtConflict({
   return conflict !== null;
 }
 ```
+
 Apply the identical `NOT` block to `checkUserOverlapConflict`'s `where` (same shape, just without `clubId`/`courtId`).
 
 Extend `createReservation`'s signature and body:
+
 ```ts
 export async function createReservation(
   createdBy: string,
@@ -710,6 +739,7 @@ export async function createReservation(
 ```
 
 Update `toReservation` to map the new field:
+
 ```ts
 function toReservation(row: ReservationRow): Reservation {
   return {
@@ -735,6 +765,7 @@ function toReservation(row: ReservationRow): Reservation {
 ```
 
 Add two new exported functions (near `cancelReservation`):
+
 ```ts
 // Transitions a pending-payment hold to CONFIRMED once Mercado Pago confirms
 // the payment (called only from the webhook route). No audit-log call here —
@@ -769,16 +800,20 @@ export async function findReservationById(
 - [ ] **Step 4: Update `courts.service.ts`'s duplicate list and its own lapsed-hold exclusion**
 
 In `core/courts/services/courts.service.ts`, find `const ACTIVE_RESERVATION_STATUSES = ["SCHEDULED", "CONFIRMED"] as const;` (used inside `getCourtSlots`) and replace it with an import of the now-shared const:
+
 ```ts
 import { ACTIVE_RESERVATION_STATUSES } from "@/core/reservations/consts";
 ```
+
 Delete the local `const ACTIVE_RESERVATION_STATUSES = ...` line. In the `prisma.reservation.findMany` (or equivalent) call inside `getCourtSlots` that filters by `status: { in: [...ACTIVE_RESERVATION_STATUSES] }`, add the same lapsed-hold exclusion used in Step 3:
+
 ```ts
 NOT: {
   status: "SCHEDULED",
   paymentExpiresAt: { lt: new Date() },
 },
 ```
+
 This is required so a lapsed, unpaid hold stops showing as a "locked" slot on the booking grid — without it, an abandoned checkout would make that slot permanently unbookable.
 
 - [ ] **Step 5: Verify**
@@ -793,16 +828,19 @@ Manually verify the lapsed-hold logic in isolation: in `npx prisma studio` (or a
 ### Task 5: `core/clubs` — `requiresPrepayment`
 
 **Files:**
+
 - Modify: `core/clubs/types/index.ts`
 - Modify: `core/clubs/schemas/club.schema.ts`
 - Modify: `core/clubs/services/clubs.service.ts`
 
 **Interfaces:**
+
 - Produces: `Club.requiresPrepayment: boolean`, `UpdateClubInput.requiresPrepayment?: boolean`
 
 - [ ] **Step 1: Types**
 
 In `core/clubs/types/index.ts`:
+
 ```ts
 export interface Club {
   id: string;
@@ -823,7 +861,9 @@ export interface Club {
   updatedBy: string;
 }
 ```
+
 Add to `UpdateClubInput`:
+
 ```ts
 export interface UpdateClubInput {
   name?: string;
@@ -843,6 +883,7 @@ export interface UpdateClubInput {
 - [ ] **Step 2: Schema**
 
 In `core/clubs/schemas/club.schema.ts`, add to `updateClubSchema`:
+
 ```ts
 export const updateClubSchema = z.object({
   name: z.string().min(1).optional(),
@@ -862,9 +903,11 @@ export const updateClubSchema = z.object({
 - [ ] **Step 3: Service mapping**
 
 In `core/clubs/services/clubs.service.ts`, find the `toClub()` mapping function and add:
+
 ```ts
 requiresPrepayment: row.requiresPrepayment,
 ```
+
 (`updateClub` itself needs no change — it already spreads validated `input` straight into `prisma.club.update`.)
 
 - [ ] **Step 4: Verify**
@@ -879,11 +922,13 @@ Manually verify: `PATCH /api/clubs` with body `{"requiresPrepayment": true}` as 
 ### Task 6: `core/courts` — `price`
 
 **Files:**
+
 - Modify: `core/courts/types/index.ts`
 - Modify: `core/courts/schemas/court.schema.ts`
 - Modify: `core/courts/services/courts.service.ts`
 
 **Interfaces:**
+
 - Produces: `Court.price?: number`, `CreateCourtInput.price?: number`, `UpdateCourtInput.price?: number`, `getCourtById(id: string): Promise<Court | null>`
 
 - [ ] **Step 1: Types**
@@ -899,21 +944,25 @@ In `core/courts/schemas/court.schema.ts`, add `price: z.number().nonnegative().o
 In `core/courts/services/courts.service.ts`:
 
 `createCourt`'s `data` object gains:
+
 ```ts
 price: input.price ?? null,
 ```
 
 `updateCourt`'s `data` object gains:
+
 ```ts
 ...(input.price !== undefined && { price: input.price }),
 ```
 
 `toCourt()` mapping gains:
+
 ```ts
 price: row.price ?? undefined,
 ```
 
 Add a new exported function (needed by Task 7's route, which must read a single court's price/clubId before deciding whether to branch into the prepayment flow):
+
 ```ts
 export async function getCourtById(id: string): Promise<Court | null> {
   const row = await prisma.court.findUnique({ where: { id } });
@@ -933,15 +982,18 @@ Manually verify: `POST /api/clubs/courts` with `{"name": "Test Court", "price": 
 ### Task 7: `POST /api/player/reservations` — prepayment branch
 
 **Files:**
+
 - Modify: `app/api/player/reservations/route.ts`
 
 **Interfaces:**
+
 - Consumes: `getCourtById` (Task 6), `getClubById` (existing, `core/clubs/services/clubs.service.ts`), `createReservation` with `opts.pendingPayment` (Task 4), `createInvoice`/`issueInvoice` (existing, `core/billing/services/billing.service.ts`), `createCheckoutPreference` (Task 2)
 - Produces: `POST /api/player/reservations` response shape extended to `{ reservation, checkoutUrl? }` — `checkoutUrl` present only when the club requires prepayment.
 
 - [ ] **Step 1: Rewrite the POST handler**
 
 Replace `app/api/player/reservations/route.ts`'s `POST` function with:
+
 ```ts
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
@@ -1036,8 +1088,7 @@ export async function POST(request: NextRequest) {
   if (!court.price) {
     return NextResponse.json(
       {
-        error:
-          "This court doesn't have a price set yet — contact the club",
+        error: "This court doesn't have a price set yet — contact the club",
       },
       { status: 422 },
     );
@@ -1095,9 +1146,11 @@ Manually verify (needs a real `MERCADOPAGO_ACCESS_TOKEN` sandbox credential in `
 ### Task 8: `POST /api/webhooks/mercadopago` (new route)
 
 **Files:**
+
 - Create: `app/api/webhooks/mercadopago/route.ts`
 
 **Interfaces:**
+
 - Consumes: `verifyMercadoPagoSignature`, `getMercadoPagoPayment` (Task 2), `findReservationById`, `confirmReservationPayment` (Task 4), `getInvoiceByReservationId`, `recordPayment`, `voidInvoice` (existing/Task 3)
 
 - [ ] **Step 1: Create the route**
@@ -1194,15 +1247,18 @@ Manually verify with the Mercado Pago sandbox: complete a test checkout (Task 7'
 ### Task 9: Refund wiring on cancellation (player + owner)
 
 **Files:**
+
 - Modify: `app/api/player/reservations/[id]/cancel/route.ts`
 - Modify: `app/api/clubs/reservations/[reservationId]/route.ts`
 
 **Interfaces:**
+
 - Consumes: `getInvoiceByReservationId`, `refundPayment` (Task 3)
 
 - [ ] **Step 1: Player self-cancel route**
 
 Rewrite `app/api/player/reservations/[id]/cancel/route.ts`:
+
 ```ts
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
@@ -1279,6 +1335,7 @@ export async function POST(
 - [ ] **Step 2: Owner PATCH route**
 
 In `app/api/clubs/reservations/[reservationId]/route.ts`, update the imports and the `"cancel"` case:
+
 ```ts
 import {
   cancelReservation,
@@ -1292,6 +1349,7 @@ import {
 } from "@/core/billing/services/billing.service";
 import { requireOwnerClub } from "../../_lib/require-owner";
 ```
+
 ```ts
       case "cancel": {
         // Same refund-before-cancel rule as the player self-cancel route —
@@ -1328,11 +1386,13 @@ Manually verify: complete a sandbox checkout to CONFIRMED (Tasks 7+8), then self
 ### Task 10: `BookingConfirmDialog` — branch on `requiresPrepayment`, redirect to checkout
 
 **Files:**
+
 - Modify: `app/dashboard/browse/_components/BrowseCourts/components/BookingConfirmDialog/BookingConfirmDialog.tsx`
 - Modify: `app/dashboard/browse/_components/BrowseCourts/components/BookingConfirmDialog/types.ts`
 - Modify: `app/dashboard/browse/_components/BrowseCourts/BrowseCourts.tsx`
 
 **Interfaces:**
+
 - Consumes: `Club.requiresPrepayment` (already returned by the existing `GET /api/player/clubs` → `useActiveClubs()`, once Task 5's type change lands)
 - Produces: `BookingConfirmDialogProps.requiresPrepayment: boolean` (new prop)
 
@@ -1341,6 +1401,7 @@ The exact price isn't threaded through the availability grid for this dialog —
 - [ ] **Step 1: Add the new prop and branch the copy**
 
 In `types.ts`:
+
 ```ts
 import type { Slot } from "@/components/CourtAvailabilityGrid";
 
@@ -1356,6 +1417,7 @@ export type BookingConfirmDialogProps = {
 ```
 
 In `BookingConfirmDialog.tsx`:
+
 ```tsx
 "use client";
 
@@ -1548,6 +1610,7 @@ Manually verify in the browser: book a slot at a non-prepay club (unchanged flow
 ### Task 11: `/dashboard/browse/payment-return` page
 
 **Files:**
+
 - Create: `app/dashboard/browse/payment-return/page.tsx`
 - Create: `app/dashboard/browse/payment-return/_components/PaymentReturnView/PaymentReturnView.tsx`
 - Create: `app/dashboard/browse/payment-return/_components/PaymentReturnView/hooks.ts`
@@ -1555,11 +1618,13 @@ Manually verify in the browser: book a slot at a non-prepay club (unchanged flow
 - Create: `app/dashboard/browse/payment-return/_components/PaymentReturnView/index.ts`
 
 **Interfaces:**
+
 - Consumes: `GET /api/player/reservations` (existing route, unmodified — just filtered client-side by id)
 
 - [ ] **Step 1: Types**
 
 Create `types.ts`:
+
 ```ts
 export type ReturnReservation = {
   id: string;
@@ -1575,6 +1640,7 @@ export type PaymentReturnState = "processing" | "success" | "failed";
 - [ ] **Step 2: Hook — poll until settled**
 
 Create `hooks.ts`:
+
 ```ts
 "use client";
 
@@ -1637,6 +1703,7 @@ export function usePaymentReturnStatus(reservationId: string | null) {
 - [ ] **Step 3: View**
 
 Create `PaymentReturnView.tsx`:
+
 ```tsx
 "use client";
 
@@ -1717,11 +1784,13 @@ export function PaymentReturnView({
 - [ ] **Step 4: Barrel and page**
 
 Create `index.ts`:
+
 ```ts
 export { PaymentReturnView } from "./PaymentReturnView";
 ```
 
 Create `app/dashboard/browse/payment-return/page.tsx`:
+
 ```tsx
 import { PaymentReturnView } from "./_components/PaymentReturnView";
 
@@ -1747,6 +1816,7 @@ Manually verify: navigate to `/dashboard/browse/payment-return?reservationId=<a 
 ### Task 12: Club Settings — `requiresPrepayment` toggle
 
 **Files:**
+
 - Modify: `app/dashboard/settings/club/_components/ClubSettingsView/types.ts`
 - Modify: `app/dashboard/settings/club/_components/ClubSettingsView/consts.ts`
 - Modify: `app/dashboard/settings/club/_components/ClubSettingsView/utils.ts`
@@ -1767,27 +1837,31 @@ In `utils.ts`, add `requiresPrepayment: club?.requiresPrepayment ?? false,` to `
 - [ ] **Step 4: Form field**
 
 In `ClubSettingsView.tsx`, add the `Switch` import and a new field (own full-width row, per this project's Sheet/Dialog field-layout convention) right before the submit button:
+
 ```tsx
 import { Switch } from "@/components/ui/switch";
 ```
+
 ```tsx
 import { useForm, useWatch } from "react-hook-form";
 ```
-```tsx
-  const {
-    register,
-    handleSubmit,
-    reset,
-    control,
-    setValue,
-    formState: { errors },
-  } = useForm<ClubSettingsFormValues>({
-    resolver: zodResolver(clubSettingsFormSchema),
-    defaultValues: clubToFormValues(club),
-  });
 
-  const requiresPrepayment = useWatch({ control, name: "requiresPrepayment" });
+```tsx
+const {
+  register,
+  handleSubmit,
+  reset,
+  control,
+  setValue,
+  formState: { errors },
+} = useForm<ClubSettingsFormValues>({
+  resolver: zodResolver(clubSettingsFormSchema),
+  defaultValues: clubToFormValues(club),
+});
+
+const requiresPrepayment = useWatch({ control, name: "requiresPrepayment" });
 ```
+
 ```tsx
         <Field orientation="horizontal">
           <FieldLabel htmlFor="club-requires-prepayment">
@@ -1821,6 +1895,7 @@ Manually verify in the browser: toggle the switch on Club Settings, save, reload
 ### Task 13: Court form — `price` field
 
 **Files:**
+
 - Modify: `app/dashboard/courts/_components/CourtsView/types.ts`
 - Modify: `app/dashboard/courts/_components/CourtsView/utils.ts`
 - Modify: `app/dashboard/courts/_components/CourtsView/components/CourtFormSheet/consts.ts`
@@ -1833,6 +1908,7 @@ In `types.ts`, add `price?: number;` to `CourtRecord` and `price: number | undef
 - [ ] **Step 2: Form schema**
 
 In `CourtFormSheet/consts.ts`, add to `courtFormSchema`:
+
 ```ts
 price: z
   .number({ message: "Price must be a number" })
@@ -1847,6 +1923,7 @@ In `utils.ts`, add `price: court?.price,` to `courtToFormValues`.
 - [ ] **Step 4: Form field**
 
 In `CourtFormSheet.tsx`, add a new field (own full-width row) after the "Slot duration" field:
+
 ```tsx
 <Field>
   <FieldLabel htmlFor="court-price">Price (per reservation)</FieldLabel>
@@ -1875,6 +1952,7 @@ Manually verify: set a price when creating a court, edit it afterward, confirm b
 ### Task 14: Env, docs
 
 **Files:**
+
 - Modify: `docs/CONTRIBUTING.md`
 - Modify: `docs/API.md`
 - Modify: `docs/ARCHITECTURE.md`

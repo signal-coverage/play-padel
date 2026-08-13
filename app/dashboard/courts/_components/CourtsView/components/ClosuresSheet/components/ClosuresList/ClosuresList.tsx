@@ -31,7 +31,7 @@ export function ClosuresList({
           >
             <div className="min-w-0 flex-1">
               <p className="text-sm font-medium">{closure.reason}</p>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs tabular-nums text-muted-foreground">
                 {format(closure.startsAt, "MMM d, HH:mm")} –{" "}
                 {format(closure.endsAt, "MMM d, HH:mm")}
               </p>

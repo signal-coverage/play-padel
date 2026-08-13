@@ -56,7 +56,8 @@ function SheetContent({
   side?: "top" | "right" | "bottom" | "left";
   showCloseButton?: boolean;
 }) {
-  const contentRef = React.useRef<React.ComponentRef<typeof SheetPrimitive.Content>>(null);
+  const contentRef =
+    React.useRef<React.ComponentRef<typeof SheetPrimitive.Content>>(null);
   return (
     <SheetPortal>
       <SheetOverlay />

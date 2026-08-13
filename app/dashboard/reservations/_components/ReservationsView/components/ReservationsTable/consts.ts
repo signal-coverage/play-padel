@@ -1,0 +1,1 @@
+export const LOADING_SKELETON_ROW_COUNT = 5;

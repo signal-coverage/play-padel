@@ -19,11 +19,19 @@ export function PadelSideDiagram({ side, className }: PadelSideDiagramProps) {
   return (
     <div
       className={cn(
-        "relative w-full overflow-hidden rounded-2xl border border-border bg-muted/40 p-3",
+        "relative w-full overflow-hidden rounded-sm border border-border bg-muted/40 p-3",
         className,
       )}
     >
-      <Image src={image.default} alt="" className="h-auto w-full" />
+      <Image
+        src={image.default}
+        alt={
+          side === null
+            ? "Padel court diagram with no preferred side selected"
+            : `Padel court diagram highlighting the ${getPreferredSideLabel(side).toLowerCase()} side`
+        }
+        className="h-auto w-full"
+      />
       <span className="absolute inset-x-3 bottom-3 truncate rounded bg-primary px-2 py-1 text-center font-mono text-[10px] font-bold tracking-widest text-primary-foreground uppercase">
         Preferred: {getPreferredSideLabel(side)}
       </span>

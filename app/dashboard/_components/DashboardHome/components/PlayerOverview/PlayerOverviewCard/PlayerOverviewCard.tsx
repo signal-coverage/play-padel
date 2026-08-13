@@ -8,7 +8,7 @@ export function PlayerOverviewCard({ className }: PlayerOverviewCardProps) {
     <Card
       size="sm"
       className={cn(
-        "animate-fade-up flex h-full flex-col overflow-hidden rounded-2xl [--card-spacing:--spacing(4)]",
+        "animate-fade-up flex h-full w-70 shrink-0 flex-col gap-4 overflow-hidden rounded-sm py-5 px-2 border-primary [--card-spacing:--spacing(4)]",
         className,
       )}
       style={{ animationDelay: "180ms" }}

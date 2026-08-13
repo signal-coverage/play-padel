@@ -17,7 +17,7 @@ export function OptionCard({
 }: OptionCardProps) {
   return (
     <Item asChild className={getOptionCardClassName(selected)}>
-      <button type="button" onClick={onClick}>
+      <button type="button" aria-pressed={selected} onClick={onClick}>
         <ItemMedia variant="icon">
           <Icon className="mt-0.5 size-5 text-primary" />
         </ItemMedia>

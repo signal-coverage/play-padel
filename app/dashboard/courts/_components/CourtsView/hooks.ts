@@ -3,7 +3,11 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import type { CreateCourtInput, UpdateCourtInput } from "@/core/courts/types";
-import type { AvailabilityEntry, CourtAvailability, CreateClosureInput } from "@/core/courts/types";
+import type {
+  AvailabilityEntry,
+  CourtAvailability,
+  CreateClosureInput,
+} from "@/core/courts/types";
 import type { CourtRecord, RawCourtClosure } from "./types";
 import { toCourtClosure } from "./utils";
 

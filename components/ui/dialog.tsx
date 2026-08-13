@@ -56,7 +56,8 @@ function DialogContent({
 }: React.ComponentProps<typeof DialogPrimitive.Content> & {
   showCloseButton?: boolean;
 }) {
-  const contentRef = React.useRef<React.ComponentRef<typeof DialogPrimitive.Content>>(null);
+  const contentRef =
+    React.useRef<React.ComponentRef<typeof DialogPrimitive.Content>>(null);
   return (
     <DialogPortal>
       <DialogOverlay />

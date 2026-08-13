@@ -1,15 +1,21 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
+import { cn } from "@/lib/utils/utils";
 import { HeroCard } from "../HeroCard";
-import { SkillOverviewCard } from "../SkillOverviewCard";
-import { ScheduleCard } from "../ScheduleCard";
+import { SessionLoadCard } from "../SessionLoadCard";
+import { UpcomingCard } from "../UpcomingCard";
+import { WeeklyLoadCard } from "../WeeklyLoadCard";
 import { ScrollHintBadge } from "./components/ScrollHintBadge";
 import { useScrollAffordance } from "./hooks";
 import { SEARCHABLE_CARDS } from "./consts";
 import type { SearchableCardsGridProps } from "./types";
 
-export function SearchableCardsGrid({ role, query }: SearchableCardsGridProps) {
+export function SearchableCardsGrid({
+  role,
+  query,
+  className,
+}: SearchableCardsGridProps) {
   const normalizedQuery = query.trim().toLowerCase();
   const isFiltering = normalizedQuery.length > 0;
   const matches = SEARCHABLE_CARDS.filter((card) =>
@@ -31,7 +37,7 @@ export function SearchableCardsGrid({ role, query }: SearchableCardsGridProps) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.15 }}
-            className="relative md:min-h-0 md:flex-1"
+            className={cn("relative md:min-h-0 md:flex-1", className)}
           >
             <div
               ref={filteredScrollRef}
@@ -52,7 +58,9 @@ export function SearchableCardsGrid({ role, query }: SearchableCardsGridProps) {
                 ))}
               </AnimatePresence>
             </div>
-            {filteredCanScrollMore && <ScrollHintBadge />}
+            <AnimatePresence>
+              {filteredCanScrollMore && <ScrollHintBadge key="scroll-hint" />}
+            </AnimatePresence>
           </motion.div>
         ) : (
           <motion.div
@@ -61,7 +69,10 @@ export function SearchableCardsGrid({ role, query }: SearchableCardsGridProps) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.15 }}
-            className="flex items-center justify-center py-8 text-sm text-muted-foreground lg:flex-1"
+            className={cn(
+              "flex items-center justify-center py-8 text-sm text-muted-foreground lg:flex-1",
+              className,
+            )}
           >
             No cards match &ldquo;{query}&rdquo;.
           </motion.div>
@@ -73,17 +84,27 @@ export function SearchableCardsGrid({ role, query }: SearchableCardsGridProps) {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.15 }}
-          className="relative md:min-h-0 md:flex-1"
+          className={cn("relative @container md:min-h-0 md:flex-1", className)}
         >
           <div
             ref={bentoScrollRef}
-            className="grid h-full grid-cols-1 gap-3 md:auto-rows-[minmax(max-content,auto)] md:overflow-y-auto md:scrollbar-none min-[1300px]:grid-cols-3 min-[1300px]:gap-4"
+            className="flex h-full flex-col gap-3 md:overflow-y-auto md:scrollbar-none"
           >
-            <HeroCard role={role} className="min-[1300px]:col-span-3" />
-            <SkillOverviewCard role={role} />
-            <ScheduleCard role={role} className="min-[1300px]:col-span-3" />
+            <HeroCard role={role} />
+            <div className="flex min-h-0 flex-1 flex-col gap-3 @min-[768px]:flex-row @min-[768px]:gap-4">
+              <div className="flex min-w-0 flex-col gap-3 @min-[768px]:h-full @min-[768px]:flex-1 @min-[768px]:basis-0">
+                <WeeklyLoadCard role={role} className="flex-1" />
+                <SessionLoadCard role={role} className="flex-1" />
+              </div>
+              <UpcomingCard
+                role={role}
+                className="min-w-0 @min-[768px]:h-full @min-[768px]:flex-1 @min-[768px]:basis-0"
+              />
+            </div>
           </div>
-          {bentoCanScrollMore && <ScrollHintBadge />}
+          <AnimatePresence>
+            {bentoCanScrollMore && <ScrollHintBadge key="scroll-hint" />}
+          </AnimatePresence>
         </motion.div>
       )}
     </AnimatePresence>

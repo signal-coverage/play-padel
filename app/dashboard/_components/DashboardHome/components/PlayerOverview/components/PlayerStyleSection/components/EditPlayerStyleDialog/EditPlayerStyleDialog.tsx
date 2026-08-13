@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Pencil } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -57,12 +58,12 @@ export function EditPlayerStyleDialog() {
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button
-          variant="outline"
-          size="xs"
-          className="h-5 rounded px-1.5 text-[10px] font-normal text-muted-foreground"
+          variant="default"
+          size="icon-xs"
+          className="rounded-full shadow-card"
           aria-label="Edit play style"
         >
-          Edit
+          <Pencil className="size-3" />
         </Button>
       </DialogTrigger>
       <DialogContent onPointerDownOutside={(e) => e.preventDefault()}>

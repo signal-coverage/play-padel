@@ -21,9 +21,7 @@ export function OwnerOverview() {
     <OverviewChart
       chartData={chartData}
       hasActivity={hasActivity}
-      caption={
-        busiest ? `${busiest}s are your busiest day this period.` : null
-      }
+      caption={busiest ? `${busiest}s are your busiest day this period.` : null}
       emptyMessage="Once bookings come in, we'll show your club's busiest days here."
     />
   );

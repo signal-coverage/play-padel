@@ -16,7 +16,9 @@ export function PerformanceSummarySection({
       />
       <div className="flex items-center justify-between text-sm">
         <span className="text-muted-foreground">Position</span>
-        <Badge>{getPreferredSideLabel(preferredSide)}</Badge>
+        <Badge className="bg-primary text-primary-foreground [a]:hover:bg-primary/80">
+          {getPreferredSideLabel(preferredSide)}
+        </Badge>
       </div>
       <LatestTournamentResults
         tournamentName={performance.latestTournamentName}

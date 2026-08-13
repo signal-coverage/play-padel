@@ -40,9 +40,7 @@ export function CourtsView() {
     useState<CourtRecord | null>(null);
 
   const [closuresOpen, setClosuresOpen] = useState(false);
-  const [closuresCourt, setClosuresCourt] = useState<CourtRecord | null>(
-    null,
-  );
+  const [closuresCourt, setClosuresCourt] = useState<CourtRecord | null>(null);
 
   const [courtPendingDeletion, setCourtPendingDeletion] =
     useState<CourtRecord | null>(null);

@@ -6,15 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Field, FieldLabel, FieldError } from "@/components/ui/field";
 import { Switch } from "@/components/ui/switch";
-import { newClosureFormSchema } from "./consts";
+import { DEFAULT_VALUES, newClosureFormSchema } from "./consts";
 import type { NewClosureFormValues, NewClosureFormProps } from "./types";
-
-const DEFAULT_VALUES: NewClosureFormValues = {
-  startsAt: "",
-  endsAt: "",
-  reason: "",
-  applyToAllCourts: false,
-};
 
 export function NewClosureForm({
   onSubmit,
@@ -88,9 +81,7 @@ export function NewClosureForm({
           <Switch
             id="closure-apply-all"
             checked={applyToAllCourts}
-            onCheckedChange={(checked) =>
-              setValue("applyToAllCourts", checked)
-            }
+            onCheckedChange={(checked) => setValue("applyToAllCourts", checked)}
           />
         </Field>
       )}

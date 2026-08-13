@@ -50,13 +50,11 @@ export function AuditLogsFilters({
         </SelectTrigger>
         <SelectContent>
           <SelectItem value={ALL}>All actions</SelectItem>
-          {(Object.keys(AUDIT_ACTION_LABELS) as AuditAction[]).map(
-            (option) => (
-              <SelectItem key={option} value={option}>
-                {AUDIT_ACTION_LABELS[option]}
-              </SelectItem>
-            ),
-          )}
+          {(Object.keys(AUDIT_ACTION_LABELS) as AuditAction[]).map((option) => (
+            <SelectItem key={option} value={option}>
+              {AUDIT_ACTION_LABELS[option]}
+            </SelectItem>
+          ))}
         </SelectContent>
       </Select>
     </div>

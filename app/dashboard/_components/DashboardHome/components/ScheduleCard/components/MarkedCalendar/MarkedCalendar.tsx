@@ -10,25 +10,26 @@ export function MarkedCalendar({
   onMonthChange,
 }: MarkedCalendarProps) {
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-2">
       <Calendar
         mode="single"
         month={month}
         onMonthChange={onMonthChange}
         showOutsideDays={false}
-        className="w-full"
+        className="w-full p-0"
         classNames={{
-          month_caption: "flex h-8 min-w-0 items-center pr-20",
+          month: "flex w-full flex-col gap-2",
+          month_caption: "flex h-7 min-w-0 items-center pr-20",
           caption_label: "truncate font-heading text-base font-bold",
-          nav: "absolute top-0 right-0 flex h-8 items-center gap-2",
+          nav: "absolute top-0 right-0 flex h-7 items-center gap-2",
           button_previous:
-            "size-8 rounded-full border border-border p-0 text-muted-foreground hover:bg-muted hover:text-foreground",
+            "size-7 rounded-full border border-border p-0 text-muted-foreground hover:bg-muted hover:text-foreground",
           button_next:
-            "size-8 rounded-full border border-border p-0 text-muted-foreground hover:bg-muted hover:text-foreground",
+            "size-7 rounded-full border border-border p-0 text-muted-foreground hover:bg-muted hover:text-foreground",
           month_grid: "w-full border-collapse",
-          weekdays: "flex w-full pb-2",
+          weekdays: "flex w-full pb-1",
           weekday: "label-mono flex-1 text-center",
-          week: "mt-0.5 flex w-full",
+          week: "flex w-full",
           day: "group/day relative flex-1 p-0 text-center",
         }}
         modifiers={{
@@ -48,9 +49,9 @@ export function MarkedCalendar({
                 modifiers={modifiers}
                 className={cn(
                   className,
-                  "mx-auto size-8 min-w-0 rounded-full text-sm font-normal hover:bg-muted",
+                  "mx-auto size-7 min-w-0 rounded-full text-sm font-normal hover:bg-muted",
                   modifiers.today &&
-                    "ring-2 ring-primary ring-offset-1 ring-offset-background",
+                    "bg-accent text-accent-foreground hover:bg-accent/90",
                 )}
               >
                 {children}
@@ -68,7 +69,7 @@ export function MarkedCalendar({
         }}
       />
       <Separator />
-      <div className="flex gap-4 pt-4">
+      <div className="flex gap-4">
         <span className="flex items-center gap-2 text-[11px] text-muted-foreground">
           <span className="size-1.5 rounded-full bg-chart-2" /> Booked
         </span>

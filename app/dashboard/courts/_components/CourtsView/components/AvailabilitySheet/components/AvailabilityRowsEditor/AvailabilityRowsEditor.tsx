@@ -60,8 +60,11 @@ export function AvailabilityRowsEditor({
             className="flex flex-col gap-2 rounded-lg border p-3"
           >
             <div className="flex items-center justify-between">
-              <Label>{DAY_LABELS[row.dayOfWeek]}</Label>
+              <Label htmlFor={`day-${row.dayOfWeek}-active`}>
+                {DAY_LABELS[row.dayOfWeek]}
+              </Label>
               <Switch
+                id={`day-${row.dayOfWeek}-active`}
                 checked={row.active}
                 onCheckedChange={(checked) =>
                   updateRow(row.dayOfWeek, { active: checked })
@@ -80,10 +83,14 @@ export function AvailabilityRowsEditor({
               <div className="min-h-0 overflow-hidden">
                 <div className="flex items-center gap-2">
                   <div className="flex flex-1 flex-col gap-1">
-                    <Label className="text-xs text-muted-foreground">
+                    <Label
+                      htmlFor={`day-${row.dayOfWeek}-start`}
+                      className="text-xs text-muted-foreground"
+                    >
                       Start
                     </Label>
                     <Input
+                      id={`day-${row.dayOfWeek}-start`}
                       type="time"
                       value={row.startTime}
                       onChange={(e) =>
@@ -93,8 +100,14 @@ export function AvailabilityRowsEditor({
                     />
                   </div>
                   <div className="flex flex-1 flex-col gap-1">
-                    <Label className="text-xs text-muted-foreground">End</Label>
+                    <Label
+                      htmlFor={`day-${row.dayOfWeek}-end`}
+                      className="text-xs text-muted-foreground"
+                    >
+                      End
+                    </Label>
                     <Input
+                      id={`day-${row.dayOfWeek}-end`}
                       type="time"
                       value={row.endTime}
                       onChange={(e) =>

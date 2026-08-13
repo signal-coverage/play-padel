@@ -19,9 +19,11 @@ export function StatValue({
 }: StatValueProps) {
   if (variant === "pill") {
     return (
-      <span className="rounded-full border border-[#f5f5f5]/20 bg-[#f5f5f5]/10 px-3 py-1.5 font-mono text-[11px] uppercase tracking-wider text-[#f5f5f5]/85 backdrop-blur-md">
+      <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1.5 font-mono text-[11px] uppercase tracking-wider text-white/85 backdrop-blur-md">
         {label}:{" "}
-        <span className={cn("font-bold text-[#dffd36] tabular-nums", valueClassName)}>
+        <span
+          className={cn("font-bold text-white tabular-nums", valueClassName)}
+        >
           {value}
         </span>
       </span>
@@ -46,7 +48,12 @@ export function StatValue({
       <div className="flex items-center justify-between gap-4">
         <span className="text-muted-foreground">{label}</span>
         {valueSlot ?? (
-          <span className={cn("font-medium text-right", valueClassName)}>
+          <span
+            className={cn(
+              "font-medium text-right tabular-nums",
+              valueClassName,
+            )}
+          >
             {value}
           </span>
         )}

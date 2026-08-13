@@ -16,7 +16,7 @@ export function HeroShell({
   return (
     <section
       className={cn(
-        "animate-fade-up relative h-72 w-full overflow-hidden rounded-4xl sm:h-80",
+        "animate-fade-up relative h-72 w-full overflow-hidden rounded-sm sm:h-80 lg:h-64",
         className,
       )}
     >
@@ -31,13 +31,11 @@ export function HeroShell({
       <div className="absolute inset-0 bg-linear-to-t from-surface/90 via-surface/45 to-surface/10" />
       <div className="absolute inset-0 flex flex-col justify-end p-6 sm:p-8">
         <div className="max-w-2xl">
-          <h1 className="mb-2 text-balance font-heading text-3xl font-bold text-[#f5f5f5] sm:text-4xl">
+          <h2 className="mb-2 text-balance font-heading text-3xl font-bold text-white sm:text-4xl">
             {heading}
-          </h1>
+          </h2>
           {subheading && (
-            <p className="mb-4 max-w-md text-sm text-[#f5f5f5]/80">
-              {subheading}
-            </p>
+            <p className="mb-4 max-w-md text-sm text-white/80">{subheading}</p>
           )}
           {children && (
             <div className="mb-6 flex flex-wrap gap-2">{children}</div>
@@ -45,7 +43,7 @@ export function HeroShell({
           {ctaLabel && (
             <Link
               href={href}
-              className="inline-flex w-fit items-center gap-2 rounded-full bg-primary px-6 py-2.5 text-sm font-bold text-primary-foreground transition-colors hover:bg-primary/90 active:scale-95"
+              className="inline-flex w-fit items-center gap-2 rounded-sm bg-primary px-6 py-2.5 text-sm font-bold text-primary-foreground transition-colors hover:bg-primary/90 active:scale-95"
             >
               {ctaLabel}
               <ArrowRight className="size-4" />

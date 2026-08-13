@@ -14,10 +14,10 @@ export default function LoginPage() {
       transition={{ duration: 0.35, ease: "easeOut" }}
     >
       <div className="mb-6 text-center">
-        <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
+        <h1 className="text-2xl font-bold text-foreground tracking-tight">
           Welcome back!
         </h1>
-        <p className="text-sm text-gray-500 mt-1.5 leading-relaxed">
+        <p className="text-sm text-muted-foreground mt-1.5 leading-relaxed">
           Sign in to your account to continue.
         </p>
       </div>

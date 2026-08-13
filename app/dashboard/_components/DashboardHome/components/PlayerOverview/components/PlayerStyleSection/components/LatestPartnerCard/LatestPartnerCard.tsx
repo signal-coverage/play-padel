@@ -13,11 +13,11 @@ export function LatestPartnerCard({ partner }: LatestPartnerCardProps) {
       <DialogTrigger asChild>
         <button
           type="button"
-          className="flex w-full items-center gap-3 rounded-2xl border border-border bg-muted/40 p-3 text-left transition-colors hover:bg-muted/70"
+          className="flex w-full items-center gap-3 rounded-lg border border-border bg-muted/40 p-3 text-left transition-colors hover:bg-muted/70"
         >
           <Avatar size="lg">
             {partner.avatarUrl && (
-              <AvatarImage src={partner.avatarUrl} alt="" />
+              <AvatarImage src={partner.avatarUrl} alt={partner.name} />
             )}
             <AvatarFallback className="bg-primary/15 font-bold text-primary">
               {getInitials(partner.name)}

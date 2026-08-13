@@ -26,9 +26,11 @@ export function LandingTestimonials() {
         transition={{ duration: 0.55, ease }}
       >
         <h2 className="text-2xl md:text-[28px] font-semibold leading-snug">
-          <span className="text-[#111111]">Real Stories from the People</span>
+          <span className="text-foreground">Real Stories from the People</span>
           <br />
-          <span className="text-[#A3A3A3]">Who Play Here Every Week</span>
+          <span className="text-muted-foreground">
+            Who Play Here Every Week
+          </span>
         </h2>
 
         <div className="flex items-center gap-2 shrink-0">
@@ -36,7 +38,7 @@ export function LandingTestimonials() {
             type="button"
             onClick={goPrev}
             aria-label="Previous testimonial"
-            className="w-11 h-11 rounded-full border border-[#D4D4D4] text-[#111111] flex items-center justify-center hover:border-[#111111] transition-colors"
+            className="w-11 h-11 rounded-full border border-border text-foreground flex items-center justify-center hover:border-foreground transition-colors"
           >
             <ArrowLeft size={16} strokeWidth={2} />
           </button>
@@ -44,7 +46,7 @@ export function LandingTestimonials() {
             type="button"
             onClick={goNext}
             aria-label="Next testimonial"
-            className="w-11 h-11 rounded-full border border-[#D4D4D4] text-[#111111] flex items-center justify-center hover:border-[#111111] transition-colors"
+            className="w-11 h-11 rounded-full border border-border text-foreground flex items-center justify-center hover:border-foreground transition-colors"
           >
             <ArrowRight size={16} strokeWidth={2} />
           </button>
@@ -61,16 +63,16 @@ export function LandingTestimonials() {
             transition={{ duration: 0.4, ease }}
           >
             <p className="text-2xl md:text-[32px] leading-snug tracking-tight min-h-33 md:min-h-44 line-clamp-4">
-              <span className="text-[#111111] font-semibold">
+              <span className="text-foreground font-semibold">
                 {current.quoteLead}
               </span>{" "}
-              <span className="text-[#A3A3A3] font-medium">
+              <span className="text-muted-foreground font-medium">
                 {current.quoteRest}
               </span>
             </p>
 
-            <p className="mt-8 text-sm text-[#999999]">
-              <span className="font-semibold text-[#111111]">
+            <p className="mt-8 text-sm text-muted-foreground">
+              <span className="font-semibold text-foreground">
                 {current.name},
               </span>{" "}
               {current.role}

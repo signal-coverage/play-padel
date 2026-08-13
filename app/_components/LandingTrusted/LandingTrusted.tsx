@@ -18,14 +18,14 @@ export function LandingTrusted() {
           viewport={{ once: true }}
           transition={{ duration: 0.5, ease }}
         >
-          <span className="inline-flex items-center bg-[#111111] text-white rounded-full px-4 py-2 text-[13px] font-semibold">
+          <span className="inline-flex items-center bg-foreground text-white rounded-full px-4 py-2 text-[13px] font-semibold">
             Beyond the Court
           </span>
         </motion.div>
 
         <div className="flex-1">
           <motion.h2
-            className="text-2xl md:text-[28px] leading-snug text-[#111111] max-w-2xl text-balance"
+            className="text-2xl md:text-[28px] leading-snug text-foreground max-w-2xl text-balance"
             initial={shouldReduce ? false : { opacity: 0, y: 12 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -48,13 +48,13 @@ export function LandingTrusted() {
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: 0.12 + i * 0.08, ease }}
               >
-                <div className="text-3xl sm:text-4xl font-bold text-[#111111] tracking-tight">
+                <div className="text-3xl sm:text-4xl font-bold text-foreground tracking-tight">
                   {stat.value}
                 </div>
-                <div className="mt-1 text-[15px] font-semibold text-[#111111]">
+                <div className="mt-1 text-[15px] font-semibold text-foreground">
                   {stat.label}
                 </div>
-                <p className="mt-2 text-sm text-[#999999] leading-relaxed max-w-none sm:max-w-60 text-pretty">
+                <p className="mt-2 text-sm text-muted-foreground leading-relaxed max-w-none sm:max-w-60 text-pretty">
                   {stat.description}
                 </p>
               </motion.div>

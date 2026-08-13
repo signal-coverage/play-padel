@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 import { usePlayers } from "./hooks";
-import { PlayerRow } from "./components/PlayerRow";
+import { PlayerCard } from "./components/PlayerCard";
 
 export function PlayersDirectory() {
   const [query, setQuery] = useState("");
@@ -41,9 +41,9 @@ export function PlayersDirectory() {
         </p>
       )}
 
-      <div className="flex flex-col gap-2">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
         {matches.map((player) => (
-          <PlayerRow key={player.id} player={player} />
+          <PlayerCard key={player.id} player={player} />
         ))}
       </div>
     </div>

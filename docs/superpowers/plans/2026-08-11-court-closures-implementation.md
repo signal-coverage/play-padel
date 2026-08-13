@@ -24,9 +24,11 @@
 ### Task 1: Schema — `CourtClosure` model
 
 **Files:**
+
 - Modify: `prisma/schema.prisma`
 
 **Interfaces:**
+
 - Produces: `CourtClosure` model (`id`, `courtId`, `startsAt`, `endsAt`, `reason`, `createdAt`, `createdBy`, `cancelledAt`, `cancelledBy`) — consumed by every later task.
 
 - [ ] **Step 1: Add the model and the `Court.closures` relation**
@@ -84,10 +86,12 @@ model CourtClosure {
 - [ ] **Step 2: Regenerate the Prisma client and push the schema**
 
 Run:
+
 ```bash
 npx prisma generate
 npx prisma db push
 ```
+
 Expected: both commands complete with no errors; `db push` reports the new `court_closures` table created.
 
 - [ ] **Step 3: Verify**
@@ -100,10 +104,12 @@ Expected: no errors.
 ### Task 2: `core/courts` — types and Zod schema for closures
 
 **Files:**
+
 - Modify: `core/courts/types/index.ts`
 - Modify: `core/courts/schemas/court.schema.ts`
 
 **Interfaces:**
+
 - Produces:
   - `CourtClosure` interface (`id`, `courtId`, `startsAt: Date`, `endsAt: Date`, `reason: string`, `createdAt: Date`, `createdBy?: string`, `cancelledAt?: Date`, `cancelledBy?: string`)
   - `CreateClosureInput` interface (`startsAt: string`, `endsAt: string`, `reason: string` — ISO date strings, matching `CreateReservationInput`'s convention)
@@ -180,9 +186,11 @@ Expected: this will show errors in files that construct a `Slot` object without 
 ### Task 3: `core/courts/services/courts.service.ts` — closure CRUD + `getCourtSlots` integration
 
 **Files:**
+
 - Modify: `core/courts/services/courts.service.ts`
 
 **Interfaces:**
+
 - Consumes: `ACTIVE_RESERVATION_STATUSES` (existing import from `core/reservations/consts.ts`), `logAudit` (existing import), `CourtClosure`/`CreateClosureInput` (Task 2)
 - Produces:
   - `listClosuresByCourt(courtId: string): Promise<CourtClosure[]>`
@@ -193,6 +201,7 @@ Expected: this will show errors in files that construct a `Slot` object without 
 - [ ] **Step 1: Add the `format` import and a `CourtClosureRow`/`toCourtClosure` mapper**
 
 Add `format` to the existing `date-fns` import:
+
 ```ts
 import { startOfDay, endOfDay, addMinutes, format } from "date-fns";
 ```
@@ -200,6 +209,7 @@ import { startOfDay, endOfDay, addMinutes, format } from "date-fns";
 Add `CourtClosure`/`CreateClosureInput` to the existing type-only import from `@/core/courts/types`.
 
 Add a new row type and mapper function (near the existing `CourtRow`/`toCourt`):
+
 ```ts
 type CourtClosureRow = NonNullable<
   Awaited<ReturnType<typeof prisma.courtClosure.findUnique>>
@@ -431,9 +441,11 @@ Manually verify: in `npx prisma studio`, create a `CourtClosure` row for a court
 ### Task 4: `core/reservations` — block booking against a closure
 
 **Files:**
+
 - Modify: `core/reservations/services/reservations.service.ts`
 
 **Interfaces:**
+
 - Produces: `checkCourtClosureConflict({ courtId, scheduledStart, scheduledEnd }): Promise<string | null>` — returns the closure's `reason` if an active closure overlaps, else `null`.
 - Consumes nothing new — queries `prisma.courtClosure` directly (this file already queries `prisma.court` directly elsewhere rather than going through `core/courts`'s service, so this follows the same established pattern instead of introducing a new cross-domain service import).
 
@@ -475,63 +487,65 @@ export async function checkCourtClosureConflict({
 - [ ] **Step 2: Wire it into `createReservation`**
 
 Find this block inside `createReservation`:
-```ts
-  const [courtConflict, userConflict] = await Promise.all([
-    checkCourtConflict({
-      clubId: court.clubId,
-      courtId: court.id,
-      scheduledStart,
-      scheduledEnd,
-    }),
-    checkUserOverlapConflict({
-      userId: input.userId,
-      scheduledStart,
-      scheduledEnd,
-    }),
-  ]);
 
-  if (courtConflict) {
-    throw new Error("This slot is no longer available. Pick another time.");
-  }
-  if (userConflict) {
-    throw new Error(
-      "You already have a reservation at this time. Cancel it or pick a different slot.",
-    );
-  }
+```ts
+const [courtConflict, userConflict] = await Promise.all([
+  checkCourtConflict({
+    clubId: court.clubId,
+    courtId: court.id,
+    scheduledStart,
+    scheduledEnd,
+  }),
+  checkUserOverlapConflict({
+    userId: input.userId,
+    scheduledStart,
+    scheduledEnd,
+  }),
+]);
+
+if (courtConflict) {
+  throw new Error("This slot is no longer available. Pick another time.");
+}
+if (userConflict) {
+  throw new Error(
+    "You already have a reservation at this time. Cancel it or pick a different slot.",
+  );
+}
 ```
 
 Replace it with:
-```ts
-  const [courtConflict, userConflict, closureReason] = await Promise.all([
-    checkCourtConflict({
-      clubId: court.clubId,
-      courtId: court.id,
-      scheduledStart,
-      scheduledEnd,
-    }),
-    checkUserOverlapConflict({
-      userId: input.userId,
-      scheduledStart,
-      scheduledEnd,
-    }),
-    checkCourtClosureConflict({
-      courtId: court.id,
-      scheduledStart,
-      scheduledEnd,
-    }),
-  ]);
 
-  if (courtConflict) {
-    throw new Error("This slot is no longer available. Pick another time.");
-  }
-  if (userConflict) {
-    throw new Error(
-      "You already have a reservation at this time. Cancel it or pick a different slot.",
-    );
-  }
-  if (closureReason) {
-    throw new Error(`This court is closed: ${closureReason}`);
-  }
+```ts
+const [courtConflict, userConflict, closureReason] = await Promise.all([
+  checkCourtConflict({
+    clubId: court.clubId,
+    courtId: court.id,
+    scheduledStart,
+    scheduledEnd,
+  }),
+  checkUserOverlapConflict({
+    userId: input.userId,
+    scheduledStart,
+    scheduledEnd,
+  }),
+  checkCourtClosureConflict({
+    courtId: court.id,
+    scheduledStart,
+    scheduledEnd,
+  }),
+]);
+
+if (courtConflict) {
+  throw new Error("This slot is no longer available. Pick another time.");
+}
+if (userConflict) {
+  throw new Error(
+    "You already have a reservation at this time. Cancel it or pick a different slot.",
+  );
+}
+if (closureReason) {
+  throw new Error(`This court is closed: ${closureReason}`);
+}
 ```
 
 Do not change anything else in `createReservation` or any other function in this file.
@@ -548,15 +562,18 @@ Manually verify: with the `CourtClosure` row created in Task 3's manual check st
 ### Task 5: Audit — new actions, labels, entity filter
 
 **Files:**
+
 - Modify: `core/audit/types/index.ts`
 - Modify: `app/dashboard/audit-logs/_components/AuditLogsView/consts.ts`
 
 **Interfaces:**
+
 - Produces: `AuditAction` gains `"court.closure_created"` and `"court.closure_cancelled"`.
 
 - [ ] **Step 1: Extend `AuditAction`**
 
 In `core/audit/types/index.ts`:
+
 ```ts
 export type AuditAction =
   | "reservation.created"
@@ -578,6 +595,7 @@ export type AuditAction =
 - [ ] **Step 2: Extend the Audit Log viewer's entity filter and action labels**
 
 In `app/dashboard/audit-logs/_components/AuditLogsView/consts.ts`, add `"CourtClosure"` to `AUDIT_ENTITY_OPTIONS` (alphabetically, between `"Court"` and `"Payment"`):
+
 ```ts
 export const AUDIT_ENTITY_OPTIONS = [
   "Club",
@@ -590,6 +608,7 @@ export const AUDIT_ENTITY_OPTIONS = [
 ```
 
 Add the two new labels to `AUDIT_ACTION_LABELS` (this is a `Record<AuditAction, string>` — TypeScript will fail to compile without both, since the type just gained two members):
+
 ```ts
   "court.closure_created": "Court closure created",
   "court.closure_cancelled": "Court closure cancelled",
@@ -605,15 +624,18 @@ Expected: no errors.
 ### Task 6: API routes — closures list/create + cancel
 
 **Files:**
+
 - Create: `app/api/clubs/courts/[courtId]/closures/route.ts`
 - Create: `app/api/clubs/courts/[courtId]/closures/[closureId]/cancel/route.ts`
 
 **Interfaces:**
+
 - Consumes: `listClosuresByCourt`, `createClosure`, `cancelClosure` (Task 3), `createClosureSchema` (Task 2), `requireOwnerClub`/`findOwnedCourt` (existing, `app/api/clubs/_lib/`)
 
 - [ ] **Step 1: List + create route**
 
 Create `app/api/clubs/courts/[courtId]/closures/route.ts`:
+
 ```ts
 import { NextResponse, type NextRequest } from "next/server";
 import {
@@ -678,6 +700,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 - [ ] **Step 2: Cancel route**
 
 Create `app/api/clubs/courts/[courtId]/closures/[closureId]/cancel/route.ts`:
+
 ```ts
 import { NextResponse, type NextRequest } from "next/server";
 import { cancelClosure } from "@/core/courts/services/courts.service";
@@ -724,6 +747,7 @@ Manually verify as a signed-in owner: `POST /api/clubs/courts/{courtId}/closures
 ### Task 7: `components/CourtAvailabilityGrid` — render `"closed"` slots
 
 **Files:**
+
 - Modify: `components/CourtAvailabilityGrid/types.ts`
 - Modify: `components/CourtAvailabilityGrid/utils.ts`
 - Modify: `components/CourtAvailabilityGrid/components/SlotCell/SlotCell.tsx`
@@ -734,6 +758,7 @@ Manually verify as a signed-in owner: `POST /api/clubs/courts/{courtId}/closures
 - Modify: `app/dashboard/reservations/_components/ReservationsView/utils.ts`
 
 **Interfaces:**
+
 - Produces: `SlotStatus` (this component's own copy, separate from `core/courts/types`'s) extended to `"free" | "locked" | "closed"`; `Slot` gains `closureReason?: string`.
 
 **Important — a gap the type checker won't catch:** both the player's Browse Courts page and the owner's Reservations page have their own independent `RawSlot` type (`status: "free" | "locked"`, no `closureReason`) and their own mapping function (`toCourtColumns` / `toSlot`) that convert the raw API JSON into this component's `Slot` type. Since `"free" | "locked"` is a subtype of `"free" | "locked" | "closed"`, assigning the narrower raw type into the wider `Slot.status` field is type-safe and `tsc --noEmit` will NOT flag it — but at runtime, a server response with `status: "closed"` and a `closureReason` would have `closureReason` silently dropped, since neither mapping function copies a field it doesn't know about. This must be fixed in the same two places or the "Closed" label will render with an empty tooltip and no reason, contradicting the spec's "reason is required and player-visible" requirement.
@@ -741,6 +766,7 @@ Manually verify as a signed-in owner: `POST /api/clubs/courts/{courtId}/closures
 - [ ] **Step 1: Extend the grid's own `SlotStatus`/`Slot`**
 
 In `components/CourtAvailabilityGrid/types.ts`, change:
+
 ```ts
 export type SlotStatus = "free" | "locked" | "closed";
 
@@ -752,11 +778,13 @@ export type Slot = {
   closureReason?: string;
 };
 ```
+
 (Everything else in this file is unchanged.)
 
 - [ ] **Step 2: Exclude `"closed"` from interactivity**
 
 In `components/CourtAvailabilityGrid/utils.ts`, replace `isSlotInteractive`:
+
 ```ts
 /**
  * Free slots are interactive whenever a click handler is provided, for both
@@ -780,6 +808,7 @@ export function isSlotInteractive(
 - [ ] **Step 3: Render a distinct label/aria-label for closed slots**
 
 In `components/CourtAvailabilityGrid/components/SlotCell/SlotCell.tsx`, replace the whole component body:
+
 ```tsx
 export function SlotCell({
   slot,
@@ -830,11 +859,13 @@ export function SlotCell({
   );
 }
 ```
+
 (Since Step 2 guarantees `"closed"` is never `interactive`, the closed branch always takes the non-interactive `<div>` path above — where the `title` attribute carries the reason as a hover tooltip. The `ariaLabel` ternary in the interactive/button branch is unchanged from before, since a `"closed"` slot never reaches it.)
 
 - [ ] **Step 4: Add a distinct style for closed slots**
 
 In `components/CourtAvailabilityGrid/components/SlotCell/styles.ts`, replace `getSlotClassName`:
+
 ```ts
 export function getSlotClassName(status: SlotStatus, interactive: boolean) {
   return cn(
@@ -854,6 +885,7 @@ export function getSlotClassName(status: SlotStatus, interactive: boolean) {
 - [ ] **Step 5: Update the player Browse Courts raw-slot mapping**
 
 In `app/dashboard/browse/_components/BrowseCourts/types.ts`, change `RawSlot`:
+
 ```ts
 export type RawSlot = {
   start: string;
@@ -865,6 +897,7 @@ export type RawSlot = {
 ```
 
 In `app/dashboard/browse/_components/BrowseCourts/utils.ts`, update `toCourtColumns`'s inner mapping to also copy `closureReason`:
+
 ```ts
 export function toCourtColumns(raw: RawCourt[]): CourtColumn[] {
   return raw.map((court) => ({
@@ -880,11 +913,13 @@ export function toCourtColumns(raw: RawCourt[]): CourtColumn[] {
   }));
 }
 ```
+
 Do not change anything else in this file (`toDateKey`, `countUniqueSlotStarts` are unrelated).
 
 - [ ] **Step 6: Update the owner Reservations raw-slot mapping**
 
 In `app/dashboard/reservations/_components/ReservationsView/types.ts`, change `RawSlot` the same way:
+
 ```ts
 export type RawSlot = {
   start: string;
@@ -896,6 +931,7 @@ export type RawSlot = {
 ```
 
 In `app/dashboard/reservations/_components/ReservationsView/utils.ts`, update `toSlot`:
+
 ```ts
 export function toSlot(raw: RawSlot): Slot {
   return {
@@ -907,6 +943,7 @@ export function toSlot(raw: RawSlot): Slot {
   };
 }
 ```
+
 Do not change anything else in this file (`toReservationRecord`, `buildCourtColumns`, `buildReservationMap`, `formatTimeRange`, `isActionable`, `ACTIONABLE_STATUSES` are unrelated — in particular, do not fold `"closed"` into `ACTIONABLE_STATUSES`, which governs reservation lifecycle transitions, not slot rendering, and is a completely separate concept from closures).
 
 - [ ] **Step 7: Verify**
@@ -921,9 +958,11 @@ Manually verify in the browser: with the `CourtClosure` from Task 3's manual che
 ### Task 8: `CourtsView` hooks — closures data layer
 
 **Files:**
+
 - Modify: `app/dashboard/courts/_components/CourtsView/hooks.ts`
 
 **Interfaces:**
+
 - Consumes: `CourtClosure`, `CreateClosureInput` (Task 2)
 - Produces:
   - `useCourtClosures(courtId: string | null)`
@@ -935,6 +974,7 @@ Manually verify in the browser: with the `CourtClosure` from Task 3's manual che
 Add `CourtClosure`, `CreateClosureInput` to the existing type-only import from `@/core/courts/types`.
 
 Add at the end of the file:
+
 ```ts
 export function useCourtClosures(courtId: string | null) {
   return useQuery({
@@ -1013,6 +1053,7 @@ Expected: no errors.
 ### Task 9: `ClosuresSheet` — new management UI
 
 **Files:**
+
 - Create: `app/dashboard/courts/_components/CourtsView/components/ClosuresSheet/ClosuresSheet.tsx`
 - Create: `app/dashboard/courts/_components/CourtsView/components/ClosuresSheet/types.ts`
 - Create: `app/dashboard/courts/_components/CourtsView/components/ClosuresSheet/index.ts`
@@ -1025,12 +1066,14 @@ Expected: no errors.
 - Create: `app/dashboard/courts/_components/CourtsView/components/ClosuresSheet/components/NewClosureForm/index.ts`
 
 **Interfaces:**
+
 - Consumes: `useCourtClosures`, `useCreateCourtClosure`, `useCancelCourtClosure` (Task 8), `CourtRecord` (existing, `../../types`), `CourtClosure` (Task 2)
 - Produces: `ClosuresSheet` component, exported `ClosuresSheetProps`.
 
 - [ ] **Step 1: `NewClosureForm` — the create form**
 
 Create `components/NewClosureForm/consts.ts`:
+
 ```ts
 import { z } from "zod";
 
@@ -1048,6 +1091,7 @@ export const newClosureFormSchema = z
 ```
 
 Create `components/NewClosureForm/types.ts`:
+
 ```ts
 export type NewClosureFormValues = {
   startsAt: string;
@@ -1064,6 +1108,7 @@ export type NewClosureFormProps = {
 ```
 
 Create `components/NewClosureForm/NewClosureForm.tsx`:
+
 ```tsx
 "use client";
 
@@ -1153,9 +1198,7 @@ export function NewClosureForm({
           <Switch
             id="closure-apply-all"
             checked={applyToAllCourts}
-            onCheckedChange={(checked) =>
-              setValue("applyToAllCourts", checked)
-            }
+            onCheckedChange={(checked) => setValue("applyToAllCourts", checked)}
           />
         </Field>
       )}
@@ -1169,6 +1212,7 @@ export function NewClosureForm({
 ```
 
 Create `components/NewClosureForm/index.ts`:
+
 ```ts
 export { NewClosureForm } from "./NewClosureForm";
 export type { NewClosureFormProps, NewClosureFormValues } from "./types";
@@ -1177,6 +1221,7 @@ export type { NewClosureFormProps, NewClosureFormValues } from "./types";
 - [ ] **Step 2: `ClosuresList` — the history/cancel list**
 
 Create `components/ClosuresList/types.ts`:
+
 ```ts
 import type { CourtClosure } from "@/core/courts/types";
 
@@ -1188,6 +1233,7 @@ export type ClosuresListProps = {
 ```
 
 Create `components/ClosuresList/ClosuresList.tsx`:
+
 ```tsx
 "use client";
 
@@ -1253,6 +1299,7 @@ export function ClosuresList({
 ```
 
 Create `components/ClosuresList/index.ts`:
+
 ```ts
 export { ClosuresList } from "./ClosuresList";
 export type { ClosuresListProps } from "./types";
@@ -1261,6 +1308,7 @@ export type { ClosuresListProps } from "./types";
 - [ ] **Step 3: `ClosuresSheet` — orchestrates the two above**
 
 Create `types.ts`:
+
 ```ts
 import type { CourtRecord } from "../../types";
 
@@ -1273,6 +1321,7 @@ export type ClosuresSheetProps = {
 ```
 
 Create `ClosuresSheet.tsx`:
+
 ```tsx
 "use client";
 
@@ -1301,9 +1350,7 @@ export function ClosuresSheet({
   courts,
 }: ClosuresSheetProps) {
   const courtId = court?.id ?? null;
-  const { data: closures, isLoading } = useCourtClosures(
-    open ? courtId : null,
-  );
+  const { data: closures, isLoading } = useCourtClosures(open ? courtId : null);
   const createClosure = useCreateCourtClosure();
   const cancelClosure = useCancelCourtClosure();
 
@@ -1379,9 +1426,7 @@ export function ClosuresSheet({
           />
 
           {isLoading || !closures ? (
-            <p className="text-sm text-muted-foreground">
-              Loading closures…
-            </p>
+            <p className="text-sm text-muted-foreground">Loading closures…</p>
           ) : (
             <ClosuresList
               closures={closures}
@@ -1401,6 +1446,7 @@ export function ClosuresSheet({
 ```
 
 Create `index.ts`:
+
 ```ts
 export { ClosuresSheet } from "./ClosuresSheet";
 export type { ClosuresSheetProps } from "./types";
@@ -1416,16 +1462,19 @@ Expected: no errors.
 ### Task 10: Wire `ClosuresSheet` into the Courts page
 
 **Files:**
+
 - Modify: `app/dashboard/courts/_components/CourtsView/components/CourtsTable/CourtsTable.tsx`
 - Modify: `app/dashboard/courts/_components/CourtsView/components/CourtsTable/types.ts`
 - Modify: `app/dashboard/courts/_components/CourtsView/CourtsView.tsx`
 
 **Interfaces:**
+
 - Consumes: `ClosuresSheet` (Task 9)
 
 - [ ] **Step 1: Add the "Closures" row action**
 
 In `CourtsTable/types.ts`, add to `CourtsTableProps`:
+
 ```ts
 export type CourtsTableProps = {
   courts: CourtRecord[];
@@ -1439,9 +1488,11 @@ export type CourtsTableProps = {
 ```
 
 In `CourtsTable.tsx`, add `CalendarOff` to the `lucide-react` import, add `onEditClosures` to the destructured props, and add a new button right after the existing "Edit availability" button (before "Edit"):
+
 ```tsx
 import { CalendarClock, CalendarOff, Pencil, Trash2 } from "lucide-react";
 ```
+
 ```tsx
 export function CourtsTable({
   courts,
@@ -1453,6 +1504,7 @@ export function CourtsTable({
   deletingCourtId,
 }: CourtsTableProps) {
 ```
+
 ```tsx
                   <Button
                     type="button"
@@ -1486,49 +1538,52 @@ export function CourtsTable({
 - [ ] **Step 2: Wire the sheet into `CourtsView`**
 
 In `CourtsView.tsx`, add the import:
+
 ```tsx
 import { ClosuresSheet } from "./components/ClosuresSheet";
 ```
 
 Add new state (next to the existing `availabilityOpen`/`availabilityCourt` state):
+
 ```tsx
-  const [closuresOpen, setClosuresOpen] = useState(false);
-  const [closuresCourt, setClosuresCourt] = useState<CourtRecord | null>(
-    null,
-  );
+const [closuresOpen, setClosuresOpen] = useState(false);
+const [closuresCourt, setClosuresCourt] = useState<CourtRecord | null>(null);
 ```
 
 Add a handler (next to `openAvailability`):
+
 ```tsx
-  function openClosures(court: CourtRecord) {
-    setClosuresCourt(court);
-    setClosuresOpen(true);
-  }
+function openClosures(court: CourtRecord) {
+  setClosuresCourt(court);
+  setClosuresOpen(true);
+}
 ```
 
 Pass the new prop to `CourtsTable`:
+
 ```tsx
-      <CourtsTable
-        courts={courts}
-        isLoading={isLoading}
-        onEdit={openEditForm}
-        onEditAvailability={openAvailability}
-        onEditClosures={openClosures}
-        onDelete={setCourtPendingDeletion}
-        deletingCourtId={
-          deleteCourt.isPending ? (deleteCourt.variables ?? null) : null
-        }
-      />
+<CourtsTable
+  courts={courts}
+  isLoading={isLoading}
+  onEdit={openEditForm}
+  onEditAvailability={openAvailability}
+  onEditClosures={openClosures}
+  onDelete={setCourtPendingDeletion}
+  deletingCourtId={
+    deleteCourt.isPending ? (deleteCourt.variables ?? null) : null
+  }
+/>
 ```
 
 Render the sheet, right after the existing `<AvailabilitySheet .../>`:
+
 ```tsx
-      <ClosuresSheet
-        open={closuresOpen}
-        onOpenChange={setClosuresOpen}
-        court={closuresCourt}
-        courts={courts}
-      />
+<ClosuresSheet
+  open={closuresOpen}
+  onOpenChange={setClosuresOpen}
+  court={closuresCourt}
+  courts={courts}
+/>
 ```
 
 - [ ] **Step 3: Verify**
@@ -1543,6 +1598,7 @@ Manually verify in the browser: on `/dashboard/courts`, click the new closures i
 ### Task 11: Docs
 
 **Files:**
+
 - Modify: `docs/API.md`
 - Modify: `docs/DATABASE.md`
 - Modify: `docs/ARCHITECTURE.md`

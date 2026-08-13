@@ -6,7 +6,11 @@ import { useMyReservations } from "@/app/dashboard/my-reservations/_components/M
 import { useAuth } from "@/hooks/use-auth";
 import { HeroShell } from "../HeroShell";
 import { StatPill } from "../StatPill";
-import { getFavoriteCourt, getHoursPlayed, getMemberSinceLabel } from "../../utils";
+import {
+  getFavoriteCourt,
+  getHoursPlayed,
+  getMemberSinceLabel,
+} from "../../utils";
 
 export function PlayerHero({ className }: { className?: string }) {
   const { user } = useAuth();

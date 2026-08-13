@@ -18,14 +18,12 @@ export function PlayerProfileCard({ player }: PlayerProfileCardProps) {
       <div className="flex items-center gap-3">
         <Avatar size="lg">
           {player.avatarUrl && (
-            <AvatarImage src={player.avatarUrl} alt="" />
+            <AvatarImage src={player.avatarUrl} alt={player.displayName} />
           )}
           <AvatarFallback>{getInitials(player.displayName)}</AvatarFallback>
         </Avatar>
         <div className="min-w-0">
-          <p className="truncate text-sm font-semibold">
-            {player.displayName}
-          </p>
+          <p className="truncate text-sm font-semibold">{player.displayName}</p>
           <Badge variant="outline" className="mt-1">
             {getPadelCategoryLabel(player.padelCategory)}
           </Badge>

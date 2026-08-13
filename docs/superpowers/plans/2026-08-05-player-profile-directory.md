@@ -25,9 +25,11 @@
 ### Task 1: Schema — `PreferredSide`/`DominantHand` enums and `UserProfile` fields
 
 **Files:**
+
 - Modify: `prisma/schema.prisma`
 
 **Interfaces:**
+
 - Produces: Prisma enums `PreferredSide` (`forehand`/`backhand`), `DominantHand` (`right`/`left`); `UserProfile.preferredSide: PreferredSide | null`, `UserProfile.dominantHand: DominantHand | null` on the generated client.
 
 - [ ] **Step 1: Add the two enums**
@@ -75,10 +77,12 @@ Expected: clean (nothing references the new fields yet, so nothing can be broken
 ### Task 2: Core types and label helpers
 
 **Files:**
+
 - Modify: `core/users/types/index.ts`
 - Modify: `core/users/consts.ts`
 
 **Interfaces:**
+
 - Produces: `PreferredSide`, `DominantHand` types; `UserProfile.preferredSide?: PreferredSide`, `UserProfile.dominantHand?: DominantHand` — from `core/users/types`.
 - Produces: `PREFERRED_SIDE_OPTIONS: { value: PreferredSide; label: string }[]`, `DOMINANT_HAND_OPTIONS: { value: DominantHand; label: string }[]`, `getPreferredSideLabel(value: PreferredSide | null): string`, `getDominantHandLabel(value: DominantHand | null): string` — from `core/users/consts`.
 
@@ -119,17 +123,22 @@ export interface UserProfile {
 In `core/users/consts.ts`, replace the full file with:
 
 ```ts
-import type { DominantHand, PreferredSide, SystemRole } from "@/core/users/types";
+import type {
+  DominantHand,
+  PreferredSide,
+  SystemRole,
+} from "@/core/users/types";
 
 export const ROLE_LABEL: Record<SystemRole, string> = {
   owner: "Owner",
   player: "Player",
 };
 
-export const PREFERRED_SIDE_OPTIONS: { value: PreferredSide; label: string }[] = [
-  { value: "forehand", label: "Forehand" },
-  { value: "backhand", label: "Backhand" },
-];
+export const PREFERRED_SIDE_OPTIONS: { value: PreferredSide; label: string }[] =
+  [
+    { value: "forehand", label: "Forehand" },
+    { value: "backhand", label: "Backhand" },
+  ];
 
 export const DOMINANT_HAND_OPTIONS: { value: DominantHand; label: string }[] = [
   { value: "right", label: "Right-handed" },
@@ -160,9 +169,11 @@ Expected: no errors.
 ### Task 3: `/api/me` — return and accept `preferredSide`/`dominantHand`
 
 **Files:**
+
 - Modify: `app/api/me/route.ts`
 
 **Interfaces:**
+
 - Consumes: `prisma` from `@/infrastructure/db/client`; `auth` from `@clerk/nextjs/server`.
 - Produces: `GET` returns `{ profile: { role, clubId, padelCategory, preferredSide, dominantHand } | null }`. `PATCH` accepts `{ preferredSide?: "forehand" | "backhand", dominantHand?: "right" | "left" }`, returns `{ profile: { preferredSide, dominantHand } }` on success.
 
@@ -249,9 +260,11 @@ Expected: no errors.
 ### Task 4: `AuthProvider` — surface the new fields and expose a refetch
 
 **Files:**
+
 - Modify: `providers/auth-provider.tsx`
 
 **Interfaces:**
+
 - Consumes: `PreferredSide`, `DominantHand` from `@/core/users/types`.
 - Produces: `AppUser.preferredSide: PreferredSide | null`, `AppUser.dominantHand: DominantHand | null`; `AuthContextValue.refetchProfile: () => Promise<void>`.
 
@@ -262,7 +275,13 @@ Replace the full file with:
 ```tsx
 "use client";
 
-import { createContext, useCallback, useEffect, useMemo, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { useUser, useClerk } from "@clerk/nextjs";
 import type { DominantHand, PreferredSide } from "@/core/users/types";
 
@@ -423,6 +442,7 @@ Expected: no errors.
 ### Task 5: Retire `MOCK_PLAYER_STYLE` — read real `preferredSide`/`dominantHand`
 
 **Files:**
+
 - Modify: `app/dashboard/_components/DashboardHome/components/PlayerOverview/types.ts`
 - Modify: `app/dashboard/_components/DashboardHome/components/PlayerOverview/consts.ts`
 - Modify: `app/dashboard/_components/DashboardHome/components/PlayerOverview/hooks.ts`
@@ -433,6 +453,7 @@ Expected: no errors.
 - Read (no change needed): `app/dashboard/_components/DashboardHome/components/PlayerOverview/PlayerOverviewContent/PlayerOverviewContent.tsx`
 
 **Interfaces:**
+
 - Consumes: `useAuth` from `@/hooks/use-auth`; `getPreferredSideLabel`, `getDominantHandLabel` from `@/core/users/consts`; `PreferredSide`, `DominantHand` from `@/core/users/types`; `court` from `@/assets/icons`.
 - Produces: `PlayerStyle` type becomes `{ preferredSide: PreferredSide | null; dominantHand: DominantHand | null }`; `usePlayerOverviewData()` returns real `playerStyle` for the signed-in player.
 
@@ -670,7 +691,11 @@ export function PadelSideDiagram({ side, className }: PadelSideDiagramProps) {
 
   return (
     <Image
-      src={isForehand ? courtSideRightSelected.default : courtSideLeftSelected.default}
+      src={
+        isForehand
+          ? courtSideRightSelected.default
+          : courtSideLeftSelected.default
+      }
       alt={
         isForehand
           ? "Preferred side: forehand (right side of the court)"
@@ -699,11 +724,13 @@ Expected: no errors.
 ### Task 6: `PlayerProfileCard` shared component
 
 **Files:**
+
 - Create: `components/PlayerProfileCard/PlayerProfileCard.tsx`
 - Create: `components/PlayerProfileCard/types.ts`
 - Create: `components/PlayerProfileCard/index.ts`
 
 **Interfaces:**
+
 - Consumes: `getPreferredSideLabel`, `getDominantHandLabel` from `@/core/users/consts`; `getPadelCategoryLabel` from `@/app/dashboard/_components/DashboardHome/components/SkillOverviewCard/utils`; `getInitials` from `@/app/dashboard/_components/DashboardHome/components/PlayerOverview/utils`.
 - Produces: `PlayerProfileData` type (`{ displayName: string; avatarUrl: string | null; padelCategory: number | null; preferredSide: PreferredSide | null; dominantHand: DominantHand | null; email: string; phone: string | null }`); `PlayerProfileCard({ player }: { player: PlayerProfileData })` — pure content only, no `Dialog` wrapper of its own. Callers wrap it in their own `<Dialog><DialogContent><PlayerProfileCard player={...} /></DialogContent></Dialog>`.
 
@@ -749,15 +776,11 @@ export function PlayerProfileCard({ player }: PlayerProfileCardProps) {
       </DialogHeader>
       <div className="flex items-center gap-3">
         <Avatar size="lg">
-          {player.avatarUrl && (
-            <AvatarImage src={player.avatarUrl} alt="" />
-          )}
+          {player.avatarUrl && <AvatarImage src={player.avatarUrl} alt="" />}
           <AvatarFallback>{getInitials(player.displayName)}</AvatarFallback>
         </Avatar>
         <div className="min-w-0">
-          <p className="truncate text-sm font-semibold">
-            {player.displayName}
-          </p>
+          <p className="truncate text-sm font-semibold">{player.displayName}</p>
           <Badge variant="outline" className="mt-1">
             {getPadelCategoryLabel(player.padelCategory)}
           </Badge>
@@ -810,9 +833,11 @@ Expected: no errors.
 ### Task 7: `GET /api/players`
 
 **Files:**
+
 - Create: `app/api/players/route.ts`
 
 **Interfaces:**
+
 - Consumes: `prisma` from `@/infrastructure/db/client`; `auth` from `@clerk/nextjs/server`.
 - Produces: `GET` returns `{ players: { id: string; displayName: string; avatarUrl: string | null; padelCategory: number | null; preferredSide: "forehand" | "backhand" | null; dominantHand: "right" | "left" | null; email: string; phone: string | null }[] }`.
 
@@ -877,6 +902,7 @@ Expected: no errors.
 ### Task 8: Players directory page
 
 **Files:**
+
 - Create: `app/dashboard/players/page.tsx`
 - Create: `app/dashboard/players/_components/PlayersDirectory/PlayersDirectory.tsx`
 - Create: `app/dashboard/players/_components/PlayersDirectory/hooks.ts`
@@ -887,6 +913,7 @@ Expected: no errors.
 - Create: `app/dashboard/players/_components/PlayersDirectory/components/PlayerRow/index.ts`
 
 **Interfaces:**
+
 - Consumes: `PlayerProfileCard`, `PlayerProfileData` from `@/components/PlayerProfileCard`; `getPadelCategoryLabel` from `@/app/dashboard/_components/DashboardHome/components/SkillOverviewCard/utils`; `getInitials` from `@/app/dashboard/_components/DashboardHome/components/PlayerOverview/utils`.
 - Produces: `usePlayers(): UseQueryResult<PlayerProfileData & { id: string }[]>`; page rendered at `/dashboard/players`.
 
@@ -953,15 +980,11 @@ export function PlayerRow({ player }: PlayerRowProps) {
           className="flex w-full items-center gap-3 rounded-lg border border-border p-3 text-left transition-colors hover:bg-muted/50"
         >
           <Avatar>
-            {player.avatarUrl && (
-              <AvatarImage src={player.avatarUrl} alt="" />
-            )}
+            {player.avatarUrl && <AvatarImage src={player.avatarUrl} alt="" />}
             <AvatarFallback>{getInitials(player.displayName)}</AvatarFallback>
           </Avatar>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-medium">
-              {player.displayName}
-            </p>
+            <p className="truncate text-sm font-medium">{player.displayName}</p>
             <p className="text-xs text-muted-foreground">
               {getPadelCategoryLabel(player.padelCategory)}
             </p>
@@ -1072,9 +1095,11 @@ Expected: no errors.
 ### Task 9: Nav entry
 
 **Files:**
+
 - Modify: `app/dashboard/_components/AppNavbar/consts.ts`
 
 **Interfaces:**
+
 - Consumes: `Users` icon from `lucide-react`.
 
 - [ ] **Step 1: Add the icon import and nav item**
@@ -1118,9 +1143,11 @@ Expected: no errors.
 ### Task 10: `LatestPartnerCard` opens `PlayerProfileCard`
 
 **Files:**
+
 - Modify: `app/dashboard/_components/DashboardHome/components/PlayerOverview/components/PlayerStyleSection/components/LatestPartnerCard/LatestPartnerCard.tsx`
 
 **Interfaces:**
+
 - Consumes: `PlayerProfileCard` from `@/components/PlayerProfileCard`; `PartnerSummary` from `../../../../types` (unchanged import path, extended shape from Task 5).
 
 - [ ] **Step 1: Replace the Popover with a Dialog opening `PlayerProfileCard`**
@@ -1189,12 +1216,14 @@ Expected: no errors.
 ### Task 11: Edit affordance for `preferredSide`/`dominantHand`
 
 **Files:**
+
 - Create: `app/dashboard/_components/DashboardHome/components/PlayerOverview/components/PlayerStyleSection/components/EditPlayerStyleDialog/EditPlayerStyleDialog.tsx`
 - Create: `app/dashboard/_components/DashboardHome/components/PlayerOverview/components/PlayerStyleSection/components/EditPlayerStyleDialog/index.ts`
 - Modify: `app/dashboard/_components/DashboardHome/components/PlayerOverview/hooks.ts`
 - Modify: `app/dashboard/_components/DashboardHome/components/PlayerOverview/components/PlayerStyleSection/PlayerStyleSection.tsx`
 
 **Interfaces:**
+
 - Consumes: `useAuth` from `@/hooks/use-auth`; `PREFERRED_SIDE_OPTIONS`, `DOMINANT_HAND_OPTIONS` from `@/core/users/consts`; `PreferredSide`, `DominantHand` from `@/core/users/types`.
 - Produces: `useUpdatePlayerStyle(): UseMutationResult<..., Error, { preferredSide?: PreferredSide; dominantHand?: DominantHand }>` from `PlayerOverview/hooks.ts`; `<EditPlayerStyleDialog />` (no props — reads/writes the current user's own profile).
 
@@ -1434,14 +1463,17 @@ Expected: clean, zero errors anywhere in the project.
 - [ ] **Step 2: Full lint on every touched file**
 
 Run:
+
 ```bash
 npx eslint core/users app/api/me app/api/players app/dashboard/players app/dashboard/_components/AppNavbar app/dashboard/_components/DashboardHome/components/PlayerOverview components/PlayerProfileCard providers/auth-provider.tsx
 ```
+
 Expected: zero new errors (ignore any pre-existing errors in files this plan didn't touch).
 
 - [ ] **Step 3: Manual verification (requires either the user, or the throwaway-public-route technique)**
 
 Since every route sits behind Clerk middleware and this session has no test credentials, verify manually (or ask the user to) by:
+
 1. Signing in as a player with no `preferredSide`/`dominantHand` set — confirm the Player Overview card shows "Not set yet" for both, and the court diagram renders the plain (unhighlighted) court.
 2. Opening the edit dialog (pencil icon), setting both fields, saving — confirm the card updates immediately without a page reload, and the badge/diagram reflect the new value.
 3. Navigating to `/dashboard/players` via the new "Players" nav item — confirm the full active-player list loads, typing in the search box filters it by name, and clicking a row opens `PlayerProfileCard` with correct data.

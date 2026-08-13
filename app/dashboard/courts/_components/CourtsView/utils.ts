@@ -2,8 +2,17 @@ import {
   DAY_LABELS,
   DEFAULT_SLOT_DURATION_MINUTES,
 } from "@/core/courts/consts";
-import type { AvailabilityEntry, CourtAvailability, CourtClosure } from "@/core/courts/types";
-import type { AvailabilityDayRow, CourtFormValues, CourtRecord, RawCourtClosure } from "./types";
+import type {
+  AvailabilityEntry,
+  CourtAvailability,
+  CourtClosure,
+} from "@/core/courts/types";
+import type {
+  AvailabilityDayRow,
+  CourtFormValues,
+  CourtRecord,
+  RawCourtClosure,
+} from "./types";
 
 export const DEFAULT_COURT_COLOR = "#2D8A60";
 

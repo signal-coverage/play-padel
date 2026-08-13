@@ -3,7 +3,9 @@ import { format } from "date-fns";
 /** Most frequent courtName, ties broken by first-seen order. "—" when empty.
  * Structurally typed (not PlayerReservation) so OwnerHero can reuse this for
  * "busiest court today" from its own ReservationRecord shape. */
-export function getFavoriteCourt(reservations: { courtName: string }[]): string {
+export function getFavoriteCourt(
+  reservations: { courtName: string }[],
+): string {
   if (reservations.length === 0) return "—";
 
   const counts = new Map<string, number>();

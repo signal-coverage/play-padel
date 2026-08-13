@@ -1,6 +1,13 @@
 "use client";
 
-import { createContext, useCallback, useEffect, useMemo, useState, useRef } from "react";
+import {
+  createContext,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  useRef,
+} from "react";
 import { useUser, useClerk } from "@clerk/nextjs";
 import type { DominantHand, PreferredSide } from "@/core/users/types";
 

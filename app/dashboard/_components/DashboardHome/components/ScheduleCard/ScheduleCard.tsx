@@ -23,7 +23,7 @@ export function ScheduleCard({
     <Card
       size="sm"
       className={cn(
-        "animate-fade-up overflow-hidden rounded-2xl [--card-spacing:--spacing(4)]",
+        "animate-fade-up overflow-hidden rounded-xl border-0 [--card-spacing:--spacing(4)]",
         className,
       )}
       style={{ animationDelay: "280ms" }}
@@ -34,7 +34,7 @@ export function ScheduleCard({
           {role === "owner" ? <OwnerTodayCaption /> : <PlayerTodayCaption />}
         </CardDescription>
       </CardHeader>
-      <CardContent className="grid grid-cols-1 gap-4 overflow-y-auto sm:grid-cols-2">
+      <CardContent className="overflow-y-auto">
         {role === "owner" ? <OwnerSchedule /> : <PlayerSchedule />}
       </CardContent>
     </Card>

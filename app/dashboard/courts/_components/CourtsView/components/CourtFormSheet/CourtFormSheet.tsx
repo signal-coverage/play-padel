@@ -126,7 +126,9 @@ export function CourtFormSheet({
           </Field>
 
           <Field>
-            <FieldLabel htmlFor="court-price">Price (per reservation)</FieldLabel>
+            <FieldLabel htmlFor="court-price">
+              Price (per reservation)
+            </FieldLabel>
             <Input
               id="court-price"
               type="number"

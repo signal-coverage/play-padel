@@ -22,7 +22,7 @@ export function LandingFeatures() {
       <div className="grid md:grid-cols-2 gap-10">
         <div className="flex flex-col gap-6">
           <motion.span
-            className="self-start inline-flex items-center bg-[#111111] text-white rounded-full px-4 py-2 text-[13px] font-semibold"
+            className="self-start inline-flex items-center bg-foreground text-white rounded-full px-4 py-2 text-[13px] font-semibold"
             initial={shouldReduce ? false : { opacity: 0, y: 12 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -60,7 +60,7 @@ export function LandingFeatures() {
                 type="button"
                 onClick={goPrev}
                 aria-label="Previous facility"
-                className="w-11 h-11 rounded-full border border-[#D4D4D4] text-[#111111] flex items-center justify-center hover:border-[#111111] transition-colors"
+                className="w-11 h-11 rounded-full border border-border text-foreground flex items-center justify-center hover:border-foreground transition-colors"
               >
                 <ArrowLeft size={16} strokeWidth={2} />
               </button>
@@ -68,7 +68,7 @@ export function LandingFeatures() {
                 type="button"
                 onClick={goNext}
                 aria-label="Next facility"
-                className="w-11 h-11 rounded-full border border-[#D4D4D4] text-[#111111] flex items-center justify-center hover:border-[#111111] transition-colors"
+                className="w-11 h-11 rounded-full border border-border text-foreground flex items-center justify-center hover:border-foreground transition-colors"
               >
                 <ArrowRight size={16} strokeWidth={2} />
               </button>
@@ -80,12 +80,12 @@ export function LandingFeatures() {
               viewport={{ once: true }}
               transition={{ duration: 0.5, ease, delay: 0.05 }}
             >
-              <span className="text-[#111111]">
+              <span className="text-foreground">
                 World-Class Paddle Facilities
               </span>
               <br />
-              <span className="text-[#111111]">for </span>
-              <span className="text-[#A3A3A3]">Every Level of Play</span>
+              <span className="text-foreground">for </span>
+              <span className="text-muted-foreground">Every Level of Play</span>
             </motion.h2>
           </div>
 
@@ -99,10 +99,10 @@ export function LandingFeatures() {
                   exit={{ opacity: 0, y: -8 }}
                   transition={{ duration: 0.35, ease }}
                 >
-                  <h3 className="text-[17px] font-semibold text-[#111111] mb-2">
+                  <h3 className="text-[17px] font-semibold text-foreground mb-2">
                     {current.title}
                   </h3>
-                  <p className="text-sm text-[#737373] leading-relaxed text-pretty">
+                  <p className="text-sm text-muted-foreground leading-relaxed text-pretty">
                     {current.description}
                   </p>
                   <div className="mt-4">
@@ -133,7 +133,7 @@ export function LandingFeatures() {
                     sizes="160px"
                     className="object-cover outline outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10 transition-transform duration-500 ease-out group-hover:scale-[1.08]"
                   />
-                  <span className="absolute left-1/2 -translate-x-1/2 bottom-3 max-w-[calc(100%-1.5rem)] inline-flex items-center gap-1 bg-white/90 backdrop-blur-sm text-[#111111] rounded-full px-3 py-1.5 text-xs font-semibold">
+                  <span className="absolute left-1/2 -translate-x-1/2 bottom-3 max-w-[calc(100%-1.5rem)] inline-flex items-center gap-1 bg-white/90 backdrop-blur-sm text-foreground rounded-full px-3 py-1.5 text-xs font-semibold">
                     <span className="truncate min-w-0">{next.title}</span>
                     <ArrowUpRight
                       size={13}

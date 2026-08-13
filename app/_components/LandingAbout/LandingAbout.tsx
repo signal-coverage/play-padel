@@ -17,34 +17,34 @@ export function LandingAbout() {
     <section id="about" className={`${CONTAINER} py-12`}>
       <div className="flex flex-wrap items-start justify-between gap-6 mb-10">
         <h2 className="text-3xl md:text-[34px] font-bold leading-tight tracking-tight">
-          <span className="text-[#111111]">Built for Players Who Want</span>
+          <span className="text-foreground">Built for Players Who Want</span>
           <br />
-          <span className="text-[#A3A3A3]">More Than Just a Match</span>
+          <span className="text-muted-foreground">More Than Just a Match</span>
         </h2>
-        <span className="inline-flex items-center bg-[#111111] text-white rounded-full px-4 py-2 text-[13px] font-semibold">
+        <span className="inline-flex items-center bg-foreground text-white rounded-full px-4 py-2 text-[13px] font-semibold">
           Paddle, People, Purpose
         </span>
       </div>
 
       <div className="grid md:grid-cols-2 gap-10">
-        <div className="border-t border-[#E5E7EB]">
+        <div className="border-t border-border">
           {ABOUT_ITEMS.map((item, i) => {
             const isActive = activeIndex === i;
             return (
-              <div key={item.title} className="border-b border-[#E5E7EB]">
+              <div key={item.title} className="border-b border-border">
                 <button
                   type="button"
                   onClick={() => setActiveIndex(isActive ? -1 : i)}
                   className="w-full flex items-center justify-between gap-4 py-5 text-left"
                 >
-                  <span className="text-lg font-medium text-[#111111]">
+                  <span className="text-lg font-medium text-foreground">
                     {item.title}
                   </span>
                   <span
                     className={`shrink-0 w-9 h-9 rounded-full flex items-center justify-center transition-colors ${
                       isActive
-                        ? "bg-[#dffd36] text-[#111111]"
-                        : "border border-[#D4D4D4] text-[#111111]"
+                        ? "bg-accent text-accent-foreground"
+                        : "border border-border text-foreground"
                     }`}
                   >
                     {isActive ? (
@@ -63,7 +63,7 @@ export function LandingAbout() {
                       transition={{ duration: 0.3, ease }}
                       className="overflow-hidden"
                     >
-                      <p className="pb-5 text-sm text-[#737373] leading-relaxed max-w-md text-pretty">
+                      <p className="pb-5 text-sm text-muted-foreground leading-relaxed max-w-md text-pretty">
                         {item.description}
                       </p>
                     </motion.div>
@@ -91,7 +91,7 @@ export function LandingAbout() {
           <Link
             href="#appointment"
             onClick={(e) => scrollToSection(e, "#appointment")}
-            className="absolute left-5 bottom-5 inline-flex items-center gap-1.5 bg-white/90 backdrop-blur-sm text-[#111111] rounded-full px-4 py-2 text-sm font-semibold hover:bg-white transition-colors"
+            className="absolute left-5 bottom-5 inline-flex items-center gap-1.5 bg-white/90 backdrop-blur-sm text-foreground rounded-full px-4 py-2 text-sm font-semibold hover:bg-white transition-colors"
           >
             Learn More
             <ArrowUpRight size={15} strokeWidth={2.5} />

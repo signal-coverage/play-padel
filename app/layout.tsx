@@ -38,6 +38,21 @@ export const metadata: Metadata = {
     title: "Play Padel",
   },
   manifest: "/site.webmanifest",
+  openGraph: {
+    title: "Play Padel",
+    description:
+      "Find available padel court appointments across different clubs in one place.",
+    siteName: "Play Padel",
+    images: ["/logo.png"],
+    type: "website",
+  },
+  twitter: {
+    card: "summary",
+    title: "Play Padel",
+    description:
+      "Find available padel court appointments across different clubs in one place.",
+    images: ["/logo.png"],
+  },
   icons: {
     icon: [
       {

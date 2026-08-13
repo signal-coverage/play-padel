@@ -52,7 +52,7 @@ export function DashboardHome() {
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Search cards…"
-              className="w-full pl-8"
+              className="w-full rounded-sm pl-8"
             />
           </div>
           {role === "owner" && (
@@ -67,10 +67,18 @@ export function DashboardHome() {
       </div>
 
       {role === "player" ? (
-        <div className="grid grid-cols-1 gap-3 md:min-h-0 md:flex-1 md:grid-cols-[2fr_auto_minmax(0,1fr)] md:grid-rows-[minmax(0,1fr)] md:gap-4">
-          <SearchableCardsGrid role={role} query={query} />
+        <div className="flex w-full flex-col gap-3 md:min-h-0 md:flex-1 md:flex-row md:gap-4">
+          <SearchableCardsGrid
+            role={role}
+            query={query}
+            className="min-w-0 md:flex-1 md:basis-0"
+          />
           <Separator orientation={isMobile ? "horizontal" : "vertical"} />
-          {isMobile ? <PlayerOverviewBanner /> : <PlayerOverviewCard />}
+          {isMobile ? (
+            <PlayerOverviewBanner />
+          ) : (
+            <PlayerOverviewCard className="md:w-70 md:shrink-0" />
+          )}
         </div>
       ) : (
         <SearchableCardsGrid role={role} query={query} />

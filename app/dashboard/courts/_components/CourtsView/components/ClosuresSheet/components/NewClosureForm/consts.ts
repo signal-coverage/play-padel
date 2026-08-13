@@ -1,4 +1,12 @@
 import { z } from "zod";
+import type { NewClosureFormValues } from "./types";
+
+export const DEFAULT_VALUES: NewClosureFormValues = {
+  startsAt: "",
+  endsAt: "",
+  reason: "",
+  applyToAllCourts: false,
+};
 
 export const newClosureFormSchema = z
   .object({
