@@ -51,8 +51,8 @@ export function SessionLoadGauge({
   const dash = (clampedPercent / 100) * circumference;
 
   return (
-    <div className="flex flex-col items-center gap-3 text-center">
-      <div className="relative size-28">
+    <div className="flex flex-col items-center gap-2 text-center">
+      <div className="relative size-28 shrink-0 @min-[768px]:size-24">
         <svg viewBox="0 0 100 100" className="size-full -rotate-90">
           <circle
             cx="50"
@@ -74,7 +74,9 @@ export function SessionLoadGauge({
           />
         </svg>
         <div className="absolute inset-0 grid place-items-center">
-          <span className="font-heading text-2xl font-bold">{percent}%</span>
+          <span className="font-heading text-3xl font-bold @min-[768px]:text-2xl">
+            {percent}%
+          </span>
         </div>
       </div>
       <p className="text-xs text-muted-foreground">{caption}</p>

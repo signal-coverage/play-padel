@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { motion } from "framer-motion";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils/utils";
 import { navItems } from "../../consts";
@@ -25,10 +26,17 @@ export function MobileBottomNav({ role, className }: NavLinksProps) {
             href={item.href}
             aria-current={active ? "page" : undefined}
             className={cn(
-              "flex min-h-11 min-w-0 flex-col items-center gap-0.5 px-2 py-1 text-[10px] leading-none font-medium",
-              active ? "text-primary" : "text-muted-foreground",
+              "relative isolate flex min-h-11 min-w-0 flex-col items-center gap-0.5 rounded-lg px-3 py-1 text-[10px] leading-none font-medium transition-colors",
+              active ? "text-primary-foreground" : "text-muted-foreground",
             )}
           >
+            {active && (
+              <motion.span
+                layoutId="mobile-nav-highlight"
+                className="absolute inset-0 -z-10 rounded-lg bg-primary"
+                transition={{ type: "spring", stiffness: 500, damping: 35 }}
+              />
+            )}
             <item.icon className="h-5 w-5" />
             <span className="max-w-16 truncate">{item.title}</span>
           </Link>

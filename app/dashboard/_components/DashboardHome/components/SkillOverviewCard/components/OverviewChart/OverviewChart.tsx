@@ -17,7 +17,7 @@ export function OverviewChart({
 }: OverviewChartProps) {
   if (!hasActivity) {
     return (
-      <div className="flex h-24 flex-col items-center justify-center gap-2 text-center">
+      <div className="flex h-20 flex-col items-center justify-center gap-2 text-center">
         <EmptyMedia variant="icon" className="mb-0 size-8 rounded-full">
           <BarChart3 className="size-4" />
         </EmptyMedia>
@@ -31,7 +31,10 @@ export function OverviewChart({
 
   return (
     <div className="flex flex-col gap-2">
-      <ChartContainer config={OVERVIEW_CHART_CONFIG} className="h-24 w-full">
+      <ChartContainer
+        config={OVERVIEW_CHART_CONFIG}
+        className="h-28 w-full @min-[768px]:h-20"
+      >
         <BarChart data={chartData}>
           <Bar dataKey="total" radius={2}>
             {chartData.map((day) => {

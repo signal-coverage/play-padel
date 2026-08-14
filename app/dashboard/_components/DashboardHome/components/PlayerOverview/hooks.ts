@@ -1,7 +1,11 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
-import { MOCK_LATEST_PARTNER, MOCK_PERFORMANCE } from "./consts";
+import {
+  MOCK_LATEST_PARTNER,
+  MOCK_PERFORMANCE,
+  MOCK_PLAYER_STYLE,
+} from "./consts";
 import type { PlayerStyle } from "./types";
 import type { DominantHand, PreferredSide } from "@/core/users/types";
 
@@ -9,8 +13,8 @@ export function usePlayerOverviewData() {
   const { user } = useAuth();
 
   const playerStyle: PlayerStyle = {
-    preferredSide: user?.preferredSide ?? null,
-    dominantHand: user?.dominantHand ?? null,
+    preferredSide: user?.preferredSide ?? MOCK_PLAYER_STYLE.preferredSide,
+    dominantHand: user?.dominantHand ?? MOCK_PLAYER_STYLE.dominantHand,
   };
 
   return {
