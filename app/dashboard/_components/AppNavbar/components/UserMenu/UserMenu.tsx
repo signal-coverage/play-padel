@@ -48,7 +48,11 @@ export function UserMenu() {
           )}
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent side="bottom" align="end" className="w-56 rounded-sm">
+      <DropdownMenuContent
+        side="bottom"
+        align="end"
+        className="w-56 rounded-sm"
+      >
         <DropdownMenuItem
           onClick={() => openUserProfile()}
           className="cursor-pointer py-2 rounded-sm"
@@ -77,7 +81,10 @@ export function UserMenu() {
           </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer py-2 rounded-sm">
+        <DropdownMenuItem
+          onClick={handleSignOut}
+          className="cursor-pointer py-2 rounded-sm"
+        >
           <LogOut className="h-4 w-4 text-muted-foreground" strokeWidth={1.5} />
           Sign out
         </DropdownMenuItem>

@@ -49,6 +49,8 @@ export function getBusiestWeekdayName(totals: number[]): string | null {
 }
 
 /** Start of the trailing player-load window (see PLAYER_LOAD_RANGE_WEEKS). */
-export function getPlayerLoadWindowStart(referenceDate: Date = new Date()): Date {
+export function getPlayerLoadWindowStart(
+  referenceDate: Date = new Date(),
+): Date {
   return subWeeks(referenceDate, PLAYER_LOAD_RANGE_WEEKS);
 }

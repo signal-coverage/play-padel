@@ -41,7 +41,7 @@ export function SearchableCardsGrid({
           >
             <div
               ref={filteredScrollRef}
-              className="grid h-full auto-rows-min grid-cols-1 content-start gap-3 overflow-y-auto sm:grid-cols-2 md:scrollbar-none lg:grid-cols-3 lg:gap-4"
+              className="grid h-full auto-rows-min grid-cols-1 content-start gap-4 overflow-y-auto sm:grid-cols-2 md:scrollbar-none lg:gap-5"
             >
               <AnimatePresence mode="popLayout">
                 {matches.map(({ key, Component }) => (
