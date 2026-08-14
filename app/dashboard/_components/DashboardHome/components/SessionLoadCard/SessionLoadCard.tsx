@@ -25,7 +25,7 @@ export function SessionLoadCard({
           {role === "owner" ? "Cancellation rate" : "Session load"}
         </CardTitle>
       </CardHeader>
-      <CardContent className="flex flex-1 flex-col justify-center gap-3">
+      <CardContent className="flex min-h-0 flex-1 flex-col justify-center gap-3">
         {role === "owner" ? <OwnerSessionLoad /> : <PlayerSessionLoad />}
       </CardContent>
     </Card>

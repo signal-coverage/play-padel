@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { motion } from "framer-motion";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils/utils";
 import { navItems } from "../../consts";
@@ -11,7 +12,7 @@ export function NavLinks({ role, className }: NavLinksProps) {
   const visibleItems = navItems.filter((item) => item.roles.includes(role));
 
   return (
-    <nav className={cn("items-center gap-6 overflow-x-auto", className)}>
+    <nav className={cn("items-center gap-1 overflow-x-auto", className)}>
       {visibleItems.map((item) => {
         const active = pathname === item.href;
         return (
@@ -20,11 +21,20 @@ export function NavLinks({ role, className }: NavLinksProps) {
             href={item.href}
             aria-current={active ? "page" : undefined}
             className={cn(
-              "shrink-0 text-sm font-medium transition-colors hover:text-foreground",
-              active ? "text-foreground" : "text-muted-foreground",
+              "relative isolate shrink-0 rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors",
+              active
+                ? "text-primary-foreground"
+                : "text-muted-foreground hover:text-foreground",
             )}
           >
-            {item.title}
+            {active && (
+              <motion.span
+                layoutId="desktop-nav-highlight"
+                className="absolute inset-0 -z-10 rounded-full bg-primary"
+                transition={{ type: "spring", stiffness: 500, damping: 35 }}
+              />
+            )}
+            <span className="relative">{item.title}</span>
           </Link>
         );
       })}

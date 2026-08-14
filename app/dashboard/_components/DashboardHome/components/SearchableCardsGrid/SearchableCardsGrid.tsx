@@ -41,7 +41,7 @@ export function SearchableCardsGrid({
           >
             <div
               ref={filteredScrollRef}
-              className="grid h-full auto-rows-min grid-cols-1 content-start gap-3 overflow-y-auto sm:grid-cols-2 md:scrollbar-none lg:grid-cols-3 lg:gap-4"
+              className="grid h-full auto-rows-min grid-cols-1 content-start gap-4 overflow-y-auto sm:grid-cols-2 md:scrollbar-none lg:gap-5"
             >
               <AnimatePresence mode="popLayout">
                 {matches.map(({ key, Component }) => (
@@ -90,20 +90,31 @@ export function SearchableCardsGrid({
             ref={bentoScrollRef}
             className="flex h-full flex-col gap-3 md:overflow-y-auto md:scrollbar-none"
           >
-            <HeroCard role={role} />
-            <div className="flex min-h-0 flex-1 flex-col gap-3 @min-[768px]:flex-row @min-[768px]:gap-4">
-              <div className="flex min-w-0 flex-col gap-3 @min-[768px]:h-full @min-[768px]:flex-1 @min-[768px]:basis-0">
-                <WeeklyLoadCard role={role} className="flex-1" />
-                <SessionLoadCard role={role} className="flex-1" />
+            <HeroCard role={role} className="shrink-0" />
+            <div className="flex flex-1 flex-col gap-3 @min-[768px]:flex-row @min-[768px]:gap-4 min-[1155px]:grid min-[1155px]:min-h-0! min-[1155px]:grid-cols-2 min-[1155px]:grid-rows-2 min-[1155px]:gap-4">
+              <div className="flex min-w-0 flex-col gap-3 @min-[768px]:flex-1 @min-[768px]:basis-0 min-[1155px]:contents">
+                <WeeklyLoadCard
+                  role={role}
+                  className="min-h-56 flex-1 @min-[768px]:min-h-72 min-[1155px]:col-start-1! min-[1155px]:row-start-1! min-[1155px]:min-h-0!"
+                />
+                <SessionLoadCard
+                  role={role}
+                  className="min-h-56 flex-1 @min-[768px]:min-h-72 min-[1155px]:col-start-1! min-[1155px]:row-start-2! min-[1155px]:min-h-0!"
+                />
               </div>
               <UpcomingCard
                 role={role}
-                className="min-w-0 @min-[768px]:h-full @min-[768px]:flex-1 @min-[768px]:basis-0"
+                className="min-w-0 min-h-80 @min-[768px]:min-h-0 @min-[768px]:flex-1 @min-[768px]:basis-0 min-[1155px]:col-start-2! min-[1155px]:row-start-1! min-[1155px]:row-span-2!"
               />
             </div>
           </div>
           <AnimatePresence>
-            {bentoCanScrollMore && <ScrollHintBadge key="scroll-hint" />}
+            {bentoCanScrollMore && (
+              <ScrollHintBadge
+                key="scroll-hint"
+                className="min-[1155px]:hidden!"
+              />
+            )}
           </AnimatePresence>
         </motion.div>
       )}

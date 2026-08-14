@@ -67,7 +67,11 @@ export default function NotFound() {
           </a>
         </p>
 
-        <Button asChild size="lg" className="mt-10 w-fit gap-2 rounded-full px-6">
+        <Button
+          asChild
+          size="lg"
+          className="mt-10 w-fit gap-2 rounded-full px-6"
+        >
           <Link href={isSignedIn ? "/dashboard" : "/"}>
             {isSignedIn ? "Back to dashboard" : "Back to home"}
             <ArrowRight className="h-4 w-4" strokeWidth={2} />

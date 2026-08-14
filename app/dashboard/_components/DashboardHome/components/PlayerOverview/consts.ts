@@ -1,12 +1,17 @@
-import type { PartnerSummary, PerformanceSummary } from "./types";
+import type { PartnerSummary, PerformanceSummary, PlayerStyle } from "./types";
 
 // Placeholder data — this app has no backend concept yet for doubles
 // partners or tournaments/matches (confirmed against prisma/schema.prisma:
 // Reservation tracks a single booking user only, no Tournament/Match model
 // exists). See docs/superpowers/specs/2026-08-01-player-overview-sidebar-design.md
 // and docs/superpowers/specs/2026-08-05-player-profile-directory-design.md.
-// preferredSide/dominantHand are real now (see core/users) — only the
-// partner and performance data below remain mocked.
+// preferredSide/dominantHand are real, user-editable fields (see core/users);
+// MOCK_PLAYER_STYLE only fills the sidebar in until the user sets their own.
+
+export const MOCK_PLAYER_STYLE: PlayerStyle = {
+  preferredSide: "forehand",
+  dominantHand: "right",
+};
 
 export const MOCK_LATEST_PARTNER: PartnerSummary = {
   name: "Sofía Martínez",
