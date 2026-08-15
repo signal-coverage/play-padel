@@ -43,7 +43,7 @@ export function LandingFeatures() {
               >
                 <Image
                   src={current.image}
-                  alt={current.title}
+                  alt={current.imageAlt}
                   fill
                   sizes="(min-width: 768px) 50vw, 100vw"
                   className="object-cover outline outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10"
@@ -126,7 +126,7 @@ export function LandingFeatures() {
                 >
                   <Image
                     src={next.image}
-                    alt={next.title}
+                    alt={next.imageAlt}
                     fill
                     sizes="160px"
                     className="object-cover outline outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10 transition-transform duration-500 ease-out group-hover:scale-[1.08]"

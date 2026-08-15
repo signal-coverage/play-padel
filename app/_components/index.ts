@@ -5,3 +5,4 @@ export * from "./LandingFooter";
 export * from "./LandingHeader";
 export * from "./LandingHero";
 export * from "./LandingTrusted";
+export * from "./ShareButton";
