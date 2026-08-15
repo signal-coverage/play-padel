@@ -1,6 +1,6 @@
 # Play Padel — Project Status
 
-_Last updated: 2026-08-11_
+_Last updated: 2026-08-15_
 
 A padel-club booking platform: players browse clubs/courts and book time slots; club owners manage their courts, availability, and reservations.
 
@@ -14,22 +14,26 @@ No model exists yet for tournaments, matches, doubles partners, or player style/
 
 - Login / signup — Clerk's `<SignIn>`/`<SignUp>` components, redirect to `/dashboard` (login) or `/onboarding` (signup after account creation).
 - SSO callback — Clerk's `<AuthenticateWithRedirectCallback>`.
-- Onboarding wizard — multi-step form branching on player vs. owner, submits to `/api/onboarding`. Player path upserts `UserProfile`; owner path creates a real `Club` row then upserts `UserProfile` with `role: "owner"`.
-  - Court-range/plan step — only maps to `Club.plan`, does not create `Court` rows (by design — real court creation happens later in `/dashboard/courts`).
+- Onboarding wizard — multi-step form branching on player vs. owner, submits to `/api/onboarding`. Player path upserts `UserProfile`; owner path creates a real `Club` row then upserts `UserProfile` with `role: "owner"`. Continue/Submit are disabled until the current step's own required fields are actually valid (checked via an independent zod parse, not RHF's own error state, so nothing flashes red before the user has touched a field).
+  - **Player flow**: Profile (name, email, phone, gender) → Location (address, country/province/city cascading picker, zip code) → Padel style (category, preferred side, dominant hand) → Terms.
+  - **Owner flow**: Club Basics (name, email, phone, address, country/province/city, zip code) → Legal & Billing (legal name, CUIT-formatted tax ID) → Plan → Profile (display name + full review summary) → Terms.
+  - Google OAuth auto-fill — name, email, and avatar (`photoURL`) are pulled from Clerk's normalized user data (populated from Google's `given_name`/`family_name`/profile photo on sign-up) and pre-fill the relevant fields; still fully editable.
+  - Cross-field auto-fill chains — club `legalName` and the owner's `displayName` track the club `name` live until manually overridden; `country` is auto-detected from the phone field's calling code.
+  - Phone field — a compound field with a searchable calling-code combobox (real flag icons via `country-flag-icons`, not emoji) next to a plain number input. Selecting a code sets `country` directly; the number itself is formatted live to the **selected country's own real national convention** via `libphonenumber-js`'s `AsYouType` (not a single hardcoded format), with a matching per-country example placeholder.
+  - Location — real cascading Country → Province/State → City picker (`country-state-city` npm data, no external API), shared between both flows via one `useCountryProvinceCityFields` hook so the parent step can lay the fields out however it needs.
+  - Plan step — four real tiers on `Club.plan` (`BASIC`/`PRO`/`PLUS`/`MAX`, ARS pricing, a monthly/annual billing toggle with an exact "save 2 months" annual discount, PRO marked "Most Popular"), still only a plan-tier signal — does not create `Court` rows (real court creation happens later in `/dashboard/courts`).
   - Terms & conditions checkbox — enforced at submit time. (mocked: acceptance itself is never persisted — no `acceptedTermsAt`/version field exists on `UserProfile`)
 - Invite-error page — static error message, shown when profile provisioning fails; no logic of its own.
 
 ## Landing Page (`/`)
 
-Entirely a marketing shell — every content section below is placeholder copy, disconnected from any real club/court/user data:
+Rewritten to describe real, shipped platform capabilities instead of fabricated marketing content. Sections that had zero backing feature (a fake "+2,400 players" hero badge, an Events section with no `Event` model anywhere, and five fabricated testimonials from invented people) were removed entirely rather than reworded — there was nothing real to describe them as. Section order: Header → Hero → Trusted (stats) → About (accordion) → Features (carousel) → CTA banner → Footer.
 
-- Hero, header, CTA banner, footer shell — static, no data.
-- "Beyond the Court" stats section (member count, satisfaction rate, coach count). (mocked: hardcoded `STATS` array, `app/_components/LandingTrusted/consts.ts`)
-- "Why join us" accordion. (mocked: hardcoded `ABOUT_ITEMS`, `app/_components/LandingAbout/consts.ts`)
-- Facilities grid. (mocked: hardcoded `FACILITIES` array, unrelated to any real club's actual courts, `app/_components/LandingFeatures/consts.ts`)
-- Events grid. (mocked: hardcoded `EVENTS` array — no `Event` model or service exists at all, `app/_components/LandingEvents/consts.ts`)
-- Testimonials carousel. (mocked: hardcoded fake names/quotes, `app/_components/LandingTestimonials/consts.ts`)
-- Footer contact info and social links. (mocked: placeholder email/phone, all social links point to `#`, `app/_components/LandingFooter/consts.ts`)
+- Hero, header, CTA banner, footer shell — static, no data; copy describes the real dual-sided value (players book, owners manage).
+- "How It Works" stats strip — real capability highlights (4 plan tiers, real-time court availability, secure Mercado Pago payments), not fabricated social-proof numbers. `app/_components/LandingTrusted/consts.ts`.
+- "Why join us" accordion — real-time booking, built-in secure payments, owner tooling (courts/availability/audit trail), player profiles (preferred side/dominant hand/skill category). `app/_components/LandingAbout/consts.ts`.
+- Platform Features carousel — reframed from a single club's physical "facilities" to actual software capabilities (availability, booking, payments, closures, profiles, plans, audit trail, Argentina-specific localization), reusing the same stock imagery. `app/_components/LandingFeatures/consts.ts` (`PLATFORM_FEATURES`, renamed from `FACILITIES`).
+- Footer contact info and social links — still placeholder (email/phone, social links point to `#`) — this one gap remains open; no real business contact info exists anywhere to substitute. `app/_components/LandingFooter/consts.ts`.
 
 ## Player Dashboard (`/dashboard`, role: player)
 
@@ -37,7 +41,7 @@ Entirely a marketing shell — every content section below is placeholder copy, 
 
 **Player Overview sidebar/banner**:
 
-- Player style card (preferred side + dominant-hand badge) — real, editable data. `preferredSide`/`dominantHand` are nullable `UserProfile` columns; a pencil icon opens `EditPlayerStyleDialog` to set them via `PATCH /api/me`, and unset values render "Not set yet". Served through `usePlayerOverviewData()` (`PlayerOverview/hooks.ts`) reading `useAuth().user`.
+- Player style card (preferred side + dominant-hand badge) — real, editable data. `preferredSide`/`dominantHand` are nullable `UserProfile` columns, now also collected upfront in the onboarding wizard's Padel style step; a pencil icon still opens `EditPlayerStyleDialog` to change them later via `PATCH /api/me`, and unset values render "Not set yet". Served through `usePlayerOverviewData()` (`PlayerOverview/hooks.ts`) reading `useAuth().user`.
 - Latest partner card (name, avatar, times played together, last played) — clicking it opens the shared `PlayerProfileCard` (skill level, side, handedness, email, phone). (mocked: the partner itself is still `MOCK_LATEST_PARTNER`, `PlayerOverview/consts.ts` — no real partner-history model exists yet, so the card is fed extended mock data rather than a real player)
 - Performance summary (tournament record, preferred position, latest results). (mocked: entire `PerformanceSummary` — `MOCK_PERFORMANCE`, same file)
 
@@ -53,7 +57,7 @@ Everything here is fully real — no mocked data found on the owner side.
 
 - **Courts** (`/dashboard/courts`) — court list/table, create/edit form (including a "Price (per reservation)" field, used when the club requires prepayment), deactivate (soft delete), weekly availability editor, and a "Closures" action per court that opens a drawer to block the court for a date/time range with a required reason (shown to players); lists past/upcoming closures with cancel actions, and an "apply to all courts" checkbox loops the create call across every active court. Creating a closure is blocked (409) if it overlaps active reservations. All backed by `/api/clubs/courts*`.
 - **Reservations** (`/dashboard/reservations`) — availability grid, reservations table, slot details dialog, and Complete/No-show/Cancel actions (owner-cancel refunds any `COMPLETED` payment via Mercado Pago first). All backed by `/api/clubs/reservations*`.
-- **Club Settings** (`/dashboard/settings/club`) — club profile form (name, legal name, tax ID, contact, timezone, currency, a "Require online payment at booking" toggle for `requiresPrepayment`), 1:1 with the `Club` model. Note: there's no club-wide "operating hours" concept — scheduling is only expressed per-court.
+- **Club Settings** (`/dashboard/settings/club`) — club profile form (name, legal name, tax ID, contact, a "Require online payment at booking" toggle for `requiresPrepayment`), 1:1 with the `Club` model. Timezone/currency are no longer user-facing anywhere in the app (removed from this form, from onboarding, and from every other surface that showed them) — every club is implicitly Buenos Aires time / ARS, silently defaulted rather than asked for or editable, since there was never more than one real value in practice. Note: there's no club-wide "operating hours" concept — scheduling is only expressed per-court.
 - **Dashboard Home owner cards** (Hero, Schedule, Utilization, Overview, Activity) — all computed from a shared `useOwnerReservationSummary()` hook hitting real reservation data.
 - **Audit Log** (`/dashboard/audit-logs`) — fully real: filterable (entity, action), paginated table over `GET /api/clubs/audit-logs`.
 

@@ -17,12 +17,12 @@ export function LandingAbout() {
     <section id="about" className={`${CONTAINER} py-12`}>
       <div className="flex flex-wrap items-start justify-between gap-6 mb-10">
         <h2 className="text-3xl md:text-[34px] font-bold leading-tight tracking-tight">
-          <span className="text-foreground">Built for Players Who Want</span>
+          <span className="text-foreground">Built for Players and</span>
           <br />
-          <span className="text-muted-foreground">More Than Just a Match</span>
+          <span className="text-muted-foreground">Clubs Who Want More</span>
         </h2>
         <span className="inline-flex items-center bg-foreground text-white rounded-full px-4 py-2 text-[13px] font-semibold">
-          Paddle, People, Purpose
+          Booking, Simplified
         </span>
       </div>
 

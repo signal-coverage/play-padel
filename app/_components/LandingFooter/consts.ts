@@ -3,7 +3,7 @@ import type { FooterLinkColumn } from "./types";
 export { ease } from "@/lib/consts/animation";
 
 export const TAGLINE =
-  "We're more than a paddle club — we're a community that lives for rallies, laughs, and friendly competition.";
+  "The platform padel clubs and players use to book, manage, and play — without the back-and-forth.";
 
 export const CONTACT = {
   email: "hello@playpadel.com",
@@ -16,8 +16,7 @@ export const FOOTER_COLUMNS: FooterLinkColumn[] = [
     links: [
       { label: "Homepage", href: "/" },
       { label: "About", href: "#about" },
-      { label: "Facilities", href: "#features" },
-      { label: "Events", href: "#modules" },
+      { label: "Features", href: "#features" },
     ],
   },
   {

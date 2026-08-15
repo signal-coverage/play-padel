@@ -1,12 +1,10 @@
 import {
   LandingAbout,
   LandingCtaBanner,
-  LandingEvents,
   LandingFeatures,
   LandingFooter,
   LandingHeader,
   LandingHero,
-  LandingTestimonials,
   LandingTrusted,
 } from "@/app/_components";
 
@@ -18,8 +16,6 @@ export default function HomePage() {
       <LandingTrusted />
       <LandingAbout />
       <LandingFeatures />
-      <LandingEvents />
-      <LandingTestimonials />
       <LandingCtaBanner />
       <LandingFooter />
     </div>

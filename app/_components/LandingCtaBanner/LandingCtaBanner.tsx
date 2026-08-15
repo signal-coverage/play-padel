@@ -33,9 +33,9 @@ export function LandingCtaBanner() {
           viewport={{ once: true }}
           transition={{ duration: 0.5, delay: 0.06, ease }}
         >
-          Be Part of a Paddle Club
+          Ready to Book
           <br />
-          That Feels Like Home
+          Your Next Match?
         </motion.h2>
 
         <motion.p
@@ -45,8 +45,9 @@ export function LandingCtaBanner() {
           viewport={{ once: true }}
           transition={{ duration: 0.5, delay: 0.12, ease }}
         >
-          Join a vibrant community of paddle lovers where every match brings new
-          friends, new skills, and endless fun on and off the court.
+          Find a club, check real-time availability, and reserve your court in
+          minutes — or bring your own club onto Play Padel and manage it all
+          from one dashboard.
         </motion.p>
 
         <motion.div
@@ -60,7 +61,7 @@ export function LandingCtaBanner() {
             href="/signup"
             className="inline-flex items-center bg-[#DFFD36] text-[#111111] rounded-full px-7 py-3.5 text-[15px] font-semibold hover:-translate-y-0.5 hover:shadow-xl transition-all duration-200"
           >
-            Let&apos;s Play Paddle!
+            Get Started Free
           </Link>
         </motion.div>
       </motion.div>
