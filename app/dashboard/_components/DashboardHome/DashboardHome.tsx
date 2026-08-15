@@ -26,7 +26,7 @@ export function DashboardHome() {
   const role = user.role;
 
   return (
-    <div className="flex flex-col gap-3 md:h-full">
+    <div className="flex flex-col gap-3 md:h-full w-full">
       <div className="flex shrink-0 flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="font-heading text-xl font-semibold tracking-tight">
           {role === "owner" ? (

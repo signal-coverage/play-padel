@@ -3,6 +3,7 @@ import {
   FileText,
   LayoutGrid,
   Landmark,
+  Trophy,
   User,
   Users,
   type LucideIcon,
@@ -19,5 +20,6 @@ export const STEP_META: Record<
   plan: { label: "Plan", icon: LayoutGrid },
   profile: { label: "Profile", icon: User },
   playerProfile: { label: "Profile", icon: User },
+  padelProfile: { label: "Padel", icon: Trophy },
   terms: { label: "Terms", icon: FileText },
 };

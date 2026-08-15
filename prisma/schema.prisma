@@ -14,10 +14,15 @@ model Club {
   taxId     String?
   email     String
   phone     String?
+  address   String?
+  country   String?
+  province  String?
+  city      String?
+  zipCode   String?
   logoUrl   String?
   timezone  String
   currency  String
-  plan      Plan       @default(FREE)
+  plan      Plan       @default(BASIC)
   status    ClubStatus @default(ACTIVE)
   requiresPrepayment Boolean @default(false)
   createdAt DateTime   @default(now())
@@ -35,10 +40,10 @@ model Club {
 }
 
 enum Plan {
-  FREE
   BASIC
   PRO
-  CUSTOM
+  PLUS
+  MAX
 }
 
 enum ClubStatus {
@@ -88,6 +93,10 @@ model UserProfile {
   photoURL      String?
   phone         String?
   address       String?
+  country       String?
+  province      String?
+  city          String?
+  zipCode       String?
   gender        Gender?
   padelCategory Int?
   preferredSide PreferredSide?

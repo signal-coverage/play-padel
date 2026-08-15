@@ -15,14 +15,14 @@ export const COURT_RANGE_OPTIONS: {
   plan: Plan;
   note?: string;
 }[] = [
-  { value: "1-2", label: "1–2 courts", plan: "FREE" },
-  { value: "3-5", label: "3–5 courts", plan: "BASIC" },
-  { value: "6-10", label: "6–10 courts", plan: "PRO" },
+  { value: "1-2", label: "1–2 courts", plan: "BASIC" },
+  { value: "3-4", label: "3–4 courts", plan: "PRO" },
+  { value: "5-7", label: "5–7 courts", plan: "PLUS" },
   {
-    value: "11+",
-    label: "11+ courts",
-    plan: "CUSTOM",
-    note: "Our team will reach out to configure enterprise pricing.",
+    value: "8+",
+    label: "8+ courts",
+    plan: "MAX",
+    note: "Custom pricing — our team will reach out to configure enterprise pricing.",
   },
 ];
 export type CourtRangeValue = (typeof COURT_RANGE_OPTIONS)[number]["value"];
@@ -85,8 +85,14 @@ export const onboardingFormSchema = z
     firstName: z.string().optional(),
     lastName: z.string().optional(),
     address: z.string().optional(),
+    country: z.string().optional(),
+    province: z.string().optional(),
+    city: z.string().optional(),
+    zipCode: z.string().optional(),
     gender: z.enum(GENDER_VALUES).optional(),
     padelCategory: z.string().optional(),
+    preferredSide: z.enum(["forehand", "backhand"]).optional(),
+    dominantHand: z.enum(["right", "left"]).optional(),
     // Terms (both)
     acceptedTerms: z
       .boolean()
@@ -98,10 +104,9 @@ export const onboardingFormSchema = z
         (
           | "name"
           | "phone"
+          | "address"
           | "legalName"
           | "taxId"
-          | "timezone"
-          | "currency"
           | "courtRange"
           | "displayName"
         ),
@@ -109,10 +114,9 @@ export const onboardingFormSchema = z
       ][] = [
         ["name", "Club name is required"],
         ["phone", "Phone is required"],
+        ["address", "Address is required"],
         ["legalName", "Legal name is required"],
         ["taxId", "Tax ID is required"],
-        ["timezone", "Timezone is required"],
-        ["currency", "Currency is required"],
         ["courtRange", "Please select a court range"],
         ["displayName", "Display name is required"],
       ];
@@ -162,7 +166,12 @@ export const onboardingFormSchema = z
 export type OnboardingFormValues = z.infer<typeof onboardingFormSchema>;
 
 // The wizard is two different flows sharing a first ("who are you") step.
-export const PLAYER_FLOW = ["userType", "playerProfile", "terms"] as const;
+export const PLAYER_FLOW = [
+  "userType",
+  "playerProfile",
+  "padelProfile",
+  "terms",
+] as const;
 export const OWNER_FLOW = [
   "userType",
   "clubBasics",
@@ -180,8 +189,17 @@ export const STEP_FIELDS: Record<
   (keyof OnboardingFormValues)[]
 > = {
   userType: ["userType"],
-  clubBasics: ["name", "email", "phone"],
-  legalBilling: ["legalName", "taxId", "timezone", "currency"],
+  clubBasics: [
+    "name",
+    "email",
+    "phone",
+    "address",
+    "country",
+    "province",
+    "city",
+    "zipCode",
+  ],
+  legalBilling: ["legalName", "taxId"],
   plan: ["courtRange"],
   profile: ["displayName"],
   playerProfile: [
@@ -189,9 +207,13 @@ export const STEP_FIELDS: Record<
     "lastName",
     "email",
     "phone",
-    "address",
     "gender",
-    "padelCategory",
+    "address",
+    "country",
+    "province",
+    "city",
+    "zipCode",
   ],
+  padelProfile: ["padelCategory", "preferredSide", "dominantHand"],
   terms: ["acceptedTerms"],
 };

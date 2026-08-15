@@ -8,8 +8,13 @@ export const createClubSchema = z.object({
   legalName: z.string().optional(),
   taxId: z.string().optional(),
   phone: z.string().optional(),
+  address: z.string().optional(),
+  country: z.string().optional(),
+  province: z.string().optional(),
+  city: z.string().optional(),
+  zipCode: z.string().optional(),
   logoUrl: z.string().optional(),
-  plan: z.enum(["FREE", "BASIC", "PRO", "CUSTOM"]).optional(),
+  plan: z.enum(["BASIC", "PRO", "PLUS", "MAX"]).optional(),
 });
 
 export const updateClubSchema = z.object({
@@ -18,10 +23,15 @@ export const updateClubSchema = z.object({
   taxId: z.string().optional(),
   email: z.string().email("Invalid email address").optional(),
   phone: z.string().optional(),
+  address: z.string().optional(),
+  country: z.string().optional(),
+  province: z.string().optional(),
+  city: z.string().optional(),
+  zipCode: z.string().optional(),
   logoUrl: z.string().optional(),
   timezone: z.string().optional(),
   currency: z.string().optional(),
-  plan: z.enum(["FREE", "BASIC", "PRO", "CUSTOM"]).optional(),
+  plan: z.enum(["BASIC", "PRO", "PLUS", "MAX"]).optional(),
   status: z.enum(["ACTIVE", "INACTIVE", "SUSPENDED", "DISABLED"]).optional(),
   requiresPrepayment: z.boolean().optional(),
 });

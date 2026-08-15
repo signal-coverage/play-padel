@@ -1,11 +1,14 @@
 import { useEffect, useRef } from "react";
-import { Building2, Mail, Phone } from "lucide-react";
+import { Building2, Mail } from "lucide-react";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { useCountryProvinceCityFields } from "../../shared/CountryProvinceCityFields";
+import { PhoneField } from "../../shared/PhoneField";
 import type { ClubBasicsStepProps } from "./types";
 
 export function ClubBasicsStep({
   register,
+  control,
   errors,
   shouldFocusHeading,
 }: ClubBasicsStepProps) {
@@ -16,6 +19,9 @@ export function ClubBasicsStep({
       headingRef.current?.focus();
     }
   }, [shouldFocusHeading]);
+
+  const { countryField, provinceField, cityField } =
+    useCountryProvinceCityFields({ control, errors });
 
   return (
     <>
@@ -28,7 +34,7 @@ export function ClubBasicsStep({
           Tell us about your club
         </h2>
         <p className="text-sm text-muted-foreground">
-          Primary contact information players will see.
+          Primary contact information and location players will see.
         </p>
       </div>
       <Field>
@@ -62,20 +68,44 @@ export function ClubBasicsStep({
         <FieldError errors={[errors.email]} />
       </Field>
 
-      <Field>
-        <FieldLabel htmlFor="phone">Phone *</FieldLabel>
-        <div className="relative">
-          <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            id="phone"
-            className="pl-9"
-            placeholder="+54 11 1234-5678"
-            {...register("phone")}
-            aria-invalid={!!errors.phone}
-          />
+      <div className="flex flex-col sm:flex-row gap-4">
+        <div className="flex-1">
+          <PhoneField control={control} errors={errors} />
         </div>
-        <FieldError errors={[errors.phone]} />
-      </Field>
+        <div className="flex-1">{countryField}</div>
+      </div>
+
+      <div className="flex flex-col sm:flex-row gap-4">
+        <div className="flex-1">{provinceField}</div>
+        <div className="flex-1">{cityField}</div>
+      </div>
+
+      <div className="flex flex-col sm:flex-row gap-4">
+        <div className="flex-1">
+          <Field>
+            <FieldLabel htmlFor="zipCode">Zip code</FieldLabel>
+            <Input
+              id="zipCode"
+              placeholder="1642"
+              {...register("zipCode")}
+              aria-invalid={!!errors.zipCode}
+            />
+            <FieldError errors={[errors.zipCode]} />
+          </Field>
+        </div>
+        <div className="flex-1">
+          <Field>
+            <FieldLabel htmlFor="address">Address *</FieldLabel>
+            <Input
+              id="address"
+              placeholder="Av. Corrientes 1234"
+              {...register("address")}
+              aria-invalid={!!errors.address}
+            />
+            <FieldError errors={[errors.address]} />
+          </Field>
+        </div>
+      </div>
     </>
   );
 }

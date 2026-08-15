@@ -14,8 +14,11 @@ export function ProfileStep({
   phone,
   legalName,
   taxId,
-  timezoneLabel,
-  currencyLabel,
+  address,
+  country,
+  province,
+  city,
+  zipCode,
   courtRangeLabel,
   shouldFocusHeading,
 }: ProfileStepProps) {
@@ -63,10 +66,13 @@ export function ProfileStep({
         <SummaryRow label="Club" value={clubName} />
         <SummaryRow label="Email" value={email} />
         <SummaryRow label="Phone" value={phone} />
+        <SummaryRow label="Address" value={address} />
+        <SummaryRow label="Country" value={country} />
+        <SummaryRow label="Province" value={province} />
+        <SummaryRow label="City" value={city} />
+        <SummaryRow label="Zip code" value={zipCode} />
         <SummaryRow label="Legal name" value={legalName} />
         <SummaryRow label="Tax ID" value={taxId} />
-        <SummaryRow label="Timezone" value={timezoneLabel} />
-        <SummaryRow label="Currency" value={currencyLabel} />
         <SummaryRow label="Courts" value={courtRangeLabel} />
       </MutedPanel>
     </>

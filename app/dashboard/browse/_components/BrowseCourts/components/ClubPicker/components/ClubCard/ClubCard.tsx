@@ -18,7 +18,7 @@ export function ClubCard({ club, selected, onClick }: ClubCardProps) {
       <div className="min-w-0 text-left">
         <p className="truncate text-sm font-semibold">{club.name}</p>
         <p className="truncate text-xs text-muted-foreground">
-          {club.phone ?? club.timezone}
+          {club.phone ?? club.email}
         </p>
       </div>
     </button>

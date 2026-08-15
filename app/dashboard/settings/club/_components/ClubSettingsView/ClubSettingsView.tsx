@@ -130,28 +130,6 @@ export function ClubSettingsView() {
           <FieldError errors={[errors.logoUrl]} />
         </Field>
 
-        <Field>
-          <FieldLabel htmlFor="club-timezone">Timezone *</FieldLabel>
-          <Input
-            id="club-timezone"
-            placeholder="America/Argentina/Buenos_Aires"
-            {...register("timezone")}
-            aria-invalid={!!errors.timezone}
-          />
-          <FieldError errors={[errors.timezone]} />
-        </Field>
-
-        <Field>
-          <FieldLabel htmlFor="club-currency">Currency *</FieldLabel>
-          <Input
-            id="club-currency"
-            placeholder="ARS"
-            {...register("currency")}
-            aria-invalid={!!errors.currency}
-          />
-          <FieldError errors={[errors.currency]} />
-        </Field>
-
         <Field orientation="horizontal">
           <FieldLabel htmlFor="club-requires-prepayment">
             Require online payment at booking
