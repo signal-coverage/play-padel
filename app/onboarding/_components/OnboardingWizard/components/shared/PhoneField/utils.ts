@@ -1,4 +1,8 @@
-import { AsYouType, getExampleNumber, type CountryCode } from "libphonenumber-js";
+import {
+  AsYouType,
+  getExampleNumber,
+  type CountryCode,
+} from "libphonenumber-js";
 import examples from "libphonenumber-js/examples.mobile.json";
 
 // Formats raw digits into the SELECTED country's own real national
@@ -33,7 +37,9 @@ export function formatPhoneNumber(
 // "11 1234-5678" placeholder this used to show was Argentina-specific and
 // misleading once every country shares this field, so there's nothing to
 // show until a country is actually selected.
-export function getPhonePlaceholder(countryIsoCode: string | undefined): string {
+export function getPhonePlaceholder(
+  countryIsoCode: string | undefined,
+): string {
   if (!countryIsoCode) return "";
   const example = getExampleNumber(countryIsoCode as CountryCode, examples);
   return example?.formatNational() ?? "";

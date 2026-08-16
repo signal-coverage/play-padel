@@ -113,8 +113,10 @@ export async function POST(request: Request) {
           // falling back to null instead of the existing value would wipe out
           // anything the player already set via the dashboard's play-style
           // editor between their first submit and a later resubmit.
-          preferredSide: data.preferredSide ?? existingProfile?.preferredSide ?? null,
-          dominantHand: data.dominantHand ?? existingProfile?.dominantHand ?? null,
+          preferredSide:
+            data.preferredSide ?? existingProfile?.preferredSide ?? null,
+          dominantHand:
+            data.dominantHand ?? existingProfile?.dominantHand ?? null,
           photoURL: clerkUser?.imageUrl ?? existingProfile?.photoURL ?? null,
           updatedBy: userId,
         },

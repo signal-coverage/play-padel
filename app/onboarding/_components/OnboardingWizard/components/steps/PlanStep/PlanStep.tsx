@@ -136,7 +136,10 @@ export function PlanStep({
                     : undefined
                 }
               >
-                <PlanPricingCard plan={selectedPlan} billingCycle={billingCycle} />
+                <PlanPricingCard
+                  plan={selectedPlan}
+                  billingCycle={billingCycle}
+                />
               </div>
             </div>
           );

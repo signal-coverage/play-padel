@@ -9,7 +9,8 @@ export function ShareButton() {
   async function handleShare() {
     const shareData = {
       ...SHARE_DATA,
-      url: typeof window !== "undefined" ? window.location.href : SHARE_DATA.url,
+      url:
+        typeof window !== "undefined" ? window.location.href : SHARE_DATA.url,
     };
 
     if (typeof navigator !== "undefined" && navigator.share) {

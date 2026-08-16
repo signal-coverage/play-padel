@@ -43,9 +43,7 @@ export function PadelProfileStep({
         >
           Your padel style
         </h2>
-        <p className="text-sm text-muted-foreground">
-          Tell us how you play.
-        </p>
+        <p className="text-sm text-muted-foreground">Tell us how you play.</p>
       </div>
 
       <Field>

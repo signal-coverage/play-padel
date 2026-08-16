@@ -24,7 +24,8 @@ export function PlanPricingCard({ plan, billingCycle }: PlanPricingCardProps) {
   const courtRangeLabel = COURT_RANGE_OPTIONS.find(
     (option) => option.plan === activePlan,
   )?.label;
-  const hasFixedPrice = details.monthlyPrice !== null && details.annualPrice !== null;
+  const hasFixedPrice =
+    details.monthlyPrice !== null && details.annualPrice !== null;
   const Icon = PLAN_ICONS[activePlan];
   const emphasis = PLAN_EMPHASIS[activePlan];
   const isAnnual = billingCycle === "annual";
@@ -34,7 +35,10 @@ export function PlanPricingCard({ plan, billingCycle }: PlanPricingCardProps) {
       : (details.monthlyPrice as number)
     : null;
   const savingsMonths = hasFixedPrice
-    ? getSavingsMonths(details.monthlyPrice as number, details.annualPrice as number)
+    ? getSavingsMonths(
+        details.monthlyPrice as number,
+        details.annualPrice as number,
+      )
     : 0;
 
   return (
@@ -97,7 +101,9 @@ export function PlanPricingCard({ plan, billingCycle }: PlanPricingCardProps) {
 
               <div>
                 <div className="flex items-center gap-2">
-                  <p className="text-lg font-bold text-foreground">{activePlan}</p>
+                  <p className="text-lg font-bold text-foreground">
+                    {activePlan}
+                  </p>
                   {activePlan === "PRO" && (
                     <span className="inline-flex items-center rounded-full bg-warning/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-warning">
                       Most Popular

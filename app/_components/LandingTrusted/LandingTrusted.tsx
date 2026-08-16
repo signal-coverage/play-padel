@@ -34,8 +34,7 @@ export function LandingTrusted() {
             <span className="font-bold">
               Whether you&apos;re booking a court or running a club
             </span>{" "}
-            — Play Padel connects players and clubs in one place, in real
-            time.
+            — Play Padel connects players and clubs in one place, in real time.
           </motion.h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-x-8 gap-y-8 sm:gap-y-10 mt-10 sm:mt-12">

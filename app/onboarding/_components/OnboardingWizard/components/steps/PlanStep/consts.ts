@@ -1,4 +1,10 @@
-import { Crown, LayoutGrid, Sparkles, Zap, type LucideIcon } from "lucide-react";
+import {
+  Crown,
+  LayoutGrid,
+  Sparkles,
+  Zap,
+  type LucideIcon,
+} from "lucide-react";
 import type { Plan } from "@/core/clubs/types";
 
 // One icon per tier, escalating in visual weight — matches the option

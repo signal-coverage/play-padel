@@ -20,6 +20,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Untracked prototype scaffold (see .gitignore) — not part of the shipped app.
+    ".lovable-project/**",
   ]),
 ]);
 

@@ -45,8 +45,8 @@ export function useCountryProvinceCityFields({
     [countryIsoCode],
   );
 
-  const [stateIsoCode, setStateIsoCode] = useState<string | undefined>(() =>
-    states.find((s) => s.name === provinceField.value)?.isoCode,
+  const [stateIsoCode, setStateIsoCode] = useState<string | undefined>(
+    () => states.find((s) => s.name === provinceField.value)?.isoCode,
   );
 
   const cities = useMemo(
