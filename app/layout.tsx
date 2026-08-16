@@ -29,28 +29,44 @@ const spaceGrotesk = Space_Grotesk({
   weight: ["400", "500", "600", "700"],
 });
 
+const APP_NAME = "Play Padel";
+const APP_DESCRIPTION =
+  "Find available padel court appointments across different clubs in one place.";
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+
+const structuredData = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  name: APP_NAME,
+  description: APP_DESCRIPTION,
+  applicationCategory: "SportsApplication",
+  url: APP_URL,
+  offers: {
+    "@type": "Offer",
+    category: "SaaS",
+  },
+};
+
 export const metadata: Metadata = {
-  title: "Play Padel",
-  description:
-    "Find available padel court appointments across different clubs in one place.",
-  applicationName: "Play Padel",
+  metadataBase: new URL(APP_URL),
+  title: APP_NAME,
+  description: APP_DESCRIPTION,
+  applicationName: APP_NAME,
   appleWebApp: {
-    title: "Play Padel",
+    title: APP_NAME,
   },
   manifest: "/site.webmanifest",
   openGraph: {
-    title: "Play Padel",
-    description:
-      "Find available padel court appointments across different clubs in one place.",
-    siteName: "Play Padel",
+    title: APP_NAME,
+    description: APP_DESCRIPTION,
+    siteName: APP_NAME,
     images: ["/logo.png"],
     type: "website",
   },
   twitter: {
     card: "summary",
-    title: "Play Padel",
-    description:
-      "Find available padel court appointments across different clubs in one place.",
+    title: APP_NAME,
+    description: APP_DESCRIPTION,
     images: ["/logo.png"],
   },
   icons: {
@@ -90,6 +106,12 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="min-h-dvh flex flex-col">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(structuredData).replace(/</g, "\\u003c"),
+          }}
+        />
         <LocatorSetup />
         <Analytics />
         <SpeedInsights />

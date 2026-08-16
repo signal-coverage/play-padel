@@ -9,7 +9,8 @@ import { useAuth } from "@/hooks/use-auth";
 import { Card } from "@/components/ui/card";
 import { LogoBadge } from "@/components/LogoBadge";
 import { Button } from "@/components/ui/button";
-import { CURRENCIES, TIMEZONES } from "@/lib/consts";
+import { cn } from "@/lib/utils/utils";
+import { TIMEZONES } from "@/lib/consts";
 import {
   onboardingFormSchema,
   STEP_FIELDS,
@@ -22,6 +23,7 @@ import {
 import { StepIndicator } from "./components/StepIndicator";
 import { ClubBasicsStep } from "./components/steps/ClubBasicsStep";
 import { LegalBillingStep } from "./components/steps/LegalBillingStep";
+import { PadelProfileStep } from "./components/steps/PadelProfileStep";
 import { PlanStep } from "./components/steps/PlanStep";
 import { PlayerProfileStep } from "./components/steps/PlayerProfileStep";
 import { ProfileStep } from "./components/steps/ProfileStep";
@@ -47,22 +49,36 @@ export function OnboardingWizard() {
 
   const form = useForm<OnboardingFormValues>({
     resolver: zodResolver(onboardingFormSchema),
+    // Reactive validation is required for the Continue/Submit buttons below
+    // to disable themselves live as required fields go from empty to filled
+    // (or vice versa), rather than only surfacing errors after a click.
+    mode: "onChange",
     defaultValues: {
       userType: undefined,
-      name: "",
+      name: user?.displayName ? `${user.displayName} Club` : "",
       email: user?.email ?? "",
       phone: "",
       legalName: "",
       taxId: "",
       timezone: TIMEZONES[0].value,
       currency: "ARS",
-      courtRange: undefined,
-      displayName: user?.displayName || user?.email?.split("@")[0] || "",
-      firstName: "",
-      lastName: "",
+      // PRO is the highlighted "Most Popular" option in PlanStep — default
+      // to it rather than leaving the choice blank, matching that nudge
+      // instead of contradicting it with a blank initial state.
+      courtRange: COURT_RANGE_OPTIONS.find((option) => option.plan === "PRO")
+        ?.value,
+      displayName: "",
+      firstName: user?.firstName ?? "",
+      lastName: user?.lastName ?? "",
       address: "",
+      country: "",
+      province: "",
+      city: "",
+      zipCode: "",
       gender: undefined,
       padelCategory: "unknown",
+      preferredSide: undefined,
+      dominantHand: undefined,
       acceptedTerms: false,
     },
   });
@@ -79,14 +95,52 @@ export function OnboardingWizard() {
 
   // Clerk's useUser() resolves after this component's first render, so the
   // useForm defaultValues (captured once at mount) miss it — this backfills
-  // the email once Clerk data lands, for both Google and email-OTP sign-up.
+  // the email and name fields once Clerk data lands, for both Google and
+  // email-OTP sign-up. Name fields come from Clerk's normalized
+  // firstName/lastName, which for Google OAuth are populated from
+  // given_name/family_name. The club "name" field is also seeded from the
+  // account's display name — a business Google account's display name is
+  // often the business name itself, so it's a reasonable editable starting
+  // guess for owners, same as the player name fields.
   useEffect(() => {
     if (user?.email && !getValues("email")) {
       setValue("email", user.email);
     }
-  }, [user?.email, getValues, setValue]);
+    if (user?.firstName && !getValues("firstName")) {
+      setValue("firstName", user.firstName);
+    }
+    if (user?.lastName && !getValues("lastName")) {
+      setValue("lastName", user.lastName);
+    }
+    if (user?.displayName && !getValues("name")) {
+      setValue("name", `${user.displayName} Club`);
+    }
+  }, [
+    user?.email,
+    user?.firstName,
+    user?.lastName,
+    user?.displayName,
+    getValues,
+    setValue,
+  ]);
 
   const watchedValues = useWatch({ control });
+
+  // Legal name and display name both default to the club name as the owner
+  // types it in an earlier step (most small clubs register under the same
+  // name they trade as, and a solo owner's "display name" in the app is
+  // often just the club itself). Each stops tracking the moment the owner
+  // types their own value into that field — the empty-check means it only
+  // ever fills in a value the user hasn't already overridden, it never
+  // clobbers an edit.
+  useEffect(() => {
+    if (watchedValues.name && !getValues("legalName")) {
+      setValue("legalName", watchedValues.name);
+    }
+    if (watchedValues.name && !getValues("displayName")) {
+      setValue("displayName", watchedValues.name);
+    }
+  }, [watchedValues.name, getValues, setValue]);
 
   // Both flows share the "userType" step; only the choice made there decides
   // whether the club-creation steps are part of the wizard at all.
@@ -98,6 +152,27 @@ export function OnboardingWizard() {
   // is true — that sidesteps the AnimatePresence mode="wait" race, since the
   // effect fires exactly when that step's own DOM node exists.
   const shouldFocusHeading = hasNavigatedOnce;
+
+  // Continue/Submit are disabled until every field belonging to THIS step is
+  // currently valid — scoped to currentKey's own fields (not the whole
+  // form), so a later step's required fields don't block navigation through
+  // earlier ones.
+  //
+  // This deliberately does NOT use RHF's own `errors`/`trigger()` — running
+  // validation through RHF is what makes it visible (it populates the same
+  // `errors` object FieldError reads from), which would flash "required"
+  // messages the instant a blank step loads, before the user has touched
+  // anything. A fresh, independent zod parse computes the same validity for
+  // the button without ever touching what's displayed — error text still
+  // only appears the original way, through interaction or a failed Continue.
+  const stepValidation = onboardingFormSchema.safeParse(watchedValues);
+  const currentStepInvalid =
+    !stepValidation.success &&
+    stepValidation.error.issues.some((issue) =>
+      STEP_FIELDS[currentKey].includes(
+        issue.path[0] as keyof OnboardingFormValues,
+      ),
+    );
 
   function onInvalidSubmit(formErrors: typeof errors) {
     if (formErrors.acceptedTerms) {
@@ -153,14 +228,6 @@ export function OnboardingWizard() {
     }
   }
 
-  const selectedCurrency = useMemo(
-    () => CURRENCIES.find((c) => c.value === watchedValues.currency),
-    [watchedValues.currency],
-  );
-  const selectedTimezone = useMemo(
-    () => TIMEZONES.find((t) => t.value === watchedValues.timezone),
-    [watchedValues.timezone],
-  );
   const selectedCourtRange = useMemo(
     () => COURT_RANGE_OPTIONS.find((o) => o.value === watchedValues.courtRange),
     [watchedValues.courtRange],
@@ -168,7 +235,12 @@ export function OnboardingWizard() {
 
   return (
     <div className="min-h-dvh flex items-center justify-center p-4 bg-muted">
-      <div className="w-full max-w-xl">
+      <div
+        className={cn(
+          "w-full transition-[max-width] duration-300 ease-out",
+          currentKey === "plan" ? "max-w-3xl" : "max-w-xl",
+        )}
+      >
         <div className="mb-6 text-center">
           <LogoBadge size="md" className="mb-3" />
           <h1 className="text-2xl font-bold text-foreground">
@@ -217,6 +289,7 @@ export function OnboardingWizard() {
                   >
                     <ClubBasicsStep
                       register={register}
+                      control={control}
                       errors={errors}
                       shouldFocusHeading={shouldFocusHeading}
                     />
@@ -281,12 +354,11 @@ export function OnboardingWizard() {
                       phone={watchedValues.phone ?? ""}
                       legalName={watchedValues.legalName ?? ""}
                       taxId={watchedValues.taxId ?? ""}
-                      timezoneLabel={
-                        selectedTimezone?.label ?? watchedValues.timezone ?? ""
-                      }
-                      currencyLabel={
-                        selectedCurrency?.label ?? watchedValues.currency ?? ""
-                      }
+                      address={watchedValues.address ?? ""}
+                      country={watchedValues.country ?? ""}
+                      province={watchedValues.province ?? ""}
+                      city={watchedValues.city ?? ""}
+                      zipCode={watchedValues.zipCode ?? ""}
                       courtRangeLabel={
                         selectedCourtRange?.label ??
                         watchedValues.courtRange ??
@@ -310,6 +382,25 @@ export function OnboardingWizard() {
                   >
                     <PlayerProfileStep
                       register={register}
+                      control={control}
+                      errors={errors}
+                      shouldFocusHeading={shouldFocusHeading}
+                    />
+                  </motion.div>
+                )}
+
+                {currentKey === "padelProfile" && (
+                  <motion.div
+                    key="padelProfile"
+                    className="space-y-4"
+                    custom={direction}
+                    variants={stepVariants}
+                    initial={shouldReduce ? false : "enter"}
+                    animate="center"
+                    exit={shouldReduce ? "center" : "exit"}
+                    transition={stepTransition}
+                  >
+                    <PadelProfileStep
                       control={control}
                       errors={errors}
                       shouldFocusHeading={shouldFocusHeading}
@@ -349,11 +440,18 @@ export function OnboardingWizard() {
               </Button>
 
               {!isLastStep ? (
-                <Button type="button" onClick={handleNext}>
+                <Button
+                  type="button"
+                  onClick={handleNext}
+                  disabled={currentStepInvalid}
+                >
                   Continue
                 </Button>
               ) : (
-                <Button type="submit" disabled={isSubmitting}>
+                <Button
+                  type="submit"
+                  disabled={isSubmitting || currentStepInvalid}
+                >
                   {isSubmitting
                     ? "Setting up…"
                     : watchedValues.userType === "owner"

@@ -1,12 +1,7 @@
 import { useEffect, useRef } from "react";
-import { Mail, Phone } from "lucide-react";
+import { Mail } from "lucide-react";
 import { Controller } from "react-hook-form";
-import {
-  Field,
-  FieldDescription,
-  FieldError,
-  FieldLabel,
-} from "@/components/ui/field";
+import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -15,7 +10,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { GENDER_OPTIONS, PADEL_CATEGORY_OPTIONS } from "@/app/onboarding/types";
+import { GENDER_OPTIONS } from "@/app/onboarding/types";
+import { useCountryProvinceCityFields } from "../../shared/CountryProvinceCityFields";
+import { PhoneField } from "../../shared/PhoneField";
 import type { PlayerProfileStepProps } from "./types";
 
 export function PlayerProfileStep({
@@ -32,6 +29,9 @@ export function PlayerProfileStep({
     }
   }, [shouldFocusHeading]);
 
+  const { countryField, provinceField, cityField } =
+    useCountryProvinceCityFields({ control, errors });
+
   return (
     <>
       <div>
@@ -43,7 +43,7 @@ export function PlayerProfileStep({
           Your profile
         </h2>
         <p className="text-sm text-muted-foreground">
-          Tell us a bit about yourself.
+          Tell us a bit about yourself and where you play.
         </p>
       </div>
 
@@ -84,32 +84,6 @@ export function PlayerProfileStep({
       </Field>
 
       <Field>
-        <FieldLabel htmlFor="phone">Phone *</FieldLabel>
-        <div className="relative">
-          <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            id="phone"
-            className="pl-9"
-            placeholder="+54 11 1234-5678"
-            {...register("phone")}
-            aria-invalid={!!errors.phone}
-          />
-        </div>
-        <FieldError errors={[errors.phone]} />
-      </Field>
-
-      <Field>
-        <FieldLabel htmlFor="address">Address</FieldLabel>
-        <Input
-          id="address"
-          placeholder="Optional"
-          {...register("address")}
-          aria-invalid={!!errors.address}
-        />
-        <FieldError errors={[errors.address]} />
-      </Field>
-
-      <Field>
         <FieldLabel htmlFor="gender">Gender *</FieldLabel>
         <Controller
           control={control}
@@ -135,35 +109,44 @@ export function PlayerProfileStep({
         <FieldError errors={[errors.gender]} />
       </Field>
 
-      <Field>
-        <FieldLabel htmlFor="padelCategory">Padel category</FieldLabel>
-        <FieldDescription>
-          Your skill-level ranking — Category 1 is the highest level, Category 8
-          is a beginner.
-        </FieldDescription>
-        <Controller
-          control={control}
-          name="padelCategory"
-          render={({ field }) => (
-            <Select
-              value={field.value ?? "unknown"}
-              onValueChange={field.onChange}
-            >
-              <SelectTrigger id="padelCategory">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {PADEL_CATEGORY_OPTIONS.map((c) => (
-                  <SelectItem key={c.value} value={c.value}>
-                    {c.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-        />
-        <FieldError errors={[errors.padelCategory]} />
-      </Field>
+      <div className="flex flex-col sm:flex-row gap-4">
+        <div className="flex-1">
+          <PhoneField control={control} errors={errors} />
+        </div>
+        <div className="flex-1">{countryField}</div>
+      </div>
+
+      <div className="flex flex-col sm:flex-row gap-4">
+        <div className="flex-1">{provinceField}</div>
+        <div className="flex-1">{cityField}</div>
+      </div>
+
+      <div className="flex flex-col sm:flex-row gap-4">
+        <div className="flex-1">
+          <Field>
+            <FieldLabel htmlFor="zipCode">Zip code</FieldLabel>
+            <Input
+              id="zipCode"
+              placeholder="1642"
+              {...register("zipCode")}
+              aria-invalid={!!errors.zipCode}
+            />
+            <FieldError errors={[errors.zipCode]} />
+          </Field>
+        </div>
+        <div className="flex-1">
+          <Field>
+            <FieldLabel htmlFor="address">Address</FieldLabel>
+            <Input
+              id="address"
+              placeholder="Optional"
+              {...register("address")}
+              aria-invalid={!!errors.address}
+            />
+            <FieldError errors={[errors.address]} />
+          </Field>
+        </div>
+      </div>
     </>
   );
 }

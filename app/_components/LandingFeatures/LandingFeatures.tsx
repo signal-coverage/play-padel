@@ -4,15 +4,15 @@ import Image from "next/image";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { ArrowLeft, ArrowRight, ArrowUpRight } from "lucide-react";
 import { SlideCounter } from "@/app/_components/SlideCounter";
-import { FACILITIES, ease } from "./consts";
+import { PLATFORM_FEATURES, ease } from "./consts";
 import { CONTAINER } from "@/lib/consts";
 
 export function LandingFeatures() {
   const shouldReduce = useReducedMotion();
   const [index, setIndex] = useState(0);
-  const total = FACILITIES.length;
-  const current = FACILITIES[index];
-  const next = FACILITIES[(index + 1) % total];
+  const total = PLATFORM_FEATURES.length;
+  const current = PLATFORM_FEATURES[index];
+  const next = PLATFORM_FEATURES[(index + 1) % total];
 
   const goPrev = () => setIndex((i) => (i - 1 + total) % total);
   const goNext = () => setIndex((i) => (i + 1) % total);
@@ -28,7 +28,7 @@ export function LandingFeatures() {
             viewport={{ once: true }}
             transition={{ duration: 0.5, ease }}
           >
-            Built for Paddle. Built for You.
+            One Platform. Every Court.
           </motion.span>
 
           <div className="relative rounded-[28px] overflow-hidden flex-1 min-h-90">
@@ -43,7 +43,7 @@ export function LandingFeatures() {
               >
                 <Image
                   src={current.image}
-                  alt={current.title}
+                  alt={current.imageAlt}
                   fill
                   sizes="(min-width: 768px) 50vw, 100vw"
                   className="object-cover outline outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10"
@@ -59,7 +59,7 @@ export function LandingFeatures() {
               <button
                 type="button"
                 onClick={goPrev}
-                aria-label="Previous facility"
+                aria-label="Previous feature"
                 className="w-11 h-11 rounded-full border border-border text-foreground flex items-center justify-center hover:border-foreground transition-colors"
               >
                 <ArrowLeft size={16} strokeWidth={2} />
@@ -67,7 +67,7 @@ export function LandingFeatures() {
               <button
                 type="button"
                 onClick={goNext}
-                aria-label="Next facility"
+                aria-label="Next feature"
                 className="w-11 h-11 rounded-full border border-border text-foreground flex items-center justify-center hover:border-foreground transition-colors"
               >
                 <ArrowRight size={16} strokeWidth={2} />
@@ -80,12 +80,10 @@ export function LandingFeatures() {
               viewport={{ once: true }}
               transition={{ duration: 0.5, ease, delay: 0.05 }}
             >
-              <span className="text-foreground">
-                World-Class Paddle Facilities
-              </span>
+              <span className="text-foreground">Everything You Need</span>
               <br />
               <span className="text-foreground">for </span>
-              <span className="text-muted-foreground">Every Level of Play</span>
+              <span className="text-muted-foreground">to Book and Manage</span>
             </motion.h2>
           </div>
 
@@ -128,7 +126,7 @@ export function LandingFeatures() {
                 >
                   <Image
                     src={next.image}
-                    alt={next.title}
+                    alt={next.imageAlt}
                     fill
                     sizes="160px"
                     className="object-cover outline outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10 transition-transform duration-500 ease-out group-hover:scale-[1.08]"

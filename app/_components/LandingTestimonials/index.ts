@@ -1,1 +1,0 @@
-export { LandingTestimonials } from "./LandingTestimonials";

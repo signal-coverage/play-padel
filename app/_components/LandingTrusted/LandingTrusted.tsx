@@ -19,7 +19,7 @@ export function LandingTrusted() {
           transition={{ duration: 0.5, ease }}
         >
           <span className="inline-flex items-center bg-foreground text-white rounded-full px-4 py-2 text-[13px] font-semibold">
-            Beyond the Court
+            How It Works
           </span>
         </motion.div>
 
@@ -32,11 +32,9 @@ export function LandingTrusted() {
             transition={{ duration: 0.5, delay: 0.06, ease }}
           >
             <span className="font-bold">
-              Whether you&apos;re here for the thrill, the fitness, or the
-              friends
+              Whether you&apos;re booking a court or running a club
             </span>{" "}
-            — Play Padel brings paddle lovers together in a space that&apos;s
-            fun, inclusive, and energizing.
+            — Play Padel connects players and clubs in one place, in real time.
           </motion.h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-x-8 gap-y-8 sm:gap-y-10 mt-10 sm:mt-12">

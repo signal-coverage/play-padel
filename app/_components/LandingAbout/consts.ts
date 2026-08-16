@@ -2,23 +2,23 @@ export { ease } from "@/lib/consts/animation";
 
 export const ABOUT_ITEMS = [
   {
-    title: "Coaches Who Get You",
+    title: "Real-Time Booking",
     description:
-      "Certified coaches who adapt to your level and goals, whether you're picking up a paddle for the first time or sharpening a competitive edge.",
+      "Browse clubs, see live court availability, and reserve your slot in seconds — no back-and-forth needed.",
   },
   {
-    title: "Vibe-Driven Community",
+    title: "Secure Payments, Built In",
     description:
-      "Whether you're smashing your first rally or chasing your next win, you're surrounded by good energy and great people.",
+      "When a club requires prepayment, checkout happens right in the app via Mercado Pago — cancel and you're refunded automatically.",
   },
   {
-    title: "Not Just Matches — Experiences",
+    title: "Built for Club Owners Too",
     description:
-      "From social tournaments to themed nights, every visit is built around connection, not just the scoreboard.",
+      "Manage courts, availability, and reservations from one dashboard, with a full audit trail of every change.",
   },
   {
-    title: "Spaces Built to Improve Your Game",
+    title: "Your Player Profile, Your Way",
     description:
-      "Premium indoor and outdoor courts designed for consistent bounce, great lighting, and a setting that makes you want to play longer.",
+      "Track your preferred side, dominant hand, and skill category so partners and clubs know your style.",
   },
 ];

@@ -9,7 +9,10 @@ export type ProfileStepProps = Pick<
   phone: string;
   legalName: string;
   taxId: string;
-  timezoneLabel: string;
-  currencyLabel: string;
+  address: string;
+  country: string;
+  province: string;
+  city: string;
+  zipCode: string;
   courtRangeLabel: string;
 };

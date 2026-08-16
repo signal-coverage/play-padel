@@ -1,24 +1,16 @@
 import { useEffect, useRef } from "react";
-import { Controller } from "react-hook-form";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { CURRENCIES, TIMEZONES } from "@/lib/consts";
 import type { LegalBillingStepProps } from "./types";
+import { formatTaxId } from "./utils";
 
 export function LegalBillingStep({
   register,
-  control,
   errors,
   shouldFocusHeading,
 }: LegalBillingStepProps) {
   const headingRef = useRef<HTMLHeadingElement>(null);
+  const taxIdField = register("taxId");
 
   useEffect(() => {
     if (shouldFocusHeading) {
@@ -57,56 +49,14 @@ export function LegalBillingStep({
         <Input
           id="taxId"
           placeholder="30-12345678-9"
-          {...register("taxId")}
+          {...taxIdField}
+          onChange={(e) => {
+            e.target.value = formatTaxId(e.target.value);
+            taxIdField.onChange(e);
+          }}
           aria-invalid={!!errors.taxId}
         />
         <FieldError errors={[errors.taxId]} />
-      </Field>
-
-      <Field>
-        <FieldLabel htmlFor="timezone">Timezone *</FieldLabel>
-        <Controller
-          control={control}
-          name="timezone"
-          render={({ field }) => (
-            <Select value={field.value} onValueChange={field.onChange}>
-              <SelectTrigger id="timezone">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {TIMEZONES.map((t) => (
-                  <SelectItem key={t.value} value={t.value}>
-                    {t.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-        />
-        <FieldError errors={[errors.timezone]} />
-      </Field>
-
-      <Field>
-        <FieldLabel htmlFor="currency">Currency *</FieldLabel>
-        <Controller
-          control={control}
-          name="currency"
-          render={({ field }) => (
-            <Select value={field.value} onValueChange={field.onChange}>
-              <SelectTrigger id="currency">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {CURRENCIES.map((c) => (
-                  <SelectItem key={c.value} value={c.value}>
-                    {c.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-        />
-        <FieldError errors={[errors.currency]} />
       </Field>
     </>
   );

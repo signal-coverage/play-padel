@@ -1,4 +1,4 @@
-export type Plan = "FREE" | "BASIC" | "PRO" | "CUSTOM";
+export type Plan = "BASIC" | "PRO" | "PLUS" | "MAX";
 export type ClubStatus = "ACTIVE" | "INACTIVE" | "SUSPENDED" | "DISABLED";
 
 export interface Club {
@@ -8,6 +8,11 @@ export interface Club {
   taxId?: string;
   email: string;
   phone?: string;
+  address?: string;
+  country?: string;
+  province?: string;
+  city?: string;
+  zipCode?: string;
   logoUrl?: string;
   timezone: string;
   currency: string;
@@ -28,6 +33,11 @@ export interface CreateClubInput {
   legalName?: string;
   taxId?: string;
   phone?: string;
+  address?: string;
+  country?: string;
+  province?: string;
+  city?: string;
+  zipCode?: string;
   logoUrl?: string;
   plan?: Plan;
 }
@@ -38,6 +48,11 @@ export interface UpdateClubInput {
   taxId?: string;
   email?: string;
   phone?: string;
+  address?: string;
+  country?: string;
+  province?: string;
+  city?: string;
+  zipCode?: string;
   logoUrl?: string;
   timezone?: string;
   currency?: string;

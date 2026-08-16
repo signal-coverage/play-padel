@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
+import { ShareButton } from "@/app/_components/ShareButton";
 import { CONTACT, FOOTER_COLUMNS, TAGLINE, ease } from "./consts";
 import { CONTAINER } from "@/lib/consts";
 import { scrollToSection } from "@/lib/utils/scroll-to-section";
@@ -101,6 +102,7 @@ export function LandingFooter() {
             >
               Terms &amp; Conditions
             </Link>
+            <ShareButton />
           </div>
         </motion.div>
       </div>

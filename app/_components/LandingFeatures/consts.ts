@@ -9,53 +9,61 @@ import img8 from "@/assets/images/person-getting-ready-play-paddle-tennis-inside
 
 export { ease } from "@/lib/consts/animation";
 
-export const FACILITIES = [
+export const PLATFORM_FEATURES = [
   {
-    title: "Pro-Level Paddle Courts",
+    title: "Real-Time Availability",
     description:
-      "Designed with top-grade turf and lighting, perfect for both casual play and competitive matches.",
+      "See exactly which courts are free at any club, updated the moment a slot is booked.",
     image: img1,
+    imageAlt: "Two women playing padel on an outdoor court",
   },
   {
-    title: "Training Zone",
+    title: "Instant Booking",
     description:
-      "A dedicated space with rebound walls and drill equipment to sharpen your technique between matches.",
+      "Reserve your court in a few taps — no phone calls, no waiting for a confirmation.",
     image: img2,
+    imageAlt: "High-angle view of padel paddles and balls on the court",
   },
   {
-    title: "Indoor Match Courts",
+    title: "Secure Online Payments",
     description:
-      "Climate-controlled courts so your game never has to wait on the weather.",
+      "Mercado Pago checkout built right into the booking flow, with automatic refunds on cancellation.",
     image: img3,
+    imageAlt: "People playing padel together on an indoor court",
   },
   {
-    title: "Warm-Up Areas",
+    title: "Court & Closure Management",
     description:
-      "Stretch and rally before you play on dedicated warm-up courts right beside the main lineup.",
+      "Owners can block a court for maintenance or an event, with a reason players see before they try to book it.",
     image: img4,
+    imageAlt: "Player getting ready to play padel on an indoor court",
   },
   {
-    title: "Doubles Courts",
+    title: "Player Profiles",
     description:
-      "Regulation-size doubles courts built for fast rallies and even faster friendships.",
+      "Track your preferred side, dominant hand, and skill category — visible to partners and clubs.",
     image: img5,
+    imageAlt: "Players sharing a moment on an indoor padel court",
   },
   {
-    title: "Solo Practice Walls",
+    title: "Plans for Every Club",
     description:
-      "Rebound walls for solo reps — perfect for footwork drills and building consistency.",
+      "From a single court to a multi-court operation, pick the plan that fits and upgrade as you grow.",
     image: img6,
+    imageAlt: "Side view of a woman playing padel",
   },
   {
-    title: "Beginner-Friendly Courts",
+    title: "Full Audit Trail",
     description:
-      "Softer surfaces and relaxed lighting made for first-timers finding their footing.",
+      "Every booking, cancellation, and change is logged, so owners always know what happened and when.",
     image: img7,
+    imageAlt: "Full shot of a woman playing padel",
   },
   {
-    title: "Locker & Prep Rooms",
+    title: "Built for Argentina",
     description:
-      "Fresh, modern facilities so you can gear up and cool down without leaving the club.",
+      "CUIT-formatted tax IDs, ARS pricing, and Mercado Pago — built around how clubs actually operate here.",
     image: img8,
+    imageAlt: "Player getting ready to play padel on an indoor court",
   },
 ];

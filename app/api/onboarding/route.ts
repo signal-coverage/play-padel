@@ -56,7 +56,16 @@ export async function POST(request: Request) {
 
       const existingProfile = await prisma.userProfile.findUnique({
         where: { id: userId },
-        select: { id: true },
+        select: {
+          id: true,
+          preferredSide: true,
+          dominantHand: true,
+          photoURL: true,
+          country: true,
+          province: true,
+          city: true,
+          zipCode: true,
+        },
       });
 
       await prisma.userProfile.upsert({
@@ -69,8 +78,15 @@ export async function POST(request: Request) {
           lastName,
           phone,
           address: data.address || null,
+          country: data.country || null,
+          province: data.province || null,
+          city: data.city || null,
+          zipCode: data.zipCode || null,
           gender: data.gender ?? null,
           padelCategory,
+          preferredSide: data.preferredSide ?? null,
+          dominantHand: data.dominantHand ?? null,
+          photoURL: clerkUser?.imageUrl ?? null,
           email: accountEmail,
           createdBy: userId,
           updatedBy: userId,
@@ -82,8 +98,26 @@ export async function POST(request: Request) {
           lastName,
           phone,
           address: data.address || null,
+          // Same resubmit-clobber risk as preferredSide/dominantHand/photoURL
+          // below: these are optional form fields, so falling back to null
+          // instead of the existing value would wipe out a location the user
+          // already set on an earlier submit.
+          country: data.country || existingProfile?.country || null,
+          province: data.province || existingProfile?.province || null,
+          city: data.city || existingProfile?.city || null,
+          zipCode: data.zipCode || existingProfile?.zipCode || null,
           gender: data.gender ?? null,
           padelCategory,
+          // Onboarding can be resubmitted (this upsert exists to make retries
+          // idempotent), and these three fields are optional in the form —
+          // falling back to null instead of the existing value would wipe out
+          // anything the player already set via the dashboard's play-style
+          // editor between their first submit and a later resubmit.
+          preferredSide:
+            data.preferredSide ?? existingProfile?.preferredSide ?? null,
+          dominantHand:
+            data.dominantHand ?? existingProfile?.dominantHand ?? null,
+          photoURL: clerkUser?.imageUrl ?? existingProfile?.photoURL ?? null,
           updatedBy: userId,
         },
       });
@@ -106,7 +140,7 @@ export async function POST(request: Request) {
     // Validated by onboardingFormSchema's superRefine when userType === "owner".
     const plan =
       COURT_RANGE_OPTIONS.find((option) => option.value === data.courtRange)
-        ?.plan ?? "FREE";
+        ?.plan ?? "BASIC";
 
     const club = await createClub(
       {
@@ -117,6 +151,11 @@ export async function POST(request: Request) {
         legalName: data.legalName,
         taxId: data.taxId,
         phone: data.phone,
+        address: data.address,
+        country: data.country,
+        province: data.province,
+        city: data.city,
+        zipCode: data.zipCode,
         plan,
       },
       userId,

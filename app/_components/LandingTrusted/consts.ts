@@ -2,21 +2,21 @@ export { ease } from "@/lib/consts/animation";
 
 export const STATS = [
   {
-    value: "810+",
-    label: "Active Members",
+    value: "4",
+    label: "Flexible Plans",
     description:
-      "A growing paddle community — from beginners to pros — playing, laughing, and improving together.",
+      "From a single-court club to a multi-court operation — pick the plan that fits, upgrade anytime.",
   },
   {
-    value: "98%",
-    label: "Satisfaction Rate",
+    value: "Real-Time",
+    label: "Court Availability",
     description:
-      "Members stick around for the vibe — fun sessions, friendly crowd, and events that make matches memorable.",
+      "See exactly which slots are open right now — no calls, no waiting on a reply.",
   },
   {
-    value: "20+",
-    label: "Certified Pro Coaches",
+    value: "Secure",
+    label: "Mercado Pago Payments",
     description:
-      "Pick up the game or level up with certified coaches who keep it fun, strategic, and simple to follow.",
+      "Pay online when you book, with automatic refunds if a reservation is cancelled.",
   },
 ];

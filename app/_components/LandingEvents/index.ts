@@ -1,1 +1,0 @@
-export { LandingEvents } from "./LandingEvents";

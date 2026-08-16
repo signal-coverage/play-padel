@@ -29,6 +29,8 @@ export interface AppUser {
   email: string | null;
   displayName: string | null;
   imageUrl: string | null;
+  firstName: string | null;
+  lastName: string | null;
   // null until the /api/me lookup resolves, or if no UserProfile row exists
   // yet for this Clerk user (nobody creates one until core/clubs/core/users
   // land — see DashboardGuard for how that gap is currently handled).
@@ -127,6 +129,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             email: clerkUser.primaryEmailAddress?.emailAddress ?? null,
             displayName: clerkUser.fullName,
             imageUrl: clerkUser.imageUrl ?? null,
+            firstName: clerkUser.firstName ?? null,
+            lastName: clerkUser.lastName ?? null,
             role: profile?.role ?? null,
             clubId: profile?.clubId ?? null,
             padelCategory: profile?.padelCategory ?? null,
@@ -141,6 +145,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       clerkUser?.primaryEmailAddress?.emailAddress,
       clerkUser?.fullName,
       clerkUser?.imageUrl,
+      clerkUser?.firstName,
+      clerkUser?.lastName,
       profile,
     ],
   );
