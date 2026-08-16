@@ -15,7 +15,9 @@ See [`docs/README.md`](docs/README.md) for the full documentation index — feat
 - [Clerk](https://clerk.com) — authentication
 - [Prisma](https://www.prisma.io) + [Neon](https://neon.tech) Postgres — database
 - Tailwind CSS + [shadcn/ui](https://ui.shadcn.com)
+- [Mercado Pago](https://www.mercadopago.com) — Checkout Pro payments for clubs that require prepayment
 - [Resend](https://resend.com) — transactional email
+- [Vercel Analytics](https://vercel.com/analytics) + [Speed Insights](https://vercel.com/docs/speed-insights) — usage and performance monitoring
 
 ## Getting started
 
@@ -31,7 +33,7 @@ Open [http://localhost:3000](http://localhost:3000) to view it.
 ## Project structure
 
 - `app/` — routes (App Router), split into public pages, `(auth)` pages, and the authenticated `dashboard/` area (player and owner views)
-- `core/` — domain logic per business area (`clubs`, `courts`, `reservations`, `users`, `billing`, `notifications`, `audit`, `events`), each with its own `services`, `schemas`, `types`, and `consts`
+- `core/` — domain logic per business area (`clubs`, `courts`, `reservations`, `users`, `billing`, `notifications`, `audit`), each with its own `services`, `schemas`, `types`, and `consts`
 - `components/ui/` — shadcn/ui primitives
 - `prisma/schema.prisma` — database schema
-- `lib/` — cross-cutting utilities (email, PDF generation, notification dispatch)
+- `lib/` — cross-cutting utilities: `mercadopago/` (Checkout Pro client, preferences, refunds, webhook signature verification), `email/` (Resend client), `notifications/` (dispatch), `utils/`
