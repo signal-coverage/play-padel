@@ -6,16 +6,18 @@ import { z } from "zod";
 // of truth — this only drives inline field validation in the Sheet.
 export const courtFormSchema = z.object({
   name: z.string().min(1, "Name is required"),
-  surface: z.string(),
+  surface: z.string().min(1, "Surface is required"),
   indoor: z.boolean(),
-  color: z.string(),
+  color: z.string().min(1, "Color is required"),
+  // Optional, unlike name/surface/color: a court without a photo is valid.
+  photoUrl: z.string().url().optional(),
   slotDurationMinutes: z
     .number({ message: "Slot duration must be a number" })
     .int()
     .positive("Slot duration must be greater than 0"),
-  price: z
-    .number({ message: "Price must be a number" })
-    .nonnegative("Price cannot be negative")
-    .optional(),
+  reservationFee: z
+    .number({ message: "Reservation fee is required" })
+    .nonnegative("Reservation fee cannot be negative"),
+  courtPrice: z.number().nonnegative().optional(),
   active: z.boolean(),
 });

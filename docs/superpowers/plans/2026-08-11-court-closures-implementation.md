@@ -869,7 +869,7 @@ In `components/CourtAvailabilityGrid/components/SlotCell/styles.ts`, replace `ge
 ```ts
 export function getSlotClassName(status: SlotStatus, interactive: boolean) {
   return cn(
-    "flex h-9 w-full items-center justify-center rounded-md border text-xs font-medium transition-colors",
+    "flex h-9 w-full items-center justify-center rounded-sm border text-xs font-medium transition-colors",
     status === "free"
       ? "border-primary/30 bg-primary/10 text-primary"
       : status === "closed"
@@ -1155,7 +1155,7 @@ export function NewClosureForm({
   return (
     <form
       onSubmit={handleSubmit(submit)}
-      className="flex flex-col gap-4 rounded-lg border p-3"
+      className="flex flex-col gap-4 rounded-sm border p-3"
     >
       <Field>
         <FieldLabel htmlFor="closure-starts-at">Starts</FieldLabel>
@@ -1263,7 +1263,7 @@ export function ClosuresList({
         return (
           <div
             key={closure.id}
-            className="flex items-center justify-between gap-2 rounded-lg border p-3"
+            className="flex items-center justify-between gap-2 rounded-sm border p-3"
           >
             <div className="min-w-0 flex-1">
               <p className="text-sm font-medium">{closure.reason}</p>

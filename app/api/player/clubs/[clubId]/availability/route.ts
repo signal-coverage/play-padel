@@ -35,6 +35,13 @@ export async function GET(
       courts.map(async (court) => ({
         id: court.id,
         name: court.name,
+        reservationFee: court.reservationFee,
+        surface: court.surface,
+        color: court.color,
+        indoor: court.indoor,
+        photoUrl: court.photoUrl,
+        courtPrice: court.courtPrice,
+        slotDurationMinutes: court.slotDurationMinutes,
         slots: await getCourtSlots(court.id, date),
       })),
     );

@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Field, FieldLabel, FieldError } from "@/components/ui/field";
 import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { getInitials } from "@/app/dashboard/_components/DashboardHome/components/PlayerOverview/utils";
 import { clubSettingsFormSchema } from "./consts";
 import { clubToFormValues } from "./utils";
 import { useCurrentClub, useUpdateClub } from "./hooks";
@@ -30,6 +32,8 @@ export function ClubSettingsView() {
   });
 
   const requiresPrepayment = useWatch({ control, name: "requiresPrepayment" });
+  const logoUrl = useWatch({ control, name: "logoUrl" });
+  const clubName = useWatch({ control, name: "name" });
 
   // Re-seed the form once the club data arrives (the form mounts before the
   // query resolves) and whenever it changes underneath us after a save.
@@ -122,11 +126,18 @@ export function ClubSettingsView() {
 
         <Field>
           <FieldLabel htmlFor="club-logo-url">Logo URL</FieldLabel>
-          <Input
-            id="club-logo-url"
-            placeholder="https://…"
-            {...register("logoUrl")}
-          />
+          <div className="flex items-center gap-3">
+            <Avatar size="lg">
+              {logoUrl && <AvatarImage src={logoUrl} alt="" />}
+              <AvatarFallback>{getInitials(clubName || "")}</AvatarFallback>
+            </Avatar>
+            <Input
+              id="club-logo-url"
+              placeholder="https://…"
+              className="flex-1"
+              {...register("logoUrl")}
+            />
+          </div>
           <FieldError errors={[errors.logoUrl]} />
         </Field>
 

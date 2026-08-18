@@ -11,6 +11,7 @@ import { getClubById } from "@/core/clubs/services/clubs.service";
 import {
   createInvoice,
   issueInvoice,
+  getReservationIdsWithReceipt,
 } from "@/core/billing/services/billing.service";
 import { createCheckoutPreference } from "@/lib/mercadopago/preferences";
 
@@ -27,9 +28,13 @@ export async function GET(request: NextRequest) {
   const includePast =
     request.nextUrl.searchParams.get("includePast") === "true";
   const reservations = await listReservationsByUser(userId, { includePast });
+  const receiptableIds = await getReservationIdsWithReceipt(
+    reservations.map((r) => r.id),
+  );
   const withFlag = reservations.map((reservation) => ({
     ...reservation,
     canSelfCancel: canSelfCancel(reservation),
+    hasReceipt: receiptableIds.has(reservation.id),
   }));
 
   return NextResponse.json({ reservations: withFlag });
@@ -72,7 +77,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Club not found" }, { status: 404 });
   }
 
-  if (!club.requiresPrepayment) {
+  // Every court's reservation fee decides whether payment is required — not
+  // the club's `requiresPrepayment` toggle. A court with a reservation fee of
+  // exactly 0 is deliberately free and books instantly; any other court must
+  // be paid online before the reservation is confirmed. Only `undefined`/
+  // `null` means "no reservation fee configured" and blocks booking below;
+  // `!court.reservationFee` would incorrectly treat 0 the same as "not set".
+  if (court.reservationFee === 0) {
     try {
       const reservation = await createReservation(userId, {
         userId,
@@ -89,7 +100,7 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  if (!court.price) {
+  if (typeof court.reservationFee !== "number") {
     return NextResponse.json(
       {
         error: "This court doesn't have a price set yet — contact the club",
@@ -114,8 +125,8 @@ export async function POST(request: NextRequest) {
         {
           description: `${court.name} reservation`,
           quantity: 1,
-          unitPrice: court.price,
-          total: court.price,
+          unitPrice: court.reservationFee,
+          total: court.reservationFee,
         },
       ],
       tax: 0,
@@ -126,7 +137,7 @@ export async function POST(request: NextRequest) {
     const { checkoutUrl } = await createCheckoutPreference({
       reservationId: reservation.id,
       courtName: court.name,
-      price: court.price,
+      price: court.reservationFee,
       currency: club.currency,
     });
 

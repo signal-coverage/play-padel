@@ -1,3 +1,4 @@
+import { createParser } from "nuqs";
 import type { CourtColumn } from "@/components/CourtAvailabilityGrid";
 import type { RawCourt } from "./types";
 
@@ -5,6 +6,13 @@ export function toCourtColumns(raw: RawCourt[]): CourtColumn[] {
   return raw.map((court) => ({
     id: court.id,
     name: court.name,
+    reservationFee: court.reservationFee,
+    surface: court.surface,
+    color: court.color,
+    indoor: court.indoor,
+    photoUrl: court.photoUrl,
+    courtPrice: court.courtPrice,
+    slotDurationMinutes: court.slotDurationMinutes,
     slots: court.slots.map((slot) => ({
       start: new Date(slot.start),
       end: new Date(slot.end),
@@ -37,3 +45,25 @@ export function countUniqueSlotStarts(courts: CourtColumn[]): number {
   }
   return starts.size;
 }
+
+/**
+ * URL-state parser for the browsed day, keyed on the same local
+ * (not UTC) calendar date used everywhere else in this feature (see
+ * `toDateKey`). nuqs' built-in `parseAsIsoDate` round-trips through
+ * `Date#toISOString`, which reads UTC components — for timezones behind
+ * UTC that silently shifts the encoded day whenever the "now" default is
+ * captured in the evening, producing a `?date=` value that doesn't match
+ * what's on screen. Parsing/serializing directly against local
+ * year/month/day avoids that mismatch and keeps the URL human-readable.
+ */
+export const parseAsLocalDate = createParser({
+  parse: (value) => {
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+    if (!match) return null;
+    const [, year, month, day] = match;
+    const date = new Date(Number(year), Number(month) - 1, Number(day));
+    return Number.isNaN(date.valueOf()) ? null : date;
+  },
+  serialize: toDateKey,
+  eq: (a, b) => toDateKey(a) === toDateKey(b),
+});

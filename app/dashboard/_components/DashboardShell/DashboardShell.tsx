@@ -27,14 +27,14 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
     <ReactQueryProvider>
       <DashboardGuard>
         <div className="h-svh overflow-hidden bg-muted p-2 lg:p-3">
-          <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-background">
+          <div className="flex h-full flex-col overflow-hidden rounded-sm border border-border bg-background">
             <AppNavbar />
             <main className="flex flex-1 justify-center overflow-y-auto p-6 scrollbar-none md:overflow-hidden md:p-4 md:px-6">
-              <div className="h-full w-full max-w-7xl">{children}</div>
+              <div className="h-full w-full min-w-0 max-w-7xl">{children}</div>
             </main>
             <MobileBottomNav
               role={user.role ?? "player"}
-              className="md:hidden"
+              className="min-[809px]:hidden"
             />
           </div>
         </div>

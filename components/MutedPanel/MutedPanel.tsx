@@ -10,7 +10,7 @@ export function MutedPanel({
   return (
     <div
       className={cn(
-        "rounded-xl",
+        "rounded-sm",
         bordered ? "border border-border bg-muted/40" : "bg-muted/50",
         size === "sm" ? "p-2.5" : "p-4",
         className,

@@ -1,4 +1,10 @@
 import type { Slot } from "@/components/CourtAvailabilityGrid";
+import type { Club } from "@/core/clubs/types";
+
+export type ClubBrowseSummary = Club & {
+  courtCount: number;
+  hasAvailabilityToday: boolean;
+};
 
 export type BookSlotInput = {
   courtId: string;
@@ -9,6 +15,8 @@ export type BookSlotInput = {
 export type SelectedSlot = {
   courtId: string;
   courtName: string;
+  /** Undefined means "not set"; 0 means genuinely free — kept distinct from unset. */
+  price?: number;
   slot: Slot;
 };
 
@@ -23,5 +31,12 @@ export type RawSlot = {
 export type RawCourt = {
   id: string;
   name: string;
+  reservationFee?: number;
+  surface?: string;
+  color?: string;
+  indoor?: boolean;
+  photoUrl?: string;
+  courtPrice?: number;
+  slotDurationMinutes?: number;
   slots: RawSlot[];
 };

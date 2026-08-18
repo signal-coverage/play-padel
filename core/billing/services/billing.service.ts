@@ -9,6 +9,7 @@ import { refundMercadoPagoPayment } from "@/lib/mercadopago/refunds";
 import type {
   Invoice,
   InvoiceItem,
+  InvoiceReceiptData,
   Payment,
   CreateInvoiceInput,
   RecordPaymentInput,
@@ -276,6 +277,87 @@ export async function getInvoiceByReservationId(
     orderBy: { createdAt: "desc" },
   });
   return row ? toInvoice(row as InvoiceRow) : null;
+}
+
+// Batch check for "list" screens (e.g. my-reservations) so each row can show
+// a "Download receipt" action without an N+1 query per reservation — a
+// receipt only makes sense once a reservation actually has a COMPLETED
+// payment behind it (PENDING/FAILED/REFUNDED invoices have nothing to
+// receipt).
+export async function getReservationIdsWithReceipt(
+  reservationIds: string[],
+): Promise<Set<string>> {
+  if (reservationIds.length === 0) return new Set();
+
+  const rows = await prisma.invoice.findMany({
+    where: { reservationId: { in: reservationIds } },
+    include: { payments: true },
+  });
+
+  const result = new Set<string>();
+  for (const row of rows) {
+    if (
+      row.reservationId &&
+      row.payments.some((p) => p.status === "COMPLETED")
+    ) {
+      result.add(row.reservationId);
+    }
+  }
+  return result;
+}
+
+// Assembles the data needed to render a receipt PDF for a single
+// reservation. Returns null when there is no invoice for this reservation,
+// or the invoice has no COMPLETED payment yet — a reservation that was
+// never prepaid (or whose payment never completed) has nothing to receipt.
+export async function getReceiptData(
+  reservationId: string,
+): Promise<InvoiceReceiptData | null> {
+  const reservation = await prisma.reservation.findUnique({
+    where: { id: reservationId },
+  });
+  if (!reservation) return null;
+
+  const invoiceRow = await prisma.invoice.findFirst({
+    where: { reservationId },
+    include: { payments: true, club: true },
+    orderBy: { createdAt: "desc" },
+  });
+  if (!invoiceRow) return null;
+
+  const completedPayments = invoiceRow.payments.filter(
+    (p) => p.status === "COMPLETED",
+  );
+  if (completedPayments.length === 0) return null;
+
+  return {
+    id: invoiceRow.id,
+    invoiceNumber: String(invoiceRow.number),
+    createdAt: invoiceRow.createdAt,
+    issuedAt: invoiceRow.issuedAt,
+    paidAt: invoiceRow.paidAt,
+    status: invoiceRow.status,
+    total: invoiceRow.total,
+    subtotal: invoiceRow.subtotal,
+    tax: invoiceRow.tax,
+    discount: invoiceRow.discount,
+    currency: invoiceRow.currency,
+    userName: invoiceRow.userName,
+    clubName: invoiceRow.club.name,
+    clubEmail: invoiceRow.club.email,
+    courtName: reservation.courtName,
+    scheduledStart: reservation.scheduledStart,
+    scheduledEnd: reservation.scheduledEnd,
+    items: Array.isArray(invoiceRow.items)
+      ? invoiceRow.items.map(toInvoiceItem)
+      : [],
+    payments: completedPayments.map((p) => ({
+      date: p.paidAt,
+      method: p.method,
+      amount: p.amount,
+      reference: p.reference ?? undefined,
+    })),
+  };
 }
 
 // Refunds the invoice's COMPLETED payment via Mercado Pago, then marks it

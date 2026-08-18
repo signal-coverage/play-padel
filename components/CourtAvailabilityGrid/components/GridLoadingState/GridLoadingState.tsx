@@ -22,7 +22,7 @@ export function GridLoadingState({
     // (which mounts/unmounts with `isLoading`) firing its own.
     <div
       aria-hidden="true"
-      className="flex flex-col gap-2 rounded-lg border p-2"
+      className="flex min-h-0 flex-1 flex-col gap-2 rounded-sm border p-2"
     >
       {rows.map((_, rowIndex) => (
         <div key={rowIndex} className="flex items-center gap-2">

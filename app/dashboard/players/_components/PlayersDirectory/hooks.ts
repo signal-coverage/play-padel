@@ -2,9 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { playersQueryKey } from "./consts";
-import type { PlayerProfileData } from "@/components/PlayerProfileCard";
-
-type PlayerListItem = PlayerProfileData & { id: string };
+import type { PlayerListItem } from "./types";
 
 async function fetchPlayers(): Promise<PlayerListItem[]> {
   const res = await fetch("/api/players");

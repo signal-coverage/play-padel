@@ -1,7 +1,9 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useReducedMotion } from "framer-motion";
 import { toast } from "sonner";
+import { fireSuccessConfetti } from "@/lib/utils/confetti";
 import type { CreateCourtInput, UpdateCourtInput } from "@/core/courts/types";
 import type {
   AvailabilityEntry,
@@ -34,6 +36,7 @@ export function useManagedCourts() {
 
 export function useCreateCourt() {
   const queryClient = useQueryClient();
+  const shouldReduceMotion = useReducedMotion();
   return useMutation({
     mutationFn: (input: CreateCourtInput) =>
       fetchJson<{ court: CourtRecord }>("/api/clubs/courts", {
@@ -44,6 +47,9 @@ export function useCreateCourt() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: COURTS_QUERY_KEY });
       toast.success("Court created");
+      if (!shouldReduceMotion) {
+        fireSuccessConfetti();
+      }
     },
     onError: (error: Error) => toast.error(error.message),
   });
@@ -69,6 +75,23 @@ export function useUpdateCourt() {
       toast.success("Court updated");
     },
     onError: (error: Error) => toast.error(error.message),
+  });
+}
+
+export function useUploadCourtPhoto() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ courtId, file }: { courtId: string; file: File }) => {
+      const formData = new FormData();
+      formData.append("photo", file);
+      return fetchJson<{ photoUrl: string }>(
+        `/api/clubs/courts/${courtId}/photo`,
+        { method: "POST", body: formData },
+      );
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: COURTS_QUERY_KEY });
+    },
   });
 }
 

@@ -17,7 +17,7 @@ import type { AuditLogsTableProps } from "./types";
 export function AuditLogsTable({ logs, isLoading }: AuditLogsTableProps) {
   if (isLoading) {
     return (
-      <div className="overflow-x-auto rounded-lg border">
+      <div className="overflow-x-auto rounded-sm border">
         <span className="sr-only" role="status">
           Loading audit log…
         </span>
@@ -60,7 +60,7 @@ export function AuditLogsTable({ logs, isLoading }: AuditLogsTableProps) {
   }
 
   return (
-    <div className="overflow-x-auto rounded-lg border">
+    <div className="overflow-x-auto rounded-sm border">
       <Table>
         <TableHeader>
           <TableRow>

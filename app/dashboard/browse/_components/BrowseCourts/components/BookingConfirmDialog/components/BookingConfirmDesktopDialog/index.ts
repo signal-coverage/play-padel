@@ -1,0 +1,1 @@
+export { BookingConfirmDesktopDialog } from "./BookingConfirmDesktopDialog";

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -13,10 +13,25 @@ import {
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Field, FieldLabel, FieldError } from "@/components/ui/field";
+import {
+  Field,
+  FieldLabel,
+  FieldError,
+  FieldDescription,
+  FieldSet,
+  FieldLegend,
+} from "@/components/ui/field";
 import { Switch } from "@/components/ui/switch";
+import { formatPricePerHour } from "@/lib/utils/currency";
 import { courtToFormValues } from "../../utils";
 import { courtFormSchema } from "./consts";
+import { SurfaceField } from "./components/SurfaceField";
+import { CourtTypeField } from "./components/CourtTypeField";
+import { ColorField } from "./components/ColorField";
+import { PhotoField } from "./components/PhotoField";
+import { SlotDurationField } from "./components/SlotDurationField";
+import { ReservationFeeField } from "./components/ReservationFeeField";
+import { CourtPriceField } from "./components/CourtPriceField";
 import type { CourtFormValues } from "../../types";
 import type { CourtFormSheetProps } from "./types";
 
@@ -29,34 +44,79 @@ export function CourtFormSheet({
 }: CourtFormSheetProps) {
   const isEditMode = Boolean(court);
 
+  // Only relevant in create mode: a photo picked before the court exists
+  // yet, staged here until the shared submit handler creates the court and
+  // can upload it against a real courtId. Lives outside RHF state since a
+  // File can't round-trip through the zod-validated form values.
+  const [pendingPhotoFile, setPendingPhotoFile] = useState<File | null>(null);
+
   const {
     register,
     handleSubmit,
     reset,
+    trigger,
     control,
     setValue,
-    formState: { errors },
+    formState: { errors, isValid, touchedFields, isSubmitted },
   } = useForm<CourtFormValues>({
     resolver: zodResolver(courtFormSchema),
     defaultValues: courtToFormValues(court),
+    mode: "onChange",
   });
 
   // Re-seed the form whenever a different court is opened for editing (or
-  // the sheet is reopened in create mode after a previous edit).
+  // the sheet is reopened in create mode after a previous edit), and
+  // recompute validity immediately so the submit button reflects the
+  // re-seeded values without waiting for the user to touch a field.
   useEffect(() => {
-    if (open) reset(courtToFormValues(court));
-  }, [open, court, reset]);
+    if (open) {
+      reset(courtToFormValues(court));
+      trigger();
+    }
+  }, [open, court, reset, trigger]);
 
+  // Clears a staged (not-yet-uploaded) create-mode photo whenever the sheet
+  // closes, however that happens (Cancel, Escape, the built-in close
+  // button) — not just on a successful submit — so a discarded selection
+  // never lingers into the next time the sheet is opened. Wrapping
+  // onOpenChange here (an event handler, not an effect) avoids the
+  // set-state-in-effect footgun of resetting it from the re-seed effect above.
+  function handleOpenChange(nextOpen: boolean) {
+    if (!nextOpen) {
+      setPendingPhotoFile(null);
+    }
+    onOpenChange(nextOpen);
+  }
+
+  const surface = useWatch({ control, name: "surface" });
   const indoor = useWatch({ control, name: "indoor" });
+  const color = useWatch({ control, name: "color" });
+  const photoUrl = useWatch({ control, name: "photoUrl" });
+  const slotDurationMinutes = useWatch({
+    control,
+    name: "slotDurationMinutes",
+  });
+  const reservationFee = useWatch({ control, name: "reservationFee" });
+  const courtPrice = useWatch({ control, name: "courtPrice" });
   const active = useWatch({ control, name: "active" });
 
   async function submit(values: CourtFormValues) {
-    await onSubmit(values);
-    onOpenChange(false);
+    await onSubmit(values, pendingPhotoFile);
+    setPendingPhotoFile(null);
+    handleOpenChange(false);
+  }
+
+  // `isValid` is kept current from the moment the sheet opens (see the
+  // `trigger()` above) so Create/Save can be disabled right away, but a
+  // field's error message should only surface once the user has actually
+  // touched that field or tried to submit — otherwise a blank "New court"
+  // form would show every required-field error before anyone typed a thing.
+  function shownError(field: keyof CourtFormValues) {
+    return touchedFields[field] || isSubmitted ? [errors[field]] : [];
   }
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
+    <Sheet open={open} onOpenChange={handleOpenChange}>
       <SheetContent onPointerDownOutside={(e) => e.preventDefault()}>
         <SheetHeader>
           <SheetTitle>{isEditMode ? "Edit court" : "New court"}</SheetTitle>
@@ -77,70 +137,129 @@ export function CourtFormSheet({
               id="court-name"
               placeholder="Court 1"
               {...register("name")}
-              aria-invalid={!!errors.name}
+              aria-invalid={
+                (touchedFields.name || isSubmitted) && !!errors.name
+              }
             />
-            <FieldError errors={[errors.name]} />
+            <FieldError errors={shownError("name")} />
           </Field>
+
+          <FieldSet>
+            <FieldLegend variant="label">Surface *</FieldLegend>
+            <SurfaceField
+              name="court-surface"
+              value={surface}
+              onChange={(value) =>
+                setValue("surface", value, {
+                  shouldValidate: true,
+                  shouldTouch: true,
+                })
+              }
+            />
+            <FieldError errors={shownError("surface")} />
+          </FieldSet>
+
+          <FieldSet>
+            <FieldLegend variant="label">Photo</FieldLegend>
+            <PhotoField
+              courtId={court?.id}
+              value={photoUrl}
+              onChange={(value) =>
+                setValue("photoUrl", value, { shouldTouch: true })
+              }
+              onFileStaged={setPendingPhotoFile}
+            />
+          </FieldSet>
+
+          <div className="flex gap-4">
+            <FieldSet className="flex-1">
+              <FieldLegend variant="label">Court type</FieldLegend>
+              <CourtTypeField
+                name="court-type"
+                indoor={indoor}
+                onChange={(value) =>
+                  setValue("indoor", value, { shouldTouch: true })
+                }
+              />
+            </FieldSet>
+
+            <FieldSet className="flex-1">
+              <FieldLegend variant="label">Color</FieldLegend>
+              <ColorField
+                name="court-color"
+                value={color}
+                onChange={(value) =>
+                  setValue("color", value, {
+                    shouldValidate: true,
+                    shouldTouch: true,
+                  })
+                }
+              />
+            </FieldSet>
+          </div>
+
+          <div className="flex gap-4">
+            <Field className="flex-1">
+              <FieldLabel htmlFor="court-slot-duration">
+                Minimum shift *
+              </FieldLabel>
+              <SlotDurationField
+                id="court-slot-duration"
+                value={slotDurationMinutes}
+                onChange={(value) =>
+                  setValue("slotDurationMinutes", value, {
+                    shouldValidate: true,
+                    shouldTouch: true,
+                  })
+                }
+                ariaInvalid={
+                  (touchedFields.slotDurationMinutes || isSubmitted) &&
+                  !!errors.slotDurationMinutes
+                }
+              />
+              <FieldDescription>
+                The shortest amount of time a player can book this court for.
+              </FieldDescription>
+              <FieldError errors={shownError("slotDurationMinutes")} />
+            </Field>
+
+            <Field className="flex-1">
+              <FieldLabel htmlFor="court-reservation-fee">
+                Reservation fee *
+              </FieldLabel>
+              <ReservationFeeField
+                id="court-reservation-fee"
+                value={reservationFee}
+                // Cast past the required `number`: the field can sit briefly
+                // empty while typing, which is exactly what makes it invalid
+                // (and Create disabled) until the user fills it in.
+                onChange={(value) =>
+                  setValue("reservationFee", value as number, {
+                    shouldValidate: true,
+                    shouldTouch: true,
+                  })
+                }
+                ariaInvalid={
+                  (touchedFields.reservationFee || isSubmitted) &&
+                  !!errors.reservationFee
+                }
+              />
+              <FieldError errors={shownError("reservationFee")} />
+            </Field>
+          </div>
 
           <Field>
-            <FieldLabel htmlFor="court-surface">Surface</FieldLabel>
-            <Input
-              id="court-surface"
-              placeholder="Artificial turf"
-              {...register("surface")}
-            />
-          </Field>
-
-          <Field orientation="horizontal">
-            <FieldLabel htmlFor="court-indoor">Indoor court</FieldLabel>
-            <Switch
-              id="court-indoor"
-              checked={indoor}
-              onCheckedChange={(checked) => setValue("indoor", checked)}
-            />
-          </Field>
-
-          <Field>
-            <FieldLabel htmlFor="court-color">Color</FieldLabel>
-            <Input
-              id="court-color"
-              type="color"
-              className="h-8 w-16 p-1"
-              {...register("color")}
-            />
-          </Field>
-
-          <Field>
-            <FieldLabel htmlFor="court-slot-duration">
-              Slot duration (minutes) *
-            </FieldLabel>
-            <Input
-              id="court-slot-duration"
-              type="number"
-              min={1}
-              step={1}
-              {...register("slotDurationMinutes", { valueAsNumber: true })}
-              aria-invalid={!!errors.slotDurationMinutes}
-            />
-            <FieldError errors={[errors.slotDurationMinutes]} />
-          </Field>
-
-          <Field>
-            <FieldLabel htmlFor="court-price">
-              Price (per reservation)
-            </FieldLabel>
-            <Input
+            <FieldLabel htmlFor="court-price">Court price</FieldLabel>
+            <CourtPriceField
               id="court-price"
-              type="number"
-              min={0}
-              step={0.01}
-              placeholder="5000"
-              {...register("price", {
-                setValueAs: (v) => (v === "" ? undefined : Number(v)),
-              })}
-              aria-invalid={!!errors.price}
+              value={courtPrice}
+              onChange={(value) =>
+                setValue("courtPrice", value, { shouldTouch: true })
+              }
             />
-            <FieldError errors={[errors.price]} />
+            <FieldDescription>
+              $/hour: {formatPricePerHour(courtPrice, slotDurationMinutes)}
+            </FieldDescription>
           </Field>
 
           {isEditMode && (
@@ -159,7 +278,7 @@ export function CourtFormSheet({
           <Button
             type="button"
             onClick={handleSubmit(submit)}
-            disabled={isSubmitting}
+            disabled={isSubmitting || !isValid}
           >
             {isSubmitting
               ? "Saving…"

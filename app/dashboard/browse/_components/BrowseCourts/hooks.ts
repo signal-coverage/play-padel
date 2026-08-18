@@ -1,7 +1,6 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { Club } from "@/core/clubs/types";
 import type { CourtColumn } from "@/components/CourtAvailabilityGrid";
 import {
   playerClubsQueryKey,
@@ -9,7 +8,7 @@ import {
   playerClubAvailabilityQueryKey,
 } from "./consts";
 import { countUniqueSlotStarts, toCourtColumns, toDateKey } from "./utils";
-import type { BookSlotInput, RawCourt } from "./types";
+import type { BookSlotInput, ClubBrowseSummary, RawCourt } from "./types";
 
 async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
   const res = await fetch(url, init);
@@ -20,11 +19,14 @@ async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
   return body as T;
 }
 
-export function useActiveClubs() {
+export function useActiveClubs(date: Date) {
+  const dateKey = toDateKey(date);
   return useQuery({
-    queryKey: playerClubsQueryKey,
+    queryKey: [...playerClubsQueryKey, dateKey],
     queryFn: () =>
-      fetchJson<{ clubs: Club[] }>("/api/player/clubs").then((d) => d.clubs),
+      fetchJson<{ clubs: ClubBrowseSummary[] }>(
+        `/api/player/clubs?date=${dateKey}`,
+      ).then((d) => d.clubs),
   });
 }
 
@@ -104,6 +106,13 @@ export function useBookSlot() {
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: playerClubAvailabilityBaseKey,
+      });
+      // Booking the last free slot at a club should re-gray it (or booking
+      // the first slot at an otherwise-empty club should un-gray it) in the
+      // club list immediately, instead of waiting for that query's
+      // staleTime to lapse.
+      queryClient.invalidateQueries({
+        queryKey: playerClubsQueryKey,
       });
     },
   });

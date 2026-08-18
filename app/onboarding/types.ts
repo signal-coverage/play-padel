@@ -93,10 +93,17 @@ export const onboardingFormSchema = z
     padelCategory: z.string().optional(),
     preferredSide: z.enum(["forehand", "backhand"]).optional(),
     dominantHand: z.enum(["right", "left"]).optional(),
-    // Terms (both)
+    // Terms (both) — two separate checkboxes: an 18+ self-certification
+    // (product decision is self-certification only, no DOB field, see
+    // docs/COMPLIANCE.md) and terms acceptance. Both gate the same submit
+    // moment, so they're still recorded under a single `acceptedTermsAt`
+    // timestamp server-side — no need for two DB columns for one instant.
+    confirmedAge: z
+      .boolean()
+      .refine((v) => v === true, "You must confirm you are 18 or older"),
     acceptedTerms: z
       .boolean()
-      .refine((v) => v === true, "You must accept the Terms and Conditions"),
+      .refine((v) => v === true, "You must agree to the Terms and Conditions"),
   })
   .superRefine((data, ctx) => {
     if (data.userType === "owner") {
@@ -215,5 +222,5 @@ export const STEP_FIELDS: Record<
     "zipCode",
   ],
   padelProfile: ["padelCategory", "preferredSide", "dominantHand"],
-  terms: ["acceptedTerms"],
+  terms: ["confirmedAge", "acceptedTerms"],
 };

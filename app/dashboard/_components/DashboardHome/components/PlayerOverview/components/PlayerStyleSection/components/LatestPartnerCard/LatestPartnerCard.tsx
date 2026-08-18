@@ -13,7 +13,7 @@ export function LatestPartnerCard({ partner }: LatestPartnerCardProps) {
       <DialogTrigger asChild>
         <button
           type="button"
-          className="flex w-full items-center gap-3 rounded-lg border border-border bg-muted/40 p-3 text-left transition-colors hover:bg-muted/70"
+          className="flex w-full items-center gap-3 rounded-sm border border-border bg-muted/40 p-3 text-left transition-colors hover:bg-muted/70"
         >
           <Avatar size="lg">
             {partner.avatarUrl && (

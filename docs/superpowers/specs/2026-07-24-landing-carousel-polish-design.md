@@ -13,7 +13,7 @@ Two horizontal-scroll/carousel components on the landing page (`app/_components/
 ### A. `LandingHow.tsx`
 
 - Move the prev/next arrow buttons out of the `EVENTS.map` loop (removing the `i === 2` conditional and the `contents` wrapper div) into the section header row, placed after the "Play Together, Grow Together" badge. Same buttons/handlers, new location only.
-- Each card (`motion.div` wrapping the `Image`): on hover, image scales to `1.08` (clipped by the existing `rounded-3xl overflow-hidden`), card lifts via `-translate-y-1` with `shadow-xl`, transition `duration-500 ease-out`. Purely decorative — no `cursor-pointer`, no link, no click handler added.
+- Each card (`motion.div` wrapping the `Image`): on hover, image scales to `1.08` (clipped by the existing `rounded-sm overflow-hidden`), card lifts via `-translate-y-1` with `shadow-xl`, transition `duration-500 ease-out`. Purely decorative — no `cursor-pointer`, no link, no click handler added.
 - Title badge: constrain with `max-w-[calc(100%-1.5rem)]`; wrap the title text in its own `<span className="truncate min-w-0">` so it ellipsizes instead of pushing the badge wider; icon gets `shrink-0` so it never gets squeezed by the truncating text.
 
 ### B. `LandingFeatures.tsx` — "next facility" preview button

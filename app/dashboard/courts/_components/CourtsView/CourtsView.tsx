@@ -23,6 +23,7 @@ import {
   useDeleteCourt,
   useManagedCourts,
   useUpdateCourt,
+  useUploadCourtPhoto,
 } from "./hooks";
 import type { CourtFormValues, CourtRecord } from "./types";
 
@@ -31,6 +32,7 @@ export function CourtsView() {
   const createCourt = useCreateCourt();
   const updateCourt = useUpdateCourt();
   const deleteCourt = useDeleteCourt();
+  const uploadCourtPhoto = useUploadCourtPhoto();
 
   const [formOpen, setFormOpen] = useState(false);
   const [editingCourt, setEditingCourt] = useState<CourtRecord | null>(null);
@@ -69,14 +71,29 @@ export function CourtsView() {
     setClosuresOpen(true);
   }
 
-  async function handleFormSubmit(values: CourtFormValues) {
+  // A photo picked while the sheet was still in create mode has nowhere to
+  // upload to until the court exists — PhotoField stages that file instead
+  // of uploading it, and this shared handler uploads it right after the
+  // court is created. In edit mode PhotoField already uploads immediately
+  // against the existing courtId, so `photoFile` is only ever set here for
+  // the create path.
+  async function handleFormSubmit(
+    values: CourtFormValues,
+    photoFile?: File | null,
+  ) {
     if (editingCourt) {
       await updateCourt.mutateAsync({
         courtId: editingCourt.id,
         input: values,
       });
     } else {
-      await createCourt.mutateAsync(values);
+      const { court } = await createCourt.mutateAsync(values);
+      if (photoFile) {
+        await uploadCourtPhoto.mutateAsync({
+          courtId: court.id,
+          file: photoFile,
+        });
+      }
     }
   }
 
@@ -125,7 +142,11 @@ export function CourtsView() {
         onOpenChange={setFormOpen}
         court={editingCourt}
         onSubmit={handleFormSubmit}
-        isSubmitting={createCourt.isPending || updateCourt.isPending}
+        isSubmitting={
+          createCourt.isPending ||
+          updateCourt.isPending ||
+          uploadCourtPhoto.isPending
+        }
       />
 
       <AvailabilitySheet

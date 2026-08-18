@@ -1,6 +1,10 @@
 import { BarChart3 } from "lucide-react";
-import { Bar, BarChart, Cell } from "recharts";
-import { ChartContainer } from "@/components/ui/chart";
+import { Bar, BarChart, Cell, XAxis } from "recharts";
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
 import {
   EmptyDescription,
   EmptyMedia,
@@ -35,8 +39,17 @@ export function OverviewChart({
         config={OVERVIEW_CHART_CONFIG}
         className="h-28 w-full @min-[768px]:h-20"
       >
-        <BarChart data={chartData}>
-          <Bar dataKey="total" radius={2}>
+        <BarChart accessibilityLayer data={chartData}>
+          {/* Hidden category axis: not rendered, but gives the tooltip the
+              weekday name as its label instead of a bare row index. */}
+          <XAxis dataKey="date" hide />
+          <ChartTooltip content={<ChartTooltipContent />} />
+          <Bar
+            dataKey="total"
+            fill="var(--color-total)"
+            radius={[4, 4, 0, 0]}
+            maxBarSize={24}
+          >
             {chartData.map((day) => {
               const isPeak = peak > 0 && day.total === peak;
               return (

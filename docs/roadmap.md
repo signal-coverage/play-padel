@@ -21,7 +21,7 @@ All of this is currently mocked UI with no backing schema (see the Player Overvi
 ## Phase 3 — hardening
 
 - **Security** — no rate limiting, no CSRF-specific review, no API throttling, no CAPTCHA on public forms. See [SECURITY.md](SECURITY.md).
-- **Landing page** — every section is placeholder marketing copy (fake testimonials, events, stats). Needs real content once there's something real to show.
+- ~~**Landing page**~~ — done. Rewritten to describe real, shipped platform capabilities instead of fabricated marketing content (see [PROJECT_STATUS.md](PROJECT_STATUS.md)). Only remaining gap: footer contact email/phone and social links are still placeholder pending real business info.
 
 ## Longer-term / aspirational
 

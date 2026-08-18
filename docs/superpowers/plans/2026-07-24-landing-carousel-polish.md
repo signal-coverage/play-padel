@@ -122,7 +122,7 @@ Current loop body (lines 41-84):
       )}
 
       <motion.div
-        className="relative shrink-0 w-56 sm:w-64 aspect-3/5 rounded-3xl overflow-hidden"
+        className="relative shrink-0 w-56 sm:w-64 aspect-3/5 rounded-sm overflow-hidden"
         initial={shouldReduce ? false : { opacity: 0, y: 16 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
@@ -152,7 +152,7 @@ Replace with:
   EVENTS.map((event, i) => (
     <motion.div
       key={event.title}
-      className="group relative shrink-0 w-56 sm:w-64 aspect-3/5 rounded-3xl overflow-hidden hover:shadow-xl transition-shadow duration-500"
+      className="group relative shrink-0 w-56 sm:w-64 aspect-3/5 rounded-sm overflow-hidden hover:shadow-xl transition-shadow duration-500"
       initial={shouldReduce ? false : { opacity: 0, y: 16 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
@@ -226,7 +226,7 @@ Current (lines 90-106):
 <button
   type="button"
   onClick={goNext}
-  className="relative shrink-0 w-40 h-32 rounded-2xl overflow-hidden"
+  className="relative shrink-0 w-40 h-32 rounded-sm overflow-hidden"
 >
   <Image
     src={next.image}
@@ -248,7 +248,7 @@ Replace with:
 <button
   type="button"
   onClick={goNext}
-  className="group relative shrink-0 w-40 h-32 rounded-2xl overflow-hidden hover:shadow-xl transition-shadow duration-500 active:scale-95"
+  className="group relative shrink-0 w-40 h-32 rounded-sm overflow-hidden hover:shadow-xl transition-shadow duration-500 active:scale-95"
 >
   <Image
     src={next.image}

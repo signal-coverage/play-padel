@@ -24,7 +24,7 @@ export function ReservationsTable({
 }: ReservationsTableProps) {
   if (isLoading) {
     return (
-      <div className="overflow-x-auto rounded-lg border">
+      <div className="overflow-x-auto rounded-sm border">
         <span className="sr-only" role="status">
           Loading reservations…
         </span>
@@ -56,8 +56,8 @@ export function ReservationsTable({
                   </TableCell>
                   <TableCell>
                     <div className="flex justify-end gap-1.5">
-                      <Skeleton className="h-8 w-16 rounded-md" />
-                      <Skeleton className="h-8 w-16 rounded-md" />
+                      <Skeleton className="h-8 w-16 rounded-sm" />
+                      <Skeleton className="h-8 w-16 rounded-sm" />
                     </div>
                   </TableCell>
                 </TableRow>
@@ -74,7 +74,7 @@ export function ReservationsTable({
   }
 
   return (
-    <div className="overflow-x-auto rounded-lg border">
+    <div className="overflow-x-auto rounded-sm border">
       <Table>
         <TableHeader>
           <TableRow>

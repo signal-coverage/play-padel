@@ -25,7 +25,7 @@ export function CancelConfirmDialog({
       <DialogContent onPointerDownOutside={(e) => e.preventDefault()}>
         <DialogHeader>
           <DialogTitle>Cancel reservation?</DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="tabular-nums">
             {target
               ? `${target.courtName} · ${formatCancelTargetDateTime(target.scheduledStart)}`
               : null}

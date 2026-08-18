@@ -15,7 +15,7 @@ export function UpcomingCard({
     <Card
       size="sm"
       className={cn(
-        "animate-fade-up shrink-0 overflow-hidden rounded-sm px-3 py-5 border-primary [--card-spacing:--spacing(4)]",
+        "animate-fade-up shrink-0 overflow-visible rounded-sm px-3 py-5 border-primary [--card-spacing:--spacing(4)]",
         className,
       )}
       style={{ animationDelay: "380ms" }}

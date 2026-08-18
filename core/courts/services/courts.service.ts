@@ -32,8 +32,10 @@ function toCourt(row: CourtRow): Court {
     surface: row.surface ?? undefined,
     indoor: row.indoor,
     color: row.color ?? undefined,
+    photoUrl: row.photoUrl ?? undefined,
     slotDurationMinutes: row.slotDurationMinutes,
-    price: row.price ?? undefined,
+    reservationFee: row.reservationFee ?? undefined,
+    courtPrice: row.courtPrice ?? undefined,
     active: row.active,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
@@ -82,10 +84,12 @@ export async function createCourt(
       surface: input.surface ?? null,
       indoor: input.indoor ?? false,
       color: input.color ?? null,
+      photoUrl: input.photoUrl ?? null,
       ...(input.slotDurationMinutes !== undefined && {
         slotDurationMinutes: input.slotDurationMinutes,
       }),
-      price: input.price ?? null,
+      reservationFee: input.reservationFee ?? null,
+      courtPrice: input.courtPrice ?? null,
       createdBy,
       updatedBy: createdBy,
     },
@@ -120,10 +124,16 @@ export async function updateCourt(
       ...(input.surface !== undefined && { surface: input.surface ?? null }),
       ...(input.indoor !== undefined && { indoor: input.indoor }),
       ...(input.color !== undefined && { color: input.color ?? null }),
+      ...(input.photoUrl !== undefined && {
+        photoUrl: input.photoUrl ?? null,
+      }),
       ...(input.slotDurationMinutes !== undefined && {
         slotDurationMinutes: input.slotDurationMinutes,
       }),
-      ...(input.price !== undefined && { price: input.price }),
+      ...(input.reservationFee !== undefined && {
+        reservationFee: input.reservationFee,
+      }),
+      ...(input.courtPrice !== undefined && { courtPrice: input.courtPrice }),
       ...(input.active !== undefined && { active: input.active }),
       updatedBy,
     },
@@ -445,6 +455,13 @@ export async function getCourtSlots(
   }
 
   return slots.sort((a, b) => a.start.getTime() - b.start.getTime());
+}
+
+/** True if any slot on any given court is free. Pure — takes each court's already-computed slots, does no DB access itself. */
+export function hasAnyFreeSlot(courtSlots: Slot[][]): boolean {
+  return courtSlots.some((slots) =>
+    slots.some((slot) => slot.status === "free"),
+  );
 }
 
 export async function getCourtById(id: string): Promise<Court | null> {

@@ -38,7 +38,7 @@ export function NewClosureForm({
   return (
     <form
       onSubmit={handleSubmit(submit)}
-      className="flex flex-col gap-4 rounded-lg border p-3"
+      className="flex flex-col gap-4 rounded-sm border p-3"
     >
       <Field>
         <FieldLabel htmlFor="closure-starts-at">Starts</FieldLabel>
