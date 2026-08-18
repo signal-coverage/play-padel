@@ -1,3 +1,4 @@
+export * from "./HomeAnalytics";
 export * from "./LandingAbout";
 export * from "./LandingCtaBanner";
 export * from "./LandingFeatures";
