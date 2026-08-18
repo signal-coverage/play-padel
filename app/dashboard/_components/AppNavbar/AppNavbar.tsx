@@ -8,6 +8,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { NavLinks } from "./components/NavLinks";
 import { UserMenu } from "./components/UserMenu";
+import { CommandPalette } from "../CommandPalette";
 
 export function AppNavbar() {
   const { user } = useAuth();
@@ -15,6 +16,8 @@ export function AppNavbar() {
 
   return (
     <header className="flex items-center justify-between gap-4 border-b border-border bg-background px-6 py-4 md:px-6">
+      <CommandPalette role={role} />
+
       <div className="flex min-w-0 items-center gap-8">
         <Link
           href="/dashboard"
@@ -24,7 +27,7 @@ export function AppNavbar() {
           <span className="hidden sm:inline">Play Padel</span>
         </Link>
 
-        <NavLinks role={role} className="hidden min-w-0 md:flex" />
+        <NavLinks role={role} className="hidden min-w-0 min-[809px]:flex" />
       </div>
 
       <div className="flex shrink-0 items-center gap-3">

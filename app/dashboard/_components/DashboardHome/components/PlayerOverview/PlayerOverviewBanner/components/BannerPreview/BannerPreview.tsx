@@ -5,7 +5,7 @@ import type { BannerPreviewProps } from "./types";
 export function BannerPreview({ partnerInitials }: BannerPreviewProps) {
   return (
     <div className="flex w-full items-center gap-3">
-      <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+      <div className="flex size-9 shrink-0 items-center justify-center rounded-sm bg-primary/10 text-primary">
         <LayoutGrid className="size-4" />
       </div>
       <div className="min-w-0 flex-1 text-left">

@@ -9,7 +9,7 @@ export const clubSettingsFormSchema = z.object({
   taxId: z.string(),
   email: z.string().min(1, "Email is required").email("Invalid email address"),
   phone: z.string(),
-  logoUrl: z.string(),
+  logoUrl: z.union([z.literal(""), z.string().url("Must be a valid URL")]),
   timezone: z.string().min(1, "Timezone is required"),
   currency: z.string().min(1, "Currency is required"),
   requiresPrepayment: z.boolean(),

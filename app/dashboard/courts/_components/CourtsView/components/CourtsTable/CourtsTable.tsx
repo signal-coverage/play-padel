@@ -13,6 +13,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { formatCourtPrice } from "@/lib/utils/currency";
 import { indoorLabel, surfaceLabel } from "../../utils";
 import { LOADING_SKELETON_ROW_COUNT } from "./consts";
 import type { CourtsTableProps } from "./types";
@@ -28,7 +34,7 @@ export function CourtsTable({
 }: CourtsTableProps) {
   if (isLoading) {
     return (
-      <div className="overflow-x-auto rounded-lg border">
+      <div className="overflow-x-auto rounded-sm border">
         <span className="sr-only" role="status">
           Loading courts…
         </span>
@@ -38,6 +44,9 @@ export function CourtsTable({
               <TableHead>Name</TableHead>
               <TableHead>Surface</TableHead>
               <TableHead>Type</TableHead>
+              <TableHead>Reservation fee</TableHead>
+              <TableHead>Court price</TableHead>
+              <TableHead>Minimum shift</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
@@ -56,14 +65,23 @@ export function CourtsTable({
                     <Skeleton className="h-4 w-16" />
                   </TableCell>
                   <TableCell>
+                    <Skeleton className="h-4 w-16" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-4 w-16" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-4 w-16" />
+                  </TableCell>
+                  <TableCell>
                     <Skeleton className="h-5 w-16 rounded-full" />
                   </TableCell>
                   <TableCell>
                     <div className="flex justify-end gap-1.5">
-                      <Skeleton className="h-8 w-8 rounded-md" />
-                      <Skeleton className="h-8 w-8 rounded-md" />
-                      <Skeleton className="h-8 w-8 rounded-md" />
-                      <Skeleton className="h-8 w-8 rounded-md" />
+                      <Skeleton className="h-8 w-8 rounded-sm" />
+                      <Skeleton className="h-8 w-8 rounded-sm" />
+                      <Skeleton className="h-8 w-8 rounded-sm" />
+                      <Skeleton className="h-8 w-8 rounded-sm" />
                     </div>
                   </TableCell>
                 </TableRow>
@@ -84,13 +102,16 @@ export function CourtsTable({
   }
 
   return (
-    <div className="overflow-x-auto rounded-lg border">
+    <div className="overflow-x-auto rounded-sm border">
       <Table>
         <TableHeader>
           <TableRow>
             <TableHead>Name</TableHead>
             <TableHead>Surface</TableHead>
             <TableHead>Type</TableHead>
+            <TableHead>Reservation fee</TableHead>
+            <TableHead>Court price</TableHead>
+            <TableHead>Minimum shift</TableHead>
             <TableHead>Status</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
@@ -111,49 +132,83 @@ export function CourtsTable({
               <TableCell>{surfaceLabel(court.surface)}</TableCell>
               <TableCell>{indoorLabel(court.indoor)}</TableCell>
               <TableCell>
+                {court.reservationFee !== undefined
+                  ? formatCourtPrice(court.reservationFee)
+                  : "—"}
+              </TableCell>
+              <TableCell>
+                {court.courtPrice !== undefined
+                  ? formatCourtPrice(court.courtPrice)
+                  : "—"}
+              </TableCell>
+              <TableCell>{court.slotDurationMinutes} min</TableCell>
+              <TableCell>
                 <Badge variant={court.active ? "default" : "secondary"}>
                   {court.active ? "Active" : "Inactive"}
                 </Badge>
               </TableCell>
               <TableCell className="text-right">
                 <div className="flex justify-end gap-1.5">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    aria-label={`Edit availability for ${court.name}`}
-                    onClick={() => onEditAvailability(court)}
-                  >
-                    <CalendarClock />
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    aria-label={`Manage closures for ${court.name}`}
-                    onClick={() => onEditClosures(court)}
-                  >
-                    <CalendarOff />
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    aria-label={`Edit ${court.name}`}
-                    onClick={() => onEdit(court)}
-                  >
-                    <Pencil />
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    aria-label={`Deactivate ${court.name}`}
-                    disabled={!court.active || deletingCourtId === court.id}
-                    onClick={() => onDelete(court)}
-                  >
-                    <Trash2 />
-                  </Button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        aria-label={`Edit availability for ${court.name}`}
+                        onClick={() => onEditAvailability(court)}
+                      >
+                        <CalendarClock />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Edit availability</TooltipContent>
+                  </Tooltip>
+
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        aria-label={`Manage closures for ${court.name}`}
+                        onClick={() => onEditClosures(court)}
+                      >
+                        <CalendarOff />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Manage closures</TooltipContent>
+                  </Tooltip>
+
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        aria-label={`Edit ${court.name}`}
+                        onClick={() => onEdit(court)}
+                      >
+                        <Pencil />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Edit court</TooltipContent>
+                  </Tooltip>
+
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        aria-label={`Deactivate ${court.name}`}
+                        disabled={!court.active || deletingCourtId === court.id}
+                        onClick={() => onDelete(court)}
+                      >
+                        <Trash2 />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Deactivate court</TooltipContent>
+                  </Tooltip>
                 </div>
               </TableCell>
             </TableRow>

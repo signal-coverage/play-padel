@@ -22,7 +22,7 @@ export function DayNavigator({ date, onDateChange }: DayNavigatorProps) {
         <ChevronLeft />
       </Button>
 
-      <span className="text-sm font-medium">{formatGridHeaderDate(date)}</span>
+      <span className="text-xs font-medium">{formatGridHeaderDate(date)}</span>
 
       <Button
         type="button"

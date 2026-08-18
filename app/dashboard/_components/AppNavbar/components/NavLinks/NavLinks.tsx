@@ -12,7 +12,7 @@ export function NavLinks({ role, className }: NavLinksProps) {
   const visibleItems = navItems.filter((item) => item.roles.includes(role));
 
   return (
-    <nav className={cn("items-center gap-1 overflow-x-auto", className)}>
+    <nav className={cn("items-center gap-1", className)}>
       {visibleItems.map((item) => {
         const active = pathname === item.href;
         return (

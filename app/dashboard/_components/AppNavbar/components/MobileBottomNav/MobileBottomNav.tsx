@@ -26,14 +26,14 @@ export function MobileBottomNav({ role, className }: NavLinksProps) {
             href={item.href}
             aria-current={active ? "page" : undefined}
             className={cn(
-              "relative isolate flex min-h-11 min-w-0 flex-col items-center gap-0.5 rounded-lg px-3 py-1 text-[10px] leading-none font-medium transition-colors",
+              "relative isolate flex min-h-11 min-w-0 flex-col items-center gap-0.5 rounded-sm px-3 py-1 text-[10px] leading-none font-medium transition-colors",
               active ? "text-primary-foreground" : "text-muted-foreground",
             )}
           >
             {active && (
               <motion.span
                 layoutId="mobile-nav-highlight"
-                className="absolute inset-0 -z-10 rounded-lg bg-primary"
+                className="absolute inset-0 -z-10 rounded-sm bg-primary"
                 transition={{ type: "spring", stiffness: 500, damping: 35 }}
               />
             )}

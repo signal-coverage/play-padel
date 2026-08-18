@@ -497,7 +497,7 @@ export function LatestPartnerCard({ partner }: LatestPartnerCardProps) {
       <PopoverTrigger asChild>
         <button
           type="button"
-          className="flex w-full items-center gap-2 rounded-lg border border-border p-2 text-left transition-colors hover:bg-muted/50"
+          className="flex w-full items-center gap-2 rounded-sm border border-border p-2 text-left transition-colors hover:bg-muted/50"
         >
           <Avatar size="sm">
             {partner.avatarUrl && (
@@ -902,7 +902,7 @@ import type { PlayerOverviewCardProps } from "./types";
 
 export function PlayerOverviewCard({ className }: PlayerOverviewCardProps) {
   return (
-    <Card className={cn("hidden rounded-2xl lg:block", className)}>
+    <Card className={cn("hidden rounded-sm lg:block", className)}>
       <CardHeader>
         <CardTitle>Player Overview</CardTitle>
       </CardHeader>
@@ -960,7 +960,7 @@ import type { BannerPreviewProps } from "./types";
 export function BannerPreview({ partnerInitials }: BannerPreviewProps) {
   return (
     <div className="flex w-full items-center gap-3">
-      <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+      <div className="flex size-9 shrink-0 items-center justify-center rounded-sm bg-primary/10 text-primary">
         <LayoutGrid className="size-4" />
       </div>
       <div className="min-w-0 flex-1 text-left">
@@ -1022,7 +1022,7 @@ export function PlayerOverviewBanner({ className }: PlayerOverviewBannerProps) {
         type="button"
         onClick={() => setOpen(true)}
         className={cn(
-          "flex items-center rounded-2xl border border-border bg-card p-3 lg:hidden",
+          "flex items-center rounded-sm border border-border bg-card p-3 lg:hidden",
           className,
         )}
       >

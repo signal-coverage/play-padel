@@ -60,7 +60,7 @@ export function PlanPricingCard({ plan, billingCycle }: PlanPricingCardProps) {
         >
           <Card
             className={cn(
-              "relative flex-1 overflow-hidden rounded-2xl border py-6",
+              "relative flex-1 overflow-hidden rounded-sm border py-6",
               emphasis.cardBorder,
               emphasis.cardShadow,
               emphasis.ring,

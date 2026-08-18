@@ -2,7 +2,7 @@ import { cn } from "@/lib/utils/utils";
 
 export function getOptionCardClassName(selected: boolean, hasBadge?: boolean) {
   return cn(
-    "items-start gap-3 rounded-xl border-2 p-4 text-left transition-colors duration-200",
+    "items-start gap-3 rounded-sm border-2 p-4 text-left transition-colors duration-200",
     selected
       ? "border-primary bg-primary/5"
       : hasBadge

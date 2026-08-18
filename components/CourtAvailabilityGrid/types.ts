@@ -11,6 +11,20 @@ export type Slot = {
 export type CourtColumn = {
   id: string;
   name: string;
+  /** Per-reservation fee, when the court has one configured (undefined means "not set"; 0 means genuinely free — the two are not the same). */
+  reservationFee?: number;
+  /** Free-text surface/field type (e.g. "clay", "cristal"). Only read by Browse Courts' court-metadata panel — CourtAvailabilityGrid itself never displays this. */
+  surface?: string;
+  /** Court accent color (hex-ish string, same convention as the owner-side CourtsTable swatch). Only read by Browse Courts' court-metadata panel. */
+  color?: string;
+  /** Whether the court is indoor. Only read by Browse Courts' court-metadata panel. */
+  indoor?: boolean;
+  /** Owner-uploaded photo URL, if any. Only read by Browse Courts' court-metadata panel. */
+  photoUrl?: string;
+  /** The court's total/base price, if the owner has set one. Only read by Browse Courts' court-metadata panel. */
+  courtPrice?: number;
+  /** Needed alongside courtPrice to derive a $/hour figure. Only read by Browse Courts' court-metadata panel. */
+  slotDurationMinutes?: number;
   slots: Slot[];
 };
 

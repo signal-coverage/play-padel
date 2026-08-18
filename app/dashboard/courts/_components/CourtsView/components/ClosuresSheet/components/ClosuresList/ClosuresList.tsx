@@ -27,7 +27,7 @@ export function ClosuresList({
         return (
           <div
             key={closure.id}
-            className="flex items-center justify-between gap-2 rounded-lg border p-3"
+            className="flex items-center justify-between gap-2 rounded-sm border p-3"
           >
             <div className="min-w-0 flex-1">
               <p className="text-sm font-medium">{closure.reason}</p>

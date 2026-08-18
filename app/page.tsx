@@ -1,4 +1,5 @@
 import {
+  HomeAnalytics,
   LandingAbout,
   LandingCtaBanner,
   LandingFeatures,
@@ -11,6 +12,7 @@ import {
 export default function HomePage() {
   return (
     <div className="theme-light font-(family-name:--font-jakarta) bg-white">
+      <HomeAnalytics />
       <LandingHeader />
       <LandingHero />
       <LandingTrusted />

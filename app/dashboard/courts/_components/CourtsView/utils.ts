@@ -2,6 +2,7 @@ import {
   DAY_LABELS,
   DEFAULT_SLOT_DURATION_MINUTES,
 } from "@/core/courts/consts";
+import { COURT_SURFACE_OPTIONS } from "./components/CourtFormSheet/components/SurfaceField/consts";
 import type {
   AvailabilityEntry,
   CourtAvailability,
@@ -16,21 +17,29 @@ import type {
 
 export const DEFAULT_COURT_COLOR = "#2D8A60";
 
-export function courtToFormValues(court?: CourtRecord | null): CourtFormValues {
+export function courtToFormValues(
+  court?: CourtRecord | null,
+): Omit<CourtFormValues, "reservationFee"> & { reservationFee?: number } {
   return {
     name: court?.name ?? "",
     surface: court?.surface ?? "",
     indoor: court?.indoor ?? false,
     color: court?.color ?? DEFAULT_COURT_COLOR,
+    photoUrl: court?.photoUrl,
     slotDurationMinutes:
       court?.slotDurationMinutes ?? DEFAULT_SLOT_DURATION_MINUTES,
-    price: court?.price,
+    reservationFee: court?.reservationFee,
+    courtPrice: court?.courtPrice,
     active: court?.active ?? true,
   };
 }
 
 export function surfaceLabel(surface?: string): string {
-  return surface && surface.trim().length > 0 ? surface : "—";
+  if (!surface || surface.trim().length === 0) return "—";
+  return (
+    COURT_SURFACE_OPTIONS.find((option) => option.value === surface)?.label ??
+    surface
+  );
 }
 
 export function indoorLabel(indoor: boolean): string {

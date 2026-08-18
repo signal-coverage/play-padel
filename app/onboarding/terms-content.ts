@@ -11,7 +11,7 @@ You are responsible for the accuracy of the information provided during registra
 Reservations are confirmed instantly at the time of booking. Players can self-cancel up to 2 hours before a reservation's start time; cancellations inside that window go through the club directly.
 
 5. Payments
-No payment is required to reserve a court through Play Padel today — payment is handled in person at the club. This may change as new payment options are added.
+Some clubs require online prepayment to confirm a reservation; in that case, payment is processed through Mercado Pago at the time of booking. For clubs that do not require prepayment, payment is handled in person at the club.
 
 6. Data Handling
 Data you submit is stored to provide the service and is not shared with third parties except as required to operate the platform or comply with the law.

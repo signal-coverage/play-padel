@@ -103,6 +103,12 @@ model UserProfile {
   dominantHand  DominantHand?
   status        UserStatus  @default(ACTIVE)
   lastLogin     DateTime?
+  // Set server-side at onboarding submit time (see app/api/onboarding/route.ts).
+  // Nullable because existing rows predate this field; the onboarding Terms
+  // step checkbox also self-certifies the user is 18+ (see docs/COMPLIANCE.md
+  // — self-certification, no DOB collection), so this single timestamp
+  // covers both terms acceptance and the age gate.
+  acceptedTermsAt DateTime?
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
   createdBy     String
@@ -122,8 +128,10 @@ model Court {
   surface             String?
   indoor              Boolean   @default(false)
   color               String?
+  photoUrl            String?
   slotDurationMinutes Int       @default(90)
-  price               Float?
+  reservationFee      Float?
+  courtPrice          Float?
   active              Boolean   @default(true)
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt

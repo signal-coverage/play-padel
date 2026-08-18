@@ -1,60 +1,21 @@
 "use client";
 
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { GuardedActionButton } from "@/components/GuardedActionButton";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { BookingConfirmDesktopDialog } from "./components/BookingConfirmDesktopDialog";
+import { BookingConfirmMobileDrawer } from "./components/BookingConfirmMobileDrawer";
 import type { BookingConfirmDialogProps } from "./types";
-import { formatSlotRange } from "./utils";
 
-export function BookingConfirmDialog({
-  open,
-  onOpenChange,
-  courtName,
-  slot,
-  isSubmitting,
-  requiresPrepayment,
-  onConfirm,
-}: BookingConfirmDialogProps) {
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent onPointerDownOutside={(e) => e.preventDefault()}>
-        <DialogHeader>
-          <DialogTitle>Confirm reservation</DialogTitle>
-          <DialogDescription className="text-base font-semibold text-foreground">
-            {slot
-              ? `${courtName} · ${formatSlotRange(slot.start, slot.end)}`
-              : null}
-          </DialogDescription>
-        </DialogHeader>
-        <p className="text-xs text-muted-foreground">
-          {requiresPrepayment
-            ? "This club requires payment to confirm your booking. You'll be redirected to Mercado Pago to complete it — your slot is held for 15 minutes."
-            : "No payment is required now — you pay at the club. You can cancel for free up to 2 hours before your reservation."}
-        </p>
-        <DialogFooter>
-          <Button
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            disabled={isSubmitting}
-          >
-            Cancel
-          </Button>
-          <GuardedActionButton isPending={isSubmitting} onClick={onConfirm}>
-            {isSubmitting
-              ? "Booking…"
-              : requiresPrepayment
-                ? "Continue to payment"
-                : "Book court"}
-          </GuardedActionButton>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+/**
+ * Shows the booking confirmation as a centered dialog on larger viewports and
+ * as a bottom-sheet drawer on small/mobile viewports, since a Dialog is
+ * cramped and hard to reach one-handed at phone widths.
+ */
+export function BookingConfirmDialog(props: BookingConfirmDialogProps) {
+  const isMobile = useIsMobile();
+
+  return isMobile ? (
+    <BookingConfirmMobileDrawer {...props} />
+  ) : (
+    <BookingConfirmDesktopDialog {...props} />
   );
 }

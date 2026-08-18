@@ -582,7 +582,7 @@ export function PlayerOverviewCard({ className }: PlayerOverviewCardProps) {
 
   return (
     <div className={cn("flex flex-col gap-3", className)}>
-      <Card size="sm" className="rounded-2xl [--card-spacing:--spacing(4)]">
+      <Card size="sm" className="rounded-sm [--card-spacing:--spacing(4)]">
         <CardHeader>
           <CardTitle>Player Overview</CardTitle>
           <CardAction>
@@ -597,7 +597,7 @@ export function PlayerOverviewCard({ className }: PlayerOverviewCardProps) {
       </Card>
       <Card
         size="sm"
-        className="rounded-2xl [--card-spacing:--spacing(4)] flex-1"
+        className="rounded-sm [--card-spacing:--spacing(4)] flex-1"
       >
         <CardHeader>
           <CardTitle>Performance Summary</CardTitle>
@@ -977,7 +977,7 @@ export function PlayerRow({ player }: PlayerRowProps) {
       <DialogTrigger asChild>
         <button
           type="button"
-          className="flex w-full items-center gap-3 rounded-lg border border-border p-3 text-left transition-colors hover:bg-muted/50"
+          className="flex w-full items-center gap-3 rounded-sm border border-border p-3 text-left transition-colors hover:bg-muted/50"
         >
           <Avatar>
             {player.avatarUrl && <AvatarImage src={player.avatarUrl} alt="" />}
@@ -1168,7 +1168,7 @@ export function LatestPartnerCard({ partner }: LatestPartnerCardProps) {
       <DialogTrigger asChild>
         <button
           type="button"
-          className="flex w-full items-center gap-2 rounded-lg border border-border p-2 text-left transition-colors hover:bg-muted/50"
+          className="flex w-full items-center gap-2 rounded-sm border border-border p-2 text-left transition-colors hover:bg-muted/50"
         >
           <Avatar size="sm">
             {partner.avatarUrl && (

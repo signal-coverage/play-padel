@@ -16,7 +16,7 @@
 - **Do not run `git commit`.** Per project convention, the user owns all git operations. Each task ends with the working tree left staged-but-uncommitted (or just modified, do not even `git add`) for the user to review and commit themselves. Do not include a "Commit" step's actual command execution — note where a commit boundary would naturally fall, but stop short of running it.
 - Follow the existing SRP file-structure convention exactly: `ComponentName.tsx` (render + local state only), `types.ts` (types/interfaces), `consts.ts` (constants), `styles.ts` (className-factory functions, following `app/onboarding/_components/OptionCard/styles.ts`'s exact pattern: `export function getXClassName(...) { return cn(...) }`), `utils.ts` (pure helpers), `index.ts` (barrel, re-exporting only the component, and the type too if consumed externally). Only create the files a component actually needs — don't scaffold empty ones.
 - Dev server is expected running at `http://localhost:3000` (`npm run dev`) with an authenticated player-role session already available in the Playwright MCP browser profile (confirmed working in this session — `http://localhost:3000/dashboard` loads directly into the signed-in dashboard, no login step needed).
-- A design premise from the spec did not survive contact with the actual code and should NOT be implemented: the spec's "border-radius hierarchy" item (tighten small elements vs. containers) is **dropped**. Inspecting the real components showed the radius scale already varies sensibly — `HeroCard` uses `rounded-4xl`, secondary bento cards use `rounded-2xl`, chips/badges/pills are already `rounded-full`/render as full pills at their height. There is no uniform-radius bug to fix. No task below touches border-radius.
+- A design premise from the spec did not survive contact with the actual code and should NOT be implemented: the spec's "border-radius hierarchy" item (tighten small elements vs. containers) is **dropped**. Inspecting the real components showed the radius scale already varies sensibly — `HeroCard` uses `rounded-sm`, secondary bento cards use `rounded-sm`, chips/badges/pills are already `rounded-full`/render as full pills at their height. There is no uniform-radius bug to fix. No task below touches border-radius.
 - The spec mentioned club "location" as potential card content — **`Club` has no location/address field** (confirmed via `core/clubs/types/index.ts`: only `id`, `name`, `legalName`, `taxId`, `email`, `phone`, `logoUrl`, `timezone`, `currency`, `plan`, `status`, `requiresPrepayment`, audit fields). Task 6 below uses `phone` (falling back to `timezone`) as the card's secondary line instead.
 
 ---
@@ -329,7 +329,7 @@ import { cn } from "@/lib/utils/utils";
 
 export function getClubCardClassName(selected: boolean) {
   return cn(
-    "flex items-center gap-3 rounded-xl border-2 p-3 text-left transition-colors duration-200",
+    "flex items-center gap-3 rounded-sm border-2 p-3 text-left transition-colors duration-200",
     selected
       ? "border-primary bg-primary/5"
       : "border-border hover:border-muted-foreground/30",
@@ -461,8 +461,8 @@ export function ClubPicker({
       <div className="flex flex-col gap-2">
         <Label>Club</Label>
         <div className="grid gap-2 sm:grid-cols-2">
-          <Skeleton className="h-16 rounded-xl" />
-          <Skeleton className="h-16 rounded-xl" />
+          <Skeleton className="h-16 rounded-sm" />
+          <Skeleton className="h-16 rounded-sm" />
         </div>
       </div>
     );
@@ -564,7 +564,7 @@ export function PlayerCard({ player }: PlayerCardProps) {
       <DialogTrigger asChild>
         <button
           type="button"
-          className="flex flex-col items-center gap-2 rounded-2xl border border-border p-4 text-center transition-colors hover:bg-muted/50"
+          className="flex flex-col items-center gap-2 rounded-sm border border-border p-4 text-center transition-colors hover:bg-muted/50"
         >
           <Avatar size="lg">
             {player.avatarUrl && (

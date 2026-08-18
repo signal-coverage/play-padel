@@ -224,6 +224,18 @@
       border-color 150ms ease,
       box-shadow 150ms ease;
   }
+
+  /* Hide the native up/down stepper on every number input, app-wide. */
+  input[type="number"] {
+    appearance: textfield;
+    -moz-appearance: textfield;
+  }
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button {
+    appearance: none;
+    -webkit-appearance: none;
+    margin: 0;
+  }
 }
 
 /* ─── Clerk auth overrides ───────────────────────────────────────────────── */

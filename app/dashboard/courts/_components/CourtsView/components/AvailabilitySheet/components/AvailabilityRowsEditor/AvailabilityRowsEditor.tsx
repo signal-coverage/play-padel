@@ -13,6 +13,7 @@ import {
   availabilityRowsToEntries,
   buildAvailabilityRows,
 } from "../../../../utils";
+import { QuickSetupPanel } from "./components/QuickSetupPanel";
 import type { AvailabilityDayRow } from "../../../../types";
 import type { AvailabilityRowsEditorProps } from "./types";
 
@@ -41,6 +42,12 @@ export function AvailabilityRowsEditor({
     );
   }
 
+  function applyToAllDays(startTime: string, endTime: string) {
+    setRows((current) =>
+      current.map((row) => ({ ...row, active: true, startTime, endTime })),
+    );
+  }
+
   function handleSave() {
     const entries = availabilityRowsToEntries(rows);
     const invalid = entries.find((entry) => entry.endTime <= entry.startTime);
@@ -54,10 +61,12 @@ export function AvailabilityRowsEditor({
   return (
     <>
       <div className="flex flex-1 flex-col gap-3 overflow-y-auto px-4">
+        <QuickSetupPanel onApply={applyToAllDays} />
+
         {rows.map((row) => (
           <div
             key={row.dayOfWeek}
-            className="flex flex-col gap-2 rounded-lg border p-3"
+            className="flex flex-col gap-2 rounded-sm border p-3"
           >
             <div className="flex items-center justify-between">
               <Label htmlFor={`day-${row.dayOfWeek}-active`}>

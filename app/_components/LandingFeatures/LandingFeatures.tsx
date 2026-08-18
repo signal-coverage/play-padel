@@ -113,7 +113,7 @@ export function LandingFeatures() {
             <button
               type="button"
               onClick={goNext}
-              className="group relative shrink-0 w-40 h-32 rounded-2xl overflow-hidden hover:shadow-xl transition-shadow duration-500 active:scale-95"
+              className="group relative shrink-0 w-40 h-32 rounded-sm overflow-hidden hover:shadow-xl transition-shadow duration-500 active:scale-95"
             >
               <AnimatePresence mode="wait" initial={false}>
                 <motion.div

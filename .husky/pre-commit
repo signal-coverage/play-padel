@@ -1,2 +1,6 @@
+#!/usr/bin/env sh
+set -e
+
 npm run lint
-npm run format
+npx tsc --noEmit
+npx prettier --check .

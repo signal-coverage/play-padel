@@ -55,7 +55,7 @@ export function CourtAvailabilityGrid({
           : "Court availability loaded.";
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex h-full min-h-0 flex-col gap-3">
       <span role="status" className="sr-only">
         {statusMessage}
       </span>
@@ -102,10 +102,10 @@ export function CourtAvailabilityGrid({
                   <TableHead
                     key={court.id}
                     scope="col"
-                    className="min-w-28 max-w-40 truncate text-center"
+                    className="min-w-28 max-w-40 truncate text-center pr-3"
                     title={court.name}
                   >
-                    {court.name}
+                    Slot
                   </TableHead>
                 ))}
               </TableRow>
@@ -128,7 +128,7 @@ export function CourtAvailabilityGrid({
                     {formatSlotTime(row.time)}
                   </TableHead>
                   {courts.map((court) => (
-                    <TableCell key={court.id} className="p-1.5">
+                    <TableCell key={court.id} className="py-1.5 pr-3">
                       <SlotCell
                         slot={row.slotsByCourtId.get(court.id)}
                         courtId={court.id}

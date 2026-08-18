@@ -113,11 +113,19 @@ export interface InvoiceReceiptData {
   userName: string;
   clubName: string;
   clubEmail: string;
+  courtName: string;
+  scheduledStart: Date;
+  scheduledEnd: Date;
   items: {
     description: string;
     quantity: number;
     unitPrice: number;
     total: number;
   }[];
-  payments: { date: Date; method: string; amount: number }[];
+  payments: {
+    date: Date;
+    method: string;
+    amount: number;
+    reference?: string;
+  }[];
 }

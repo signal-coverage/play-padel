@@ -52,3 +52,7 @@ next-env.d.ts
 /.superpower/
 /.atl/
 /.claude/
+.env*
+
+# Sentry Config File
+.env.sentry-build-plugin

@@ -5,8 +5,10 @@ export const createCourtSchema = z.object({
   surface: z.string().optional(),
   indoor: z.boolean().optional(),
   color: z.string().optional(),
+  photoUrl: z.string().url().optional(),
   slotDurationMinutes: z.number().int().positive().optional(),
-  price: z.number().nonnegative().optional(),
+  reservationFee: z.number().nonnegative().optional(),
+  courtPrice: z.number().nonnegative().optional(),
 });
 
 export const updateCourtSchema = z.object({
@@ -14,8 +16,10 @@ export const updateCourtSchema = z.object({
   surface: z.string().optional(),
   indoor: z.boolean().optional(),
   color: z.string().optional(),
+  photoUrl: z.string().url().optional(),
   slotDurationMinutes: z.number().int().positive().optional(),
-  price: z.number().nonnegative().optional(),
+  reservationFee: z.number().nonnegative().optional(),
+  courtPrice: z.number().nonnegative().optional(),
   active: z.boolean().optional(),
 });
 

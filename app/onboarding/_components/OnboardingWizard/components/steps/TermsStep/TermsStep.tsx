@@ -44,6 +44,31 @@ export function TermsStep({
 
       <Controller
         control={control}
+        name="confirmedAge"
+        render={({ field }) => (
+          <div className="flex items-start gap-2">
+            <Checkbox
+              id="confirmedAge"
+              checked={field.value}
+              onCheckedChange={(checked) => field.onChange(checked === true)}
+            />
+            <Label
+              htmlFor="confirmedAge"
+              className="text-sm font-normal leading-snug"
+            >
+              I confirm I am 18 years of age or older.
+            </Label>
+          </div>
+        )}
+      />
+      {errors.confirmedAge && (
+        <p className="text-sm text-destructive">
+          {errors.confirmedAge.message}
+        </p>
+      )}
+
+      <Controller
+        control={control}
         name="acceptedTerms"
         render={({ field }) => (
           <div className="flex items-start gap-2">
@@ -56,7 +81,7 @@ export function TermsStep({
               htmlFor="acceptedTerms"
               className="text-sm font-normal leading-snug"
             >
-              I have read and agree to the Terms and Conditions.
+              I agree to the Terms and Conditions.
             </Label>
           </div>
         )}

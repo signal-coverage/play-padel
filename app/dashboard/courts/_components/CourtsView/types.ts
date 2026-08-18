@@ -4,8 +4,10 @@ export type CourtRecord = {
   surface?: string;
   indoor: boolean;
   color?: string;
+  photoUrl?: string;
   slotDurationMinutes: number;
-  price?: number;
+  reservationFee?: number;
+  courtPrice?: number;
   active: boolean;
 };
 
@@ -14,8 +16,10 @@ export type CourtFormValues = {
   surface: string;
   indoor: boolean;
   color: string;
+  photoUrl?: string;
   slotDurationMinutes: number;
-  price?: number;
+  reservationFee: number;
+  courtPrice?: number;
   active: boolean;
 };
 

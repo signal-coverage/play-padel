@@ -5,8 +5,10 @@ export interface Court {
   surface?: string;
   indoor: boolean;
   color?: string;
+  photoUrl?: string;
   slotDurationMinutes: number;
-  price?: number;
+  reservationFee?: number;
+  courtPrice?: number;
   active: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -31,8 +33,10 @@ export interface CreateCourtInput {
   surface?: string;
   indoor?: boolean;
   color?: string;
+  photoUrl?: string;
   slotDurationMinutes?: number;
-  price?: number;
+  reservationFee?: number;
+  courtPrice?: number;
 }
 
 export interface UpdateCourtInput {
@@ -40,8 +44,10 @@ export interface UpdateCourtInput {
   surface?: string;
   indoor?: boolean;
   color?: string;
+  photoUrl?: string;
   slotDurationMinutes?: number;
-  price?: number;
+  reservationFee?: number;
+  courtPrice?: number;
   active?: boolean;
 }
 
