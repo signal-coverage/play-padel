@@ -225,6 +225,15 @@
       box-shadow 150ms ease;
   }
 
+  a:focus-visible,
+  button:focus-visible,
+  [role="button"]:focus-visible,
+  input:focus-visible,
+  select:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+
   /* Hide the native up/down stepper on every number input, app-wide. */
   input[type="number"] {
     appearance: textfield;
