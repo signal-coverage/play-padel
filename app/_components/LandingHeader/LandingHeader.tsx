@@ -51,7 +51,12 @@ export function LandingHeader() {
           transition={{ duration: 0.45, ease }}
         >
           <Link href="/" className="flex items-center gap-2">
-            <Image src="/logo.svg" alt="Play Padel" width={20} height={20} />
+            <Image
+              src="/light/logo.svg"
+              alt="Play Padel"
+              width={20}
+              height={20}
+            />
             <span
               className={`font-bold text-[15px] tracking-tight transition-colors duration-300 ${
                 isScrolled ? "text-foreground" : "text-white"
@@ -95,11 +100,7 @@ export function LandingHeader() {
             (isSignedIn ? (
               <Link
                 href="/dashboard"
-                className={`inline-flex items-center border-[1.5px] rounded-full px-4 sm:px-5 py-2 text-sm font-semibold transition-all duration-300 ${
-                  isScrolled
-                    ? "border-foreground text-foreground hover:bg-foreground hover:text-white"
-                    : "border-white text-white hover:bg-white hover:text-primary"
-                }`}
+                className="inline-flex items-center bg-accent text-accent-foreground rounded-full px-4 sm:px-5 py-2 text-sm font-semibold transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg"
               >
                 Go to app
               </Link>
@@ -107,11 +108,7 @@ export function LandingHeader() {
               <>
                 <Link
                   href="/signup"
-                  className={`inline-flex items-center border-[1.5px] rounded-full px-4 sm:px-5 py-2 text-sm font-semibold transition-all duration-300 ${
-                    isScrolled
-                      ? "border-foreground text-foreground hover:bg-foreground hover:text-white"
-                      : "border-white text-white hover:bg-white hover:text-primary"
-                  }`}
+                  className="inline-flex items-center bg-accent text-accent-foreground rounded-full px-4 sm:px-5 py-2 text-sm font-semibold transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg"
                 >
                   Try for free
                 </Link>

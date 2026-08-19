@@ -9,7 +9,7 @@ export function LogoBadge({ size = "md", className }: LogoBadgeProps) {
   return (
     <div className={cn(variant.wrapper, className)}>
       <Image
-        src="/logo.svg"
+        src="/light/logo.svg"
         alt="Play Padel"
         width={24}
         height={24}
