@@ -9,6 +9,7 @@ export function CourtSchedulePanel({
   onDateChange,
   selectedCourt,
   onSlotClick,
+  onJoinWaitlist,
   isLoading,
   isUpdating,
   isError,
@@ -33,12 +34,14 @@ export function CourtSchedulePanel({
       courts={selectedCourt ? [selectedCourt] : []}
       variant="player"
       onSlotClick={onSlotClick}
+      onJoinWaitlist={onJoinWaitlist}
       onDateChange={onDateChange}
       isLoading={isLoading}
       isUpdating={isUpdating}
       isError={isError}
       columnCount={1}
       rowCount={rowCount}
+      hideDayNavigator
     />
   );
 }

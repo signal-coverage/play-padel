@@ -26,6 +26,13 @@ export type RawSlot = {
   status: "free" | "locked" | "closed";
   reservationId?: string;
   closureReason?: string;
+  waitlisted?: boolean;
+};
+
+export type JoinWaitlistInput = {
+  courtId: string;
+  scheduledStart: string;
+  scheduledEnd: string;
 };
 
 export type RawCourt = {

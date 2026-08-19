@@ -4,6 +4,7 @@ import { useState } from "react";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { StatusBox } from "@/components/StatusBox";
 import type { ClosuresListProps } from "./types";
 
 export function ClosuresList({
@@ -14,7 +15,7 @@ export function ClosuresList({
   const [now] = useState(() => Date.now());
 
   if (closures.length === 0) {
-    return <p className="text-sm text-muted-foreground">No closures yet.</p>;
+    return <StatusBox className="p-4">No closures yet.</StatusBox>;
   }
 
   return (

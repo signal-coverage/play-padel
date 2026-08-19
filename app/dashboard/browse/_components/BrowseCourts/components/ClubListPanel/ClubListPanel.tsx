@@ -2,11 +2,10 @@
 
 import { useMemo } from "react";
 import { useQueryState, parseAsString, parseAsStringEnum } from "nuqs";
-import { ArrowDown, ArrowUp, Search } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { SortDirectionButton } from "@/components/SortDirectionButton";
+import { SearchInput } from "@/components/SearchInput";
 import {
   Select,
   SelectContent,
@@ -16,7 +15,7 @@ import {
 } from "@/components/ui/select";
 import { DataTable } from "@/components/DataTable";
 import { StatusBox } from "@/components/StatusBox";
-import { getInitials } from "@/app/dashboard/_components/DashboardHome/components/PlayerOverview/utils";
+import { getInitials } from "@/lib/utils/initials";
 import { cn } from "@/lib/utils/utils";
 import { filterClubs, sortClubs } from "./utils";
 import type { DataTableColumn } from "@/components/DataTable";
@@ -109,15 +108,11 @@ export function ClubListPanel({
 
   return (
     <div className="flex h-full flex-col gap-3">
-      <div className="relative">
-        <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search clubs..."
-          className="pl-8"
-        />
-      </div>
+      <SearchInput
+        value={query}
+        onChange={setQuery}
+        placeholder="Search clubs..."
+      />
 
       <div className="flex items-center gap-1.5">
         <Select
@@ -132,21 +127,12 @@ export function ClubListPanel({
             <SelectItem value="courtCount">Court count</SelectItem>
           </SelectContent>
         </Select>
-        <Button
-          type="button"
-          variant="outline"
-          size="icon"
-          aria-label={
-            sort.direction === "asc"
-              ? "Sort ascending, click to sort descending"
-              : "Sort descending, click to sort ascending"
-          }
-          onClick={() =>
+        <SortDirectionButton
+          direction={sort.direction}
+          onToggle={() =>
             setSortDirection(sort.direction === "asc" ? "desc" : "asc")
           }
-        >
-          {sort.direction === "asc" ? <ArrowUp /> : <ArrowDown />}
-        </Button>
+        />
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto">

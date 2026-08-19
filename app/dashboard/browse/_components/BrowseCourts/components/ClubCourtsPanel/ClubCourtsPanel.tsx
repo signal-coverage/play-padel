@@ -3,8 +3,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import { useQueryState, parseAsString, parseAsStringEnum } from "nuqs";
-import { ArrowDown, ArrowUp, Image as ImageIcon } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Image as ImageIcon } from "lucide-react";
+import { ColorSwatch } from "@/components/ColorSwatch";
+import { SortDirectionButton } from "@/components/SortDirectionButton";
 import {
   Dialog,
   DialogContent,
@@ -168,11 +169,7 @@ export function ClubCourtsPanel({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <div className="flex items-center gap-1.5 w-fit">
-                    <span
-                      className="h-2.5 w-2.5 shrink-0 rounded-full"
-                      style={{ backgroundColor: court.color ?? "#94a3b8" }}
-                      aria-hidden="true"
-                    />
+                    <ColorSwatch color={court.color} />
                     <span className="w-fit">{surfaceLabel(court.surface)}</span>
                   </div>
                 </TooltipTrigger>
@@ -409,21 +406,12 @@ export function ClubCourtsPanel({
                 <SelectItem value="reservationFee">Reservation fee</SelectItem>
               </SelectContent>
             </Select>
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              aria-label={
-                sort.direction === "asc"
-                  ? "Sort ascending, click to sort descending"
-                  : "Sort descending, click to sort ascending"
-              }
-              onClick={() =>
+            <SortDirectionButton
+              direction={sort.direction}
+              onToggle={() =>
                 setSortDirection(sort.direction === "asc" ? "desc" : "asc")
               }
-            >
-              {sort.direction === "asc" ? <ArrowUp /> : <ArrowDown />}
-            </Button>
+            />
           </div>
         </div>
       </div>

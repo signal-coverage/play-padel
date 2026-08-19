@@ -6,4 +6,5 @@ export type SlotCellProps = {
   courtName: string;
   variant: CourtAvailabilityGridVariant;
   onSlotClick?: (courtId: string, slot: Slot) => void;
+  onJoinWaitlist?: (courtId: string, slot: Slot) => void;
 };

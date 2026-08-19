@@ -30,8 +30,7 @@ import { CourtTypeField } from "./components/CourtTypeField";
 import { ColorField } from "./components/ColorField";
 import { PhotoField } from "./components/PhotoField";
 import { SlotDurationField } from "./components/SlotDurationField";
-import { ReservationFeeField } from "./components/ReservationFeeField";
-import { CourtPriceField } from "./components/CourtPriceField";
+import { CurrencyAmountField } from "@/components/CurrencyAmountField";
 import type { CourtFormValues } from "../../types";
 import type { CourtFormSheetProps } from "./types";
 
@@ -227,7 +226,7 @@ export function CourtFormSheet({
               <FieldLabel htmlFor="court-reservation-fee">
                 Reservation fee *
               </FieldLabel>
-              <ReservationFeeField
+              <CurrencyAmountField
                 id="court-reservation-fee"
                 value={reservationFee}
                 // Cast past the required `number`: the field can sit briefly
@@ -250,7 +249,7 @@ export function CourtFormSheet({
 
           <Field>
             <FieldLabel htmlFor="court-price">Court price</FieldLabel>
-            <CourtPriceField
+            <CurrencyAmountField
               id="court-price"
               value={courtPrice}
               onChange={(value) =>

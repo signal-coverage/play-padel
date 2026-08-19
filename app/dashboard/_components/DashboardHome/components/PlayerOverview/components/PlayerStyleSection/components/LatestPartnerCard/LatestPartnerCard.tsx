@@ -2,9 +2,11 @@ import { ChevronRight } from "lucide-react";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { PlayerProfileCard } from "@/components/PlayerProfileCard";
-import { getPreferredSideLabel } from "@/core/users/consts";
-import { getPadelCategoryLabel } from "@/app/dashboard/_components/DashboardHome/components/SkillOverviewCard/utils";
-import { getInitials } from "../../../../utils";
+import {
+  getPreferredSideLabel,
+  getPadelCategoryLabel,
+} from "@/core/users/consts";
+import { getInitials } from "@/lib/utils/initials";
 import type { LatestPartnerCardProps } from "./types";
 
 export function LatestPartnerCard({ partner }: LatestPartnerCardProps) {

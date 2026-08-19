@@ -8,7 +8,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils/utils";
-import { getInitials } from "../utils";
+import { getInitials } from "@/lib/utils/initials";
 import { usePlayerOverviewData } from "../hooks";
 import { PlayerOverviewContent } from "../PlayerOverviewContent";
 import { BannerPreview } from "./components/BannerPreview";

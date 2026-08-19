@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import type { CourtColumn } from "@/components/CourtAvailabilityGrid";
 import {
   playerClubsQueryKey,
@@ -8,7 +9,12 @@ import {
   playerClubAvailabilityQueryKey,
 } from "./consts";
 import { countUniqueSlotStarts, toCourtColumns, toDateKey } from "./utils";
-import type { BookSlotInput, ClubBrowseSummary, RawCourt } from "./types";
+import type {
+  BookSlotInput,
+  ClubBrowseSummary,
+  JoinWaitlistInput,
+  RawCourt,
+} from "./types";
 
 async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
   const res = await fetch(url, init);
@@ -114,6 +120,29 @@ export function useBookSlot() {
       queryClient.invalidateQueries({
         queryKey: playerClubsQueryKey,
       });
+    },
+  });
+}
+
+export function useJoinWaitlist() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: JoinWaitlistInput) =>
+      fetchJson("/api/player/waitlist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(input),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: playerClubAvailabilityBaseKey,
+      });
+      toast.success("We'll email you if this slot opens up.");
+    },
+    onError: (error) => {
+      toast.error(
+        error instanceof Error ? error.message : "Could not join the waitlist.",
+      );
     },
   });
 }

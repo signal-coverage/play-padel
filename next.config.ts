@@ -1,25 +1,8 @@
 import { withSentryConfig } from "@sentry/nextjs";
 import type { NextConfig } from "next";
-import path from "path";
 
 const nextConfig: NextConfig = {
-  transpilePackages: ["odonto-next"],
-  webpack(config) {
-    config.resolve.alias = {
-      ...config.resolve.alias,
-      "odonto-next/style.css": path.resolve(
-        __dirname,
-        "./lib/odonto-next/odontogram.css",
-      ),
-      "odonto-next": path.resolve(__dirname, "./lib/odonto-next/index.js"),
-    };
-    return config;
-  },
   turbopack: {
-    resolveAlias: {
-      "odonto-next/style.css": "./lib/odonto-next/odontogram.css",
-      "odonto-next": "./lib/odonto-next/index.js",
-    },
     rules: {
       "*.{tsx,jsx}": {
         loaders: [

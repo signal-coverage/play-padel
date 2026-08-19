@@ -88,6 +88,7 @@ export async function POST(request: Request) {
           dominantHand: data.dominantHand ?? null,
           photoURL: clerkUser?.imageUrl ?? null,
           email: accountEmail,
+          acceptedTermsAt: new Date(),
           createdBy: userId,
           updatedBy: userId,
         },
@@ -118,6 +119,7 @@ export async function POST(request: Request) {
           dominantHand:
             data.dominantHand ?? existingProfile?.dominantHand ?? null,
           photoURL: clerkUser?.imageUrl ?? existingProfile?.photoURL ?? null,
+          acceptedTermsAt: new Date(),
           updatedBy: userId,
         },
       });
@@ -169,6 +171,7 @@ export async function POST(request: Request) {
         clubId: club.id,
         displayName: data.displayName!,
         email: accountEmail,
+        acceptedTermsAt: new Date(),
         createdBy: userId,
         updatedBy: userId,
       },
@@ -176,6 +179,7 @@ export async function POST(request: Request) {
         role: "owner",
         clubId: club.id,
         displayName: data.displayName!,
+        acceptedTermsAt: new Date(),
         updatedBy: userId,
       },
     });

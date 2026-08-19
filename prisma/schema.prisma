@@ -8,33 +8,34 @@ datasource db {
 }
 
 model Club {
-  id        String     @id @default(cuid())
-  name      String
-  legalName String?
-  taxId     String?
-  email     String
-  phone     String?
-  address   String?
-  country   String?
-  province  String?
-  city      String?
-  zipCode   String?
-  logoUrl   String?
-  timezone  String
-  currency  String
-  plan      Plan       @default(BASIC)
-  status    ClubStatus @default(ACTIVE)
-  requiresPrepayment Boolean @default(false)
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-  createdBy String
-  updatedBy String
+  id                 String     @id @default(cuid())
+  name               String
+  legalName          String?
+  taxId              String?
+  email              String
+  phone              String?
+  address            String?
+  country            String?
+  province           String?
+  city               String?
+  zipCode            String?
+  logoUrl            String?
+  timezone           String
+  currency           String
+  plan               Plan       @default(BASIC)
+  status             ClubStatus @default(ACTIVE)
+  requiresPrepayment Boolean    @default(false)
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
+  createdBy          String
+  updatedBy          String
 
-  users        UserProfile[]
-  courts       Court[]
-  reservations Reservation[]
-  invoices     Invoice[]
-  payments     Payment[]
+  users           UserProfile[]
+  courts          Court[]
+  reservations    Reservation[]
+  invoices        Invoice[]
+  payments        Payment[]
+  waitlistEntries WaitlistEntry[]
 
   @@map("clubs")
 }
@@ -62,6 +63,11 @@ enum UserStatus {
   ACTIVE
   INACTIVE
   PENDING
+  // Set by the Clerk `user.deleted` webhook (anonymize, not hard-delete —
+  // see docs/COMPLIANCE.md, derecho de supresión). Kept distinct from
+  // INACTIVE, which an owner can set to deactivate a player's access without
+  // their Clerk account being deleted.
+  DELETED
 }
 
 enum Gender {
@@ -82,39 +88,40 @@ enum DominantHand {
 }
 
 model UserProfile {
-  id            String      @id
-  role          SystemRole  @default(player)
-  clubId        String?
-  club          Club?       @relation(fields: [clubId], references: [id])
-  displayName   String
-  firstName     String?
-  lastName      String?
-  email         String
-  photoURL      String?
-  phone         String?
-  address       String?
-  country       String?
-  province      String?
-  city          String?
-  zipCode       String?
-  gender        Gender?
-  padelCategory Int?
-  preferredSide PreferredSide?
-  dominantHand  DominantHand?
-  status        UserStatus  @default(ACTIVE)
-  lastLogin     DateTime?
+  id              String         @id
+  role            SystemRole     @default(player)
+  clubId          String?
+  club            Club?          @relation(fields: [clubId], references: [id])
+  displayName     String
+  firstName       String?
+  lastName        String?
+  email           String
+  photoURL        String?
+  phone           String?
+  address         String?
+  country         String?
+  province        String?
+  city            String?
+  zipCode         String?
+  gender          Gender?
+  padelCategory   Int?
+  preferredSide   PreferredSide?
+  dominantHand    DominantHand?
+  status          UserStatus     @default(ACTIVE)
+  lastLogin       DateTime?
   // Set server-side at onboarding submit time (see app/api/onboarding/route.ts).
   // Nullable because existing rows predate this field; the onboarding Terms
   // step checkbox also self-certifies the user is 18+ (see docs/COMPLIANCE.md
   // — self-certification, no DOB collection), so this single timestamp
   // covers both terms acceptance and the age gate.
   acceptedTermsAt DateTime?
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
-  createdBy     String
-  updatedBy     String
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  createdBy       String
+  updatedBy       String
 
-  reservations Reservation[]
+  reservations    Reservation[]
+  waitlistEntries WaitlistEntry[]
 
   @@index([clubId])
   @@map("user_profiles")
@@ -140,9 +147,10 @@ model Court {
   deletedAt           DateTime?
   deletedBy           String?
 
-  availability CourtAvailability[]
-  closures     CourtClosure[]
-  reservations Reservation[]
+  availability    CourtAvailability[]
+  closures        CourtClosure[]
+  reservations    Reservation[]
+  waitlistEntries WaitlistEntry[]
 
   @@index([clubId, active])
   @@map("courts")
@@ -187,26 +195,26 @@ enum ReservationStatus {
 }
 
 model Reservation {
-  id             String            @id @default(cuid())
-  clubId         String
-  club           Club              @relation(fields: [clubId], references: [id])
-  userId         String
-  user           UserProfile       @relation(fields: [userId], references: [id])
-  userName       String
-  courtId        String
-  court          Court             @relation(fields: [courtId], references: [id])
-  courtName      String
-  status         ReservationStatus @default(CONFIRMED)
-  scheduledStart DateTime
-  scheduledEnd   DateTime
-  notes          String?
+  id               String            @id @default(cuid())
+  clubId           String
+  club             Club              @relation(fields: [clubId], references: [id])
+  userId           String
+  user             UserProfile       @relation(fields: [userId], references: [id])
+  userName         String
+  courtId          String
+  court            Court             @relation(fields: [courtId], references: [id])
+  courtName        String
+  status           ReservationStatus @default(CONFIRMED)
+  scheduledStart   DateTime
+  scheduledEnd     DateTime
+  notes            String?
   paymentExpiresAt DateTime?
-  cancelledAt    DateTime?
-  cancelledBy    String?
-  createdAt      DateTime          @default(now())
-  updatedAt      DateTime          @updatedAt
-  createdBy      String?
-  updatedBy      String?
+  cancelledAt      DateTime?
+  cancelledBy      String?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  createdBy        String?
+  updatedBy        String?
 
   invoices Invoice[]
 
@@ -215,6 +223,32 @@ model Reservation {
   @@index([clubId, courtId])
   @@index([clubId, status])
   @@map("reservations")
+}
+
+enum WaitlistEntryStatus {
+  WAITING
+  NOTIFIED
+}
+
+model WaitlistEntry {
+  id             String              @id @default(cuid())
+  clubId         String
+  club           Club                @relation(fields: [clubId], references: [id])
+  courtId        String
+  court          Court               @relation(fields: [courtId], references: [id])
+  courtName      String
+  userId         String
+  user           UserProfile         @relation(fields: [userId], references: [id])
+  scheduledStart DateTime
+  scheduledEnd   DateTime
+  status         WaitlistEntryStatus @default(WAITING)
+  notifiedAt     DateTime?
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+
+  @@unique([courtId, scheduledStart, userId])
+  @@index([courtId, scheduledStart, status])
+  @@map("waitlist_entries")
 }
 
 enum InvoiceStatus {
@@ -295,6 +329,7 @@ enum NotificationType {
   RESERVATION_REMINDER
   RESERVATION_CANCELLED
   PAYMENT_CONFIRMED
+  WAITLIST_SLOT_AVAILABLE
 }
 
 enum NotificationStatus {

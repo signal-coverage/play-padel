@@ -5,6 +5,7 @@ export type CourtSchedulePanelProps = {
   onDateChange: (date: Date) => void;
   selectedCourt: CourtColumn | null;
   onSlotClick: (courtId: string, slot: Slot) => void;
+  onJoinWaitlist: (courtId: string, slot: Slot) => void;
   isLoading: boolean;
   isUpdating: boolean;
   isError: boolean;

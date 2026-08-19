@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { track } from "@vercel/analytics";
+import { track as trackAmplitude } from "@amplitude/unified";
 import { Loader2, CheckCircle2, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { fireSuccessConfetti } from "@/lib/utils/confetti";
@@ -20,6 +21,7 @@ export function PaymentReturnView({
   useEffect(() => {
     if (state !== "success") return;
     track("payment_confirmed");
+    trackAmplitude("payment_confirmed");
     if (!shouldReduceMotion) {
       fireSuccessConfetti();
     }

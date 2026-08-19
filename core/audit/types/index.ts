@@ -11,8 +11,11 @@ export type AuditAction =
   | "club.created"
   | "club.updated"
   | "user.created"
+  | "user.updated"
+  | "user.anonymized"
   | "payment.confirmed"
-  | "payment.refunded";
+  | "payment.refunded"
+  | "waitlist.notified";
 
 export interface AuditLog {
   id: string;

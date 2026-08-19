@@ -9,6 +9,7 @@ export const AUDIT_ENTITY_OPTIONS = [
   "Payment",
   "Reservation",
   "UserProfile",
+  "WaitlistEntry",
 ] as const;
 
 export const AUDIT_ACTION_LABELS: Record<AuditAction, string> = {
@@ -24,6 +25,9 @@ export const AUDIT_ACTION_LABELS: Record<AuditAction, string> = {
   "club.created": "Club created",
   "club.updated": "Club updated",
   "user.created": "Player joined",
+  "user.updated": "Profile updated",
+  "user.anonymized": "Account deleted",
   "payment.confirmed": "Payment confirmed",
   "payment.refunded": "Payment refunded",
+  "waitlist.notified": "Waitlist notified",
 };

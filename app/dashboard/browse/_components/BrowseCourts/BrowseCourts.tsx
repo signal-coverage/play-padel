@@ -5,8 +5,15 @@ import { useQueryState, parseAsString } from "nuqs";
 import { toast } from "sonner";
 import { useReducedMotion } from "framer-motion";
 import { track } from "@vercel/analytics";
+import { track as trackAmplitude } from "@amplitude/unified";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
+// Deep import (not from the CourtAvailabilityGrid barrel): DayNavigator is an
+// internal building block of that component, not part of its public surface
+// — re-exporting it from the barrel would widen that API just for this one
+// external reuse. If a second consumer needs it, promote it to the barrel
+// instead of deep-importing again.
+import { DayNavigator } from "@/components/CourtAvailabilityGrid/components/DayNavigator";
 import type { Slot } from "@/components/CourtAvailabilityGrid";
 import { useGuardedDialogClose } from "@/hooks/use-guarded-dialog-close";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -15,7 +22,12 @@ import { ClubListPanel } from "./components/ClubListPanel";
 import { ClubCourtsPanel } from "./components/ClubCourtsPanel";
 import { CourtSchedulePanel } from "./components/CourtSchedulePanel";
 import { BookingConfirmDialog } from "./components/BookingConfirmDialog";
-import { useActiveClubs, useClubAvailability, useBookSlot } from "./hooks";
+import {
+  useActiveClubs,
+  useClubAvailability,
+  useBookSlot,
+  useJoinWaitlist,
+} from "./hooks";
 import { parseAsLocalDate } from "./utils";
 import type { SelectedSlot } from "./types";
 
@@ -48,6 +60,7 @@ export function BrowseCourts() {
     rowCount,
   } = useClubAvailability(clubId, date);
   const bookSlot = useBookSlot();
+  const joinWaitlist = useJoinWaitlist();
   const handleDialogClose = useGuardedDialogClose(bookSlot.isPending, () =>
     setSelected(null),
   );
@@ -96,6 +109,14 @@ export function BrowseCourts() {
     });
   }
 
+  function handleJoinWaitlist(courtId: string, slot: Slot) {
+    joinWaitlist.mutate({
+      courtId,
+      scheduledStart: slot.start.toISOString(),
+      scheduledEnd: slot.end.toISOString(),
+    });
+  }
+
   async function handleConfirm() {
     if (!selected) return;
     try {
@@ -112,6 +133,7 @@ export function BrowseCourts() {
 
       toast.success("Reservation confirmed.");
       track("booking_confirmed");
+      trackAmplitude("booking_confirmed");
       if (!shouldReduceMotion) {
         fireSuccessConfetti();
       }
@@ -151,6 +173,7 @@ export function BrowseCourts() {
       onDateChange={setDate}
       selectedCourt={selectedCourt}
       onSlotClick={handleSlotClick}
+      onJoinWaitlist={handleJoinWaitlist}
       isLoading={availabilityLoading}
       isUpdating={availabilityUpdating}
       isError={availabilityError}
@@ -165,6 +188,10 @@ export function BrowseCourts() {
         <p className="text-sm text-muted-foreground mt-1">
           Pick a club, then a court, then a free slot to reserve.
         </p>
+      </div>
+
+      <div className="w-full max-w-56 shrink-0">
+        <DayNavigator date={date} onDateChange={setDate} />
       </div>
 
       {isMobile ? (

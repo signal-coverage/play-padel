@@ -6,6 +6,8 @@ export type Slot = {
   status: SlotStatus;
   reservationId?: string;
   closureReason?: string;
+  /** Only meaningful when status is "locked" — true if the current player has an active waitlist entry for this exact slot. */
+  waitlisted?: boolean;
 };
 
 export type CourtColumn = {
@@ -37,6 +39,8 @@ export type CourtAvailabilityGridProps = {
   /** Owner gets extra affordances (e.g. inspecting a locked slot); player only sees free/locked. */
   variant: CourtAvailabilityGridVariant;
   onSlotClick?: (courtId: string, slot: Slot) => void;
+  /** Renders a "Notify me" affordance on locked slots for the "player" variant only, instead of the plain non-interactive "Locked" label. Omit to render locked slots exactly as before (no waitlist UI at all) — this is how the owner-side variant, which never passes this prop, stays completely unaffected. */
+  onJoinWaitlist?: (courtId: string, slot: Slot) => void;
   /** Wires up the built-in prev/next day navigator. Omit to render it disabled. */
   onDateChange?: (date: Date) => void;
   isLoading?: boolean;
@@ -59,6 +63,12 @@ export type CourtAvailabilityGridProps = {
   columnCount?: number;
   /** Last-known time-slot row count to use for the loading skeleton. */
   rowCount?: number;
+  /**
+   * When true, suppresses the grid's own internal day navigator (for
+   * callers that render their own shared one elsewhere). Defaults to
+   * false/undefined.
+   */
+  hideDayNavigator?: boolean;
 };
 
 /** One rendered grid row: a single point in time plus the matching slot (if any) per court. */

@@ -3,16 +3,7 @@
 import { useState } from "react";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  AlertDialog,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { GuardedActionButton } from "@/components/GuardedActionButton";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { useGuardedDialogClose } from "@/hooks/use-guarded-dialog-close";
 import { CourtsTable } from "./components/CourtsTable";
 import { CourtFormSheet } from "./components/CourtFormSheet";
@@ -162,42 +153,34 @@ export function CourtsView() {
         courts={courts}
       />
 
-      <AlertDialog
+      {/*
+        Uses ConfirmDialog's default GuardedActionButton confirm action
+        instead of AlertDialogAction: AlertDialogAction wraps Radix's
+        Dialog.Close, whose onClick unconditionally closes the dialog in the
+        same synchronous click — before isPending can ever flip to true —
+        which would close the dialog instantly regardless of mutation
+        outcome. GuardedActionButton renders a plain Button (no Dialog.Close),
+        so nothing closes the dialog on click; only the explicit
+        setCourtPendingDeletion(null) in confirmDelete's success path (via
+        useGuardedDialogClose's onOpenChange for Escape/overlay, or via
+        ConfirmDialog's confirm button) does. variant="default" preserves
+        this dialog's original (non-destructive-styled) confirm button.
+      */}
+      <ConfirmDialog
         open={Boolean(courtPendingDeletion)}
         onOpenChange={handleDeleteDialogClose}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Deactivate court?</AlertDialogTitle>
-            <AlertDialogDescription>
-              {courtPendingDeletion
-                ? `"${courtPendingDeletion.name}" will be marked inactive and hidden from new bookings. This can't be undone from here.`
-                : ""}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            {/*
-              AlertDialogAction wraps Radix's Dialog.Close: its onClick is
-              composed with an unconditional close via composeEventHandlers,
-              so preventDefault() has to run synchronously on the same click
-              that starts the mutation — before isPending can ever flip to
-              true — which made the dialog close instantly regardless of
-              mutation outcome. GuardedActionButton renders a plain Button
-              (no Dialog.Close), so nothing closes the dialog on click; only
-              the explicit setCourtPendingDeletion(null) in confirmDelete's
-              success path (via useGuardedDialogClose's onOpenChange for
-              Escape/overlay, or here for the button) does.
-            */}
-            <GuardedActionButton
-              isPending={deleteCourt.isPending}
-              onClick={confirmDelete}
-            >
-              {deleteCourt.isPending ? "Deactivating…" : "Deactivate"}
-            </GuardedActionButton>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+        title="Deactivate court?"
+        description={
+          courtPendingDeletion
+            ? `"${courtPendingDeletion.name}" will be marked inactive and hidden from new bookings. This can't be undone from here.`
+            : undefined
+        }
+        confirmLabel="Deactivate"
+        pendingLabel="Deactivating…"
+        isPending={deleteCourt.isPending}
+        onConfirm={confirmDelete}
+        variant="default"
+      />
     </div>
   );
 }

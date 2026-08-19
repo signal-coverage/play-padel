@@ -9,7 +9,7 @@ import { Field, FieldLabel, FieldError } from "@/components/ui/field";
 import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { getInitials } from "@/app/dashboard/_components/DashboardHome/components/PlayerOverview/utils";
+import { getInitials } from "@/lib/utils/initials";
 import { clubSettingsFormSchema } from "./consts";
 import { clubToFormValues } from "./utils";
 import { useCurrentClub, useUpdateClub } from "./hooks";

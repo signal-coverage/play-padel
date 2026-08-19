@@ -92,7 +92,7 @@ export function DataTable<T>({
                 <TableRow key={index}>
                   {columns.map((column) => (
                     <TableCell key={column.key}>
-                      <Skeleton className="h-4 w-20" />
+                      {column.loadingCell ?? <Skeleton className="h-4 w-20" />}
                     </TableCell>
                   ))}
                 </TableRow>

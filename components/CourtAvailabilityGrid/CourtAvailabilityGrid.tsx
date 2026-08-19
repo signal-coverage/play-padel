@@ -26,12 +26,14 @@ export function CourtAvailabilityGrid({
   courts,
   variant,
   onSlotClick,
+  onJoinWaitlist,
   onDateChange,
   isLoading = false,
   isUpdating = false,
   isError = false,
   columnCount,
   rowCount,
+  hideDayNavigator = false,
 }: CourtAvailabilityGridProps) {
   const timeRows = buildTimeRows(courts);
   const hasCourts = courts.length > 0;
@@ -60,7 +62,9 @@ export function CourtAvailabilityGrid({
         {statusMessage}
       </span>
       <div className="flex flex-col gap-1.5">
-        <DayNavigator date={date} onDateChange={onDateChange} />
+        {!hideDayNavigator && (
+          <DayNavigator date={date} onDateChange={onDateChange} />
+        )}
         {showsStaleData && (
           <div
             className="flex items-center gap-1.5 self-end text-xs text-muted-foreground"
@@ -140,6 +144,9 @@ export function CourtAvailabilityGrid({
                         // non-interactive cells while stale data is shown —
                         // no new prop needed on SlotCell.
                         onSlotClick={showsStaleData ? undefined : onSlotClick}
+                        onJoinWaitlist={
+                          showsStaleData ? undefined : onJoinWaitlist
+                        }
                       />
                     </TableCell>
                   ))}
