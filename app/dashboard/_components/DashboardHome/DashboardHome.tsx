@@ -68,6 +68,7 @@ export function DashboardHome() {
           <SearchableCardsGrid
             role={role}
             query={query}
+            onClearSearch={() => setQuery("")}
             className="min-w-0 md:flex-1 md:basis-0"
           />
           <Separator orientation={isMobile ? "horizontal" : "vertical"} />
@@ -78,7 +79,11 @@ export function DashboardHome() {
           )}
         </div>
       ) : (
-        <SearchableCardsGrid role={role} query={query} />
+        <SearchableCardsGrid
+          role={role}
+          query={query}
+          onClearSearch={() => setQuery("")}
+        />
       )}
     </div>
   );

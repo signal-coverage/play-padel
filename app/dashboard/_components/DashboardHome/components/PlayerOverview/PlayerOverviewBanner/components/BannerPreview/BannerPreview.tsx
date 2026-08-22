@@ -19,7 +19,10 @@ export function BannerPreview({ partnerInitials }: BannerPreviewProps) {
           {partnerInitials}
         </AvatarFallback>
       </Avatar>
-      <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+      <ChevronRight
+        aria-hidden="true"
+        className="size-4 shrink-0 text-muted-foreground"
+      />
     </div>
   );
 }

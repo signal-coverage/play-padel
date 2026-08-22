@@ -13,7 +13,7 @@ export function LatestTournamentResults({
           <span
             key={index}
             className={cn(
-              "flex size-5 items-center justify-center rounded-full text-[10px] font-semibold",
+              "flex size-5 items-center justify-center rounded-full text-xs font-semibold",
               result === "W"
                 ? "bg-success text-success-foreground"
                 : "bg-destructive text-destructive-foreground",

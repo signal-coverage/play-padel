@@ -12,5 +12,6 @@ export type SearchableCardDefinition = {
 export type SearchableCardsGridProps = {
   role: SystemRole;
   query: string;
+  onClearSearch: () => void;
   className?: string;
 };

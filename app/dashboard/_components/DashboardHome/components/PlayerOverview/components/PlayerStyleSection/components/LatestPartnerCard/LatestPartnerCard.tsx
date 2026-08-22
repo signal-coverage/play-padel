@@ -31,8 +31,17 @@ export function LatestPartnerCard({ partner }: LatestPartnerCardProps) {
               {getPadelCategoryLabel(partner.padelCategory)} •{" "}
               {getPreferredSideLabel(partner.preferredSide)}
             </p>
+            <p className="truncate text-xs text-muted-foreground">
+              <span className="font-medium text-foreground">
+                {partner.coupleWinRate}% WR
+              </span>{" "}
+              • Played {partner.timesPlayedTogether}x
+            </p>
           </div>
-          <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+          <ChevronRight
+            aria-hidden="true"
+            className="size-4 shrink-0 text-muted-foreground"
+          />
         </button>
       </DialogTrigger>
       <DialogContent>

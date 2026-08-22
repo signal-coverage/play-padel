@@ -108,36 +108,46 @@ export function ClubListPanel({
 
   return (
     <div className="flex h-full flex-col gap-3">
-      <SearchInput
-        value={query}
-        onChange={setQuery}
-        placeholder="Search clubs..."
-      />
-
-      <div className="flex items-center gap-1.5">
-        <Select
-          value={sort.field}
-          onValueChange={(value) => setSortField(value as ClubSortField)}
-        >
-          <SelectTrigger className="flex-1">
-            <SelectValue placeholder="Sort by" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="name">Name</SelectItem>
-            <SelectItem value="courtCount">Court count</SelectItem>
-          </SelectContent>
-        </Select>
-        <SortDirectionButton
-          direction={sort.direction}
-          onToggle={() =>
-            setSortDirection(sort.direction === "asc" ? "desc" : "asc")
-          }
+      <div className="flex flex-col gap-1.5">
+        <span className="text-xs font-medium text-muted-foreground">
+          Clubs List
+        </span>
+        <SearchInput
+          value={query}
+          onChange={setQuery}
+          placeholder="Search clubs..."
         />
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        <span className="text-xs font-medium text-muted-foreground">
+          Sort by
+        </span>
+        <div className="flex items-center gap-1.5">
+          <Select
+            value={sort.field}
+            onValueChange={(value) => setSortField(value as ClubSortField)}
+          >
+            <SelectTrigger className="flex-1">
+              <SelectValue placeholder="Sort by" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="name">Name</SelectItem>
+              <SelectItem value="courtCount">Court count</SelectItem>
+            </SelectContent>
+          </Select>
+          <SortDirectionButton
+            direction={sort.direction}
+            onToggle={() =>
+              setSortDirection(sort.direction === "asc" ? "desc" : "asc")
+            }
+          />
+        </div>
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto">
         <DataTable
-          className="h-full"
+          className="h-full bg-card"
           columns={columns}
           rows={visibleClubs}
           rowKey={(club) => club.id}

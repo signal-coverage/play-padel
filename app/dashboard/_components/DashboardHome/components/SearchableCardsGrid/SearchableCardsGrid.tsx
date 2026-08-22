@@ -1,6 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils/utils";
 import { HeroCard } from "../HeroCard";
 import { SessionLoadCard } from "../SessionLoadCard";
@@ -14,6 +15,7 @@ import type { SearchableCardsGridProps } from "./types";
 export function SearchableCardsGrid({
   role,
   query,
+  onClearSearch,
   className,
 }: SearchableCardsGridProps) {
   const normalizedQuery = query.trim().toLowerCase();
@@ -70,11 +72,14 @@ export function SearchableCardsGrid({
             exit={{ opacity: 0 }}
             transition={{ duration: 0.15 }}
             className={cn(
-              "flex items-center justify-center py-8 text-sm text-muted-foreground lg:flex-1",
+              "flex flex-col items-center justify-center gap-1 py-8 text-sm text-muted-foreground lg:flex-1",
               className,
             )}
           >
-            No cards match &ldquo;{query}&rdquo;.
+            <p>No cards match &ldquo;{query}&rdquo;.</p>
+            <Button variant="link" size="sm" onClick={onClearSearch}>
+              Clear search
+            </Button>
           </motion.div>
         )
       ) : (

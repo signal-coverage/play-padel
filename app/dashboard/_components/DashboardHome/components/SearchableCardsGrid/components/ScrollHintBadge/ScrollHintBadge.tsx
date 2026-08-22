@@ -1,8 +1,10 @@
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils/utils";
 
 export function ScrollHintBadge({ className }: { className?: string }) {
+  const shouldReduceMotion = useReducedMotion();
+
   return (
     <>
       <motion.div
@@ -26,7 +28,7 @@ export function ScrollHintBadge({ className }: { className?: string }) {
         )}
       >
         <motion.div
-          animate={{ y: [0, 5, 0] }}
+          animate={shouldReduceMotion ? undefined : { y: [0, 5, 0] }}
           transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut" }}
           className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg"
         >

@@ -13,13 +13,13 @@ export function DashboardBentoCard({
     <Card
       size="sm"
       className={cn(
-        "animate-fade-up rounded-sm border-primary px-2 py-5 [--card-spacing:--spacing(4)]",
+        "animate-fade-up rounded-sm px-2 py-5 [--card-spacing:--spacing(4)]",
         className,
       )}
       style={{ animationDelay }}
     >
       <CardHeader>
-        <CardTitle className="label-mono!">{title}</CardTitle>
+        <CardTitle>{title}</CardTitle>
       </CardHeader>
       <CardContent className={contentClassName}>{children}</CardContent>
     </Card>
