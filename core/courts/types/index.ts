@@ -83,4 +83,6 @@ export interface Slot {
   status: SlotStatus;
   reservationId?: string;
   closureReason?: string;
+  /** Only meaningful when status is "locked" — true if the CURRENT player has an active (WAITING) waitlist entry for this exact slot. Undefined/false for a free or closed slot, or a locked slot the current player hasn't joined the waitlist for. */
+  waitlisted?: boolean;
 }

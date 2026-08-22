@@ -1,3 +1,5 @@
+"use client";
+
 import {
   InputGroup,
   InputGroupAddon,
@@ -5,14 +7,19 @@ import {
   InputGroupText,
 } from "@/components/ui/input-group";
 import { formatPriceDisplay, parsePriceInput } from "./utils";
-import type { ReservationFeeFieldProps } from "./types";
+import type { CurrencyAmountFieldProps } from "./types";
 
-export function ReservationFeeField({
+// ARS-only for now (see lib/utils/currency.ts's formatCourtPrice, which
+// makes the same simplification for the read-only display side). No
+// required/invalid styling of its own beyond the optional ariaInvalid pass-
+// through — a court price is optional, a reservation fee is required, and
+// that distinction is enforced by the caller's Zod schema, not this field.
+export function CurrencyAmountField({
   id,
   value,
   onChange,
   ariaInvalid,
-}: ReservationFeeFieldProps) {
+}: CurrencyAmountFieldProps) {
   return (
     <InputGroup>
       <InputGroupAddon>

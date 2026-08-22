@@ -7,6 +7,7 @@ import { ui } from "@clerk/ui";
 import { AuthProvider } from "@/providers/auth-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/theme-provider";
+import { ThemeFavicon } from "@/components/theme-favicon";
 import { LocatorSetup } from "@/components/locator-setup";
 import "./globals.css";
 
@@ -55,42 +56,42 @@ export const metadata: Metadata = {
   appleWebApp: {
     title: APP_NAME,
   },
-  manifest: "/site.webmanifest",
+  manifest: "/light/site.webmanifest",
   openGraph: {
     title: APP_NAME,
     description: APP_DESCRIPTION,
     siteName: APP_NAME,
-    images: ["/logo.png"],
+    images: ["/light/logo.png"],
     type: "website",
   },
   twitter: {
     card: "summary",
     title: APP_NAME,
     description: APP_DESCRIPTION,
-    images: ["/logo.png"],
+    images: ["/light/logo.png"],
   },
   icons: {
     icon: [
       {
-        url: "/favicon-96x96.png",
+        url: "/light/favicon-96x96.png",
         type: "image/png",
         sizes: "96x96",
       },
       {
-        url: "/favicon.svg",
+        url: "/light/favicon.svg",
         type: "image/svg+xml",
       },
       {
-        url: "/favicon.ico",
+        url: "/light/favicon.ico",
       },
     ],
     apple: [
       {
-        url: "/apple-touch-icon.png",
+        url: "/light/apple-touch-icon.png",
         sizes: "180x180",
       },
     ],
-    shortcut: ["/favicon.ico"],
+    shortcut: ["/light/favicon.ico"],
   },
 };
 
@@ -121,6 +122,7 @@ export default function RootLayout({
             defaultTheme="light"
             enableSystem={false}
           >
+            <ThemeFavicon />
             <AuthProvider>{children}</AuthProvider>
             <Toaster />
           </ThemeProvider>

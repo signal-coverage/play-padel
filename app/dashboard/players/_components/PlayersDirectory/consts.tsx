@@ -2,12 +2,12 @@ export const playersQueryKey = ["players"] as const;
 
 import { Badge } from "@/components/ui/badge";
 import { PADEL_CATEGORY_OPTIONS } from "@/app/onboarding/types";
-import { getPadelCategoryLabel } from "@/app/dashboard/_components/DashboardHome/components/SkillOverviewCard/utils";
 import {
   DOMINANT_HAND_OPTIONS,
   PREFERRED_SIDE_OPTIONS,
   getDominantHandLabel,
   getPreferredSideLabel,
+  getPadelCategoryLabel,
 } from "@/core/users/consts";
 import type { DataTableColumn } from "@/components/DataTable";
 import type { PlayerListItem, PlayerSortField } from "./types";

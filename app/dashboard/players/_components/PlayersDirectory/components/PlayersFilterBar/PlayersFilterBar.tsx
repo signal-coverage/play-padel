@@ -1,6 +1,5 @@
-import { ArrowDown, ArrowUp, Search } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { SortDirectionButton } from "@/components/SortDirectionButton";
+import { SearchInput } from "@/components/SearchInput";
 import {
   Select,
   SelectContent,
@@ -34,15 +33,12 @@ export function PlayersFilterBar({
 
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
-      <div className="relative sm:w-64">
-        <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          value={query}
-          onChange={(e) => onQueryChange(e.target.value)}
-          placeholder="Search players by name..."
-          className="pl-8"
-        />
-      </div>
+      <SearchInput
+        value={query}
+        onChange={onQueryChange}
+        placeholder="Search players by name..."
+        className="sm:w-64"
+      />
 
       <Select
         value={filters.category}
@@ -116,24 +112,15 @@ export function PlayersFilterBar({
             ))}
           </SelectContent>
         </Select>
-        <Button
-          type="button"
-          variant="outline"
-          size="icon"
-          aria-label={
-            sort.direction === "asc"
-              ? "Sort ascending, click to sort descending"
-              : "Sort descending, click to sort ascending"
-          }
-          onClick={() =>
+        <SortDirectionButton
+          direction={sort.direction}
+          onToggle={() =>
             onSortChange({
               ...sort,
               direction: sort.direction === "asc" ? "desc" : "asc",
             })
           }
-        >
-          {sort.direction === "asc" ? <ArrowUp /> : <ArrowDown />}
-        </Button>
+        />
       </div>
     </div>
   );

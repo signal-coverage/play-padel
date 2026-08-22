@@ -74,7 +74,7 @@ export function SessionLoadGauge({
           />
         </svg>
         <div className="absolute inset-0 grid place-items-center">
-          <span className="font-heading text-3xl font-bold @min-[768px]:text-2xl">
+          <span className="font-heading text-3xl font-bold tabular-nums @min-[768px]:text-2xl">
             {percent}%
           </span>
         </div>
@@ -83,7 +83,7 @@ export function SessionLoadGauge({
       <div className="flex items-center gap-2">
         <Badge variant={TONE_BADGE_VARIANT[tone]}>{TONE_LABEL[tone]}</Badge>
         {trend && (
-          <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
+          <span className="flex items-center gap-1 text-xs text-muted-foreground">
             {trend.direction === "up" ? (
               <ArrowUpRight className="size-3.5" />
             ) : (

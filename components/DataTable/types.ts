@@ -6,6 +6,8 @@ export type DataTableColumn<T> = {
   cell: (row: T) => ReactNode;
   className?: string;
   headerClassName?: string;
+  /** Custom loading-state placeholder for this column (e.g. a differently-sized or pill-shaped Skeleton). Falls back to a generic `h-4 w-20` Skeleton when omitted. */
+  loadingCell?: ReactNode;
 };
 
 export type DataTableProps<T> = {

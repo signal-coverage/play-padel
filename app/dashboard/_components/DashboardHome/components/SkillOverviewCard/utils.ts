@@ -1,13 +1,4 @@
-import { PADEL_CATEGORY_OPTIONS } from "@/app/onboarding/types";
 import { WEEKDAY_LABELS } from "./consts";
-
-export function getPadelCategoryLabel(category: number | null): string {
-  if (category === null) return "Not set yet";
-  const option = PADEL_CATEGORY_OPTIONS.find(
-    (o) => o.value === String(category),
-  );
-  return option?.label ?? `Category ${category}`;
-}
 
 /** Weekday with the highest summed weight, ties broken by first-seen order. Null when every weight is zero. */
 export function getBusiestWeekday(

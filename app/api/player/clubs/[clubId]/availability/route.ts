@@ -4,6 +4,7 @@ import {
   listCourtsByClub,
   getCourtSlots,
 } from "@/core/courts/services/courts.service";
+import { hasActiveWaitlistEntry } from "@/core/waitlist/services/waitlist.service";
 
 // Player-facing composed view: a club's active courts plus each court's
 // computed slots for one calendar day, shaped directly for
@@ -32,18 +33,32 @@ export async function GET(
   try {
     const courts = await listCourtsByClub(clubId);
     const courtsWithSlots = await Promise.all(
-      courts.map(async (court) => ({
-        id: court.id,
-        name: court.name,
-        reservationFee: court.reservationFee,
-        surface: court.surface,
-        color: court.color,
-        indoor: court.indoor,
-        photoUrl: court.photoUrl,
-        courtPrice: court.courtPrice,
-        slotDurationMinutes: court.slotDurationMinutes,
-        slots: await getCourtSlots(court.id, date),
-      })),
+      courts.map(async (court) => {
+        const slots = await getCourtSlots(court.id, date);
+        const slotsWithWaitlist = await Promise.all(
+          slots.map(async (slot) => {
+            if (slot.status !== "locked") return slot;
+            const waitlisted = await hasActiveWaitlistEntry(
+              court.id,
+              slot.start,
+              userId,
+            );
+            return { ...slot, waitlisted };
+          }),
+        );
+        return {
+          id: court.id,
+          name: court.name,
+          reservationFee: court.reservationFee,
+          surface: court.surface,
+          color: court.color,
+          indoor: court.indoor,
+          photoUrl: court.photoUrl,
+          courtPrice: court.courtPrice,
+          slotDurationMinutes: court.slotDurationMinutes,
+          slots: slotsWithWaitlist,
+        };
+      }),
     );
     return NextResponse.json({ courts: courtsWithSlots });
   } catch {

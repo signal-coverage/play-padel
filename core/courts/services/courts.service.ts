@@ -464,6 +464,155 @@ export function hasAnyFreeSlot(courtSlots: Slot[][]): boolean {
   );
 }
 
+/**
+ * Batched equivalent of calling getCourtSlots for every active court across
+ * multiple clubs and reducing to a per-club "has any free slot" boolean —
+ * used by /api/player/clubs to avoid an N+1 query pattern (previously: one
+ * listCourtsByClub + 4 queries per court, per club). This does a constant
+ * number of queries regardless of club/court count: one for all active
+ * courts across the given clubs, one for all their availability windows on
+ * this day-of-week, one for all overlapping reservations, one for all
+ * overlapping closures — then reproduces getCourtSlots' exact slot-
+ * generation logic in memory per court, short-circuiting a club to `true`
+ * as soon as one free slot is found anywhere in it.
+ */
+export async function getClubsAvailability(
+  clubIds: string[],
+  date: Date,
+): Promise<Map<string, { courtCount: number; hasAvailabilityToday: boolean }>> {
+  const result = new Map<
+    string,
+    { courtCount: number; hasAvailabilityToday: boolean }
+  >();
+  for (const clubId of clubIds) {
+    result.set(clubId, { courtCount: 0, hasAvailabilityToday: false });
+  }
+
+  if (clubIds.length === 0) {
+    return result;
+  }
+
+  const courts = await prisma.court.findMany({
+    where: { clubId: { in: clubIds }, deletedAt: null, active: true },
+    select: { id: true, clubId: true, slotDurationMinutes: true },
+  });
+
+  for (const court of courts) {
+    const entry = result.get(court.clubId);
+    if (entry) entry.courtCount += 1;
+  }
+
+  if (courts.length === 0) {
+    return result;
+  }
+
+  const courtIds = courts.map((c) => c.id);
+  const dayOfWeek = date.getDay();
+
+  const availabilityRows = await prisma.courtAvailability.findMany({
+    where: { courtId: { in: courtIds }, dayOfWeek, active: true },
+    orderBy: { startTime: "asc" },
+  });
+
+  const reservations = await prisma.reservation.findMany({
+    where: {
+      courtId: { in: courtIds },
+      status: { in: [...ACTIVE_RESERVATION_STATUSES] },
+      scheduledStart: { gte: startOfDay(date), lte: endOfDay(date) },
+      // Same lapsed-hold exception as getCourtSlots: an unpaid SCHEDULED
+      // hold past its expiry no longer blocks the slot.
+      NOT: {
+        status: "SCHEDULED",
+        paymentExpiresAt: { lt: new Date() },
+      },
+    },
+    select: {
+      id: true,
+      courtId: true,
+      scheduledStart: true,
+      scheduledEnd: true,
+    },
+  });
+
+  const closures = await prisma.courtClosure.findMany({
+    where: {
+      courtId: { in: courtIds },
+      cancelledAt: null,
+      startsAt: { lte: endOfDay(date) },
+      endsAt: { gte: startOfDay(date) },
+    },
+    select: { courtId: true, startsAt: true, endsAt: true, reason: true },
+  });
+
+  const availabilityByCourt = new Map<string, typeof availabilityRows>();
+  for (const row of availabilityRows) {
+    const list = availabilityByCourt.get(row.courtId) ?? [];
+    list.push(row);
+    availabilityByCourt.set(row.courtId, list);
+  }
+
+  const reservationsByCourt = new Map<string, typeof reservations>();
+  for (const row of reservations) {
+    const list = reservationsByCourt.get(row.courtId) ?? [];
+    list.push(row);
+    reservationsByCourt.set(row.courtId, list);
+  }
+
+  const closuresByCourt = new Map<string, typeof closures>();
+  for (const row of closures) {
+    const list = closuresByCourt.get(row.courtId) ?? [];
+    list.push(row);
+    closuresByCourt.set(row.courtId, list);
+  }
+
+  for (const court of courts) {
+    const entry = result.get(court.clubId);
+    // Already confirmed available via an earlier court in this same club —
+    // no need to evaluate the rest of the club's courts.
+    if (!entry || entry.hasAvailabilityToday) continue;
+
+    const windows = availabilityByCourt.get(court.id) ?? [];
+    if (windows.length === 0) continue;
+
+    const courtReservations = reservationsByCourt.get(court.id) ?? [];
+    const courtClosures = closuresByCourt.get(court.id) ?? [];
+
+    let courtHasFree = false;
+    for (const window of windows) {
+      const windowStart = timeToDateOnDay(date, window.startTime);
+      const windowEnd = timeToDateOnDay(date, window.endTime);
+
+      let slotStart = windowStart;
+      while (addMinutes(slotStart, court.slotDurationMinutes) <= windowEnd) {
+        const slotEnd = addMinutes(slotStart, court.slotDurationMinutes);
+
+        const closed = courtClosures.some(
+          (c) => c.startsAt < slotEnd && c.endsAt > slotStart,
+        );
+        const locked =
+          !closed &&
+          courtReservations.some(
+            (r) => r.scheduledStart < slotEnd && r.scheduledEnd > slotStart,
+          );
+
+        if (!closed && !locked) {
+          courtHasFree = true;
+          break;
+        }
+
+        slotStart = slotEnd;
+      }
+      if (courtHasFree) break;
+    }
+
+    if (courtHasFree) {
+      entry.hasAvailabilityToday = true;
+    }
+  }
+
+  return result;
+}
+
 export async function getCourtById(id: string): Promise<Court | null> {
   const row = await prisma.court.findUnique({ where: { id } });
   return row ? toCourt(row) : null;

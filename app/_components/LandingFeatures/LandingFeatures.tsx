@@ -82,7 +82,6 @@ export function LandingFeatures() {
             >
               <span className="text-foreground">Everything You Need</span>
               <br />
-              <span className="text-foreground">for </span>
               <span className="text-muted-foreground">to Book and Manage</span>
             </motion.h2>
           </div>
@@ -105,6 +104,22 @@ export function LandingFeatures() {
                   </p>
                   <div className="mt-4">
                     <SlideCounter current={index + 1} total={total} />
+                    <div className="mt-3 flex items-center gap-1.5">
+                      {PLATFORM_FEATURES.map((feature, i) => (
+                        <button
+                          key={feature.title}
+                          type="button"
+                          onClick={() => setIndex(i)}
+                          aria-label={`Go to feature ${i + 1}: ${feature.title}`}
+                          aria-current={i === index}
+                          className={`h-2 rounded-full transition-all duration-300 ${
+                            i === index
+                              ? "w-5 bg-accent"
+                              : "w-2 bg-border hover:bg-foreground/30"
+                          }`}
+                        />
+                      ))}
+                    </div>
                   </div>
                 </motion.div>
               </AnimatePresence>

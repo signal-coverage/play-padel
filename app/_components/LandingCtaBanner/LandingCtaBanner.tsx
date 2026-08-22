@@ -51,7 +51,7 @@ export function LandingCtaBanner() {
         </motion.p>
 
         <motion.div
-          className="relative z-10"
+          className="relative z-10 flex flex-col items-center gap-4"
           initial={shouldReduce ? false : { opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
@@ -62,6 +62,12 @@ export function LandingCtaBanner() {
             className="inline-flex items-center bg-[#DFFD36] text-[#111111] rounded-full px-7 py-3.5 text-[15px] font-semibold hover:-translate-y-0.5 hover:shadow-xl transition-all duration-200"
           >
             Get Started Free
+          </Link>
+          <Link
+            href="/signup"
+            className="text-sm font-medium text-white/75 hover:text-white border-b border-white/30 hover:border-white/60 transition-colors duration-200"
+          >
+            Own a club? List it here
           </Link>
         </motion.div>
       </motion.div>

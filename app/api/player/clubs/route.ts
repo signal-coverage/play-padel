@@ -1,11 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { listActiveClubs } from "@/core/clubs/services/clubs.service";
-import {
-  listCourtsByClub,
-  getCourtSlots,
-  hasAnyFreeSlot,
-} from "@/core/courts/services/courts.service";
+import { getClubsAvailability } from "@/core/courts/services/courts.service";
 import type { ClubBrowseSummary } from "@/app/dashboard/browse/_components/BrowseCourts/types";
 
 // Player-facing club list: any signed-in user can browse clubs to book a
@@ -29,19 +25,21 @@ export async function GET(request: NextRequest) {
 
   try {
     const activeClubs = await listActiveClubs();
-    const clubs: ClubBrowseSummary[] = await Promise.all(
-      activeClubs.map(async (club) => {
-        const courts = await listCourtsByClub(club.id);
-        const slotsByCourt = await Promise.all(
-          courts.map((court) => getCourtSlots(court.id, date)),
-        );
-        return {
-          ...club,
-          courtCount: courts.length,
-          hasAvailabilityToday: hasAnyFreeSlot(slotsByCourt),
-        };
-      }),
+    const availability = await getClubsAvailability(
+      activeClubs.map((club) => club.id),
+      date,
     );
+    const clubs: ClubBrowseSummary[] = activeClubs.map((club) => {
+      const info = availability.get(club.id) ?? {
+        courtCount: 0,
+        hasAvailabilityToday: false,
+      };
+      return {
+        ...club,
+        courtCount: info.courtCount,
+        hasAvailabilityToday: info.hasAvailabilityToday,
+      };
+    });
 
     return NextResponse.json({ clubs });
   } catch {

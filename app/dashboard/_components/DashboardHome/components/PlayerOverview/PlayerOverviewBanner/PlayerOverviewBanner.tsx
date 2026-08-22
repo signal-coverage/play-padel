@@ -8,7 +8,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils/utils";
-import { getInitials } from "../utils";
+import { getInitials } from "@/lib/utils/initials";
 import { usePlayerOverviewData } from "../hooks";
 import { PlayerOverviewContent } from "../PlayerOverviewContent";
 import { BannerPreview } from "./components/BannerPreview";
@@ -34,7 +34,7 @@ export function PlayerOverviewBanner({ className }: PlayerOverviewBannerProps) {
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetContent side="bottom">
           <SheetHeader>
-            <SheetTitle className="label-mono!">Player Overview</SheetTitle>
+            <SheetTitle>Player Overview</SheetTitle>
           </SheetHeader>
           <div className="overflow-y-auto px-4 pb-4">
             <PlayerOverviewContent />

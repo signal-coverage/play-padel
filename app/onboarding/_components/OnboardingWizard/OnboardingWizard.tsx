@@ -5,6 +5,7 @@ import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { track } from "@vercel/analytics";
+import { track as trackAmplitude } from "@amplitude/unified";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useAuth } from "@/hooks/use-auth";
 import { Card } from "@/components/ui/card";
@@ -223,6 +224,7 @@ export function OnboardingWizard() {
         toast.success("You're all set. Welcome to Play Padel.");
       }
       track("signup_completed", { role: data.userType });
+      trackAmplitude("signup_completed", { role: data.userType });
       // Hard navigation, not router.push: AuthProvider only fetches /api/me
       // once per Clerk session and won't know a profile now exists, which
       // would otherwise leave DashboardGuard stuck redirecting back here

@@ -19,6 +19,7 @@ export function toCourtColumns(raw: RawCourt[]): CourtColumn[] {
       status: slot.status,
       ...(slot.reservationId && { reservationId: slot.reservationId }),
       ...(slot.closureReason && { closureReason: slot.closureReason }),
+      ...(slot.waitlisted && { waitlisted: slot.waitlisted }),
     })),
   }));
 }

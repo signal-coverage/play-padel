@@ -1,4 +1,4 @@
-export type UserStatus = "ACTIVE" | "INACTIVE" | "PENDING";
+export type UserStatus = "ACTIVE" | "INACTIVE" | "PENDING" | "DELETED";
 export type SystemRole = "owner" | "player";
 export type PreferredSide = "forehand" | "backhand";
 export type DominantHand = "right" | "left";

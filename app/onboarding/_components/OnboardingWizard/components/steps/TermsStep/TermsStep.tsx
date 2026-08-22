@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { Controller } from "react-hook-form";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { FieldError } from "@/components/ui/field";
 import { MutedPanel } from "@/components/MutedPanel";
 import { TERMS_AND_CONDITIONS_TEXT } from "@/app/onboarding/terms-content";
 import type { TermsStepProps } from "./types";
@@ -61,11 +62,7 @@ export function TermsStep({
           </div>
         )}
       />
-      {errors.confirmedAge && (
-        <p className="text-sm text-destructive">
-          {errors.confirmedAge.message}
-        </p>
-      )}
+      <FieldError errors={[errors.confirmedAge]} />
 
       <Controller
         control={control}
@@ -86,11 +83,7 @@ export function TermsStep({
           </div>
         )}
       />
-      {errors.acceptedTerms && (
-        <p className="text-sm text-destructive">
-          {errors.acceptedTerms.message}
-        </p>
-      )}
+      <FieldError errors={[errors.acceptedTerms]} />
     </>
   );
 }

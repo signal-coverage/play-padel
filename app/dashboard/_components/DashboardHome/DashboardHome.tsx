@@ -3,11 +3,11 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Search, Sparkles } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { SearchInput } from "@/components/SearchInput";
 import { tennisBall, tennisCourt } from "@/assets/icons";
 import { SearchableCardsGrid } from "./components/SearchableCardsGrid";
 import { PlayerOverviewCard } from "./components/PlayerOverview/PlayerOverviewCard";
@@ -46,15 +46,12 @@ export function DashboardHome() {
         </h1>
 
         <div className="flex flex-1 items-center gap-2 max-w-208 lg:max-w-160">
-          <div className="relative w-full">
-            <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search cards…"
-              className="w-full rounded-sm pl-8"
-            />
-          </div>
+          <SearchInput
+            value={query}
+            onChange={setQuery}
+            placeholder="Search cards…"
+            className="w-full"
+          />
           {role === "owner" && (
             <Button asChild size="sm">
               <Link href="/dashboard/settings/club">
@@ -71,6 +68,7 @@ export function DashboardHome() {
           <SearchableCardsGrid
             role={role}
             query={query}
+            onClearSearch={() => setQuery("")}
             className="min-w-0 md:flex-1 md:basis-0"
           />
           <Separator orientation={isMobile ? "horizontal" : "vertical"} />
@@ -81,7 +79,11 @@ export function DashboardHome() {
           )}
         </div>
       ) : (
-        <SearchableCardsGrid role={role} query={query} />
+        <SearchableCardsGrid
+          role={role}
+          query={query}
+          onClearSearch={() => setQuery("")}
+        />
       )}
     </div>
   );

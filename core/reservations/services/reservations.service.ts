@@ -20,6 +20,7 @@ import {
 import { dispatch } from "@/lib/notifications/dispatcher";
 import { ReservationCancelled } from "@/lib/email/templates/ReservationCancelled";
 import { logAudit } from "@/core/audit/services/audit.service";
+import { notifyWaitlistForSlot } from "@/core/waitlist/services/waitlist.service";
 
 type ReservationRow = NonNullable<
   Awaited<ReturnType<typeof prisma.reservation.findUnique>>
@@ -504,6 +505,17 @@ export async function cancelReservation(
     });
   } catch {
     // notification failure must not affect reservation cancellation
+  }
+
+  try {
+    await notifyWaitlistForSlot(
+      row.courtId,
+      row.scheduledStart,
+      row.scheduledEnd,
+      row.userId,
+    );
+  } catch {
+    // waitlist notification failure must not affect reservation cancellation
   }
 
   const actor = await prisma.userProfile.findUnique({

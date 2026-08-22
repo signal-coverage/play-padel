@@ -6,7 +6,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { DataTable } from "@/components/DataTable";
 import { StatusBox } from "@/components/StatusBox";
 import { PlayerProfileCard } from "@/components/PlayerProfileCard";
-import { getInitials } from "@/app/dashboard/_components/DashboardHome/components/PlayerOverview/utils";
+import { getInitials } from "@/lib/utils/initials";
 import { usePlayers } from "./hooks";
 import { STATIC_PLAYER_COLUMNS } from "./consts";
 import { filterPlayers, sortPlayers } from "./utils";

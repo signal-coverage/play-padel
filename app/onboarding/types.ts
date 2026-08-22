@@ -46,17 +46,9 @@ export const GENDER_OPTIONS: { value: Gender; label: string }[] = [
 
 // Argentine padel skill-level convention: Category 1 is the highest level,
 // Category 8 is a beginner. "unknown" submits as a null padelCategory.
-export const PADEL_CATEGORY_OPTIONS: { value: string; label: string }[] = [
-  { value: "1", label: "Category 1 — highest level" },
-  { value: "2", label: "Category 2" },
-  { value: "3", label: "Category 3" },
-  { value: "4", label: "Category 4" },
-  { value: "5", label: "Category 5" },
-  { value: "6", label: "Category 6" },
-  { value: "7", label: "Category 7" },
-  { value: "8", label: "Category 8 — beginner" },
-  { value: "unknown", label: "Not sure yet" },
-];
+// Defined in core/users/consts (core/ owns domain vocabulary; app/ only
+// re-exports it here so existing imports from this module keep working).
+export { PADEL_CATEGORY_OPTIONS } from "@/core/users/consts";
 
 // Owner-only fields are optional at the schema level and enforced via
 // superRefine, since players skip them entirely (see docs/reservation-flow.md

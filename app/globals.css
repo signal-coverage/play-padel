@@ -74,8 +74,8 @@
   --warning-foreground: #ffffff;
   --muted: #f2f2f2;
   --muted-foreground: #585858;
-  --accent: #dffd36;
-  --accent-foreground: #073d6b;
+  --accent: #073d6b;
+  --accent-foreground: #ffffff;
   --destructive: #f24236;
   --destructive-foreground: #1a0805;
   --surface: oklch(0.185 0.004 145);
@@ -115,8 +115,8 @@
   --warning-foreground: #111111;
   --muted: #1e1e1e;
   --muted-foreground: #a3a3a3;
-  --accent: #073d6b;
-  --accent-foreground: #f5f5f5;
+  --accent: #dffd36;
+  --accent-foreground: #111111;
   --destructive: #f24236;
   --destructive-foreground: #1a0805;
   --border: #ffffff1a;
@@ -223,6 +223,15 @@
       color 150ms ease,
       border-color 150ms ease,
       box-shadow 150ms ease;
+  }
+
+  a:focus-visible,
+  button:focus-visible,
+  [role="button"]:focus-visible,
+  input:focus-visible,
+  select:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
   }
 
   /* Hide the native up/down stepper on every number input, app-wide. */

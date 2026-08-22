@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { toast } from "sonner";
 import {
   Sheet,
@@ -8,6 +9,8 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { useGuardedDialogClose } from "@/hooks/use-guarded-dialog-close";
 import {
   useCancelCourtClosure,
   useCourtClosures,
@@ -28,6 +31,13 @@ export function ClosuresSheet({
   const { data: closures, isLoading } = useCourtClosures(open ? courtId : null);
   const createClosure = useCreateCourtClosure();
   const cancelClosure = useCancelCourtClosure();
+  const [closurePendingCancellation, setClosurePendingCancellation] = useState<
+    string | null
+  >(null);
+  const handleCancelDialogClose = useGuardedDialogClose(
+    cancelClosure.isPending,
+    () => setClosurePendingCancellation(null),
+  );
 
   async function handleCreate(values: NewClosureFormValues): Promise<boolean> {
     const targetCourtIds = values.applyToAllCourts
@@ -74,12 +84,17 @@ export function ClosuresSheet({
     return failures.length === 0;
   }
 
-  async function handleCancel(closureId: string) {
-    if (!courtId) return;
+  async function handleConfirmCancel() {
+    if (!courtId || !closurePendingCancellation) return;
     try {
-      await cancelClosure.mutateAsync({ courtId, closureId });
+      await cancelClosure.mutateAsync({
+        courtId,
+        closureId: closurePendingCancellation,
+      });
+      setClosurePendingCancellation(null);
     } catch {
-      // useCancelCourtClosure's onError already surfaces a toast
+      // useCancelCourtClosure's onError already surfaces a toast; leave the
+      // dialog open so the user can retry or back out explicitly.
     }
   }
 
@@ -107,7 +122,7 @@ export function ClosuresSheet({
           ) : (
             <ClosuresList
               closures={closures}
-              onCancel={handleCancel}
+              onCancel={setClosurePendingCancellation}
               cancellingClosureId={
                 cancelClosure.isPending
                   ? (cancelClosure.variables?.closureId ?? null)
@@ -117,6 +132,18 @@ export function ClosuresSheet({
           )}
         </div>
       </SheetContent>
+
+      <ConfirmDialog
+        open={closurePendingCancellation !== null}
+        onOpenChange={handleCancelDialogClose}
+        title="Cancel this closure?"
+        description="This will make the court bookable again for its blocked time range."
+        cancelLabel="Keep closure"
+        confirmLabel="Cancel closure"
+        pendingLabel="Cancelling…"
+        isPending={cancelClosure.isPending}
+        onConfirm={handleConfirmCancel}
+      />
     </Sheet>
   );
 }

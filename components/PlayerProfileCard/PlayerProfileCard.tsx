@@ -4,9 +4,9 @@ import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   getDominantHandLabel,
   getPreferredSideLabel,
+  getPadelCategoryLabel,
 } from "@/core/users/consts";
-import { getPadelCategoryLabel } from "@/app/dashboard/_components/DashboardHome/components/SkillOverviewCard/utils";
-import { getInitials } from "@/app/dashboard/_components/DashboardHome/components/PlayerOverview/utils";
+import { getInitials } from "@/lib/utils/initials";
 import type { PlayerProfileCardProps } from "./types";
 
 export function PlayerProfileCard({ player }: PlayerProfileCardProps) {

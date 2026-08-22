@@ -1,0 +1,13 @@
+# Play Padel
+
+> Play Padel is a booking platform that connects padel players and clubs in one place. Players browse clubs, see real-time court availability across different clubs, and reserve a court in minutes. Club owners get a full dashboard to manage courts, availability, closures, and reservations, with secure online payments (Mercado Pago) and a complete audit trail of every change.
+
+## Key pages
+
+- [Homepage](/): product overview, how it works, and getting started
+- [Log In](/login): sign in to an existing account
+- [Sign Up](/signup): create a new player or club account
+
+## Notes for crawlers
+
+Most of this application lives behind authentication (`/dashboard/*` and the onboarding flow) and is not publicly crawlable content — it is private, per-user application state (bookings, court management, player profiles, club settings), not indexable documents. The pages listed above are the entire public surface of the site.

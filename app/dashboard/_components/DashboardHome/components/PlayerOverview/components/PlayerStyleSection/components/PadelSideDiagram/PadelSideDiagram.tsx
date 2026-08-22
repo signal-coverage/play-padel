@@ -32,7 +32,7 @@ export function PadelSideDiagram({ side, className }: PadelSideDiagramProps) {
         }
         className="h-auto w-full"
       />
-      <span className="absolute inset-x-3 bottom-3 truncate rounded bg-primary px-2 py-1 text-center font-mono text-[10px] font-bold tracking-widest text-primary-foreground uppercase">
+      <span className="absolute inset-x-3 bottom-3 truncate rounded bg-primary px-2 py-1 text-center font-mono text-xs font-bold tracking-widest text-primary-foreground uppercase">
         Preferred: {getPreferredSideLabel(side)}
       </span>
     </div>

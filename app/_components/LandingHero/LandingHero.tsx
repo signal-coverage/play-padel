@@ -2,7 +2,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, ArrowUpRight } from "lucide-react";
 import { ease } from "./consts";
 import { CONTAINER } from "@/lib/consts";
 import { scrollToSection } from "@/lib/utils/scroll-to-section";
@@ -55,6 +55,14 @@ export function LandingHero() {
             >
               Explore Clubs
               <ArrowRight size={15} strokeWidth={2.5} />
+            </Link>
+            <Link
+              href="#about"
+              onClick={(e) => scrollToSection(e, "#about")}
+              className="inline-flex items-center gap-2 border-[1.5px] border-white text-white rounded-full px-6 py-3.5 text-[15px] font-semibold hover:bg-white hover:text-primary transition-all duration-200"
+            >
+              For Club Owners
+              <ArrowUpRight size={15} strokeWidth={2.5} />
             </Link>
           </motion.div>
           <p className="mt-8 md:mt-24 text-[17px] text-white/80 leading-[1.75] max-w-110">

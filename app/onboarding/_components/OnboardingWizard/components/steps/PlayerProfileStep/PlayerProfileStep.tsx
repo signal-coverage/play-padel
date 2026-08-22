@@ -1,15 +1,8 @@
 import { useEffect, useRef } from "react";
 import { Mail } from "lucide-react";
-import { Controller } from "react-hook-form";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { SelectField } from "@/components/SelectField";
 import { GENDER_OPTIONS } from "@/app/onboarding/types";
 import { useCountryProvinceCityFields } from "../../shared/CountryProvinceCityFields";
 import { PhoneField } from "../../shared/PhoneField";
@@ -83,31 +76,14 @@ export function PlayerProfileStep({
         <FieldError errors={[errors.email]} />
       </Field>
 
-      <Field>
-        <FieldLabel htmlFor="gender">Gender *</FieldLabel>
-        <Controller
-          control={control}
-          name="gender"
-          render={({ field }) => (
-            <Select
-              value={field.value ?? undefined}
-              onValueChange={field.onChange}
-            >
-              <SelectTrigger id="gender" aria-invalid={!!errors.gender}>
-                <SelectValue placeholder="Select an option" />
-              </SelectTrigger>
-              <SelectContent>
-                {GENDER_OPTIONS.map((g) => (
-                  <SelectItem key={g.value} value={g.value}>
-                    {g.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-        />
-        <FieldError errors={[errors.gender]} />
-      </Field>
+      <SelectField
+        control={control}
+        name="gender"
+        label="Gender *"
+        placeholder="Select an option"
+        options={GENDER_OPTIONS}
+        error={errors.gender}
+      />
 
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="flex-1">

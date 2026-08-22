@@ -13,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { SelectField } from "@/components/SelectField";
 import { PADEL_CATEGORY_OPTIONS } from "@/app/onboarding/types";
 import {
   DOMINANT_HAND_OPTIONS,
@@ -76,57 +77,23 @@ export function PadelProfileStep({
         <FieldError errors={[errors.padelCategory]} />
       </Field>
 
-      <Field>
-        <FieldLabel htmlFor="preferredSide">Preferred side</FieldLabel>
-        <Controller
-          control={control}
-          name="preferredSide"
-          render={({ field }) => (
-            <Select
-              value={field.value ?? undefined}
-              onValueChange={field.onChange}
-            >
-              <SelectTrigger id="preferredSide">
-                <SelectValue placeholder="Not set yet" />
-              </SelectTrigger>
-              <SelectContent>
-                {PREFERRED_SIDE_OPTIONS.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-        />
-        <FieldError errors={[errors.preferredSide]} />
-      </Field>
+      <SelectField
+        control={control}
+        name="preferredSide"
+        label="Preferred side"
+        placeholder="Not set yet"
+        options={PREFERRED_SIDE_OPTIONS}
+        error={errors.preferredSide}
+      />
 
-      <Field>
-        <FieldLabel htmlFor="dominantHand">Dominant hand</FieldLabel>
-        <Controller
-          control={control}
-          name="dominantHand"
-          render={({ field }) => (
-            <Select
-              value={field.value ?? undefined}
-              onValueChange={field.onChange}
-            >
-              <SelectTrigger id="dominantHand">
-                <SelectValue placeholder="Not set yet" />
-              </SelectTrigger>
-              <SelectContent>
-                {DOMINANT_HAND_OPTIONS.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-        />
-        <FieldError errors={[errors.dominantHand]} />
-      </Field>
+      <SelectField
+        control={control}
+        name="dominantHand"
+        label="Dominant hand"
+        placeholder="Not set yet"
+        options={DOMINANT_HAND_OPTIONS}
+        error={errors.dominantHand}
+      />
     </>
   );
 }

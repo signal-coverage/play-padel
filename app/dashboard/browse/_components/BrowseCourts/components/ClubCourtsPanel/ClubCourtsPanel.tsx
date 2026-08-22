@@ -3,8 +3,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import { useQueryState, parseAsString, parseAsStringEnum } from "nuqs";
-import { ArrowDown, ArrowUp, Image as ImageIcon } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { CircleHelp, Image as ImageIcon } from "lucide-react";
+import { ColorSwatch } from "@/components/ColorSwatch";
+import { SortDirectionButton } from "@/components/SortDirectionButton";
 import {
   Dialog,
   DialogContent,
@@ -165,62 +166,66 @@ export function ClubCourtsPanel({
 
           return (
             <div className="flex flex-col gap-1">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className="flex items-center gap-1.5 w-fit">
-                    <span
-                      className="h-2.5 w-2.5 shrink-0 rounded-full"
-                      style={{ backgroundColor: court.color ?? "#94a3b8" }}
-                      aria-hidden="true"
-                    />
-                    <span className="w-fit">{surfaceLabel(court.surface)}</span>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent className="border bg-popover text-popover-foreground p-2">
-                  {court.surface === "carpet" ? (
-                    <div className="relative h-24 w-24 overflow-hidden rounded-xs">
-                      <Image
-                        src={presetImage ?? CARPET_SURFACE_FALLBACK_IMAGE}
-                        alt=""
-                        fill
-                        className="object-cover"
-                      />
-                      {/* Only the fallback render needs a CSS tint — the
-                          presets above are already pixel-perfect for their
-                          exact color, so tinting on top would double up the
-                          color. `mix-blend-mode: color` takes this overlay's
-                          hue/saturation while keeping the photo's own
-                          luminosity; the color itself is muted via
-                          `color-mix` in OKLCH (reduces chroma, keeps hue
-                          stable) for a matte look instead of the raw,
-                          fully-saturated picker color. */}
-                      {!presetImage && (
-                        <div
-                          className="absolute inset-0"
-                          style={{
-                            backgroundColor: `color-mix(in oklch, ${court.color ?? "#94a3b8"} 60%, gray)`,
-                            mixBlendMode: "color",
-                          }}
-                          aria-hidden="true"
+              <div className="flex items-center gap-1.5 w-fit">
+                <ColorSwatch color={court.color} />
+                <span className="w-fit">{surfaceLabel(court.surface)}</span>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      type="button"
+                      onClick={(e) => e.stopPropagation()}
+                      aria-label={`See a texture preview of ${surfaceLabel(court.surface)}`}
+                      className="flex size-4 items-center justify-center rounded-full text-muted-foreground outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50"
+                    >
+                      <CircleHelp className="size-3.5" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent className="border bg-popover text-popover-foreground p-2">
+                    {court.surface === "carpet" ? (
+                      <div className="relative h-24 w-24 overflow-hidden rounded-xs">
+                        <Image
+                          src={presetImage ?? CARPET_SURFACE_FALLBACK_IMAGE}
+                          alt=""
+                          fill
+                          className="object-cover"
                         />
-                      )}
-                    </div>
-                  ) : court.surface === "concrete" ? (
-                    <div className="relative h-24 w-24 overflow-hidden rounded-xs">
-                      <Image
-                        src={CONCRETE_SURFACE_IMAGE}
-                        alt=""
-                        fill
-                        className="object-cover"
-                      />
-                    </div>
-                  ) : (
-                    <div className="flex h-24 w-24 items-center justify-center rounded-xs bg-muted">
-                      <ImageIcon className="h-4 w-4 text-muted-foreground" />
-                    </div>
-                  )}
-                </TooltipContent>
-              </Tooltip>
+                        {/* Only the fallback render needs a CSS tint — the
+                            presets above are already pixel-perfect for their
+                            exact color, so tinting on top would double up the
+                            color. `mix-blend-mode: color` takes this overlay's
+                            hue/saturation while keeping the photo's own
+                            luminosity; the color itself is muted via
+                            `color-mix` in OKLCH (reduces chroma, keeps hue
+                            stable) for a matte look instead of the raw,
+                            fully-saturated picker color. */}
+                        {!presetImage && (
+                          <div
+                            className="absolute inset-0"
+                            style={{
+                              backgroundColor: `color-mix(in oklch, ${court.color ?? "#94a3b8"} 60%, gray)`,
+                              mixBlendMode: "color",
+                            }}
+                            aria-hidden="true"
+                          />
+                        )}
+                      </div>
+                    ) : court.surface === "concrete" ? (
+                      <div className="relative h-24 w-24 overflow-hidden rounded-xs">
+                        <Image
+                          src={CONCRETE_SURFACE_IMAGE}
+                          alt=""
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+                    ) : (
+                      <div className="flex h-24 w-24 items-center justify-center rounded-xs bg-muted">
+                        <ImageIcon className="h-4 w-4 text-muted-foreground" />
+                      </div>
+                    )}
+                  </TooltipContent>
+                </Tooltip>
+              </div>
             </div>
           );
         },
@@ -300,32 +305,20 @@ export function ClubCourtsPanel({
     [],
   );
 
-  if (!selectedClubId) {
-    return (
-      <StatusBox className="flex h-full flex-col items-center justify-center">
-        Select a club to see its courts.
-      </StatusBox>
-    );
-  }
-
-  if (isError) {
-    return (
-      <StatusBox className="flex h-full flex-col items-center justify-center">
-        Could not load courts. Try again later.
-      </StatusBox>
-    );
-  }
-
-  if (!isLoading && courts.length === 0) {
-    return (
-      <StatusBox className="flex h-full flex-col items-center justify-center">
-        No courts available for the selected date.
-      </StatusBox>
-    );
-  }
+  // These replace only the table area below, not the whole panel — the
+  // filters/sort row above stays visible regardless of club/load/error
+  // state, so this column doesn't collapse to a bare placeholder box while
+  // its siblings keep their own header row.
+  const statusMessage = !selectedClubId
+    ? "Select a club to see its courts."
+    : isError
+      ? "Could not load courts. Try again later."
+      : !isLoading && courts.length === 0
+        ? "No courts available for the selected date."
+        : null;
 
   return (
-    <div className="flex h-full flex-col gap-3">
+    <div className="flex h-full flex-col gap-2">
       <div className="flex flex-wrap items-start gap-3 justify-between">
         <div className="flex flex-col gap-1.5">
           <span className="text-xs font-medium text-muted-foreground">
@@ -409,46 +402,43 @@ export function ClubCourtsPanel({
                 <SelectItem value="reservationFee">Reservation fee</SelectItem>
               </SelectContent>
             </Select>
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              aria-label={
-                sort.direction === "asc"
-                  ? "Sort ascending, click to sort descending"
-                  : "Sort descending, click to sort ascending"
-              }
-              onClick={() =>
+            <SortDirectionButton
+              direction={sort.direction}
+              onToggle={() =>
                 setSortDirection(sort.direction === "asc" ? "desc" : "asc")
               }
-            >
-              {sort.direction === "asc" ? <ArrowUp /> : <ArrowDown />}
-            </Button>
+            />
           </div>
         </div>
       </div>
 
-      <div
-        className={cn(
-          "min-h-0 flex-1 overflow-y-auto",
-          // Same treatment CourtSchedulePanel/CourtAvailabilityGrid already
-          // apply during a placeholder-data window on date change — this
-          // panel's data can be similarly stale for a moment.
-          isUpdating && "opacity-60 transition-opacity",
-        )}
-      >
-        <DataTable
-          className="h-full"
-          columns={columns}
-          rows={visibleCourts}
-          rowKey={(court) => court.id}
-          isLoading={isLoading}
-          loadingLabel="Loading courts…"
-          emptyState={<StatusBox>No courts match your filters.</StatusBox>}
-          onRowClick={(court) => onSelectCourt(court.id)}
-          isRowSelected={(court) => court.id === selectedCourtId}
-        />
-      </div>
+      {statusMessage ? (
+        <StatusBox className="flex min-h-0 flex-1 flex-col items-center justify-center">
+          {statusMessage}
+        </StatusBox>
+      ) : (
+        <div
+          className={cn(
+            "min-h-0 flex-1 overflow-y-auto",
+            // Same treatment CourtSchedulePanel/CourtAvailabilityGrid already
+            // apply during a placeholder-data window on date change — this
+            // panel's data can be similarly stale for a moment.
+            isUpdating && "opacity-60 transition-opacity",
+          )}
+        >
+          <DataTable
+            className="h-full"
+            columns={columns}
+            rows={visibleCourts}
+            rowKey={(court) => court.id}
+            isLoading={isLoading}
+            loadingLabel="Loading courts…"
+            emptyState={<StatusBox>No courts match your filters.</StatusBox>}
+            onRowClick={(court) => onSelectCourt(court.id)}
+            isRowSelected={(court) => court.id === selectedCourtId}
+          />
+        </div>
+      )}
 
       <Dialog
         open={!!previewCourt}
