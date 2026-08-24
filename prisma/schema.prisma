@@ -30,12 +30,13 @@ model Club {
   createdBy          String
   updatedBy          String
 
-  users           UserProfile[]
-  courts          Court[]
-  reservations    Reservation[]
-  invoices        Invoice[]
-  payments        Payment[]
-  waitlistEntries WaitlistEntry[]
+  users              UserProfile[]
+  courts             Court[]
+  reservations       Reservation[]
+  invoices           Invoice[]
+  payments           Payment[]
+  waitlistEntries    WaitlistEntry[]
+  mercadoPagoAccount ClubMercadoPagoAccount?
 
   @@map("clubs")
 }
@@ -57,6 +58,41 @@ enum ClubStatus {
 enum SystemRole {
   owner
   player
+}
+
+enum MpConnectionStatus {
+  NOT_CONNECTED
+  CONNECTED
+}
+
+// One-to-one per club (see `Club.mercadoPagoAccount`). Tokens are encrypted
+// at rest with AES-256-GCM (see lib/mercadopago/tokenCrypto.ts) — never store
+// or log plaintext access/refresh tokens.
+model ClubMercadoPagoAccount {
+  id     String             @id @default(cuid())
+  clubId String             @unique
+  club   Club               @relation(fields: [clubId], references: [id])
+  status MpConnectionStatus @default(NOT_CONNECTED)
+
+  // Mercado Pago's own seller identifiers for this OAuth grant.
+  mpUserId String?
+  liveMode Boolean @default(false)
+  scope    String?
+
+  // AES-256-GCM ciphertext (iv + authTag + data, see tokenCrypto.ts) — never
+  // plaintext.
+  accessTokenEncrypted  String?
+  refreshTokenEncrypted String?
+  tokenExpiresAt        DateTime?
+
+  connectedAt      DateTime?
+  disconnectedAt   DateTime?
+  lastRefreshError String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("club_mercadopago_accounts")
 }
 
 enum UserStatus {

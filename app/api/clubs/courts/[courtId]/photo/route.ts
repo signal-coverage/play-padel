@@ -4,6 +4,7 @@ import { updateCourt } from "@/core/courts/services/courts.service";
 import { validateCourtPhotoFile } from "@/core/courts/validation";
 import { requireOwnerClub } from "../../../_lib/require-owner";
 import { findOwnedCourt } from "../../../_lib/find-owned-court";
+import { requireClubOperational } from "../../../_lib/require-club-operational";
 
 type RouteParams = { params: Promise<{ courtId: string }> };
 
@@ -14,6 +15,11 @@ type RouteParams = { params: Promise<{ courtId: string }> };
 export async function POST(request: NextRequest, { params }: RouteParams) {
   const authResult = await requireOwnerClub();
   if (!authResult.ok) return authResult.response;
+
+  const operationalResult = await requireClubOperational(
+    authResult.context.clubId,
+  );
+  if (!operationalResult.ok) return operationalResult.response;
 
   const { courtId } = await params;
   const owned = await findOwnedCourt(authResult.context.clubId, courtId);

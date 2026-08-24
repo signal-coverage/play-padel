@@ -19,10 +19,21 @@ const SYSTEM_ACTOR = "system:mercadopago-webhook";
 // lib/mercadopago/payments.ts). Always acks with 2xx once the signature is
 // valid, even on a business-logic no-op (e.g. an already-processed payment
 // from a duplicate delivery) — Mercado Pago retries on any non-2xx response.
+//
+// Club resolution happens BEFORE the payment is ever fetched: a seller-OAuth
+// payment generally can't be read with a different account's token, so we
+// must know which club's client to use first. `reservationId` is embedded
+// as a query param on notification_url at preference-creation time (see
+// lib/mercadopago/preferences.ts) specifically so it's available here
+// without ever having read the payment itself. Once the payment is fetched
+// with the resolved club's client, its `external_reference` is cross-checked
+// against `reservationId` — a mismatch is rejected outright rather than
+// trusted.
 export async function POST(request: NextRequest) {
   const xSignature = request.headers.get("x-signature");
   const xRequestId = request.headers.get("x-request-id");
   const dataId = request.nextUrl.searchParams.get("data.id");
+  const reservationId = request.nextUrl.searchParams.get("reservationId");
 
   const validSignature = verifyMercadoPagoSignature({
     xSignature,
@@ -37,15 +48,41 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Missing data.id" }, { status: 400 });
   }
 
-  const mpPayment = await getMercadoPagoPayment(dataId);
-  if (!mpPayment.externalReference) {
-    // Not a payment we created a preference for — ack and ignore.
+  if (!reservationId) {
+    // Without reservationId we cannot resolve which club's token to use to
+    // re-fetch the payment — not a notification we can act on. Ack and
+    // ignore rather than error, matching the "not a payment we created a
+    // preference for" no-op below.
     return NextResponse.json({ ok: true });
   }
 
-  const reservation = await findReservationById(mpPayment.externalReference);
+  const reservation = await findReservationById(reservationId);
   if (!reservation) {
     return NextResponse.json({ ok: true });
+  }
+
+  let mpPayment;
+  try {
+    mpPayment = await getMercadoPagoPayment(dataId, reservation.clubId);
+  } catch (err) {
+    console.error(
+      `[mercadopago webhook] Failed to fetch payment ${dataId} using club ${reservation.clubId}'s Mercado Pago client:`,
+      err,
+    );
+    return NextResponse.json(
+      { error: "Failed to fetch payment" },
+      { status: 500 },
+    );
+  }
+
+  if (mpPayment.externalReference !== reservationId) {
+    console.error(
+      `[mercadopago webhook] external_reference mismatch: expected reservationId ${reservationId}, got ${mpPayment.externalReference} for payment ${dataId}`,
+    );
+    return NextResponse.json(
+      { error: "external_reference mismatch" },
+      { status: 400 },
+    );
   }
 
   const invoice = await getInvoiceByReservationId(reservation.id);

@@ -1,0 +1,1 @@
+export { PaymentActivationScreen } from "./PaymentActivationScreen";

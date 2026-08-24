@@ -12,7 +12,7 @@ import concreteSurfaceImage from "@/assets/images/carpet_surface_concrete.png";
 // ColorField's native <input type="color">.
 export const CARPET_SURFACE_FALLBACK_IMAGE = carpetSurfaceBlue;
 
-// Its own dedicated render — see ClubCourtsPanel.tsx.
+// Its own dedicated render — see SurfacePreview.tsx.
 export const CONCRETE_SURFACE_IMAGE = concreteSurfaceImage;
 
 // Real per-color renders, keyed lowercase (the native color input returns

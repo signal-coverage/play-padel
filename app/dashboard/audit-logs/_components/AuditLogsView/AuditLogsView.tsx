@@ -22,7 +22,7 @@ export function AuditLogsView() {
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex h-full min-h-0 min-w-0 flex-col gap-4">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight text-balance">
           Audit Log
@@ -44,7 +44,11 @@ export function AuditLogsView() {
           Could not load the audit log. Try again later.
         </p>
       ) : (
-        <AuditLogsTable logs={data?.logs ?? []} isLoading={isLoading} />
+        <AuditLogsTable
+          className="min-h-0 flex-1"
+          logs={data?.logs ?? []}
+          isLoading={isLoading}
+        />
       )}
 
       <div className="flex items-center justify-between text-sm text-muted-foreground">

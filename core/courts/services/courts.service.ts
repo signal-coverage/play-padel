@@ -1,6 +1,7 @@
 import { prisma } from "@/infrastructure/db/client";
 import { Prisma } from "@/lib/generated/prisma/client";
 import { logAudit } from "@/core/audit/services/audit.service";
+import { CLUB_OPERATIONAL_WHERE } from "@/lib/mercadopago/operationalStatus";
 import { startOfDay, endOfDay, addMinutes, format } from "date-fns";
 import type {
   Court,
@@ -189,12 +190,20 @@ export async function softDeleteCourt(
 
 export async function listCourtsByClub(
   clubId: string,
-  { includeInactive = false }: { includeInactive?: boolean } = {},
+  {
+    includeInactive = false,
+    operationalOnly = false,
+  }: { includeInactive?: boolean; operationalOnly?: boolean } = {},
 ): Promise<Court[]> {
   const where: Prisma.CourtWhereInput = {
     clubId,
     deletedAt: null,
     ...(includeInactive ? {} : { active: true }),
+    // Player deep-link protection: a clubId can be hit directly (bypassing
+    // the browse-list filter in listActiveClubs), so callers that serve
+    // player-facing reads must opt into this flag. Owner call sites never
+    // pass it, so their own court list is unaffected by operational status.
+    ...(operationalOnly ? { club: CLUB_OPERATIONAL_WHERE } : {}),
   };
 
   const rows = await prisma.court.findMany({

@@ -31,7 +31,10 @@ export async function GET(
   }
 
   try {
-    const courts = await listCourtsByClub(clubId);
+    // operationalOnly: true closes the direct deep-link gap — a non-
+    // operational club's courts would otherwise be reachable here even
+    // though app/api/player/clubs excludes it from the browse list.
+    const courts = await listCourtsByClub(clubId, { operationalOnly: true });
     const courtsWithSlots = await Promise.all(
       courts.map(async (court) => {
         const slots = await getCourtSlots(court.id, date);

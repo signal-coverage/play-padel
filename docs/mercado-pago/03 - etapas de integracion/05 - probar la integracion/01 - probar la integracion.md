@@ -1,0 +1,3 @@
+# MD for: https://www.mercadopago.com.ar/developers/es/docs/checkout-api-orders/integration-test.md
+
+\# Integration test The testing process allows you to verify if the configurations made during your integration are working correctly, and if payments will be processed without errors, preventing potential failures when making the checkout available to end buyers. In this section you will find the necessary steps to perform a test purchase with: - \[Cards\](https://www.mercadopago.com.ar/developers/en/docs/checkout-api-orders/integration-test/cards) - \[Other payment methods\](https://www.mercadopago.com.ar/developers/en/docs/checkout-api-orders/integration-test/other-payment-methods)

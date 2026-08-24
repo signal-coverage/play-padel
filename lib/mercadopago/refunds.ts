@@ -1,5 +1,5 @@
 import { PaymentRefund } from "mercadopago";
-import { getMercadoPagoClient } from "./client";
+import { getClubMercadoPagoClient } from "./clubMercadoPagoClient";
 
 // Refunds the full amount of a Mercado Pago payment via the SDK's own
 // PaymentRefund client (same class-based pattern as Preference and Payment
@@ -8,9 +8,15 @@ import { getMercadoPagoClient } from "./client";
 // attached automatically and stay consistent with the rest of the
 // integration. `total()` (not `create()`) is used because we always refund
 // the entire payment — no partial-amount body is needed.
+//
+// Refunds MUST come from the same club's account that received the funds —
+// there is no silent fallback to the platform token or another club's token
+// (see design.md's "Handling of Externally Revoked Authorization").
 export async function refundMercadoPagoPayment(
   paymentId: string,
+  clubId: string,
 ): Promise<void> {
-  const paymentRefund = new PaymentRefund(getMercadoPagoClient());
+  const client = await getClubMercadoPagoClient(clubId);
+  const paymentRefund = new PaymentRefund(client);
   await paymentRefund.total({ payment_id: paymentId });
 }

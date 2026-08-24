@@ -1,0 +1,106 @@
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { NextRequest } from "next/server";
+
+vi.mock("../_lib/require-owner", () => ({
+  requireOwnerClub: vi.fn(),
+}));
+
+vi.mock("../_lib/require-club-operational", () => ({
+  requireClubOperational: vi.fn(),
+}));
+
+vi.mock("@/core/courts/services/courts.service", () => ({
+  createCourt: vi.fn(),
+  listCourtsByClub: vi.fn(),
+}));
+
+import { requireOwnerClub } from "../_lib/require-owner";
+import { requireClubOperational } from "../_lib/require-club-operational";
+import {
+  createCourt,
+  listCourtsByClub,
+} from "@/core/courts/services/courts.service";
+import { GET, POST } from "./route";
+import { NextResponse } from "next/server";
+
+const requireOwnerClubMock = requireOwnerClub as ReturnType<typeof vi.fn>;
+const requireClubOperationalMock = requireClubOperational as ReturnType<
+  typeof vi.fn
+>;
+const createCourtMock = createCourt as ReturnType<typeof vi.fn>;
+const listCourtsByClubMock = listCourtsByClub as ReturnType<typeof vi.fn>;
+
+function makeRequest(body: unknown) {
+  return new Request("http://localhost/api/clubs/courts", {
+    method: "POST",
+    body: JSON.stringify(body),
+  }) as unknown as Parameters<typeof POST>[0];
+}
+
+function makeGetRequest() {
+  return new NextRequest("http://localhost/api/clubs/courts");
+}
+
+describe("POST /api/clubs/courts", () => {
+  beforeEach(() => {
+    requireOwnerClubMock.mockReset();
+    requireClubOperationalMock.mockReset();
+    createCourtMock.mockReset();
+    requireOwnerClubMock.mockResolvedValue({
+      ok: true,
+      context: { userId: "user_1", clubId: "club_1" },
+    });
+  });
+
+  it("returns 403 club_mp_not_connected and never creates a court when the club is not operational", async () => {
+    const forbidden = NextResponse.json(
+      { error: "club_mp_not_connected" },
+      { status: 403 },
+    );
+    requireClubOperationalMock.mockResolvedValue({
+      ok: false,
+      response: forbidden,
+    });
+
+    const response = await POST(makeRequest({ name: "Court 1" }));
+
+    expect(response).toBe(forbidden);
+    expect(createCourtMock).not.toHaveBeenCalled();
+  });
+
+  it("creates the court when the club is operational", async () => {
+    requireClubOperationalMock.mockResolvedValue({ ok: true });
+    createCourtMock.mockResolvedValue({ id: "court_1", name: "Court 1" });
+
+    const response = await POST(makeRequest({ name: "Court 1" }));
+
+    expect(requireClubOperationalMock).toHaveBeenCalledWith("club_1");
+    expect(createCourtMock).toHaveBeenCalledWith(
+      "club_1",
+      expect.objectContaining({ name: "Court 1" }),
+      "user_1",
+    );
+    expect(response.status).toBe(201);
+  });
+});
+
+describe("GET /api/clubs/courts (ungated regardless of operational status)", () => {
+  beforeEach(() => {
+    requireOwnerClubMock.mockReset();
+    requireClubOperationalMock.mockReset();
+    listCourtsByClubMock.mockReset();
+    requireOwnerClubMock.mockResolvedValue({
+      ok: true,
+      context: { userId: "user_1", clubId: "club_1" },
+    });
+  });
+
+  it("returns the owner's courts without ever calling requireClubOperational", async () => {
+    listCourtsByClubMock.mockResolvedValue([{ id: "court_1" }]);
+
+    const response = await GET(makeGetRequest());
+
+    expect(requireClubOperationalMock).not.toHaveBeenCalled();
+    expect(response.status).toBe(200);
+  });
+});

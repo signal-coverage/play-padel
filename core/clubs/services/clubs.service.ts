@@ -1,5 +1,6 @@
 import { prisma } from "@/infrastructure/db/client";
 import { logAudit } from "@/core/audit/services/audit.service";
+import { CLUB_OPERATIONAL_WHERE } from "@/lib/mercadopago/operationalStatus";
 import type {
   Club,
   CreateClubInput,
@@ -99,10 +100,14 @@ export async function updateClub(
 /**
  * Clubs regular users can browse and reserve courts at — see
  * docs/reservation-flow.md for the player-facing flow this backs.
+ *
+ * Filters at the query level via `CLUB_OPERATIONAL_WHERE`, which already
+ * includes `status: "ACTIVE"` — so a club must also have a `CONNECTED`
+ * Mercado Pago account to appear here. See lib/mercadopago/operationalStatus.ts.
  */
 export async function listActiveClubs(): Promise<Club[]> {
   const rows = await prisma.club.findMany({
-    where: { status: "ACTIVE" },
+    where: CLUB_OPERATIONAL_WHERE,
     orderBy: { name: "asc" },
   });
   return rows.map(toClub);

@@ -4,12 +4,14 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils/utils";
-import { navItems } from "../../consts";
+import { useIsClubOperational } from "../../hooks";
+import { getVisibleNavItems } from "../../utils";
 import type { NavLinksProps } from "../NavLinks/types";
 
 export function MobileBottomNav({ role, className }: NavLinksProps) {
   const pathname = usePathname();
-  const visibleItems = navItems.filter((item) => item.roles.includes(role));
+  const isOperational = useIsClubOperational(role);
+  const visibleItems = getVisibleNavItems(role, isOperational);
 
   return (
     <nav

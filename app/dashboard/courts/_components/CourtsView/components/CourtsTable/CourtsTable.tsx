@@ -3,8 +3,10 @@
 import { useMemo } from "react";
 import { CalendarClock, CalendarOff, Pencil, Trash2 } from "lucide-react";
 import { ColorSwatch } from "@/components/ColorSwatch";
+import { CourtPhotoPreview } from "@/components/CourtPhotoPreview";
 import { DataTable } from "@/components/DataTable";
 import { StatusBox } from "@/components/StatusBox";
+import { SurfacePreview } from "@/components/SurfacePreview";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -45,8 +47,25 @@ export function CourtsTable({
       {
         key: "surface",
         header: "Surface",
-        cell: (court) => surfaceLabel(court.surface),
+        cell: (court) => (
+          <span className="flex items-center gap-1.5">
+            {surfaceLabel(court.surface)}
+            <SurfacePreview surface={court.surface} color={court.color} />
+          </span>
+        ),
         loadingCell: <Skeleton className="h-4 w-16" />,
+      },
+      {
+        key: "preview",
+        header: "Preview",
+        cell: (court) => (
+          <CourtPhotoPreview
+            photoUrl={court.photoUrl}
+            courtName={court.name}
+            size="sm"
+          />
+        ),
+        loadingCell: <Skeleton className="h-10 w-10 rounded-xs" />,
       },
       {
         key: "type",

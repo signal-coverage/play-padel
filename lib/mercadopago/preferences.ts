@@ -1,5 +1,5 @@
 import { Preference } from "mercadopago";
-import { getMercadoPagoClient } from "./client";
+import { getClubMercadoPagoClient } from "./clubMercadoPagoClient";
 
 function requireAppUrl(): string {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL;
@@ -8,19 +8,32 @@ function requireAppUrl(): string {
 }
 
 // Creates a Checkout Pro preference for one reservation and returns the
-// hosted redirect URL. external_reference carries the reservationId so the
-// webhook (which only receives a Mercado Pago payment id) can look up which
-// reservation/invoice a confirmed payment belongs to.
+// hosted redirect URL. Uses the OWNING CLUB's Mercado Pago client (see
+// clubMercadoPagoClient.ts) so the resulting payment belongs to that club's
+// own MP account — 100% of the amount goes to the club, no marketplace_fee
+// is set. `marketplaceFee` is accepted (but intentionally unused) purely so
+// a future commission feature doesn't require reshaping this signature; see
+// design.md's "no marketplace_fee" decision.
+//
+// external_reference carries the reservationId so the webhook (which only
+// receives a Mercado Pago payment id) can look up which reservation/invoice
+// a confirmed payment belongs to. reservationId is ALSO embedded as a query
+// param on notification_url so the webhook can resolve which club's token to
+// re-fetch the payment with BEFORE it has read anything about the payment
+// itself (see app/api/webhooks/mercadopago/route.ts).
 export async function createCheckoutPreference(params: {
+  clubId: string;
   reservationId: string;
   courtName: string;
   price: number;
   currency: string;
+  marketplaceFee?: number;
 }): Promise<{ checkoutUrl: string }> {
   const appUrl = requireAppUrl();
   const returnUrl = `${appUrl}/dashboard/browse/payment-return?reservationId=${params.reservationId}`;
 
-  const preference = new Preference(getMercadoPagoClient());
+  const client = await getClubMercadoPagoClient(params.clubId);
+  const preference = new Preference(client);
   const result = await preference.create({
     body: {
       items: [
@@ -33,7 +46,7 @@ export async function createCheckoutPreference(params: {
         },
       ],
       external_reference: params.reservationId,
-      notification_url: `${appUrl}/api/webhooks/mercadopago`,
+      notification_url: `${appUrl}/api/webhooks/mercadopago?reservationId=${params.reservationId}`,
       back_urls: {
         success: returnUrl,
         pending: returnUrl,

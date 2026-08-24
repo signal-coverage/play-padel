@@ -1,17 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import Image from "next/image";
+import { useEffect, useMemo, useRef } from "react";
 import { useQueryState, parseAsString, parseAsStringEnum } from "nuqs";
-import { CircleHelp, Image as ImageIcon } from "lucide-react";
 import { ColorSwatch } from "@/components/ColorSwatch";
+import { CourtPhotoPreview } from "@/components/CourtPhotoPreview";
 import { SortDirectionButton } from "@/components/SortDirectionButton";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { SurfacePreview } from "@/components/SurfacePreview";
 import {
   Select,
   SelectContent,
@@ -19,11 +13,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { DataTable } from "@/components/DataTable";
 import { StatusBox } from "@/components/StatusBox";
 import {
@@ -32,11 +21,6 @@ import {
 } from "@/app/dashboard/courts/_components/CourtsView/utils";
 import { cn } from "@/lib/utils/utils";
 import { formatCourtPrice, formatPricePerHour } from "@/lib/utils/currency";
-import {
-  CARPET_SURFACE_FALLBACK_IMAGE,
-  CARPET_SURFACE_IMAGE_BY_COLOR,
-  CONCRETE_SURFACE_IMAGE,
-} from "./consts";
 import { filterCourts, sortCourts } from "./utils";
 import type { DataTableColumn } from "@/components/DataTable";
 import type { CourtColumn } from "@/components/CourtAvailabilityGrid";
@@ -56,8 +40,6 @@ export function ClubCourtsPanel({
   isUpdating,
   isError,
 }: ClubCourtsPanelProps) {
-  const [previewCourt, setPreviewCourt] = useState<CourtColumn | null>(null);
-
   // Filter/sort state lives in the URL (like `club`/`court`/`date` in
   // BrowseCourts) so the current filters/sort are shareable and survive a
   // refresh, per the feature spec.
@@ -156,79 +138,15 @@ export function ClubCourtsPanel({
       {
         key: "surfaceColor",
         header: "Surface & Color",
-        cell: (court) => {
-          // Real per-color renders exist for the ColorField presets; any
-          // other (custom-picked) color falls back to the neutral render,
-          // tinted at render time instead of pixel-perfect.
-          const presetImage = court.color
-            ? CARPET_SURFACE_IMAGE_BY_COLOR[court.color.toLowerCase()]
-            : undefined;
-
-          return (
-            <div className="flex flex-col gap-1">
-              <div className="flex items-center gap-1.5 w-fit">
-                <ColorSwatch color={court.color} />
-                <span className="w-fit">{surfaceLabel(court.surface)}</span>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      type="button"
-                      onClick={(e) => e.stopPropagation()}
-                      aria-label={`See a texture preview of ${surfaceLabel(court.surface)}`}
-                      className="flex size-4 items-center justify-center rounded-full text-muted-foreground outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50"
-                    >
-                      <CircleHelp className="size-3.5" />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent className="border bg-popover text-popover-foreground p-2">
-                    {court.surface === "carpet" ? (
-                      <div className="relative h-24 w-24 overflow-hidden rounded-xs">
-                        <Image
-                          src={presetImage ?? CARPET_SURFACE_FALLBACK_IMAGE}
-                          alt=""
-                          fill
-                          className="object-cover"
-                        />
-                        {/* Only the fallback render needs a CSS tint — the
-                            presets above are already pixel-perfect for their
-                            exact color, so tinting on top would double up the
-                            color. `mix-blend-mode: color` takes this overlay's
-                            hue/saturation while keeping the photo's own
-                            luminosity; the color itself is muted via
-                            `color-mix` in OKLCH (reduces chroma, keeps hue
-                            stable) for a matte look instead of the raw,
-                            fully-saturated picker color. */}
-                        {!presetImage && (
-                          <div
-                            className="absolute inset-0"
-                            style={{
-                              backgroundColor: `color-mix(in oklch, ${court.color ?? "#94a3b8"} 60%, gray)`,
-                              mixBlendMode: "color",
-                            }}
-                            aria-hidden="true"
-                          />
-                        )}
-                      </div>
-                    ) : court.surface === "concrete" ? (
-                      <div className="relative h-24 w-24 overflow-hidden rounded-xs">
-                        <Image
-                          src={CONCRETE_SURFACE_IMAGE}
-                          alt=""
-                          fill
-                          className="object-cover"
-                        />
-                      </div>
-                    ) : (
-                      <div className="flex h-24 w-24 items-center justify-center rounded-xs bg-muted">
-                        <ImageIcon className="h-4 w-4 text-muted-foreground" />
-                      </div>
-                    )}
-                  </TooltipContent>
-                </Tooltip>
-              </div>
+        cell: (court) => (
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-1.5 w-fit">
+              <ColorSwatch color={court.color} />
+              <span className="w-fit">{surfaceLabel(court.surface)}</span>
+              <SurfacePreview surface={court.surface} color={court.color} />
             </div>
-          );
-        },
+          </div>
+        ),
       },
       {
         key: "reservationFee",
@@ -263,42 +181,7 @@ export function ClubCourtsPanel({
         key: "preview",
         header: "Preview",
         cell: (court) => (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span className="w-fit text-muted-foreground underline decoration-dotted underline-offset-2">
-                See preview
-              </span>
-            </TooltipTrigger>
-            <TooltipContent className="border bg-popover text-popover-foreground p-2">
-              <button
-                type="button"
-                onClick={(e) => {
-                  // Radix portals this content to document.body, but React
-                  // still re-dispatches the click through the component
-                  // tree — without this it'd also bubble to the row's
-                  // onClick and select the court as a side effect.
-                  e.stopPropagation();
-                  setPreviewCourt(court);
-                }}
-                aria-label={`See a bigger preview of ${court.name}`}
-                className="flex h-24 w-24 items-center justify-center rounded-xs bg-muted outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
-              >
-                {court.photoUrl ? (
-                  // Arbitrary owner-uploaded Vercel Blob URLs aren't known
-                  // ahead of time, so next/image's remotePatterns allowlist
-                  // doesn't fit here.
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={court.photoUrl}
-                    className="h-full w-full rounded-xs object-cover"
-                    alt=""
-                  />
-                ) : (
-                  <ImageIcon className="h-4 w-4 text-muted-foreground" />
-                )}
-              </button>
-            </TooltipContent>
-          </Tooltip>
+          <CourtPhotoPreview photoUrl={court.photoUrl} courtName={court.name} />
         ),
       },
     ],
@@ -439,32 +322,6 @@ export function ClubCourtsPanel({
           />
         </div>
       )}
-
-      <Dialog
-        open={!!previewCourt}
-        onOpenChange={(open) => !open && setPreviewCourt(null)}
-      >
-        <DialogContent className="sm:max-w-3xl">
-          <DialogHeader>
-            <DialogTitle>{previewCourt?.name}</DialogTitle>
-          </DialogHeader>
-          <div className="flex min-h-128 w-full items-center justify-center rounded-sm bg-muted">
-            {previewCourt?.photoUrl ? (
-              // Arbitrary owner-uploaded Vercel Blob URLs aren't known
-              // ahead of time, so next/image's remotePatterns allowlist
-              // doesn't fit here.
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={previewCourt.photoUrl}
-                className="h-full w-full rounded-xs object-cover"
-                alt=""
-              />
-            ) : (
-              <ImageIcon className="h-10 w-10 text-muted-foreground" />
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

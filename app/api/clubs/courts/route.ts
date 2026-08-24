@@ -5,6 +5,7 @@ import {
 } from "@/core/courts/services/courts.service";
 import { createCourtSchema } from "@/core/courts/schemas/court.schema";
 import { requireOwnerClub } from "../_lib/require-owner";
+import { requireClubOperational } from "../_lib/require-club-operational";
 
 export async function GET(request: NextRequest) {
   const authResult = await requireOwnerClub();
@@ -22,6 +23,11 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const authResult = await requireOwnerClub();
   if (!authResult.ok) return authResult.response;
+
+  const operationalResult = await requireClubOperational(
+    authResult.context.clubId,
+  );
+  if (!operationalResult.ok) return operationalResult.response;
 
   const body = await request.json().catch(() => null);
   const parsed = createCourtSchema.safeParse(body);

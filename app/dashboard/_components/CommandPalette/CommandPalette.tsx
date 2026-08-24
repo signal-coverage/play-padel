@@ -10,19 +10,22 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import { navItems } from "../AppNavbar/consts";
+import { useIsClubOperational } from "../AppNavbar/hooks";
+import { getVisibleNavItems } from "../AppNavbar/utils";
 import { useCommandPaletteShortcut } from "./hooks";
 import type { CommandPaletteProps } from "./types";
 
-// Entries come from the same navItems source of truth as NavLinks and
-// MobileBottomNav, so this can never drift into a second, inconsistent
-// route list.
+// Entries come from the same navItems source of truth (via
+// getVisibleNavItems) as NavLinks and MobileBottomNav, so this can never
+// drift into a second, inconsistent route list — including the
+// non-operational-owner "Dashboard only" reduction.
 export function CommandPalette({ role }: CommandPaletteProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   useCommandPaletteShortcut(setOpen);
 
-  const visibleItems = navItems.filter((item) => item.roles.includes(role));
+  const isOperational = useIsClubOperational(role);
+  const visibleItems = getVisibleNavItems(role, isOperational);
 
   function handleSelect(href: string) {
     setOpen(false);
