@@ -30,13 +30,14 @@ model Club {
   createdBy          String
   updatedBy          String
 
-  users              UserProfile[]
-  courts             Court[]
-  reservations       Reservation[]
-  invoices           Invoice[]
-  payments           Payment[]
-  waitlistEntries    WaitlistEntry[]
-  mercadoPagoAccount ClubMercadoPagoAccount?
+  users                  UserProfile[]
+  courts                 Court[]
+  reservations           Reservation[]
+  invoices               Invoice[]
+  payments               Payment[]
+  waitlistEntries        WaitlistEntry[]
+  mercadoPagoAccount     ClubMercadoPagoAccount?
+  membershipSubscription ClubMembershipSubscription?
 
   @@map("clubs")
 }
@@ -93,6 +94,94 @@ model ClubMercadoPagoAccount {
   updatedAt DateTime @updatedAt
 
   @@map("club_mercadopago_accounts")
+}
+
+enum MembershipCycle {
+  MONTHLY
+  ANNUAL
+}
+
+enum MembershipRenewalMode {
+  AUTO
+  MANUAL
+}
+
+enum MembershipStatus {
+  PENDING
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  CANCELLED
+}
+
+// One-to-one per club (see `Club.membershipSubscription`). Tracks the
+// club's OWN payment to the platform for its membership plan/tier — the
+// opposite money direction from `ClubMercadoPagoAccount` (which is the
+// club's OAuth-connected account for RECEIVING reservation payments). All MP
+// calls for this model go through the platform's own Mercado Pago client
+// (see lib/mercadopago/platformClient.ts, Phase 2), never a club's OAuth
+// token. See design.md's "Membership state storage" and "MP client for
+// membership" decisions.
+model ClubMembershipSubscription {
+  id     String @id @default(cuid())
+  clubId String @unique
+  club   Club   @relation(fields: [clubId], references: [id])
+
+  plan         Plan
+  pendingPlan  Plan? // applied at next period boundary — no mid-cycle proration (see spec)
+  cycle        MembershipCycle
+  pendingCycle MembershipCycle?
+  renewalMode  MembershipRenewalMode
+  status       MembershipStatus      @default(PENDING)
+
+  // Never hardcoded — every MP call for this model carries currency as an
+  // explicit parameter (see spec's "Currency Threaded as Explicit Parameter").
+  currency String
+
+  mpPreapprovalId String? // MONTHLY only — real MP Subscriptions/Preapproval id
+  mpPreferenceId  String? // ANNUAL only — one-time Checkout Pro preference id
+  mpCustomerId    String?
+  mpCardId        String?
+
+  // Authoritative for ANNUAL only (no native MP trial-without-charge exists
+  // for one-off Checkout Pro). Informational mirror for MONTHLY — MP's own
+  // `preapproval_plan.auto_recurring.free_trial` is authoritative there.
+  trialEndsAt DateTime?
+
+  currentPeriodStart DateTime?
+  currentPeriodEnd   DateTime?
+
+  pastDueSince DateTime?
+  // AUTO mode: informational/missed-webhook-backstop only — MP's own
+  // recycling/dunning timeline is the real clock, this never independently
+  // shortens or extends it. MANUAL mode: authoritative lockout deadline,
+  // evaluated by the cron sweep (no MP-side signal exists for this mode).
+  pastDueUntil DateTime?
+
+  // Idempotency guard so a re-delivered/duplicate MP webhook never replays
+  // a state transition twice (see design.md's state machine decision).
+  lastWebhookEventId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("club_membership_subscriptions")
+}
+
+// Admin-configurable trial length per plan tier, one row per `Plan` (builds
+// on the existing `welcomeFreeMonths` concept — see spec's "Admin-
+// Configurable Trial Length Per Plan"). Edited via a static-secret-guarded
+// route (Phase 5); broader admin-role auth is explicitly out of scope here.
+model MembershipTrialConfig {
+  plan                Plan     @id
+  trialDays           Int
+  // preapproval_plan id carrying auto_recurring.free_trial for this tier
+  // (see lib/mercadopago/preapprovalPlans.ts, Phase 2).
+  mpPreapprovalPlanId String?
+  updatedAt           DateTime @updatedAt
+  updatedBy           String
+
+  @@map("membership_trial_configs")
 }
 
 enum UserStatus {

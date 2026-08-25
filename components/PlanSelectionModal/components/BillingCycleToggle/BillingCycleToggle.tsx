@@ -1,17 +1,16 @@
 "use client";
 
 import { cn } from "@/lib/utils/utils";
-import { BILLING_CYCLE_OPTIONS } from "./consts";
+import { BILLING_CYCLE_OPTIONS } from "../../consts";
 import type { BillingCycleToggleProps } from "./types";
 
-// Monthly/annual pill toggle for the plan grid above it, mirroring
-// PlanStep.tsx's existing toggle in the onboarding flow as closely as
-// reasonable (same rounded-full bordered pair of buttons + the "Save 2
-// months with annual billing" note) since this dialog needs the same
-// billing-cycle choice. Kept as its own component here rather than
-// imported from the onboarding tree per this repo's SRP-per-folder
-// convention — see this folder's types.ts for the same reasoning applied
-// to the BillingCycle type itself.
+// Monthly/annual pill toggle, same visual language as PlanStep.tsx's
+// onboarding version — kept as its own local copy here per this repo's
+// SRP-per-folder convention rather than importing across component trees.
+// (The former PaymentActivationScreen/components/BillingCycleToggle copy
+// was removed as dead code in Phase 10 — this shared PlanSelectionModal
+// component fully superseded it once PaymentActivationScreen was wired to
+// open the modal instead of rendering its own toggle, see Phase 7 notes.)
 export function BillingCycleToggle({
   value,
   onChange,

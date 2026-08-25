@@ -5,7 +5,6 @@ import { CalendarClock, CalendarOff, Pencil, Trash2 } from "lucide-react";
 import { ColorSwatch } from "@/components/ColorSwatch";
 import { CourtPhotoPreview } from "@/components/CourtPhotoPreview";
 import { DataTable } from "@/components/DataTable";
-import { StatusBox } from "@/components/StatusBox";
 import { SurfacePreview } from "@/components/SurfacePreview";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,6 +16,7 @@ import {
 } from "@/components/ui/tooltip";
 import { formatCourtPrice } from "@/lib/utils/currency";
 import { indoorLabel, surfaceLabel } from "../../utils";
+import { CourtsEmptyState } from "./components/CourtsEmptyState";
 import type { DataTableColumn } from "@/components/DataTable";
 import type { CourtRecord } from "../../types";
 import type { CourtsTableProps } from "./types";
@@ -29,6 +29,7 @@ export function CourtsTable({
   onEditClosures,
   onDelete,
   deletingCourtId,
+  className,
 }: CourtsTableProps) {
   const columns: DataTableColumn<CourtRecord>[] = useMemo(
     () => [
@@ -191,16 +192,13 @@ export function CourtsTable({
 
   return (
     <DataTable
+      className={className}
       columns={columns}
       rows={courts}
       rowKey={(court) => court.id}
       isLoading={isLoading}
       loadingLabel="Loading courts…"
-      emptyState={
-        <StatusBox>
-          No courts yet. Create your first court to get started.
-        </StatusBox>
-      }
+      emptyState={<CourtsEmptyState />}
     />
   );
 }

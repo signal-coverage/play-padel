@@ -1,6 +1,7 @@
 {
   "crons": [
     { "path": "/api/cron/notifications", "schedule": "0 8 * * *" },
-    { "path": "/api/cron/mercadopago-token-refresh", "schedule": "0 3 * * *" }
+    { "path": "/api/cron/mercadopago-token-refresh", "schedule": "0 3 * * *" },
+    { "path": "/api/cron/membership-grace-sweep", "schedule": "0 4 * * *" }
   ]
 }

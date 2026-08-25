@@ -14,7 +14,7 @@ function requireAppUrl(): string {
 
 function settingsRedirect(params: Record<string, string>): NextResponse {
   const appUrl = requireAppUrl();
-  const url = new URL(`${appUrl}/dashboard/settings/club`);
+  const url = new URL(`${appUrl}/dashboard/courts`);
   for (const [key, value] of Object.entries(params)) {
     url.searchParams.set(key, value);
   }

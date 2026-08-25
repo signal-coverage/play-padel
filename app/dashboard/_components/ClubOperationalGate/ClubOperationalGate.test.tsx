@@ -6,45 +6,36 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ClubOperationalGate } from "./ClubOperationalGate";
 import type { ClubOperationalStatusResponse } from "./types";
 
-// Minimal valid club shape for the PaymentActivationScreen's GET /api/clubs
-// fetch — only `plan` matters to the screen, but the wire response always
-// carries the full Club record.
-const MINIMAL_CLUB = {
-  id: "club_1",
-  name: "Test Club",
-  email: "club@example.com",
-  timezone: "America/Argentina/Buenos_Aires",
-  currency: "ARS",
+// Minimal valid membership subscription shape for
+// PaymentActivationScreen's GET /api/clubs/membership fetch.
+const PENDING_SUBSCRIPTION = {
+  id: "sub_1",
+  clubId: "club_1",
   plan: "BASIC",
-  status: "ACTIVE",
-  requiresPrepayment: false,
-  createdAt: new Date().toISOString(),
-  updatedAt: new Date().toISOString(),
-  createdBy: "user_1",
-  updatedBy: "user_1",
+  pendingPlan: null,
+  cycle: "MONTHLY",
+  pendingCycle: null,
+  renewalMode: "AUTO",
+  status: "PENDING",
+  currency: "ARS",
+  trialEndsAt: null,
+  currentPeriodEnd: null,
 };
 
 function renderGate(response: ClubOperationalStatusResponse) {
-  // Once PaymentActivationScreen also calls fetch("/api/clubs") (GET for
-  // the current plan, PATCH when changing it) from inside the same test,
-  // a single undiscriminating mock would hand it the operational-status
-  // shape instead of { club: { plan } }, breaking the screen. Branch by
-  // URL/method so each endpoint gets the shape its caller actually expects.
-  const fetchMock = vi.fn((url: string, init?: RequestInit) => {
+  // Once PaymentActivationScreen also calls fetch("/api/clubs/membership")
+  // from inside the same test, a single undiscriminating mock would hand it
+  // the operational-status shape instead of { subscription }, breaking the
+  // screen. Branch by URL so each endpoint gets the shape its caller
+  // actually expects.
+  const fetchMock = vi.fn((url: string) => {
     if (url.includes("/mercadopago/operational-status")) {
       return Promise.resolve({ ok: true, json: async () => response });
     }
-    if (url === "/api/clubs" && (!init || init.method === undefined)) {
+    if (url === "/api/clubs/membership") {
       return Promise.resolve({
         ok: true,
-        json: async () => ({ club: MINIMAL_CLUB }),
-      });
-    }
-    if (url === "/api/clubs" && init?.method === "PATCH") {
-      const plan = JSON.parse(init.body as string).plan;
-      return Promise.resolve({
-        ok: true,
-        json: async () => ({ club: { ...MINIMAL_CLUB, plan } }),
+        json: async () => ({ subscription: PENDING_SUBSCRIPTION }),
       });
     }
     throw new Error(`unexpected fetch: ${url}`);
@@ -128,17 +119,20 @@ describe("ClubOperationalGate", () => {
     });
     expect(heading).toBeInTheDocument();
 
-    // All 4 plan tiers show as selectable options in the grid.
+    // The membership summary and "Pay Membership" action show once the
+    // subscription snapshot loads; "Link Mercado Pago account" stays
+    // disabled until membership is confirmed (spec's "Two Separate
+    // Membership Actions").
     await waitFor(() => {
-      expect(screen.getByRole("radio", { name: /BASIC/ })).toBeInTheDocument();
-      expect(screen.getByRole("radio", { name: /PRO/ })).toBeInTheDocument();
-      expect(screen.getByRole("radio", { name: /PLUS/ })).toBeInTheDocument();
-      expect(screen.getByRole("radio", { name: /MAX/ })).toBeInTheDocument();
+      expect(screen.getByText(/BASIC/)).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: "Pay Membership" }),
+      ).toBeInTheDocument();
     });
 
     expect(
       screen.getByRole("button", { name: "Link Mercado Pago account" }),
-    ).toBeInTheDocument();
+    ).toBeDisabled();
 
     // This is the actual point of the fix: the gated-out page content must
     // be entirely absent from the DOM, not just visually hidden — no blur

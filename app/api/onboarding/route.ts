@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { prisma } from "@/infrastructure/db/client";
 import { createClub } from "@/core/clubs/services/clubs.service";
+import { createPendingMembershipSubscription } from "@/core/billing/services/membership.service";
 import { logAudit } from "@/core/audit/services/audit.service";
 import {
   onboardingFormSchema,
@@ -162,6 +163,17 @@ export async function POST(request: Request) {
       },
       userId,
     );
+
+    // `Club.plan` above is still written directly (needed immediately for
+    // court-capacity purposes, see design's Onboarding flow) — this seeds
+    // the parallel `ClubMembershipSubscription` state-machine row in
+    // PENDING, with no MP object created yet. Phase 7's dashboard payment
+    // flow is what actually moves this into TRIALING/ACTIVE.
+    await createPendingMembershipSubscription({
+      clubId: club.id,
+      plan,
+      currency: data.currency!,
+    });
 
     await prisma.userProfile.upsert({
       where: { id: userId },

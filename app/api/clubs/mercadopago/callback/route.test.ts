@@ -83,7 +83,7 @@ describe("GET /api/clubs/mercadopago/callback", () => {
     );
     expect(response.status).toBe(307);
     const location = response.headers.get("location");
-    expect(location).toContain("/dashboard/settings/club");
+    expect(location).toContain("/dashboard/courts");
     expect(location).toContain("mpConnect=success");
   });
 

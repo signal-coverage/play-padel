@@ -2,12 +2,10 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import Link from "next/link";
-import { Sparkles } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Button } from "@/components/ui/button";
 import { SearchInput } from "@/components/SearchInput";
+import { UpgradeMembershipButton } from "@/components/UpgradeMembershipButton";
 import { tennisBall, tennisCourt } from "@/assets/icons";
 import { SearchableCardsGrid } from "./components/SearchableCardsGrid";
 import { PlayerOverviewCard } from "./components/PlayerOverview/PlayerOverviewCard";
@@ -52,14 +50,7 @@ export function DashboardHome() {
             placeholder="Search cards…"
             className="w-full"
           />
-          {role === "owner" && (
-            <Button asChild size="sm">
-              <Link href="/dashboard/settings/club">
-                <Sparkles className="h-4 w-4" />
-                Upgrade
-              </Link>
-            </Button>
-          )}
+          {role === "owner" && <UpgradeMembershipButton />}
         </div>
       </div>
 

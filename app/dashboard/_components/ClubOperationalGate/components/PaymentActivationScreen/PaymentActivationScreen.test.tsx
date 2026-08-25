@@ -11,34 +11,26 @@ import "@testing-library/jest-dom/vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { PaymentActivationScreen } from "./PaymentActivationScreen";
 
-const MINIMAL_CLUB = {
-  id: "club_1",
-  name: "Test Club",
-  email: "club@example.com",
-  timezone: "America/Argentina/Buenos_Aires",
-  currency: "ARS",
+const PENDING_SUBSCRIPTION = {
+  id: "sub_1",
+  clubId: "club_1",
   plan: "BASIC",
-  status: "ACTIVE",
-  requiresPrepayment: false,
-  createdAt: new Date().toISOString(),
-  updatedAt: new Date().toISOString(),
-  createdBy: "user_1",
-  updatedBy: "user_1",
+  pendingPlan: null,
+  cycle: "MONTHLY",
+  pendingCycle: null,
+  renewalMode: "AUTO",
+  status: "PENDING",
+  currency: "ARS",
+  trialEndsAt: null,
+  currentPeriodEnd: null,
 };
 
-function renderScreen() {
-  const fetchMock = vi.fn((url: string, init?: RequestInit) => {
-    if (url === "/api/clubs" && (!init || init.method === undefined)) {
+function renderScreen(subscription: object = PENDING_SUBSCRIPTION) {
+  const fetchMock = vi.fn((url: string) => {
+    if (url === "/api/clubs/membership") {
       return Promise.resolve({
         ok: true,
-        json: async () => ({ club: MINIMAL_CLUB }),
-      });
-    }
-    if (url === "/api/clubs" && init?.method === "PATCH") {
-      const plan = JSON.parse(init.body as string).plan;
-      return Promise.resolve({
-        ok: true,
-        json: async () => ({ club: { ...MINIMAL_CLUB, plan } }),
+        json: async () => ({ subscription }),
       });
     }
     throw new Error(`unexpected fetch: ${url}`);
@@ -61,8 +53,6 @@ function renderScreen() {
 describe("PaymentActivationScreen", () => {
   beforeEach(() => {
     vi.restoreAllMocks();
-    // Minimal, repo-established idiom for asserting a window.location.href
-    // navigation without actually navigating jsdom.
     Object.defineProperty(window, "location", {
       writable: true,
       value: { href: "" },
@@ -70,147 +60,57 @@ describe("PaymentActivationScreen", () => {
   });
 
   afterEach(() => {
-    // This repo's vitest.config.mts does not enable `test.globals`, so
-    // @testing-library/react's automatic afterEach(cleanup) registration
-    // never fires — clean up the DOM explicitly between tests instead.
     cleanup();
     vi.unstubAllGlobals();
   });
 
-  it("renders with the club's current plan pre-selected", async () => {
+  it("renders the current plan/status summary and a disabled Link MP action while PENDING", async () => {
     renderScreen();
 
-    await waitFor(() => {
-      expect(screen.getByRole("radio", { name: /BASIC/ })).toHaveAttribute(
-        "aria-checked",
-        "true",
-      );
-    });
-
-    expect(screen.getByRole("radio", { name: /PRO/ })).toHaveAttribute(
-      "aria-checked",
-      "false",
-    );
-  });
-
-  it("changes the selection when clicking a different plan card", async () => {
-    renderScreen();
-
-    const proCard = await screen.findByRole("radio", { name: /PRO/ });
-    fireEvent.click(proCard);
-
-    expect(proCard).toHaveAttribute("aria-checked", "true");
-    expect(screen.getByRole("radio", { name: /BASIC/ })).toHaveAttribute(
-      "aria-checked",
-      "false",
-    );
-  });
-
-  it("navigates without calling PATCH when the plan is unchanged", async () => {
-    const fetchMock = renderScreen();
-
-    // The submit button is always in the DOM but stays disabled (via
-    // !selectedPlan) until the club's current plan finishes loading — wait
-    // for that before clicking, otherwise the click is a no-op.
-    await waitFor(() => {
-      expect(screen.getByRole("radio", { name: /BASIC/ })).toHaveAttribute(
-        "aria-checked",
-        "true",
-      );
-    });
-
-    const submitButton = screen.getByRole("button", {
-      name: "Link Mercado Pago account",
-    });
-    fireEvent.click(submitButton);
-
-    await waitFor(() =>
-      expect(window.location.href).toBe("/api/clubs/mercadopago/connect"),
-    );
-
+    expect(await screen.findByText(/BASIC/)).toBeInTheDocument();
     expect(
-      fetchMock.mock.calls.some(([, init]) => init?.method === "PATCH"),
-    ).toBe(false);
+      screen.getByRole("button", { name: "Link Mercado Pago account" }),
+    ).toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: "Pay Membership" }),
+    ).toBeInTheDocument();
   });
 
-  it("calls PATCH with the new plan then navigates when the plan changed", async () => {
-    const fetchMock = renderScreen();
+  it("opens the plan-selection modal when Pay Membership is clicked", async () => {
+    renderScreen();
 
-    await waitFor(() => {
-      expect(screen.getByRole("radio", { name: /BASIC/ })).toHaveAttribute(
-        "aria-checked",
-        "true",
-      );
-    });
+    await screen.findByText(/BASIC/);
+    fireEvent.click(screen.getByRole("button", { name: "Pay Membership" }));
 
-    const proCard = screen.getByRole("radio", { name: /PRO/ });
-    fireEvent.click(proCard);
-    expect(proCard).toHaveAttribute("aria-checked", "true");
+    expect(await screen.findByText("Membership")).toBeInTheDocument();
+  });
 
-    const submitButton = screen.getByRole("button", {
-      name: "Link Mercado Pago account",
-    });
-    fireEvent.click(submitButton);
+  it("shows 'Membership Active' and enables Link MP once the subscription is ACTIVE", async () => {
+    renderScreen({ ...PENDING_SUBSCRIPTION, status: "ACTIVE" });
+
+    expect(await screen.findByText("Membership Active")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Link Mercado Pago account" }),
+    ).not.toBeDisabled();
+  });
+
+  it("navigates to the connect route when Link Mercado Pago account is clicked while confirmed", async () => {
+    renderScreen({ ...PENDING_SUBSCRIPTION, status: "TRIALING" });
+
+    await screen.findByText("Membership Active");
+    fireEvent.click(
+      screen.getByRole("button", { name: "Link Mercado Pago account" }),
+    );
 
     await waitFor(() =>
       expect(window.location.href).toBe("/api/clubs/mercadopago/connect"),
     );
-
-    const patchCall = fetchMock.mock.calls.find(
-      ([, init]) => init?.method === "PATCH",
-    );
-    expect(patchCall).toBeDefined();
-    const [, patchInit] = patchCall as [string, RequestInit];
-    expect(JSON.parse(patchInit.body as string)).toEqual({ plan: "PRO" });
   });
 
-  it("renders the billing-cycle toggle defaulting to monthly", async () => {
-    renderScreen();
-
-    await waitFor(() => {
-      expect(screen.getByRole("radio", { name: /BASIC/ })).toHaveAttribute(
-        "aria-checked",
-        "true",
-      );
-    });
-
-    const monthlyButton = screen.getByRole("button", { name: "Monthly" });
-    const annualButton = screen.getByRole("button", { name: "Annual" });
-    expect(monthlyButton).toBeInTheDocument();
-    expect(annualButton).toBeInTheDocument();
-
-    // Monthly is the default: no "billed annually" pricing note anywhere
-    // in the grid yet.
-    expect(screen.queryByText(/billed annually/)).not.toBeInTheDocument();
-  });
-
-  it("switches plan cards to annual pricing and back when toggling billing cycle", async () => {
-    renderScreen();
-
-    await waitFor(() => {
-      expect(screen.getByRole("radio", { name: /BASIC/ })).toHaveAttribute(
-        "aria-checked",
-        "true",
-      );
-    });
-
-    fireEvent.click(screen.getByRole("button", { name: "Annual" }));
-
-    await waitFor(() => {
-      expect(screen.getAllByText(/billed annually/).length).toBeGreaterThan(0);
-    });
-
-    fireEvent.click(screen.getByRole("button", { name: "Monthly" }));
-
-    await waitFor(() => {
-      expect(screen.queryByText(/billed annually/)).not.toBeInTheDocument();
-    });
-  });
-
-  it("shows a retry state instead of stuck skeletons when the plan fetch fails, and recovers on retry", async () => {
+  it("shows a retry state instead of stuck skeletons when the fetch fails, and recovers on retry", async () => {
     let shouldFail = true;
-    const fetchMock = vi.fn((url: string, init?: RequestInit) => {
-      if (url === "/api/clubs" && (!init || init.method === undefined)) {
+    const fetchMock = vi.fn((url: string) => {
+      if (url === "/api/clubs/membership") {
         if (shouldFail) {
           return Promise.resolve({
             ok: false,
@@ -219,7 +119,7 @@ describe("PaymentActivationScreen", () => {
         }
         return Promise.resolve({
           ok: true,
-          json: async () => ({ club: MINIMAL_CLUB }),
+          json: async () => ({ subscription: PENDING_SUBSCRIPTION }),
         });
       }
       throw new Error(`unexpected fetch: ${url}`);
@@ -237,30 +137,20 @@ describe("PaymentActivationScreen", () => {
     );
 
     expect(
-      await screen.findByText(/couldn't load your plan/i),
+      await screen.findByText(/couldn't load your membership/i),
     ).toBeInTheDocument();
 
-    // No stuck skeletons and no plan grid while the error state is showing.
-    expect(screen.queryByRole("radiogroup")).not.toBeInTheDocument();
-
-    const submitButton = screen.getByRole("button", {
+    const linkButton = screen.getByRole("button", {
       name: "Link Mercado Pago account",
     });
-    expect(submitButton).toBeDisabled();
+    expect(linkButton).toBeDisabled();
 
     shouldFail = false;
     fireEvent.click(screen.getByRole("button", { name: "Retry" }));
 
-    await waitFor(() => {
-      expect(screen.getByRole("radio", { name: /BASIC/ })).toHaveAttribute(
-        "aria-checked",
-        "true",
-      );
-    });
-
+    await screen.findByText(/BASIC/);
     expect(
-      screen.queryByText(/couldn't load your plan/i),
+      screen.queryByText(/couldn't load your membership/i),
     ).not.toBeInTheDocument();
-    expect(submitButton).not.toBeDisabled();
   });
 });
