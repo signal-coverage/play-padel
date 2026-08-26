@@ -92,6 +92,82 @@ export async function createMembershipPreapprovalPlan(
   return { id: result.id, initPoint: result.init_point };
 }
 
+export interface GetOrCreateMembershipPreapprovalPlanIdParams {
+  plan: Plan;
+  currency: string;
+  backUrl: string;
+}
+
+function isUniqueConstraintViolation(err: unknown): boolean {
+  return (
+    typeof err === "object" &&
+    err !== null &&
+    "code" in err &&
+    (err as { code?: unknown }).code === "P2002"
+  );
+}
+
+/**
+ * Returns a reusable `preapproval_plan` id for a given (plan tier, currency)
+ * pair, creating one via `createMembershipPreapprovalPlan` only the first
+ * time that pair is ever checked out — see the `MembershipPreapprovalPlanCache`
+ * model (prisma/schema.prisma) and this batch's apply-progress notes. This
+ * is what `app/api/clubs/membership/route.ts`'s MONTHLY branch calls instead
+ * of `createMembershipPreapprovalPlan` directly, so every club on the same
+ * tier+currency shares one Mercado Pago plan object instead of cluttering
+ * the seller's "Planes de suscripción" dashboard with near-duplicates.
+ *
+ * Cached per (plan, currency) rather than plan alone: `Club.currency` is a
+ * free-form per-club field (spec's "Currency Threaded as Explicit
+ * Parameter"), so a plan object created for one currency must never be
+ * reused for a club billed in a different currency.
+ *
+ * Concurrency: if two checkouts race to create the cache row for the same
+ * never-before-used (plan, currency) pair, the loser's `create` throws a
+ * unique-constraint violation (Prisma `P2002`) on the composite `@@id`.
+ * Rather than a distributed lock (disproportionate for a genuinely rare
+ * race), the loser simply re-reads the winner's row and reuses its id.
+ * Worst case in that race, one harmless orphan `preapproval_plan` object is
+ * left in the MP dashboard from the loser's own already-completed
+ * `createMembershipPreapprovalPlan` call — an accepted low-severity edge
+ * case, since it's strictly rarer than the every-checkout duplication this
+ * cache exists to fix.
+ */
+export async function getOrCreateMembershipPreapprovalPlanId(
+  params: GetOrCreateMembershipPreapprovalPlanIdParams,
+): Promise<MembershipPreapprovalPlanResult> {
+  const cacheKey = { plan: params.plan, currency: params.currency };
+
+  const cached = await prisma.membershipPreapprovalPlanCache.findUnique({
+    where: { plan_currency: cacheKey },
+  });
+  if (cached) {
+    return { id: cached.preapprovalPlanId };
+  }
+
+  const created = await createMembershipPreapprovalPlan(params);
+
+  try {
+    await prisma.membershipPreapprovalPlanCache.create({
+      data: { ...cacheKey, preapprovalPlanId: created.id },
+    });
+  } catch (err) {
+    if (!isUniqueConstraintViolation(err)) throw err;
+
+    const winner = await prisma.membershipPreapprovalPlanCache.findUnique({
+      where: { plan_currency: cacheKey },
+    });
+    if (winner) {
+      return { id: winner.preapprovalPlanId, initPoint: created.initPoint };
+    }
+    // Extremely unlikely: the winner's row vanished between the constraint
+    // violation and this re-read. Fall back to our own freshly created plan
+    // rather than throwing — it's still a valid, usable object.
+  }
+
+  return created;
+}
+
 export interface UpdateMembershipPreapprovalPlanParams {
   preapprovalPlanId: string;
   plan: Plan;

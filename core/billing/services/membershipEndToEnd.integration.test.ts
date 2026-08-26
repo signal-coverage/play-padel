@@ -30,12 +30,19 @@ import { NextRequest } from "next/server";
 
 type Row = Record<string, unknown>;
 
-const { subscriptions, clubs, userProfiles, trialConfigs } = vi.hoisted(() => {
+const {
+  subscriptions,
+  clubs,
+  userProfiles,
+  trialConfigs,
+  preapprovalPlanCache,
+} = vi.hoisted(() => {
   return {
     subscriptions: new Map<string, Row>(),
     clubs: new Map<string, Row>(),
     userProfiles: new Map<string, Row>(),
     trialConfigs: new Map<string, Row>(),
+    preapprovalPlanCache: new Map<string, Row>(),
   };
 });
 
@@ -140,6 +147,23 @@ vi.mock("@/infrastructure/db/client", () => ({
         return trialConfigs.get(where.plan) ?? null;
       }),
     },
+    membershipPreapprovalPlanCache: {
+      findUnique: vi.fn(
+        async ({
+          where,
+        }: {
+          where: { plan_currency: { plan: string; currency: string } };
+        }) => {
+          const key = `${where.plan_currency.plan}:${where.plan_currency.currency}`;
+          return preapprovalPlanCache.get(key) ?? null;
+        },
+      ),
+      create: vi.fn(async ({ data }: { data: Row }) => {
+        const key = `${data.plan}:${data.currency}`;
+        preapprovalPlanCache.set(key, data);
+        return data;
+      }),
+    },
   },
 }));
 
@@ -190,7 +214,12 @@ import {
   GET as membershipGet,
   POST as membershipPost,
 } from "@/app/api/clubs/membership/route";
-import { POST as webhookPost } from "@/app/api/webhooks/mercadopago/membership/route";
+// Mercado Pago's DevPanel registers exactly ONE notification URL per
+// environment, not one per topic — so the real webhook entry point is the
+// consolidated base route, not a dedicated `/membership` path (see
+// app/api/webhooks/mercadopago/route.ts and
+// lib/mercadopago/membershipWebhookHandlers.ts for the full rationale).
+import { POST as webhookPost } from "@/app/api/webhooks/mercadopago/route";
 import { GET as connectGet } from "@/app/api/clubs/mercadopago/connect/route";
 import { GET as cronGet } from "@/app/api/cron/membership-grace-sweep/route";
 import { createPendingMembershipSubscription } from "@/core/billing/services/membership.service";
@@ -230,27 +259,24 @@ function makePreapprovalWebhookRequest(
   notificationId?: string,
 ) {
   notificationIdCounter += 1;
-  return new NextRequest(
-    "http://localhost/api/webhooks/mercadopago/membership",
-    {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        "x-signature": "ts=1,v1=abc",
-        "x-request-id": "req-1",
-      },
-      body: JSON.stringify({
-        action: "updated",
-        data: { id: preapprovalId },
-        id: notificationId ?? `notif_${preapprovalId}_${notificationIdCounter}`,
-        type: "subscription_preapproval",
-      }),
+  return new NextRequest("http://localhost/api/webhooks/mercadopago", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "x-signature": "ts=1,v1=abc",
+      "x-request-id": "req-1",
     },
-  );
+    body: JSON.stringify({
+      action: "updated",
+      data: { id: preapprovalId },
+      id: notificationId ?? `notif_${preapprovalId}_${notificationIdCounter}`,
+      type: "subscription_preapproval",
+    }),
+  });
 }
 
 function makePaymentWebhookRequest(paymentId: string, clubId: string) {
-  const url = new URL("http://localhost/api/webhooks/mercadopago/membership");
+  const url = new URL("http://localhost/api/webhooks/mercadopago");
   url.searchParams.set("clubId", clubId);
   return new NextRequest(url, {
     method: "POST",
@@ -271,7 +297,6 @@ function makePaymentWebhookRequest(paymentId: string, clubId: string) {
 beforeEach(() => {
   vi.stubEnv("NEXT_PUBLIC_APP_URL", "https://app.example.com");
   vi.stubEnv("MERCADOPAGO_ACCESS_TOKEN", "platform-access-token");
-  vi.stubEnv("MERCADOPAGO_MEMBERSHIP_WEBHOOK_SECRET", "membership-secret");
   vi.stubEnv("CRON_SECRET", "test-cron-secret");
   // This suite's whole purpose is exercising the REAL MP-connect gate
   // against real membership state — opt into gating explicitly (Phase 10's
@@ -283,6 +308,7 @@ beforeEach(() => {
   clubs.clear();
   userProfiles.clear();
   trialConfigs.clear();
+  preapprovalPlanCache.clear();
   subIdCounter = 0;
   notificationIdCounter = 0;
 
@@ -805,5 +831,49 @@ describe("End-to-end: ANNUAL membership — app-tracked trial (sdd-verify WARNIN
     expect((await sweep.json()).annualTrialsExpired).toBe(0);
     expect(subscriptions.get(clubId)!.status).toBe("ACTIVE");
     expect((await connectGet()).status).toBe(307);
+  });
+});
+
+describe("GET /api/clubs/membership — post-archive fix: lazy PENDING seeding for pre-existing clubs (found via live smoke test)", () => {
+  it("returns 200 with a REAL, persisted PENDING row for a club that predates onboarding's Phase 6.2 seeding — never a 404, and never a synthetic in-memory-only object", async () => {
+    const clubId = "club_pre_existing_1";
+    // Deliberately do NOT call `createPendingMembershipSubscription` here —
+    // this reproduces a real club created before Phase 6.2's onboarding-time
+    // seeding existed, which has ZERO rows in `club_membership_subscriptions`.
+    seedOwner(clubId);
+    expect(subscriptions.has(clubId)).toBe(false);
+
+    const response = await membershipGet();
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.subscription.status).toBe("PENDING");
+    expect(body.subscription.clubId).toBe(clubId);
+    // Genuinely persisted — not a synthetic in-memory-only object.
+    expect(subscriptions.has(clubId)).toBe(true);
+    expect(subscriptions.get(clubId)!.id).toBe(body.subscription.id);
+  });
+
+  it("finds the SAME persisted row on a second GET — never creates a duplicate", async () => {
+    const clubId = "club_pre_existing_2";
+    seedOwner(clubId);
+
+    const first = await (await membershipGet()).json();
+    const second = await (await membershipGet()).json();
+
+    expect(first.subscription.id).toBe(second.subscription.id);
+    expect(subscriptions.size).toBe(1);
+  });
+
+  it("derives plan/currency from the Club row itself (BASIC default plan, ARS from the fixture) since GET has no request body to read them from", async () => {
+    const clubId = "club_pre_existing_3";
+    seedOwner(clubId);
+
+    const body = await (await membershipGet()).json();
+
+    expect(body.subscription.plan).toBe("BASIC");
+    expect(body.subscription.currency).toBe("ARS");
+    expect(body.subscription.cycle).toBe("MONTHLY");
+    expect(body.subscription.renewalMode).toBe("AUTO");
   });
 });

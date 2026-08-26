@@ -30,7 +30,7 @@ import {
 const STATE_SECRET = "test-state-secret";
 
 beforeEach(() => {
-  vi.stubEnv("MP_OAUTH_STATE_SECRET", STATE_SECRET);
+  vi.stubEnv("MERCADOPAGO_OAUTH_STATE_SECRET", STATE_SECRET);
   vi.stubEnv("MERCADOPAGO_OAUTH_CLIENT_ID", "client-id-123");
   vi.stubEnv("MERCADOPAGO_OAUTH_CLIENT_SECRET", "client-secret-abc");
   vi.stubEnv("MERCADOPAGO_ACCESS_TOKEN", "platform-access-token");

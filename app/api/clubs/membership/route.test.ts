@@ -14,14 +14,14 @@ vi.mock("@/infrastructure/db/client", () => ({
 
 vi.mock("@/core/billing/services/membership.service", () => ({
   getMembershipSubscription: vi.fn(),
-  createPendingMembershipSubscription: vi.fn(),
+  seedPendingMembershipSubscriptionFromClub: vi.fn(),
   attachPendingPreapproval: vi.fn(),
   attachPendingPreference: vi.fn(),
   startTrial: vi.fn(),
 }));
 
 vi.mock("@/lib/mercadopago/preapprovalPlans", () => ({
-  createMembershipPreapprovalPlan: vi.fn(),
+  getOrCreateMembershipPreapprovalPlanId: vi.fn(),
   resolveFreeTrialConfig: vi.fn(),
 }));
 
@@ -37,13 +37,13 @@ import { requireOwnerClub } from "../_lib/require-owner";
 import { prisma } from "@/infrastructure/db/client";
 import {
   getMembershipSubscription,
-  createPendingMembershipSubscription,
+  seedPendingMembershipSubscriptionFromClub,
   attachPendingPreapproval,
   attachPendingPreference,
   startTrial,
 } from "@/core/billing/services/membership.service";
 import {
-  createMembershipPreapprovalPlan,
+  getOrCreateMembershipPreapprovalPlanId,
   resolveFreeTrialConfig,
 } from "@/lib/mercadopago/preapprovalPlans";
 import { createMembershipPreapproval } from "@/lib/mercadopago/membershipPreapprovals";
@@ -57,8 +57,8 @@ const clubFindUniqueMock = prisma.club.findUnique as ReturnType<typeof vi.fn>;
 const getMembershipSubscriptionMock = getMembershipSubscription as ReturnType<
   typeof vi.fn
 >;
-const createPendingMembershipSubscriptionMock =
-  createPendingMembershipSubscription as ReturnType<typeof vi.fn>;
+const seedPendingMembershipSubscriptionFromClubMock =
+  seedPendingMembershipSubscriptionFromClub as ReturnType<typeof vi.fn>;
 const attachPendingPreapprovalMock = attachPendingPreapproval as ReturnType<
   typeof vi.fn
 >;
@@ -66,8 +66,8 @@ const attachPendingPreferenceMock = attachPendingPreference as ReturnType<
   typeof vi.fn
 >;
 const startTrialMock = startTrial as ReturnType<typeof vi.fn>;
-const createMembershipPreapprovalPlanMock =
-  createMembershipPreapprovalPlan as ReturnType<typeof vi.fn>;
+const getOrCreateMembershipPreapprovalPlanIdMock =
+  getOrCreateMembershipPreapprovalPlanId as ReturnType<typeof vi.fn>;
 const resolveFreeTrialConfigMock = resolveFreeTrialConfig as ReturnType<
   typeof vi.fn
 >;
@@ -120,11 +120,11 @@ beforeEach(() => {
   trialConfigFindUniqueMock.mockReset();
   clubFindUniqueMock.mockReset();
   getMembershipSubscriptionMock.mockReset();
-  createPendingMembershipSubscriptionMock.mockReset();
+  seedPendingMembershipSubscriptionFromClubMock.mockReset();
   attachPendingPreapprovalMock.mockReset();
   attachPendingPreferenceMock.mockReset();
   startTrialMock.mockReset();
-  createMembershipPreapprovalPlanMock.mockReset();
+  getOrCreateMembershipPreapprovalPlanIdMock.mockReset();
   resolveFreeTrialConfigMock.mockReset();
   createMembershipPreapprovalMock.mockReset();
   createMembershipPreferenceMock.mockReset();
@@ -146,21 +146,32 @@ describe("GET /api/clubs/membership", () => {
     expect(getMembershipSubscriptionMock).not.toHaveBeenCalled();
   });
 
-  it("returns 404 when the club has no membership subscription yet", async () => {
+  it("lazily seeds a PENDING subscription and returns 200 when the club has none yet (post-archive fix — a club that predates onboarding's Phase 6.2 seeding must not 404)", async () => {
     getMembershipSubscriptionMock.mockResolvedValue(null);
+    seedPendingMembershipSubscriptionFromClubMock.mockResolvedValue(
+      subscriptionRow({ status: "PENDING" }),
+    );
 
     const response = await GET();
+    const body = await response.json();
 
-    expect(response.status).toBe(404);
+    expect(seedPendingMembershipSubscriptionFromClubMock).toHaveBeenCalledWith({
+      clubId: "club_1",
+    });
+    expect(response.status).toBe(200);
+    expect(body.subscription.status).toBe("PENDING");
   });
 
-  it("returns the subscription snapshot for the caller's own club", async () => {
+  it("returns the subscription snapshot for the caller's own club without seeding when one already exists", async () => {
     getMembershipSubscriptionMock.mockResolvedValue(subscriptionRow());
 
     const response = await GET();
     const body = await response.json();
 
     expect(getMembershipSubscriptionMock).toHaveBeenCalledWith("club_1");
+    expect(
+      seedPendingMembershipSubscriptionFromClubMock,
+    ).not.toHaveBeenCalled();
     expect(response.status).toBe(200);
     expect(body.subscription.clubId).toBe("club_1");
   });
@@ -210,7 +221,7 @@ describe("POST /api/clubs/membership", () => {
     );
 
     expect(response.status).toBe(400);
-    expect(createMembershipPreapprovalPlanMock).not.toHaveBeenCalled();
+    expect(getOrCreateMembershipPreapprovalPlanIdMock).not.toHaveBeenCalled();
   });
 
   it("rejects MAX plan for ANNUAL checkout with 400 (no fixed annual price — contact-us tier)", async () => {
@@ -277,13 +288,12 @@ describe("POST /api/clubs/membership", () => {
     );
 
     expect(response.status).toBe(409);
-    expect(createMembershipPreapprovalPlanMock).not.toHaveBeenCalled();
+    expect(getOrCreateMembershipPreapprovalPlanIdMock).not.toHaveBeenCalled();
   });
 
-  it("seeds a fresh PENDING subscription (using the club's own currency) when none exists yet", async () => {
+  it("seeds a fresh PENDING subscription (via the shared seed helper) when none exists yet", async () => {
     getMembershipSubscriptionMock.mockResolvedValue(null);
-    clubFindUniqueMock.mockResolvedValue({ currency: "ARS" });
-    createPendingMembershipSubscriptionMock.mockResolvedValue(
+    seedPendingMembershipSubscriptionFromClubMock.mockResolvedValue(
       subscriptionRow({ status: "PENDING" }),
     );
     createMembershipPreferenceMock.mockResolvedValue({
@@ -298,15 +308,11 @@ describe("POST /api/clubs/membership", () => {
       makePostRequest({ plan: "PRO", cycle: "ANNUAL" }),
     );
 
-    expect(clubFindUniqueMock).toHaveBeenCalledWith({
-      where: { id: "club_1" },
-      select: { currency: true },
-    });
-    expect(createPendingMembershipSubscriptionMock).toHaveBeenCalledWith(
+    expect(seedPendingMembershipSubscriptionFromClubMock).toHaveBeenCalledWith(
       expect.objectContaining({
         clubId: "club_1",
         plan: "PRO",
-        currency: "ARS",
+        cycle: "ANNUAL",
       }),
     );
     expect(response.status).toBe(200);
@@ -323,7 +329,9 @@ describe("POST /api/clubs/membership", () => {
 
     it("creates the preapproval_plan BEFORE creating the preapproval", async () => {
       getMembershipSubscriptionMock.mockResolvedValue(subscriptionRow());
-      createMembershipPreapprovalPlanMock.mockResolvedValue({ id: "plan_1" });
+      getOrCreateMembershipPreapprovalPlanIdMock.mockResolvedValue({
+        id: "plan_1",
+      });
       createMembershipPreapprovalMock.mockResolvedValue({
         id: "preap_1",
         status: "authorized",
@@ -337,7 +345,7 @@ describe("POST /api/clubs/membership", () => {
       await POST(makePostRequest(monthlyBody));
 
       const planOrder =
-        createMembershipPreapprovalPlanMock.mock.invocationCallOrder[0];
+        getOrCreateMembershipPreapprovalPlanIdMock.mock.invocationCallOrder[0];
       const preapprovalOrder =
         createMembershipPreapprovalMock.mock.invocationCallOrder[0];
       expect(planOrder).toBeLessThan(preapprovalOrder);
@@ -353,7 +361,9 @@ describe("POST /api/clubs/membership", () => {
 
     it("calls attachPendingPreapproval (not startTrial) when the tier has no free trial configured", async () => {
       getMembershipSubscriptionMock.mockResolvedValue(subscriptionRow());
-      createMembershipPreapprovalPlanMock.mockResolvedValue({ id: "plan_1" });
+      getOrCreateMembershipPreapprovalPlanIdMock.mockResolvedValue({
+        id: "plan_1",
+      });
       createMembershipPreapprovalMock.mockResolvedValue({
         id: "preap_1",
         status: "authorized",
@@ -380,7 +390,9 @@ describe("POST /api/clubs/membership", () => {
 
     it("calls startTrial (not attachPendingPreapproval) when the tier has a free trial configured", async () => {
       getMembershipSubscriptionMock.mockResolvedValue(subscriptionRow());
-      createMembershipPreapprovalPlanMock.mockResolvedValue({ id: "plan_1" });
+      getOrCreateMembershipPreapprovalPlanIdMock.mockResolvedValue({
+        id: "plan_1",
+      });
       createMembershipPreapprovalMock.mockResolvedValue({
         id: "preap_1",
         status: "authorized",
@@ -409,7 +421,9 @@ describe("POST /api/clubs/membership", () => {
 
     it("returns 500 when Mercado Pago fails to create the preapproval", async () => {
       getMembershipSubscriptionMock.mockResolvedValue(subscriptionRow());
-      createMembershipPreapprovalPlanMock.mockResolvedValue({ id: "plan_1" });
+      getOrCreateMembershipPreapprovalPlanIdMock.mockResolvedValue({
+        id: "plan_1",
+      });
       createMembershipPreapprovalMock.mockRejectedValue(new Error("MP down"));
       trialConfigFindUniqueMock.mockResolvedValue(null);
       resolveFreeTrialConfigMock.mockReturnValue(undefined);

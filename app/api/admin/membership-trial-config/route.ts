@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/infrastructure/db/client";
 import { updateMembershipTrialConfigSchema } from "@/core/billing/schemas/membershipTrialConfig.schema";
+import { updateMembershipPreapprovalPlan } from "@/lib/mercadopago/preapprovalPlans";
 
 // Minimal-scope admin surface: a static-secret bearer guard, not a new
 // admin role — see spec's "Admin-Configurable Trial Length Per Plan" and
@@ -31,6 +32,19 @@ export async function GET(request: Request) {
  * and `resolveTrialEndsAt`/`startTrial` (core/billing/services/
  * membership.service.ts, Phase 3), both already wired to prefer this
  * override over the static `welcomeFreeMonths` default.
+ *
+ * After persisting the override, propagates the new trial length to every
+ * already-created `preapproval_plan` for this tier — one per currency, per
+ * `MembershipPreapprovalPlanCache` (see
+ * lib/mercadopago/preapprovalPlans.ts's `getOrCreateMembershipPreapprovalPlanId`)
+ * — via `updateMembershipPreapprovalPlan`, so existing cached plan objects
+ * stay in sync instead of only affecting future checkouts. If no tier's
+ * plan has been created yet (nobody has checked out on it), this is a
+ * clean no-op — the next checkout creates it fresh with the new config.
+ * Propagation is best-effort per currency: a failure updating one cached
+ * plan is logged and does not block propagation to the others or the
+ * overall 200 response, since the authoritative trialDays write already
+ * succeeded.
  */
 export async function PATCH(request: Request) {
   if (!isAuthorized(request)) {
@@ -46,22 +60,34 @@ export async function PATCH(request: Request) {
     );
   }
 
-  const { plan, trialDays, mpPreapprovalPlanId, updatedBy } = parsed.data;
+  const { plan, trialDays, updatedBy } = parsed.data;
 
   const config = await prisma.membershipTrialConfig.upsert({
     where: { plan },
-    create: {
-      plan,
-      trialDays,
-      mpPreapprovalPlanId: mpPreapprovalPlanId ?? null,
-      updatedBy,
-    },
-    update: {
-      trialDays,
-      mpPreapprovalPlanId: mpPreapprovalPlanId ?? null,
-      updatedBy,
-    },
+    create: { plan, trialDays, updatedBy },
+    update: { trialDays, updatedBy },
   });
+
+  const cachedPlans = await prisma.membershipPreapprovalPlanCache.findMany({
+    where: { plan },
+  });
+
+  await Promise.allSettled(
+    cachedPlans.map(async (cached) => {
+      try {
+        await updateMembershipPreapprovalPlan({
+          preapprovalPlanId: cached.preapprovalPlanId,
+          plan,
+          currency: cached.currency,
+        });
+      } catch (err) {
+        console.error(
+          `[admin/membership-trial-config] Failed to propagate trialDays=${trialDays} to preapproval_plan ${cached.preapprovalPlanId} (plan=${plan}, currency=${cached.currency}):`,
+          err,
+        );
+      }
+    }),
+  );
 
   return NextResponse.json({ config });
 }

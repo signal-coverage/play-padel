@@ -7,7 +7,6 @@ import { z } from "zod";
 export const updateMembershipTrialConfigSchema = z.object({
   plan: z.enum(["BASIC", "PRO", "PLUS", "MAX"]),
   trialDays: z.number().int().min(0, "trialDays must be zero or greater"),
-  mpPreapprovalPlanId: z.string().optional().nullable(),
   // No admin-role auth exists yet (explicitly out of scope for this slice —
   // see design.md) — the caller must self-identify here for auditing.
   updatedBy: z.string().min(1, "updatedBy is required"),

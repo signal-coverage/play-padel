@@ -7,6 +7,16 @@ export interface CreateMembershipPreapprovalParams {
   payerEmail: string;
   cardTokenId: string;
   currency: string;
+  /**
+   * Must equal the referenced preapproval_plan's own `auto_recurring.
+   * transaction_amount` (see preapprovalPlans.ts's
+   * createMembershipPreapprovalPlan) — confirmed via a real Mercado Pago
+   * sandbox call that creating a preapproval linked to a plan WITHOUT this
+   * field is rejected ("The transaction_amount must be the same as
+   * preapproval_plan"), even though the plan already carries an amount. MP's
+   * own "Subscription with an associated plan" docs always include it.
+   */
+  transactionAmount: number;
   backUrl: string;
 }
 
@@ -64,6 +74,7 @@ export async function createMembershipPreapproval(
       auto_recurring: {
         frequency: 1,
         frequency_type: "months",
+        transaction_amount: params.transactionAmount,
         currency_id: params.currency,
       },
     },

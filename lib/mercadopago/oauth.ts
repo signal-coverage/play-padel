@@ -41,7 +41,7 @@ function requireAppUrl(): string {
 }
 
 function getStateSecret(): string {
-  return requireEnv("MP_OAUTH_STATE_SECRET");
+  return requireEnv("MERCADOPAGO_OAUTH_STATE_SECRET");
 }
 
 function signPayload(encodedPayload: string): string {

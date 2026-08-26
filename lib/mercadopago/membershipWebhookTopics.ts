@@ -25,9 +25,15 @@
 // NOT exist as a distinct topic; it was an unconfirmed candidate that this
 // empirical check ruled out.
 //
-// Consequence for the webhook handler (Phase 4, `app/api/webhooks/
-// mercadopago/membership/route.ts`): this repo's established Mercado Pago
-// webhook pattern is "never trust the webhook body, always re-fetch"
+// Consequence for the webhook handler (originally Phase 4's
+// `app/api/webhooks/mercadopago/membership/route.ts`, since consolidated
+// into `lib/mercadopago/membershipWebhookHandlers.ts`'s
+// `handleSubscriptionPreapprovalTopic`, called from the single real webhook
+// URL at `app/api/webhooks/mercadopago/route.ts` — Mercado Pago's DevPanel
+// registers exactly ONE notification URL per environment, not one per
+// topic, so the original separate route was never actually reachable): this
+// repo's established Mercado Pago webhook pattern is "never trust the
+// webhook body, always re-fetch"
 // (see `lib/mercadopago/payments.ts`, from the prior
 // `mercadopago-club-split-payments` change). The handler must, on receiving
 // `type: MEMBERSHIP_WEBHOOK_TOPIC`, call `getMembershipPreapproval(data.id)`
@@ -46,10 +52,12 @@ export const MEMBERSHIP_WEBHOOK_TOPIC = "subscription_preapproval" as const;
 // notifies THAT confirmation via the standard `payment` topic, exactly like
 // the reservation webhook (app/api/webhooks/mercadopago/route.ts) already
 // handles for reservation payments. `lib/mercadopago/platformPreferences.ts`'s
-// `createMembershipPreference` already embeds `?clubId=` on its
-// `notification_url` for exactly this purpose (club resolution BEFORE ever
-// re-fetching the payment, matching the reservation webhook's own
-// `reservationId`-query-param pattern) — this constant is what lets the
-// membership webhook route (Phase 9 gap fix) dispatch to that branch
-// alongside the existing subscription/preapproval one.
+// `createMembershipPreference` embeds `?clubId=` on its `notification_url`
+// (pointing at the base, consolidated route — see that file) for exactly
+// this purpose (club resolution BEFORE ever re-fetching the payment,
+// matching the reservation webhook's own `reservationId`-query-param
+// pattern) — this constant is what lets the consolidated base route
+// (app/api/webhooks/mercadopago/route.ts) dispatch a `type: "payment"`
+// notification with no `reservationId` to `handleMembershipPaymentTopic`
+// instead of the reservation flow.
 export const MEMBERSHIP_PAYMENT_WEBHOOK_TOPIC = "payment" as const;

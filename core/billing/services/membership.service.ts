@@ -197,6 +197,55 @@ export async function createPendingMembershipSubscription(
   return toSnapshot(row);
 }
 
+export interface SeedPendingMembershipSubscriptionFromClubInput {
+  clubId: string;
+  /** Falls back to `Club.plan` when omitted. */
+  plan?: Plan;
+  /** Falls back to `Club.currency` when omitted. */
+  currency?: string;
+  cycle?: MembershipCycleValue;
+  renewalMode?: MembershipRenewalModeValue;
+}
+
+/**
+ * Shared lazy-creation fallback for a club that predates Phase 6.2's
+ * onboarding-time PENDING-row seeding — used by BOTH `POST` (which already
+ * knows `plan`/`cycle`/`renewalMode` from its request body and only needs
+ * `Club.currency`) and `GET` (which has no request body at all and must
+ * derive `plan` and `currency` purely from `Club`, see
+ * app/api/clubs/membership/route.ts). Only queries the `Club` columns that
+ * are actually missing, to avoid changing either call site's existing query
+ * shape. Defaults to `Club.plan`'s own schema default (`BASIC`) / `ARS` in
+ * the unexpected case the `Club` row itself cannot be found.
+ */
+export async function seedPendingMembershipSubscriptionFromClub(
+  input: SeedPendingMembershipSubscriptionFromClubInput,
+): Promise<MembershipSubscriptionSnapshot> {
+  let plan = input.plan;
+  let currency = input.currency;
+
+  if (plan == null || currency == null) {
+    const club = await prisma.club.findUnique({
+      where: { id: input.clubId },
+      select: {
+        ...(plan == null ? { plan: true } : {}),
+        ...(currency == null ? { currency: true } : {}),
+      },
+    });
+    plan = plan ?? (club as { plan?: Plan } | null)?.plan ?? "BASIC";
+    currency =
+      currency ?? (club as { currency?: string } | null)?.currency ?? "ARS";
+  }
+
+  return createPendingMembershipSubscription({
+    clubId: input.clubId,
+    plan,
+    currency,
+    cycle: input.cycle,
+    renewalMode: input.renewalMode,
+  });
+}
+
 export interface StartTrialInput {
   clubId: string;
   plan: Plan;

@@ -19,6 +19,10 @@ vi.mock("@/infrastructure/db/client", () => ({
     membershipTrialConfig: {
       findUnique: vi.fn(),
     },
+    membershipPreapprovalPlanCache: {
+      findUnique: vi.fn(),
+      create: vi.fn(),
+    },
   },
 }));
 
@@ -27,6 +31,7 @@ import { getPlatformMercadoPagoClient } from "./platformClient";
 import { prisma } from "@/infrastructure/db/client";
 import {
   createMembershipPreapprovalPlan,
+  getOrCreateMembershipPreapprovalPlanId,
   resolveFreeTrialConfig,
 } from "./preapprovalPlans";
 
@@ -35,6 +40,10 @@ const getPlatformMercadoPagoClientMock =
 const findUniqueMock = prisma.membershipTrialConfig.findUnique as ReturnType<
   typeof vi.fn
 >;
+const cacheFindUniqueMock = prisma.membershipPreapprovalPlanCache
+  .findUnique as ReturnType<typeof vi.fn>;
+const cacheCreateMock = prisma.membershipPreapprovalPlanCache
+  .create as ReturnType<typeof vi.fn>;
 
 const FAKE_PLATFORM_CLIENT = { accessToken: "platform-token" };
 
@@ -43,6 +52,8 @@ beforeEach(() => {
   updateMock.mockReset();
   getPlatformMercadoPagoClientMock.mockReset();
   findUniqueMock.mockReset();
+  cacheFindUniqueMock.mockReset();
+  cacheCreateMock.mockReset();
   getPlatformMercadoPagoClientMock.mockReturnValue(FAKE_PLATFORM_CLIENT);
   createMock.mockResolvedValue(buildPreapprovalPlanResponse());
 });
@@ -173,5 +184,115 @@ describe("createMembershipPreapprovalPlan", () => {
       }),
     ).rejects.toThrow(/MAX/);
     expect(createMock).not.toHaveBeenCalled();
+  });
+});
+
+describe("getOrCreateMembershipPreapprovalPlanId", () => {
+  beforeEach(() => {
+    findUniqueMock.mockResolvedValue(null);
+  });
+
+  it("reuses the cached preapproval_plan id for a (plan, currency) pair without calling Mercado Pago", async () => {
+    cacheFindUniqueMock.mockResolvedValue({
+      plan: "PRO",
+      currency: "ARS",
+      preapprovalPlanId: "plan_cached_1",
+    });
+
+    const result = await getOrCreateMembershipPreapprovalPlanId({
+      plan: "PRO",
+      currency: "ARS",
+      backUrl: "https://app.example.com/dashboard",
+    });
+
+    expect(cacheFindUniqueMock).toHaveBeenCalledWith({
+      where: { plan_currency: { plan: "PRO", currency: "ARS" } },
+    });
+    expect(result).toEqual({ id: "plan_cached_1" });
+    expect(createMock).not.toHaveBeenCalled();
+    expect(cacheCreateMock).not.toHaveBeenCalled();
+  });
+
+  it("creates and persists a new preapproval_plan id on a cache miss", async () => {
+    cacheFindUniqueMock.mockResolvedValue(null);
+    createMock.mockResolvedValue(
+      buildPreapprovalPlanResponse({ id: "plan_new_1" }),
+    );
+    cacheCreateMock.mockResolvedValue({
+      plan: "PRO",
+      currency: "ARS",
+      preapprovalPlanId: "plan_new_1",
+    });
+
+    const result = await getOrCreateMembershipPreapprovalPlanId({
+      plan: "PRO",
+      currency: "ARS",
+      backUrl: "https://app.example.com/dashboard",
+    });
+
+    expect(createMock).toHaveBeenCalledTimes(1);
+    expect(cacheCreateMock).toHaveBeenCalledWith({
+      data: { plan: "PRO", currency: "ARS", preapprovalPlanId: "plan_new_1" },
+    });
+    expect(result.id).toBe("plan_new_1");
+  });
+
+  it("caches per (plan, currency) — a different currency for the same tier is a cache miss", async () => {
+    cacheFindUniqueMock.mockResolvedValue(null);
+    createMock.mockResolvedValue(
+      buildPreapprovalPlanResponse({ id: "plan_usd_1" }),
+    );
+    cacheCreateMock.mockResolvedValue({});
+
+    await getOrCreateMembershipPreapprovalPlanId({
+      plan: "PRO",
+      currency: "USD",
+      backUrl: "https://app.example.com/dashboard",
+    });
+
+    expect(cacheFindUniqueMock).toHaveBeenCalledWith({
+      where: { plan_currency: { plan: "PRO", currency: "USD" } },
+    });
+    expect(createMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("on a race (unique constraint violation on the cache insert), re-reads and reuses the winner's cached id instead of throwing", async () => {
+    cacheFindUniqueMock.mockResolvedValueOnce(null).mockResolvedValueOnce({
+      plan: "PRO",
+      currency: "ARS",
+      preapprovalPlanId: "plan_winner_1",
+    });
+    createMock.mockResolvedValue(
+      buildPreapprovalPlanResponse({ id: "plan_loser_1" }),
+    );
+    const raceError = Object.assign(new Error("Unique constraint failed"), {
+      code: "P2002",
+    });
+    cacheCreateMock.mockRejectedValue(raceError);
+
+    const result = await getOrCreateMembershipPreapprovalPlanId({
+      plan: "PRO",
+      currency: "ARS",
+      backUrl: "https://app.example.com/dashboard",
+    });
+
+    expect(result.id).toBe("plan_winner_1");
+    expect(cacheFindUniqueMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("re-throws non-race errors from the cache write instead of swallowing them", async () => {
+    cacheFindUniqueMock.mockResolvedValue(null);
+    createMock.mockResolvedValue(
+      buildPreapprovalPlanResponse({ id: "plan_x" }),
+    );
+    cacheCreateMock.mockRejectedValue(new Error("DB down"));
+
+    await expect(
+      getOrCreateMembershipPreapprovalPlanId({
+        plan: "PRO",
+        currency: "ARS",
+        backUrl: "https://app.example.com/dashboard",
+      }),
+    ).rejects.toThrow("DB down");
   });
 });

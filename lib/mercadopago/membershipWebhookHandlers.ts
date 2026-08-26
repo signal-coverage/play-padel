@@ -1,14 +1,9 @@
 import { NextResponse, NextRequest } from "next/server";
-import { verifyMercadoPagoSignature } from "@/lib/mercadopago/webhookSignature";
 import {
   getMembershipPreapproval,
   type MembershipPreapprovalDetail,
 } from "@/lib/mercadopago/membershipPreapprovals";
 import { getMembershipPayment } from "@/lib/mercadopago/platformPreferences";
-import {
-  MEMBERSHIP_WEBHOOK_TOPIC,
-  MEMBERSHIP_PAYMENT_WEBHOOK_TOPIC,
-} from "@/lib/mercadopago/membershipWebhookTopics";
 import {
   findMembershipSubscriptionByPreapprovalId,
   getMembershipSubscription,
@@ -73,10 +68,17 @@ export function resolveMembershipWebhookDecision(
 
 /**
  * Handles the `subscription_preapproval` topic (MONTHLY membership billing).
- * Extracted from the main dispatcher so `POST` stays a thin router between
- * this and `handlePaymentTopic` below.
+ *
+ * Extracted out of a dedicated route so it can be called directly from the
+ * ONE Mercado Pago webhook URL this app actually has registered
+ * (`app/api/webhooks/mercadopago/route.ts`) — Mercado Pago's DevPanel
+ * registers exactly one notification URL per environment (test/production),
+ * not one per subscribed topic, so a separate physical route for this topic
+ * would never actually be called in a real deployment. See
+ * `app/api/webhooks/mercadopago/route.ts`'s file-level comment for the full
+ * consolidation rationale.
  */
-async function handleSubscriptionPreapprovalTopic(
+export async function handleSubscriptionPreapprovalTopic(
   dataId: string | null,
   notificationId: string | null,
 ): Promise<NextResponse> {
@@ -172,8 +174,13 @@ async function handleSubscriptionPreapprovalTopic(
  * clubId at preference-creation time) is cross-checked against the resolved
  * clubId before ever trusting it, same defensive pattern as the reservation
  * webhook's `external_reference` check.
+ *
+ * Called from the consolidated base route ONLY when `reservationId` is
+ * absent from the request — a `type: "payment"` notification carrying a
+ * `reservationId` query param belongs to the reservation-payment flow
+ * instead (see the base route's dispatch logic).
  */
-async function handlePaymentTopic(
+export async function handleMembershipPaymentTopic(
   request: NextRequest,
   dataId: string | null,
   notificationId: string | null,
@@ -240,71 +247,5 @@ async function handlePaymentTopic(
   // etc.) is a no-op — the subscription simply stays PENDING (spec's
   // "Webhook-Only State Confirmation": no confirmation, no state change).
 
-  return NextResponse.json({ ok: true });
-}
-
-// Mercado Pago's source-of-truth membership payment notification. Distinct
-// from the reservation webhook (app/api/webhooks/mercadopago/route.ts):
-// different token scope (platform vs. club OAuth) and its own signing secret
-// since it is registered as its own webhook URL in the DevPanel (see
-// lib/mercadopago/webhookSignature.ts's optional `secret` override, added
-// for exactly this second webhook). Dispatches on TWO topics: the
-// confirmed `subscription_preapproval` topic (MONTHLY, see
-// lib/mercadopago/membershipWebhookTopics.ts) and the standard `payment`
-// topic (ANNUAL one-time Checkout Pro payment) — every other topic is
-// acked as a no-op.
-//
-// The webhook body itself is NEVER trusted beyond routing (which id to look
-// at) — both branches always re-fetch the real object from Mercado Pago
-// (`getMembershipPreapproval` / `getMembershipPayment`) and act only on that
-// freshly fetched state.
-export async function POST(request: NextRequest) {
-  const xSignature = request.headers.get("x-signature");
-  const xRequestId = request.headers.get("x-request-id");
-
-  const rawBody = await request.text();
-  let body: Record<string, unknown> | null = null;
-  try {
-    body = rawBody ? JSON.parse(rawBody) : null;
-  } catch {
-    body = null;
-  }
-
-  // MP's confirmed notification shape carries `type`/`data.id`/`id` in the
-  // JSON body, but webhook URLs registered in the DevPanel can also have
-  // `type`/`data.id` appended as query params — read from either so a
-  // delivery shaped either way is still handled.
-  const bodyData = body?.data as { id?: unknown } | undefined;
-  const type =
-    (typeof body?.type === "string" ? body.type : null) ??
-    request.nextUrl.searchParams.get("type");
-  const dataId =
-    (typeof bodyData?.id === "string" ? bodyData.id : null) ??
-    request.nextUrl.searchParams.get("data.id");
-  const notificationId =
-    (typeof body?.id === "string" ? body.id : null) ??
-    request.nextUrl.searchParams.get("id");
-
-  const validSignature = verifyMercadoPagoSignature({
-    xSignature,
-    xRequestId,
-    dataId,
-    secret: process.env.MERCADOPAGO_MEMBERSHIP_WEBHOOK_SECRET,
-  });
-  if (!validSignature) {
-    return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
-  }
-
-  if (type === MEMBERSHIP_WEBHOOK_TOPIC) {
-    return handleSubscriptionPreapprovalTopic(dataId, notificationId);
-  }
-
-  if (type === MEMBERSHIP_PAYMENT_WEBHOOK_TOPIC) {
-    return handlePaymentTopic(request, dataId, notificationId);
-  }
-
-  // Neither a subscription/preapproval nor a payment notification — ack
-  // rather than error, in case this URL ever receives an unrelated/
-  // misconfigured delivery.
   return NextResponse.json({ ok: true });
 }

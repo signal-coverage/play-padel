@@ -173,15 +173,35 @@ model ClubMembershipSubscription {
 // Configurable Trial Length Per Plan"). Edited via a static-secret-guarded
 // route (Phase 5); broader admin-role auth is explicitly out of scope here.
 model MembershipTrialConfig {
-  plan                Plan     @id
-  trialDays           Int
-  // preapproval_plan id carrying auto_recurring.free_trial for this tier
-  // (see lib/mercadopago/preapprovalPlans.ts, Phase 2).
-  mpPreapprovalPlanId String?
-  updatedAt           DateTime @updatedAt
-  updatedBy           String
+  plan      Plan     @id
+  trialDays Int
+  updatedAt DateTime @updatedAt
+  updatedBy String
 
   @@map("membership_trial_configs")
+}
+
+// System-managed cache of the Mercado Pago `preapproval_plan` object created
+// for a given (plan tier, currency) pair, so a MONTHLY checkout reuses one
+// plan object per tier+currency instead of creating a near-duplicate on
+// every single checkout (post-archive optimization — see this batch's
+// apply-progress notes). Composite-keyed by (plan, currency) rather than
+// plan alone: `Club.currency` is a free-form per-club field (spec's
+// "Currency Threaded as Explicit Parameter"), so a plan object created for
+// one currency must never be reused for a club billed in a different
+// currency. Deliberately a separate table from `MembershipTrialConfig`
+// rather than a field on it: that model's `trialDays`/`updatedBy` are
+// required admin-authored fields, but a cache write can legitimately happen
+// before any admin has ever configured a trial override for that tier.
+model MembershipPreapprovalPlanCache {
+  plan              Plan
+  currency          String
+  preapprovalPlanId String
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@id([plan, currency])
+  @@map("membership_preapproval_plan_cache")
 }
 
 enum UserStatus {

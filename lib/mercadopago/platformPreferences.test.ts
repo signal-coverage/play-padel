@@ -95,7 +95,7 @@ describe("createMembershipPreference", () => {
     expect(callArgs.body.external_reference).toBe("club_77");
   });
 
-  it("points notification_url at the platform-scoped membership webhook route, not the reservation one", async () => {
+  it("points notification_url at the base (consolidated) webhook route with a clubId query param, since Mercado Pago only ever calls the one URL registered per environment", async () => {
     await createMembershipPreference({
       clubId: "club_77",
       plan: "PRO",
@@ -105,7 +105,7 @@ describe("createMembershipPreference", () => {
 
     const callArgs = createMock.mock.calls[0][0];
     expect(callArgs.body.notification_url).toBe(
-      "https://app.example.com/api/webhooks/mercadopago/membership?clubId=club_77",
+      "https://app.example.com/api/webhooks/mercadopago?clubId=club_77",
     );
   });
 

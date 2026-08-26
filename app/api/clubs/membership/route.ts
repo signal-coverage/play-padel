@@ -5,13 +5,13 @@ import { createMembershipCheckoutSchema } from "@/core/billing/schemas/membershi
 import { PLAN_DETAILS } from "@/lib/consts/planPricing";
 import {
   getMembershipSubscription,
-  createPendingMembershipSubscription,
+  seedPendingMembershipSubscriptionFromClub,
   attachPendingPreapproval,
   attachPendingPreference,
   startTrial,
 } from "@/core/billing/services/membership.service";
 import {
-  createMembershipPreapprovalPlan,
+  getOrCreateMembershipPreapprovalPlanId,
   resolveFreeTrialConfig,
 } from "@/lib/mercadopago/preapprovalPlans";
 import { createMembershipPreapproval } from "@/lib/mercadopago/membershipPreapprovals";
@@ -23,23 +23,27 @@ function requireAppUrl(): string {
   return appUrl;
 }
 
-// Reads the caller's own club's current membership subscription — what a
-// (not-yet-built, Phase 7) membership UI polls/reads to decide between
-// showing "Pay Membership" vs. a confirmed-state label (see spec's "UI
-// Label Reflects Confirmed Payment State").
+// Reads the caller's own club's current membership subscription — what the
+// dashboard's `PaymentActivationScreen` (Phase 7) polls/reads to decide
+// between showing "Pay Membership" vs. a confirmed-state label (see spec's
+// "UI Label Reflects Confirmed Payment State").
+//
+// Post-archive fix (live smoke test): onboarding (Phase 6.2) normally seeds
+// a PENDING row for every club up front, but any club that predates that
+// seeding step has zero rows in `club_membership_subscriptions` — this used
+// to 404 here, leaving the dashboard with no plan-selection UI at all. `GET`
+// now lazily seeds the same PENDING row `POST`'s own fallback already
+// creates (see `seedPendingMembershipSubscriptionFromClub`), deriving both
+// `plan` and `currency` from `Club` since there's no request body to read
+// them from here.
 export async function GET() {
   const authResult = await requireOwnerClub();
   if (!authResult.ok) return authResult.response;
 
-  const subscription = await getMembershipSubscription(
-    authResult.context.clubId,
-  );
-  if (!subscription) {
-    return NextResponse.json(
-      { error: "No membership subscription found" },
-      { status: 404 },
-    );
-  }
+  const clubId = authResult.context.clubId;
+  const subscription =
+    (await getMembershipSubscription(clubId)) ??
+    (await seedPendingMembershipSubscriptionFromClub({ clubId }));
 
   return NextResponse.json({ subscription });
 }
@@ -48,8 +52,8 @@ export async function GET() {
 // real Mercado Pago object (a MONTHLY preapproval, or an ANNUAL one-time
 // Checkout Pro preference) and records its id on the subscription row,
 // WITHOUT advancing membership status: per spec's "Webhook-Only State
-// Confirmation", only the membership webhook
-// (app/api/webhooks/mercadopago/membership/route.ts) may move a
+// Confirmation", only the membership webhook handling (dispatched from
+// app/api/webhooks/mercadopago/route.ts, see the NOTE below) may move a
 // subscription into ACTIVE. A tier with a configured free trial is the
 // synchronous exception for BOTH cycles — `startTrial` records TRIALING
 // right here, since spec's "Trial start" scenario confirms the trial the
@@ -58,6 +62,13 @@ export async function GET() {
 // primitive for a one-off Checkout Pro preference), the moment this app
 // itself starts the app-tracked trial clock — see design.md's "Trial start
 // (ANNUAL)" workaround.
+//
+// NOTE: the membership webhook itself is dispatched from the single,
+// consolidated `app/api/webhooks/mercadopago/route.ts` (not a dedicated
+// `/membership` path) — Mercado Pago's DevPanel only ever calls ONE
+// notification URL per environment, so this repo has no separate reachable
+// membership webhook route; see that file and
+// `lib/mercadopago/membershipWebhookHandlers.ts`.
 //
 // "Pay now" during an ANNUAL trial (sdd-verify follow-up fix): calling this
 // route again while a club is already TRIALING on the ANNUAL cycle (same
@@ -101,17 +112,15 @@ export async function POST(request: NextRequest) {
   if (!existing) {
     // Onboarding (Phase 6.2) normally seeds a PENDING row for every club
     // up front, so reaching this branch is an edge case (e.g. a club that
-    // predates that seeding step). `Club.currency` is the same
-    // club-selected currency onboarding itself uses — never a hardcoded
+    // predates that seeding step) — same shared fallback `GET` now also
+    // uses (see `seedPendingMembershipSubscriptionFromClub`). `plan`/
+    // `cycle`/`renewalMode` are already known from the request body here,
+    // so only `Club.currency` is resolved from the DB — the same
+    // club-selected currency onboarding itself uses, never a hardcoded
     // literal (spec's "Currency Threaded as Explicit Parameter").
-    const club = await prisma.club.findUnique({
-      where: { id: clubId },
-      select: { currency: true },
-    });
-    existing = await createPendingMembershipSubscription({
+    existing = await seedPendingMembershipSubscriptionFromClub({
       clubId,
       plan,
-      currency: club?.currency ?? "ARS",
       cycle,
       renewalMode: renewalMode ?? "AUTO",
     });
@@ -142,15 +151,13 @@ export async function POST(request: NextRequest) {
     if (cycle === "MONTHLY") {
       const backUrl = `${requireAppUrl()}/dashboard`;
 
-      // Each MONTHLY checkout creates its own preapproval_plan rather than
-      // caching/reusing one per tier in
-      // MembershipTrialConfig.mpPreapprovalPlanId — functionally correct
-      // (every preapproval still references a valid plan id) but a known,
-      // deliberately deferred optimization; see this batch's apply-progress
-      // notes for the reasoning (MembershipTrialConfig is an admin-owned
-      // table, and this owner-facing route intentionally never writes to
-      // it).
-      const preapprovalPlan = await createMembershipPreapprovalPlan({
+      // Reuses one preapproval_plan per (plan tier, currency) pair via
+      // MembershipPreapprovalPlanCache instead of creating a fresh one on
+      // every single MONTHLY checkout — see
+      // lib/mercadopago/preapprovalPlans.ts's
+      // getOrCreateMembershipPreapprovalPlanId and this batch's
+      // apply-progress notes.
+      const preapprovalPlan = await getOrCreateMembershipPreapprovalPlanId({
         plan,
         currency,
         backUrl,
@@ -162,6 +169,10 @@ export async function POST(request: NextRequest) {
         payerEmail: payerEmail!,
         cardTokenId: cardTokenId!,
         currency,
+        // Must match the amount the plan itself was created with (see
+        // getOrCreateMembershipPreapprovalPlanId) — Mercado Pago rejects the
+        // preapproval otherwise.
+        transactionAmount: planDetails.monthlyPrice!,
         backUrl,
       });
 

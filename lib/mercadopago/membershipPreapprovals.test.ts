@@ -53,6 +53,7 @@ describe("createMembershipPreapproval", () => {
       payerEmail: "owner@example.com",
       cardTokenId: "card_tok_1",
       currency: "ARS",
+      transactionAmount: 30000,
       backUrl: "https://app.example.com/dashboard",
     });
 
@@ -67,6 +68,7 @@ describe("createMembershipPreapproval", () => {
       payerEmail: "owner@example.com",
       cardTokenId: "card_tok_1",
       currency: "ARS",
+      transactionAmount: 30000,
       backUrl: "https://app.example.com/dashboard",
     });
 
@@ -82,6 +84,7 @@ describe("createMembershipPreapproval", () => {
       payerEmail: "owner@example.com",
       cardTokenId: "card_tok_1",
       currency: "ARS",
+      transactionAmount: 30000,
       backUrl: "https://app.example.com/dashboard",
     });
 
@@ -97,11 +100,34 @@ describe("createMembershipPreapproval", () => {
       payerEmail: "owner@example.com",
       cardTokenId: "card_tok_1",
       currency: "USD",
+      transactionAmount: 30000,
       backUrl: "https://app.example.com/dashboard",
     });
 
     const callArgs = createMock.mock.calls[0][0];
     expect(callArgs.body.auto_recurring.currency_id).toBe("USD");
+  });
+
+  // Confirmed via a real Mercado Pago sandbox call during smoke testing:
+  // creating a preapproval linked to a preapproval_plan_id WITHOUT
+  // `auto_recurring.transaction_amount` is rejected with "The
+  // transaction_amount must be the same as preapproval_plan" — MP's own
+  // docs example for "Subscription with an associated plan" always includes
+  // it alongside frequency/currency_id, even though the plan already
+  // carries a transaction_amount.
+  it("sends transaction_amount in auto_recurring, matching the preapproval_plan's own amount", async () => {
+    await createMembershipPreapproval({
+      clubId: "club_1",
+      preapprovalPlanId: "plan_1",
+      payerEmail: "owner@example.com",
+      cardTokenId: "card_tok_1",
+      currency: "ARS",
+      transactionAmount: 30000,
+      backUrl: "https://app.example.com/dashboard",
+    });
+
+    const callArgs = createMock.mock.calls[0][0];
+    expect(callArgs.body.auto_recurring.transaction_amount).toBe(30000);
   });
 
   it("returns the created preapproval's id and status", async () => {
@@ -115,6 +141,7 @@ describe("createMembershipPreapproval", () => {
       payerEmail: "owner@example.com",
       cardTokenId: "card_tok_1",
       currency: "ARS",
+      transactionAmount: 30000,
       backUrl: "https://app.example.com/dashboard",
     });
 
@@ -138,6 +165,7 @@ describe("createMembershipPreapproval", () => {
         payerEmail: "owner@example.com",
         cardTokenId: "card_tok_1",
         currency: "ARS",
+        transactionAmount: 30000,
         backUrl: "https://app.example.com/dashboard",
       }),
     ).rejects.toThrow("Mercado Pago did not return a preapproval id/status");

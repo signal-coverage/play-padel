@@ -20,6 +20,11 @@ vi.mock("@/core/billing/services/billing.service", () => ({
   recordPayment: vi.fn(),
 }));
 
+vi.mock("@/lib/mercadopago/membershipWebhookHandlers", () => ({
+  handleSubscriptionPreapprovalTopic: vi.fn(),
+  handleMembershipPaymentTopic: vi.fn(),
+}));
+
 import { verifyMercadoPagoSignature } from "@/lib/mercadopago/webhookSignature";
 import { getMercadoPagoPayment } from "@/lib/mercadopago/payments";
 import {
@@ -31,6 +36,11 @@ import {
   getInvoiceByReservationId,
   recordPayment,
 } from "@/core/billing/services/billing.service";
+import {
+  handleSubscriptionPreapprovalTopic,
+  handleMembershipPaymentTopic,
+} from "@/lib/mercadopago/membershipWebhookHandlers";
+import { NextResponse } from "next/server";
 import { POST } from "./route";
 
 const verifyMercadoPagoSignatureMock = verifyMercadoPagoSignature as ReturnType<
@@ -50,12 +60,18 @@ const getInvoiceByReservationIdMock = getInvoiceByReservationId as ReturnType<
   typeof vi.fn
 >;
 const recordPaymentMock = recordPayment as ReturnType<typeof vi.fn>;
+const handleSubscriptionPreapprovalTopicMock =
+  handleSubscriptionPreapprovalTopic as ReturnType<typeof vi.fn>;
+const handleMembershipPaymentTopicMock =
+  handleMembershipPaymentTopic as ReturnType<typeof vi.fn>;
 
 function makeRequest(params: {
   reservationId?: string;
   dataId?: string;
   signature?: string | null;
   requestId?: string | null;
+  type?: string;
+  body?: unknown;
 }) {
   const url = new URL("http://localhost/api/webhooks/mercadopago");
   if (params.reservationId !== undefined) {
@@ -64,6 +80,9 @@ function makeRequest(params: {
   if (params.dataId !== undefined) {
     url.searchParams.set("data.id", params.dataId);
   }
+  if (params.type !== undefined) {
+    url.searchParams.set("type", params.type);
+  }
   const headers = new Headers();
   if (params.signature !== null) {
     headers.set("x-signature", params.signature ?? "ts=1,v1=abc");
@@ -71,7 +90,14 @@ function makeRequest(params: {
   if (params.requestId !== null) {
     headers.set("x-request-id", params.requestId ?? "req-1");
   }
-  return new NextRequest(url, { method: "POST", headers });
+  if (params.body !== undefined) {
+    headers.set("content-type", "application/json");
+  }
+  return new NextRequest(url, {
+    method: "POST",
+    headers,
+    body: params.body === undefined ? undefined : JSON.stringify(params.body),
+  });
 }
 
 const RESERVATION = {
@@ -92,8 +118,16 @@ beforeEach(() => {
   checkCourtClosureConflictMock.mockReset();
   getInvoiceByReservationIdMock.mockReset();
   recordPaymentMock.mockReset();
+  handleSubscriptionPreapprovalTopicMock.mockReset();
+  handleMembershipPaymentTopicMock.mockReset();
 
   verifyMercadoPagoSignatureMock.mockReturnValue(true);
+  handleSubscriptionPreapprovalTopicMock.mockResolvedValue(
+    NextResponse.json({ ok: true }),
+  );
+  handleMembershipPaymentTopicMock.mockResolvedValue(
+    NextResponse.json({ ok: true }),
+  );
 });
 
 describe("POST /api/webhooks/mercadopago", () => {
@@ -212,5 +246,105 @@ describe("POST /api/webhooks/mercadopago", () => {
     expect(response.status).toBe(200);
     expect(recordPaymentMock).not.toHaveBeenCalled();
     expect(confirmReservationPaymentMock).not.toHaveBeenCalled();
+  });
+});
+
+// Consolidation fix: Mercado Pago's DevPanel registers exactly ONE
+// notification URL per environment (confirmed against the real DevPanel),
+// not one per subscribed topic — every topic this app subscribes to
+// (payment, subscription_preapproval) is delivered to THIS route. A
+// previously separate `app/api/webhooks/mercadopago/membership/route.ts`
+// was therefore unreachable in any real deployment. These tests cover only
+// the DISPATCH logic (which handler gets called for which `type`); the
+// handlers' own business logic is covered directly in
+// `lib/mercadopago/membershipWebhookHandlers.test.ts`.
+describe("POST /api/webhooks/mercadopago — type-based dispatch to membership handlers", () => {
+  it("returns 401 before dispatching to any membership handler when the signature is invalid", async () => {
+    verifyMercadoPagoSignatureMock.mockReturnValue(false);
+
+    const response = await POST(
+      makeRequest({
+        body: {
+          type: "subscription_preapproval",
+          data: { id: "preap_1" },
+          id: "notif_1",
+        },
+      }),
+    );
+
+    expect(response.status).toBe(401);
+    expect(handleSubscriptionPreapprovalTopicMock).not.toHaveBeenCalled();
+    expect(handleMembershipPaymentTopicMock).not.toHaveBeenCalled();
+  });
+
+  it("dispatches to handleSubscriptionPreapprovalTopic when type is subscription_preapproval in the JSON body", async () => {
+    const response = await POST(
+      makeRequest({
+        body: {
+          type: "subscription_preapproval",
+          data: { id: "preap_1" },
+          id: "notif_1",
+        },
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(handleSubscriptionPreapprovalTopicMock).toHaveBeenCalledWith(
+      "preap_1",
+      "notif_1",
+    );
+    expect(handleMembershipPaymentTopicMock).not.toHaveBeenCalled();
+    expect(findReservationByIdMock).not.toHaveBeenCalled();
+  });
+
+  it("dispatches to handleSubscriptionPreapprovalTopic when type/data.id arrive as query params instead of a JSON body", async () => {
+    const response = await POST(
+      makeRequest({ type: "subscription_preapproval", dataId: "preap_2" }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(handleSubscriptionPreapprovalTopicMock).toHaveBeenCalledWith(
+      "preap_2",
+      null,
+    );
+  });
+
+  it("dispatches to handleMembershipPaymentTopic when type is payment and no reservationId is present (ANNUAL membership payment)", async () => {
+    const response = await POST(
+      makeRequest({
+        body: { type: "payment", data: { id: "pay_1" }, id: "notif_pay_1" },
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(handleMembershipPaymentTopicMock).toHaveBeenCalledWith(
+      expect.anything(),
+      "pay_1",
+      "notif_pay_1",
+    );
+    expect(handleSubscriptionPreapprovalTopicMock).not.toHaveBeenCalled();
+    expect(findReservationByIdMock).not.toHaveBeenCalled();
+  });
+
+  it("routes a payment-type notification to the reservation flow (not handleMembershipPaymentTopic) when reservationId IS present", async () => {
+    findReservationByIdMock.mockResolvedValue(RESERVATION);
+    getMercadoPagoPaymentMock.mockResolvedValue({
+      id: 12345,
+      status: "pending",
+      externalReference: "res_1",
+      transactionAmount: 1000,
+    });
+
+    const response = await POST(
+      makeRequest({
+        reservationId: "res_1",
+        body: { type: "payment", data: { id: "12345" }, id: "notif_1" },
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(handleMembershipPaymentTopicMock).not.toHaveBeenCalled();
+    expect(handleSubscriptionPreapprovalTopicMock).not.toHaveBeenCalled();
+    expect(findReservationByIdMock).toHaveBeenCalledWith("res_1");
   });
 });

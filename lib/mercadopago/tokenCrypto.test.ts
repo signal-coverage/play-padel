@@ -12,7 +12,7 @@ afterEach(() => {
 
 describe("encryptToken / decryptToken", () => {
   it("round-trips plaintext through encrypt then decrypt", () => {
-    vi.stubEnv("MP_TOKEN_ENCRYPTION_KEY", TEST_KEY);
+    vi.stubEnv("MERCADOPAGO_TOKEN_ENCRYPTION_KEY", TEST_KEY);
     const plaintext = "APP_USR-1234567890-access-token";
 
     const ciphertext = encryptToken(plaintext);
@@ -22,7 +22,7 @@ describe("encryptToken / decryptToken", () => {
   });
 
   it("produces different ciphertext for the same plaintext on repeated calls (random IV)", () => {
-    vi.stubEnv("MP_TOKEN_ENCRYPTION_KEY", TEST_KEY);
+    vi.stubEnv("MERCADOPAGO_TOKEN_ENCRYPTION_KEY", TEST_KEY);
     const plaintext = "same-plaintext-value";
 
     const first = encryptToken(plaintext);
@@ -34,7 +34,7 @@ describe("encryptToken / decryptToken", () => {
   });
 
   it("throws when the ciphertext has been tampered with (auth tag mismatch)", () => {
-    vi.stubEnv("MP_TOKEN_ENCRYPTION_KEY", TEST_KEY);
+    vi.stubEnv("MERCADOPAGO_TOKEN_ENCRYPTION_KEY", TEST_KEY);
     const ciphertext = encryptToken("some-refresh-token");
 
     // Flip a character in the middle of the base64 payload to corrupt either
@@ -47,28 +47,28 @@ describe("encryptToken / decryptToken", () => {
   });
 
   it("throws when decrypting with the wrong key", () => {
-    vi.stubEnv("MP_TOKEN_ENCRYPTION_KEY", TEST_KEY);
+    vi.stubEnv("MERCADOPAGO_TOKEN_ENCRYPTION_KEY", TEST_KEY);
     const ciphertext = encryptToken("secret-value");
 
     vi.stubEnv(
-      "MP_TOKEN_ENCRYPTION_KEY",
+      "MERCADOPAGO_TOKEN_ENCRYPTION_KEY",
       crypto.randomBytes(32).toString("base64"),
     );
 
     expect(() => decryptToken(ciphertext)).toThrow();
   });
 
-  it("throws when MP_TOKEN_ENCRYPTION_KEY is not configured", () => {
-    vi.stubEnv("MP_TOKEN_ENCRYPTION_KEY", "");
+  it("throws when MERCADOPAGO_TOKEN_ENCRYPTION_KEY is not configured", () => {
+    vi.stubEnv("MERCADOPAGO_TOKEN_ENCRYPTION_KEY", "");
 
     expect(() => encryptToken("value")).toThrow(
-      "MP_TOKEN_ENCRYPTION_KEY is not set",
+      "MERCADOPAGO_TOKEN_ENCRYPTION_KEY is not set",
     );
   });
 
-  it("throws when MP_TOKEN_ENCRYPTION_KEY is not 32 bytes once decoded", () => {
+  it("throws when MERCADOPAGO_TOKEN_ENCRYPTION_KEY is not 32 bytes once decoded", () => {
     vi.stubEnv(
-      "MP_TOKEN_ENCRYPTION_KEY",
+      "MERCADOPAGO_TOKEN_ENCRYPTION_KEY",
       crypto.randomBytes(16).toString("base64"),
     );
 

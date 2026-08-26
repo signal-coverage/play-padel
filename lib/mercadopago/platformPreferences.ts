@@ -49,7 +49,15 @@ export async function createMembershipPreference(
         },
       ],
       external_reference: params.clubId,
-      notification_url: `${appUrl}/api/webhooks/mercadopago/membership?clubId=${params.clubId}`,
+      // Points at the base reservation webhook route, NOT a dedicated
+      // membership route — Mercado Pago's DevPanel registers exactly ONE
+      // notification URL per environment (confirmed against the real
+      // DevPanel), so that's the only URL guaranteed to ever be called
+      // regardless of what this field says. `app/api/webhooks/mercadopago/
+      // route.ts` dispatches internally on `type` + `clubId` to
+      // `handleMembershipPaymentTopic` (see
+      // lib/mercadopago/membershipWebhookHandlers.ts).
+      notification_url: `${appUrl}/api/webhooks/mercadopago?clubId=${params.clubId}`,
       auto_return: "approved",
     },
   });

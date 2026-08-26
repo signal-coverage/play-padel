@@ -10,14 +10,14 @@ const IV_BYTE_LENGTH = 12; // 96-bit IV is the recommended/standard size for GCM
 const AUTH_TAG_BYTE_LENGTH = 16;
 
 function getKey(): Buffer {
-  const raw = process.env.MP_TOKEN_ENCRYPTION_KEY;
+  const raw = process.env.MERCADOPAGO_TOKEN_ENCRYPTION_KEY;
   if (!raw) {
-    throw new Error("MP_TOKEN_ENCRYPTION_KEY is not set");
+    throw new Error("MERCADOPAGO_TOKEN_ENCRYPTION_KEY is not set");
   }
   const key = Buffer.from(raw, "base64");
   if (key.length !== KEY_BYTE_LENGTH) {
     throw new Error(
-      `MP_TOKEN_ENCRYPTION_KEY must decode to ${KEY_BYTE_LENGTH} bytes (got ${key.length}). Generate one with: openssl rand -base64 32`,
+      `MERCADOPAGO_TOKEN_ENCRYPTION_KEY must decode to ${KEY_BYTE_LENGTH} bytes (got ${key.length}). Generate one with: openssl rand -base64 32`,
     );
   }
   return key;

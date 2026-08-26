@@ -10,6 +10,7 @@ vi.mock("@/infrastructure/db/client", () => ({
     },
     club: {
       update: vi.fn(),
+      findUnique: vi.fn(),
     },
   },
 }));
@@ -33,6 +34,7 @@ import {
   attachPendingPreapproval,
   attachPendingPreference,
   getMembershipSubscription,
+  seedPendingMembershipSubscriptionFromClub,
 } from "./membership.service";
 
 const findUniqueMock = prisma.clubMembershipSubscription
@@ -47,6 +49,7 @@ const updateMock = prisma.clubMembershipSubscription.update as ReturnType<
   typeof vi.fn
 >;
 const clubUpdateMock = prisma.club.update as ReturnType<typeof vi.fn>;
+const clubFindUniqueMock = prisma.club.findUnique as ReturnType<typeof vi.fn>;
 
 function row(overrides: Record<string, unknown> = {}) {
   return {
@@ -81,6 +84,7 @@ beforeEach(() => {
   createMock.mockReset();
   updateMock.mockReset();
   clubUpdateMock.mockReset();
+  clubFindUniqueMock.mockReset();
 });
 
 describe("ALLOWED_MEMBERSHIP_TRANSITIONS / assertMembershipTransition (pure)", () => {
@@ -930,5 +934,107 @@ describe("getMembershipSubscription (read for GET /api/clubs/membership)", () =>
     const result = await getMembershipSubscription("club_missing");
 
     expect(result).toBeNull();
+  });
+});
+
+describe("seedPendingMembershipSubscriptionFromClub (lazy-create fallback, shared by GET and POST /api/clubs/membership)", () => {
+  it("resolves both plan and currency from Club when neither is provided (GET's use case — no request body to read them from)", async () => {
+    clubFindUniqueMock.mockResolvedValue({ plan: "PRO", currency: "USD" });
+    createMock.mockResolvedValue(
+      row({ status: "PENDING", plan: "PRO", currency: "USD" }),
+    );
+
+    const result = await seedPendingMembershipSubscriptionFromClub({
+      clubId: "club_1",
+    });
+
+    expect(clubFindUniqueMock).toHaveBeenCalledWith({
+      where: { id: "club_1" },
+      select: { plan: true, currency: true },
+    });
+    expect(createMock).toHaveBeenCalledWith({
+      data: {
+        clubId: "club_1",
+        plan: "PRO",
+        cycle: "MONTHLY",
+        renewalMode: "AUTO",
+        currency: "USD",
+        status: "PENDING",
+      },
+    });
+    expect(result.status).toBe("PENDING");
+  });
+
+  it("only queries Club.currency when plan is already known (POST's use case — plan comes from the request body)", async () => {
+    clubFindUniqueMock.mockResolvedValue({ currency: "ARS" });
+    createMock.mockResolvedValue(
+      row({ status: "PENDING", plan: "PRO", currency: "ARS", cycle: "ANNUAL" }),
+    );
+
+    await seedPendingMembershipSubscriptionFromClub({
+      clubId: "club_1",
+      plan: "PRO",
+      cycle: "ANNUAL",
+      renewalMode: "AUTO",
+    });
+
+    expect(clubFindUniqueMock).toHaveBeenCalledWith({
+      where: { id: "club_1" },
+      select: { currency: true },
+    });
+    expect(createMock).toHaveBeenCalledWith({
+      data: {
+        clubId: "club_1",
+        plan: "PRO",
+        cycle: "ANNUAL",
+        renewalMode: "AUTO",
+        currency: "ARS",
+        status: "PENDING",
+      },
+    });
+  });
+
+  it("does not query Club at all when both plan and currency are already provided", async () => {
+    createMock.mockResolvedValue(
+      row({ status: "PENDING", plan: "BASIC", currency: "ARS" }),
+    );
+
+    await seedPendingMembershipSubscriptionFromClub({
+      clubId: "club_1",
+      plan: "BASIC",
+      currency: "ARS",
+    });
+
+    expect(clubFindUniqueMock).not.toHaveBeenCalled();
+    expect(createMock).toHaveBeenCalledWith({
+      data: {
+        clubId: "club_1",
+        plan: "BASIC",
+        cycle: "MONTHLY",
+        renewalMode: "AUTO",
+        currency: "ARS",
+        status: "PENDING",
+      },
+    });
+  });
+
+  it("falls back to BASIC/ARS defaults if the Club row is somehow missing", async () => {
+    clubFindUniqueMock.mockResolvedValue(null);
+    createMock.mockResolvedValue(
+      row({ status: "PENDING", plan: "BASIC", currency: "ARS" }),
+    );
+
+    await seedPendingMembershipSubscriptionFromClub({ clubId: "club_ghost" });
+
+    expect(createMock).toHaveBeenCalledWith({
+      data: {
+        clubId: "club_ghost",
+        plan: "BASIC",
+        cycle: "MONTHLY",
+        renewalMode: "AUTO",
+        currency: "ARS",
+        status: "PENDING",
+      },
+    });
   });
 });
