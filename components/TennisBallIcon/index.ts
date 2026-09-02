@@ -1,0 +1,1 @@
+export { TennisBallIcon } from "./TennisBallIcon";

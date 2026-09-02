@@ -14,6 +14,7 @@ import {
   getReservationIdsWithReceipt,
 } from "@/core/billing/services/billing.service";
 import { createCheckoutPreference } from "@/lib/mercadopago/preferences";
+import { getClubOperationalStatus } from "@/lib/mercadopago/operationalStatus";
 
 // Player's "my reservations" list, across all clubs. Each row also carries a
 // server-computed canSelfCancel flag (docs/reservation-flow.md: self-cancel
@@ -109,6 +110,22 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  // Defense-in-depth: re-validate the club's Mercado Pago connection at
+  // booking time, independent of the court-management gate (Phase 3) — a
+  // club's connection can lapse after its courts already exist. Checked
+  // before creating any reservation hold so a doomed booking never gets a
+  // SCHEDULED row it can't actually be paid for. Reuses the same
+  // `getClubOperationalStatus` source of truth as the mutation gate and the
+  // player-facing read filters (see design.md's "Operational predicate
+  // source of truth" decision) rather than reimplementing the check.
+  const operationalStatus = await getClubOperationalStatus(club.id);
+  if (!operationalStatus.operational) {
+    return NextResponse.json(
+      { error: "club_payment_unavailable" },
+      { status: 422 },
+    );
+  }
+
   let reservation: Awaited<ReturnType<typeof createReservation>> | undefined;
   try {
     reservation = await createReservation(
@@ -135,6 +152,7 @@ export async function POST(request: NextRequest) {
     await issueInvoice(court.clubId, invoice.id, userId);
 
     const { checkoutUrl } = await createCheckoutPreference({
+      clubId: court.clubId,
       reservationId: reservation.id,
       courtName: court.name,
       price: court.reservationFee,

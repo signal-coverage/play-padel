@@ -10,7 +10,11 @@ import type { AuditLogsTableProps } from "./types";
 
 type AuditLogRow = AuditLogsTableProps["logs"][number];
 
-export function AuditLogsTable({ logs, isLoading }: AuditLogsTableProps) {
+export function AuditLogsTable({
+  logs,
+  isLoading,
+  className,
+}: AuditLogsTableProps) {
   const columns: DataTableColumn<AuditLogRow>[] = useMemo(
     () => [
       {
@@ -46,6 +50,7 @@ export function AuditLogsTable({ logs, isLoading }: AuditLogsTableProps) {
 
   return (
     <DataTable
+      className={className}
       columns={columns}
       rows={logs}
       rowKey={(log) => log.id}

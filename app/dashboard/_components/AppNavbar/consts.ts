@@ -16,6 +16,12 @@ export type NavItem = {
   href: string;
   icon: LucideIcon;
   roles: SystemRole[];
+  // When true, this item stays visible for an owner even while their club is
+  // non-operational (see getVisibleNavItems in ./utils) — every other
+  // owner-only page just renders the same ClubOperationalGate screen, so
+  // only the item(s) that make sense to keep reachable in that state should
+  // set this.
+  essential?: boolean;
 };
 
 export const navItems: NavItem[] = [
@@ -24,6 +30,7 @@ export const navItems: NavItem[] = [
     href: "/dashboard",
     icon: LayoutDashboard,
     roles: ["owner", "player"],
+    essential: true,
   },
   {
     title: "Courts",
@@ -68,3 +75,16 @@ export const navItems: NavItem[] = [
     roles: ["player"],
   },
 ];
+
+// Intentionally identical to ClubOperationalGate/consts.ts's
+// CLUB_OPERATIONAL_STATUS_QUERY_KEY (same endpoint, same shape). Using the
+// same TanStack Query key lets this folder's fetch dedupe with the gate's
+// when both are mounted together (an owner's dashboard renders AppNavbar and
+// ClubOperationalGate as siblings — see DashboardShell.tsx) instead of
+// firing two independent requests. Kept as a local copy, not imported across
+// folders, per this repo's SRP-per-folder convention.
+export const CLUB_OPERATIONAL_STATUS_QUERY_KEY = [
+  "clubs",
+  "mercadopago",
+  "operational-status",
+] as const;

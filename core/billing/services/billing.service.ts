@@ -385,7 +385,7 @@ export async function refundPayment(
     throw new Error("Payment has no Mercado Pago reference to refund");
   }
 
-  await refundMercadoPagoPayment(completedPayment.reference);
+  await refundMercadoPagoPayment(completedPayment.reference, clubId);
 
   const row = await prisma.payment.update({
     where: { id: completedPayment.id },

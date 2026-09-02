@@ -2,12 +2,18 @@ import { NextResponse, type NextRequest } from "next/server";
 import { cancelClosure } from "@/core/courts/services/courts.service";
 import { requireOwnerClub } from "../../../../../_lib/require-owner";
 import { findOwnedCourt } from "../../../../../_lib/find-owned-court";
+import { requireClubOperational } from "../../../../../_lib/require-club-operational";
 
 type RouteParams = { params: Promise<{ courtId: string; closureId: string }> };
 
 export async function POST(_request: NextRequest, { params }: RouteParams) {
   const authResult = await requireOwnerClub();
   if (!authResult.ok) return authResult.response;
+
+  const operationalResult = await requireClubOperational(
+    authResult.context.clubId,
+  );
+  if (!operationalResult.ok) return operationalResult.response;
 
   const { courtId, closureId } = await params;
   const owned = await findOwnedCourt(authResult.context.clubId, courtId);

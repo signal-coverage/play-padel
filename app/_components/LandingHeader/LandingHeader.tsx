@@ -40,7 +40,7 @@ export function LandingHeader() {
     <header
       className={`fixed top-0 inset-x-0 z-50 transition-colors duration-300 ${
         isScrolled
-          ? "bg-white/80 backdrop-blur-md border-b border-black/5"
+          ? "bg-background/80 backdrop-blur-md border-b border-border"
           : "bg-transparent"
       }`}
     >
@@ -110,7 +110,7 @@ export function LandingHeader() {
                   href="/signup"
                   className="inline-flex items-center bg-accent text-accent-foreground rounded-full px-4 sm:px-5 py-2 text-sm font-semibold transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg"
                 >
-                  Try for free
+                  Sign Up
                 </Link>
                 <Link
                   href="/login"

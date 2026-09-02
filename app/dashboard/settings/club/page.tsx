@@ -1,12 +1,10 @@
-"use client";
-
 import { OwnerOnlyGuard } from "@/app/dashboard/_components/OwnerOnlyGuard";
-import { ClubSettingsView } from "./_components/ClubSettingsView";
+import { ClubSettingsTabs } from "./_components/ClubSettingsTabs";
 
 export default function ClubSettingsPage() {
   return (
     <OwnerOnlyGuard>
-      <ClubSettingsView />
+      <ClubSettingsTabs />
     </OwnerOnlyGuard>
   );
 }

@@ -1,28 +1,5 @@
 import { z } from "zod";
 
-export const createCourtSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  surface: z.string().optional(),
-  indoor: z.boolean().optional(),
-  color: z.string().optional(),
-  photoUrl: z.string().url().optional(),
-  slotDurationMinutes: z.number().int().positive().optional(),
-  reservationFee: z.number().nonnegative().optional(),
-  courtPrice: z.number().nonnegative().optional(),
-});
-
-export const updateCourtSchema = z.object({
-  name: z.string().min(1, "Name is required").optional(),
-  surface: z.string().optional(),
-  indoor: z.boolean().optional(),
-  color: z.string().optional(),
-  photoUrl: z.string().url().optional(),
-  slotDurationMinutes: z.number().int().positive().optional(),
-  reservationFee: z.number().nonnegative().optional(),
-  courtPrice: z.number().nonnegative().optional(),
-  active: z.boolean().optional(),
-});
-
 const timeRegex = /^([01]\d|2[0-3]):[0-5]\d$/;
 
 const availabilityEntrySchema = z
@@ -45,6 +22,33 @@ const availabilityEntrySchema = z
 export const weeklyAvailabilityTemplateSchema = z.array(
   availabilityEntrySchema,
 );
+
+export const createCourtSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  surface: z.string().optional(),
+  indoor: z.boolean().optional(),
+  color: z.string().optional(),
+  photoUrl: z.string().url().optional(),
+  slotDurationMinutes: z.number().int().positive().optional(),
+  reservationFee: z.number().nonnegative().optional(),
+  courtPrice: z.number().nonnegative().optional(),
+  // Omitted or empty means "no explicit availability" — createCourt then
+  // seeds CourtAvailability from the club's own operating hours instead (see
+  // resolveDefaultCourtAvailability).
+  availability: weeklyAvailabilityTemplateSchema.optional(),
+});
+
+export const updateCourtSchema = z.object({
+  name: z.string().min(1, "Name is required").optional(),
+  surface: z.string().optional(),
+  indoor: z.boolean().optional(),
+  color: z.string().optional(),
+  photoUrl: z.string().url().optional(),
+  slotDurationMinutes: z.number().int().positive().optional(),
+  reservationFee: z.number().nonnegative().optional(),
+  courtPrice: z.number().nonnegative().optional(),
+  active: z.boolean().optional(),
+});
 
 export const createClosureSchema = z
   .object({

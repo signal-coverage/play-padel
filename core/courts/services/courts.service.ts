@@ -1,6 +1,7 @@
 import { prisma } from "@/infrastructure/db/client";
 import { Prisma } from "@/lib/generated/prisma/client";
 import { logAudit } from "@/core/audit/services/audit.service";
+import { CLUB_OPERATIONAL_WHERE } from "@/lib/mercadopago/operationalStatus";
 import { startOfDay, endOfDay, addMinutes, format } from "date-fns";
 import type {
   Court,
@@ -13,6 +14,7 @@ import type {
   CreateClosureInput,
 } from "@/core/courts/types";
 import { ACTIVE_RESERVATION_STATUSES } from "@/core/reservations/consts";
+import { resolveDefaultCourtAvailability } from "@/core/clubs/services/operatingHours.service";
 
 type CourtRow = NonNullable<
   Awaited<ReturnType<typeof prisma.court.findUnique>>
@@ -23,6 +25,35 @@ type CourtAvailabilityRow = NonNullable<
 type CourtClosureRow = NonNullable<
   Awaited<ReturnType<typeof prisma.courtClosure.findUnique>>
 >;
+
+export class DuplicateCourtNameError extends Error {
+  constructor(name: string) {
+    super(`A court named "${name}" already exists in this club`);
+    this.name = "DuplicateCourtNameError";
+  }
+}
+
+// Case-insensitive, scoped to the club and to live (non-soft-deleted) courts
+// — a deactivated court's old name is free to reuse. `excludeCourtId` lets
+// `updateCourt` keep a court's own current name without tripping over itself.
+async function assertNoDuplicateCourtName(
+  clubId: string,
+  name: string,
+  excludeCourtId?: string,
+): Promise<void> {
+  const existing = await prisma.court.findFirst({
+    where: {
+      clubId,
+      deletedAt: null,
+      name: { equals: name, mode: "insensitive" },
+      ...(excludeCourtId ? { id: { not: excludeCourtId } } : {}),
+    },
+    select: { id: true },
+  });
+  if (existing) {
+    throw new DuplicateCourtNameError(name);
+  }
+}
 
 function toCourt(row: CourtRow): Court {
   return {
@@ -77,6 +108,8 @@ export async function createCourt(
   input: CreateCourtInput,
   createdBy: string,
 ): Promise<Court> {
+  await assertNoDuplicateCourtName(clubId, input.name);
+
   const row = await prisma.court.create({
     data: {
       clubId,
@@ -93,6 +126,25 @@ export async function createCourt(
       createdBy,
       updatedBy: createdBy,
     },
+  });
+
+  // A brand-new court always ends up with real CourtAvailability rows the
+  // moment it's created — never zero rows. Explicit availability is seeded
+  // as-is (no prior rows to delete, so a bare createMany is fine here);
+  // omitted/empty falls back to the club's own operating hours (or that
+  // service's own all-week fallback for a club with none on file).
+  const availability =
+    input.availability && input.availability.length > 0
+      ? input.availability
+      : await resolveDefaultCourtAvailability(clubId);
+
+  await prisma.courtAvailability.createMany({
+    data: availability.map((entry) => ({
+      courtId: row.id,
+      dayOfWeek: entry.dayOfWeek,
+      startTime: entry.startTime,
+      endTime: entry.endTime,
+    })),
   });
 
   const creator = await prisma.userProfile.findUnique({
@@ -113,10 +165,15 @@ export async function createCourt(
 }
 
 export async function updateCourt(
+  clubId: string,
   id: string,
   input: UpdateCourtInput,
   updatedBy: string,
 ): Promise<Court> {
+  if (input.name !== undefined) {
+    await assertNoDuplicateCourtName(clubId, input.name, id);
+  }
+
   const row = await prisma.court.update({
     where: { id },
     data: {
@@ -189,12 +246,20 @@ export async function softDeleteCourt(
 
 export async function listCourtsByClub(
   clubId: string,
-  { includeInactive = false }: { includeInactive?: boolean } = {},
+  {
+    includeInactive = false,
+    operationalOnly = false,
+  }: { includeInactive?: boolean; operationalOnly?: boolean } = {},
 ): Promise<Court[]> {
   const where: Prisma.CourtWhereInput = {
     clubId,
     deletedAt: null,
     ...(includeInactive ? {} : { active: true }),
+    // Player deep-link protection: a clubId can be hit directly (bypassing
+    // the browse-list filter in listActiveClubs), so callers that serve
+    // player-facing reads must opt into this flag. Owner call sites never
+    // pass it, so their own court list is unaffected by operational status.
+    ...(operationalOnly ? { club: CLUB_OPERATIONAL_WHERE } : {}),
   };
 
   const rows = await prisma.court.findMany({

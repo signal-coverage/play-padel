@@ -108,40 +108,47 @@ export function ClubListPanel({
 
   return (
     <div className="flex h-full flex-col gap-3">
-      <div className="flex flex-col gap-1.5">
-        <span className="text-xs font-medium text-muted-foreground">
-          Clubs List
-        </span>
-        <SearchInput
-          value={query}
-          onChange={setQuery}
-          placeholder="Search clubs..."
-        />
-      </div>
-
-      <div className="flex flex-col gap-1.5">
-        <span className="text-xs font-medium text-muted-foreground">
-          Sort by
-        </span>
-        <div className="flex items-center gap-1.5">
-          <Select
-            value={sort.field}
-            onValueChange={(value) => setSortField(value as ClubSortField)}
-          >
-            <SelectTrigger className="flex-1">
-              <SelectValue placeholder="Sort by" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="name">Name</SelectItem>
-              <SelectItem value="courtCount">Court count</SelectItem>
-            </SelectContent>
-          </Select>
-          <SortDirectionButton
-            direction={sort.direction}
-            onToggle={() =>
-              setSortDirection(sort.direction === "asc" ? "desc" : "asc")
-            }
+      {/* Same-row treatment as ClubCourtsPanel's Filters/Sort by pair (and
+          the invisible spacer CourtSchedulePanel mirrors from it): keeping
+          this to one control row, instead of stacking search above sort,
+          keeps all three BrowseCourts columns reserving the same header
+          height so their tables/grid line up and fill the rest evenly. */}
+      <div className="flex flex-wrap items-start gap-3 justify-between">
+        <div className="flex flex-1 flex-col gap-1.5">
+          <span className="text-xs font-medium text-muted-foreground">
+            Clubs List
+          </span>
+          <SearchInput
+            value={query}
+            onChange={setQuery}
+            placeholder="Search clubs..."
           />
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <span className="text-xs font-medium text-muted-foreground">
+            Sort by
+          </span>
+          <div className="flex items-center gap-1.5">
+            <Select
+              value={sort.field}
+              onValueChange={(value) => setSortField(value as ClubSortField)}
+            >
+              <SelectTrigger className="w-32">
+                <SelectValue placeholder="Sort by" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="name">Name</SelectItem>
+                <SelectItem value="courtCount">Court count</SelectItem>
+              </SelectContent>
+            </Select>
+            <SortDirectionButton
+              direction={sort.direction}
+              onToggle={() =>
+                setSortDirection(sort.direction === "asc" ? "desc" : "asc")
+              }
+            />
+          </div>
         </div>
       </div>
 
@@ -153,7 +160,11 @@ export function ClubListPanel({
           rowKey={(club) => club.id}
           isLoading={isLoading}
           loadingLabel="Loading clubs…"
-          emptyState={<StatusBox>No clubs match your search.</StatusBox>}
+          emptyState={
+            <StatusBox className="flex h-full flex-col items-center justify-center">
+              No clubs match your search.
+            </StatusBox>
+          }
         />
       </div>
     </div>

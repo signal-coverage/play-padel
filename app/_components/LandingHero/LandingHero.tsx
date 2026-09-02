@@ -59,7 +59,7 @@ export function LandingHero() {
             <Link
               href="#about"
               onClick={(e) => scrollToSection(e, "#about")}
-              className="inline-flex items-center gap-2 border-[1.5px] border-white text-white rounded-full px-6 py-3.5 text-[15px] font-semibold hover:bg-white hover:text-primary transition-all duration-200"
+              className="inline-flex items-center gap-2 border-[1.5px] border-white text-white rounded-full px-6 py-3.5 text-[15px] font-semibold hover:bg-white hover:text-primary hover:-translate-y-0.5 hover:shadow-xl transition-all duration-200"
             >
               For Club Owners
               <ArrowUpRight size={15} strokeWidth={2.5} />

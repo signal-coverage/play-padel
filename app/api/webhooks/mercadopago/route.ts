@@ -10,19 +10,63 @@ import {
   getInvoiceByReservationId,
   recordPayment,
 } from "@/core/billing/services/billing.service";
+import {
+  MEMBERSHIP_WEBHOOK_TOPIC,
+  MEMBERSHIP_PAYMENT_WEBHOOK_TOPIC,
+} from "@/lib/mercadopago/membershipWebhookTopics";
+import {
+  handleSubscriptionPreapprovalTopic,
+  handleMembershipPaymentTopic,
+} from "@/lib/mercadopago/membershipWebhookHandlers";
 
 const SYSTEM_ACTOR = "system:mercadopago-webhook";
 
-// Mercado Pago's source-of-truth payment notification. The webhook body
-// itself is never trusted for payment status — only used to know which
-// payment id to re-fetch via an authenticated GET (see
-// lib/mercadopago/payments.ts). Always acks with 2xx once the signature is
-// valid, even on a business-logic no-op (e.g. an already-processed payment
-// from a duplicate delivery) — Mercado Pago retries on any non-2xx response.
+// THE single Mercado Pago webhook entry point for this app. Mercado Pago's
+// DevPanel registers exactly ONE notification URL per environment
+// (test/production) — not one per subscribed topic — confirmed against the
+// real DevPanel. Every topic this app subscribes to ("payment" and
+// "subscription_preapproval") is delivered HERE, and dispatch happens
+// internally based on the notification's `type`. A previously separate
+// `app/api/webhooks/mercadopago/membership/route.ts` was unreachable in any
+// real deployment because Mercado Pago never calls a second URL — it was
+// removed and its logic now lives in
+// `lib/mercadopago/membershipWebhookHandlers.ts`, imported below.
+//
+// `type`/`data.id`/`id` can arrive either in the JSON body (the confirmed
+// modern webhook payload shape) or as query params appended by Mercado Pago
+// to whatever `notification_url` a preference/preapproval embedded — both
+// shapes are read, preferring the body when present.
+//
+// Reservation-payment notifications (this route's original, still-primary
+// responsibility) carry NO `type` disambiguation of their own beyond
+// `"payment"` and are resolved via the `reservationId` query param embedded
+// on `notification_url` at preference-creation time (see
+// lib/mercadopago/preferences.ts). ANNUAL membership payments also use the
+// `"payment"` type but resolve via a `clubId` query param instead (see
+// lib/mercadopago/platformPreferences.ts) — `reservationId` presence is what
+// disambiguates between the two "payment"-type flows below.
 export async function POST(request: NextRequest) {
   const xSignature = request.headers.get("x-signature");
   const xRequestId = request.headers.get("x-request-id");
-  const dataId = request.nextUrl.searchParams.get("data.id");
+
+  const rawBody = await request.text();
+  let body: Record<string, unknown> | null = null;
+  try {
+    body = rawBody ? JSON.parse(rawBody) : null;
+  } catch {
+    body = null;
+  }
+  const bodyData = body?.data as { id?: unknown } | undefined;
+  const type =
+    (typeof body?.type === "string" ? body.type : null) ??
+    request.nextUrl.searchParams.get("type");
+  const dataId =
+    (typeof bodyData?.id === "string" ? bodyData.id : null) ??
+    request.nextUrl.searchParams.get("data.id");
+  const notificationId =
+    (typeof body?.id === "string" ? body.id : null) ??
+    request.nextUrl.searchParams.get("id");
+  const reservationId = request.nextUrl.searchParams.get("reservationId");
 
   const validSignature = verifyMercadoPagoSignature({
     xSignature,
@@ -33,19 +77,77 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
   }
 
+  if (type === MEMBERSHIP_WEBHOOK_TOPIC) {
+    return handleSubscriptionPreapprovalTopic(dataId, notificationId);
+  }
+
+  if (type === MEMBERSHIP_PAYMENT_WEBHOOK_TOPIC && !reservationId) {
+    return handleMembershipPaymentTopic(request, dataId, notificationId);
+  }
+
+  return handleReservationPaymentTopic(dataId, reservationId);
+}
+
+// Original reservation-payment logic, unchanged in behavior — only extracted
+// into its own function so `POST` can stay a thin dispatcher. The webhook
+// body itself is never trusted for payment status — only used to know which
+// payment id to re-fetch via an authenticated GET (see
+// lib/mercadopago/payments.ts). Always acks with 2xx once the signature is
+// valid, even on a business-logic no-op (e.g. an already-processed payment
+// from a duplicate delivery) — Mercado Pago retries on any non-2xx response.
+//
+// Club resolution happens BEFORE the payment is ever fetched: a seller-OAuth
+// payment generally can't be read with a different account's token, so we
+// must know which club's client to use first. `reservationId` is embedded
+// as a query param on notification_url at preference-creation time (see
+// lib/mercadopago/preferences.ts) specifically so it's available here
+// without ever having read the payment itself. Once the payment is fetched
+// with the resolved club's client, its `external_reference` is cross-checked
+// against `reservationId` — a mismatch is rejected outright rather than
+// trusted.
+async function handleReservationPaymentTopic(
+  dataId: string | null,
+  reservationId: string | null,
+): Promise<NextResponse> {
   if (!dataId) {
     return NextResponse.json({ error: "Missing data.id" }, { status: 400 });
   }
 
-  const mpPayment = await getMercadoPagoPayment(dataId);
-  if (!mpPayment.externalReference) {
-    // Not a payment we created a preference for — ack and ignore.
+  if (!reservationId) {
+    // Without reservationId we cannot resolve which club's token to use to
+    // re-fetch the payment — not a notification we can act on. Ack and
+    // ignore rather than error, matching the "not a payment we created a
+    // preference for" no-op below.
     return NextResponse.json({ ok: true });
   }
 
-  const reservation = await findReservationById(mpPayment.externalReference);
+  const reservation = await findReservationById(reservationId);
   if (!reservation) {
     return NextResponse.json({ ok: true });
+  }
+
+  let mpPayment;
+  try {
+    mpPayment = await getMercadoPagoPayment(dataId, reservation.clubId);
+  } catch (err) {
+    console.error(
+      `[mercadopago webhook] Failed to fetch payment ${dataId} using club ${reservation.clubId}'s Mercado Pago client:`,
+      err,
+    );
+    return NextResponse.json(
+      { error: "Failed to fetch payment" },
+      { status: 500 },
+    );
+  }
+
+  if (mpPayment.externalReference !== reservationId) {
+    console.error(
+      `[mercadopago webhook] external_reference mismatch: expected reservationId ${reservationId}, got ${mpPayment.externalReference} for payment ${dataId}`,
+    );
+    return NextResponse.json(
+      { error: "external_reference mismatch" },
+      { status: 400 },
+    );
   }
 
   const invoice = await getInvoiceByReservationId(reservation.id);

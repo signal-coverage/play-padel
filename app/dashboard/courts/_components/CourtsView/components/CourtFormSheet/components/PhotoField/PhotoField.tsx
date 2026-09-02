@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ImageIcon, Loader2 } from "lucide-react";
+import { ImageIcon } from "lucide-react";
+import { BouncingBall } from "@/components/BouncingBall";
 import { Button } from "@/components/ui/button";
 import { FieldError } from "@/components/ui/field";
 import { validateCourtPhotoFile } from "@/core/courts/validation";
@@ -100,7 +101,7 @@ export function PhotoField({
         </Button>
         {uploadPhoto.isPending && (
           <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <Loader2 className="h-3 w-3 animate-spin" />
+            <BouncingBall size={14} amplitude={4} />
             Uploading…
           </span>
         )}

@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { prisma } from "@/infrastructure/db/client";
 import { createClub } from "@/core/clubs/services/clubs.service";
+import { setClubOperatingHours } from "@/core/clubs/services/operatingHours.service";
+import { createPendingMembershipSubscription } from "@/core/billing/services/membership.service";
 import { logAudit } from "@/core/audit/services/audit.service";
 import {
   onboardingFormSchema,
@@ -162,6 +164,33 @@ export async function POST(request: Request) {
       },
       userId,
     );
+
+    // `Club.plan` above is still written directly (needed immediately for
+    // court-capacity purposes, see design's Onboarding flow) — this seeds
+    // the parallel `ClubMembershipSubscription` state-machine row in
+    // PENDING, with no MP object created yet. Phase 7's dashboard payment
+    // flow is what actually moves this into TRIALING/ACTIVE.
+    await createPendingMembershipSubscription({
+      clubId: club.id,
+      plan,
+      currency: data.currency!,
+    });
+
+    // The operating-hours step's superRefine requires at least one active
+    // day for a real owner submission, so this should always have entries —
+    // but skip the write entirely rather than calling
+    // setClubOperatingHours with an empty set for a defensive request that
+    // somehow reaches here without it.
+    const operatingHoursEntries = (data.operatingHours ?? [])
+      .filter((entry) => entry.active)
+      .map((entry) => ({
+        dayOfWeek: entry.dayOfWeek,
+        startTime: entry.startTime,
+        endTime: entry.endTime,
+      }));
+    if (operatingHoursEntries.length > 0) {
+      await setClubOperatingHours(club.id, operatingHoursEntries);
+    }
 
     await prisma.userProfile.upsert({
       where: { id: userId },

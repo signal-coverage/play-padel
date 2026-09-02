@@ -1,0 +1,5 @@
+export {
+  CARPET_SURFACE_FALLBACK_IMAGE,
+  CARPET_SURFACE_IMAGE_BY_COLOR,
+  CONCRETE_SURFACE_IMAGE,
+} from "@/lib/consts/courtSurfaceImages";

@@ -1,3 +1,4 @@
+import type { AvailabilityEntry } from "@/core/courts/types";
 import type { CourtFormValues, CourtRecord } from "../../types";
 
 export type CourtFormSheetProps = {
@@ -9,8 +10,17 @@ export type CourtFormSheetProps = {
    * `photoFile` is set when the user picked a photo before the court
    * existed yet (create mode) — PhotoField can't upload it immediately
    * without a courtId, so it stages the raw file here for the parent to
-   * upload right after the court is created.
+   * upload right after the court is created. `availability` is always sent
+   * — details and the weekly schedule now save together as one action.
    */
-  onSubmit: (values: CourtFormValues, photoFile?: File | null) => Promise<void>;
+  onSubmit: (
+    values: CourtFormValues,
+    photoFile: File | null | undefined,
+    availability: AvailabilityEntry[],
+  ) => Promise<void>;
   isSubmitting: boolean;
+  /** Which step the sheet opens on: 0 = Details (default), 1 = Availability.
+   * Both the table's pencil and clock icons open this same sheet, just
+   * starting on a different step. */
+  initialStep?: 0 | 1;
 };

@@ -1,17 +1,24 @@
 import { NextResponse, type NextRequest } from "next/server";
 import {
+  DuplicateCourtNameError,
   softDeleteCourt,
   updateCourt,
 } from "@/core/courts/services/courts.service";
 import { updateCourtSchema } from "@/core/courts/schemas/court.schema";
 import { requireOwnerClub } from "../../_lib/require-owner";
 import { findOwnedCourt } from "../../_lib/find-owned-court";
+import { requireClubOperational } from "../../_lib/require-club-operational";
 
 type RouteParams = { params: Promise<{ courtId: string }> };
 
 export async function PATCH(request: NextRequest, { params }: RouteParams) {
   const authResult = await requireOwnerClub();
   if (!authResult.ok) return authResult.response;
+
+  const operationalResult = await requireClubOperational(
+    authResult.context.clubId,
+  );
+  if (!operationalResult.ok) return operationalResult.response;
 
   const { courtId } = await params;
   const owned = await findOwnedCourt(authResult.context.clubId, courtId);
@@ -30,12 +37,16 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 
   try {
     const court = await updateCourt(
+      authResult.context.clubId,
       courtId,
       parsed.data,
       authResult.context.userId,
     );
     return NextResponse.json({ court });
-  } catch {
+  } catch (err) {
+    if (err instanceof DuplicateCourtNameError) {
+      return NextResponse.json({ error: err.message }, { status: 409 });
+    }
     return NextResponse.json(
       { error: "Failed to update court" },
       { status: 500 },
@@ -46,6 +57,11 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 export async function DELETE(_request: NextRequest, { params }: RouteParams) {
   const authResult = await requireOwnerClub();
   if (!authResult.ok) return authResult.response;
+
+  const operationalResult = await requireClubOperational(
+    authResult.context.clubId,
+  );
+  if (!operationalResult.ok) return operationalResult.response;
 
   const { courtId } = await params;
   const owned = await findOwnedCourt(authResult.context.clubId, courtId);

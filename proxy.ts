@@ -10,6 +10,9 @@ const isPublicRoute = createRouteMatcher([
   // Vercel Cron calls this with no Clerk session — it carries its own
   // CRON_SECRET bearer check instead (see app/api/cron/notifications/route.ts).
   "/api/cron/(.*)",
+  // Same reasoning — these carry their own MEMBERSHIP_ADMIN_SECRET bearer
+  // check instead of a Clerk session (see app/api/admin/club-status/route.ts).
+  "/api/admin/(.*)",
   "/invite-error(.*)",
 ]);
 

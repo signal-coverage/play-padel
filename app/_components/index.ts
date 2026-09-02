@@ -5,5 +5,6 @@ export * from "./LandingFeatures";
 export * from "./LandingFooter";
 export * from "./LandingHeader";
 export * from "./LandingHero";
+export * from "./LandingThemeShell";
 export * from "./LandingTrusted";
 export * from "./ShareButton";

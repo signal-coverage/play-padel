@@ -1,10 +1,12 @@
 import { NextResponse, type NextRequest } from "next/server";
 import {
   createCourt,
+  DuplicateCourtNameError,
   listCourtsByClub,
 } from "@/core/courts/services/courts.service";
 import { createCourtSchema } from "@/core/courts/schemas/court.schema";
 import { requireOwnerClub } from "../_lib/require-owner";
+import { requireClubOperational } from "../_lib/require-club-operational";
 
 export async function GET(request: NextRequest) {
   const authResult = await requireOwnerClub();
@@ -23,6 +25,11 @@ export async function POST(request: NextRequest) {
   const authResult = await requireOwnerClub();
   if (!authResult.ok) return authResult.response;
 
+  const operationalResult = await requireClubOperational(
+    authResult.context.clubId,
+  );
+  if (!operationalResult.ok) return operationalResult.response;
+
   const body = await request.json().catch(() => null);
   const parsed = createCourtSchema.safeParse(body);
   if (!parsed.success) {
@@ -39,7 +46,10 @@ export async function POST(request: NextRequest) {
       authResult.context.userId,
     );
     return NextResponse.json({ court }, { status: 201 });
-  } catch {
+  } catch (err) {
+    if (err instanceof DuplicateCourtNameError) {
+      return NextResponse.json({ error: err.message }, { status: 409 });
+    }
     return NextResponse.json(
       { error: "Failed to create court" },
       { status: 500 },

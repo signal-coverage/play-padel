@@ -37,6 +37,9 @@ export interface CreateCourtInput {
   slotDurationMinutes?: number;
   reservationFee?: number;
   courtPrice?: number;
+  // Omitted/empty means "use the club's own default" — see createCourt's use
+  // of resolveDefaultCourtAvailability.
+  availability?: AvailabilityEntry[];
 }
 
 export interface UpdateCourtInput {

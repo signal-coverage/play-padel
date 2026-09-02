@@ -1,5 +1,5 @@
 import { Payment as MercadoPagoPayment } from "mercadopago";
-import { getMercadoPagoClient } from "./client";
+import { getClubMercadoPagoClient } from "./clubMercadoPagoClient";
 
 export interface MercadoPagoPaymentStatus {
   id: number;
@@ -9,12 +9,18 @@ export interface MercadoPagoPaymentStatus {
 }
 
 // The webhook body only carries a payment id — never trust its other fields.
-// This re-fetches the payment directly from Mercado Pago's API (authenticated
-// with our own access token) as the actual source of truth for its status.
+// This re-fetches the payment directly from Mercado Pago's API, authenticated
+// with the OWNING CLUB's access token (a seller-OAuth payment generally can't
+// be read with a different account's token) as the actual source of truth
+// for its status. Callers must resolve `clubId` (e.g. via the reservation the
+// payment belongs to) BEFORE calling this — see
+// app/api/webhooks/mercadopago/route.ts.
 export async function getMercadoPagoPayment(
   paymentId: string,
+  clubId: string,
 ): Promise<MercadoPagoPaymentStatus> {
-  const payment = new MercadoPagoPayment(getMercadoPagoClient());
+  const client = await getClubMercadoPagoClient(clubId);
+  const payment = new MercadoPagoPayment(client);
   const result = await payment.get({ id: paymentId });
   return {
     id: result.id!,

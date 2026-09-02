@@ -1,9 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useReducedMotion } from "framer-motion";
 import { toast } from "sonner";
-import { fireSuccessConfetti } from "@/lib/utils/confetti";
 import type { CreateCourtInput, UpdateCourtInput } from "@/core/courts/types";
 import type {
   AvailabilityEntry,
@@ -36,7 +34,6 @@ export function useManagedCourts() {
 
 export function useCreateCourt() {
   const queryClient = useQueryClient();
-  const shouldReduceMotion = useReducedMotion();
   return useMutation({
     mutationFn: (input: CreateCourtInput) =>
       fetchJson<{ court: CourtRecord }>("/api/clubs/courts", {
@@ -44,12 +41,14 @@ export function useCreateCourt() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(input),
       }),
+    // Success signaling (toast + celebration) intentionally lives in
+    // CourtsView's handleFormSubmit instead of here: this resolves the
+    // instant the create POST lands, before the chained photo upload (when
+    // there is one) even starts, which previously fired the toast/
+    // celebration and closed-looking table update while the Sheet was still
+    // showing "Saving…" for the photo. See CourtsView.tsx.
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: COURTS_QUERY_KEY });
-      toast.success("Court created");
-      if (!shouldReduceMotion) {
-        fireSuccessConfetti();
-      }
     },
     onError: (error: Error) => toast.error(error.message),
   });
@@ -64,17 +63,24 @@ export function useUpdateCourt() {
     }: {
       courtId: string;
       input: UpdateCourtInput;
+      // Set by BulkEditCourtsSheet, which fans this mutation out to every
+      // selected court and shows its own aggregate summary toast — without
+      // this, an N-court bulk apply would also stack N "Court updated"
+      // toasts from this hook's own onSuccess.
+      silent?: boolean;
     }) =>
       fetchJson<{ court: CourtRecord }>(`/api/clubs/courts/${courtId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(input),
       }),
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: COURTS_QUERY_KEY });
-      toast.success("Court updated");
+      if (!variables.silent) toast.success("Court updated");
     },
-    onError: (error: Error) => toast.error(error.message),
+    onError: (error: Error, variables) => {
+      if (!variables.silent) toast.error(error.message);
+    },
   });
 }
 
@@ -139,13 +145,29 @@ export function useSetCourtAvailability() {
           body: JSON.stringify(entries),
         },
       ),
+    // No onSuccess toast here: availability is now always saved together
+    // with the court's details as one single action (see CourtFormSheet /
+    // CourtsView.handleFormSubmit), and useUpdateCourt's own "Court updated"
+    // toast already signals that combined save — a second "Weekly
+    // availability saved" toast firing right alongside it would just read as
+    // redundant/confusing for one user action.
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({
         queryKey: ["court-availability", variables.courtId],
       });
-      toast.success("Weekly availability saved");
     },
     onError: (error: Error) => toast.error(error.message),
+  });
+}
+
+export function useClubOperatingHours(enabled: boolean) {
+  return useQuery({
+    queryKey: ["club-operating-hours"],
+    queryFn: () =>
+      fetchJson<{ operatingHours: AvailabilityEntry[] }>(
+        "/api/clubs/operating-hours",
+      ).then((data) => data.operatingHours),
+    enabled,
   });
 }
 

@@ -50,7 +50,15 @@ export function usePaymentReturnStatus(reservationId: string | null) {
   const reservation = query.data ?? null;
 
   let state: PaymentReturnState = "processing";
-  if (reservation?.status === "CONFIRMED") {
+  // Checked FIRST, ahead of every other branch below: this app's own fetch
+  // failing (network error, our API 500ing) is not the same thing as "the
+  // payment didn't go through" — without this, `!query.isLoading &&
+  // !reservation` (the last branch here) would silently misclassify a
+  // genuine backend failure as a settled, failed payment, telling the
+  // player their booking/hold expired when we actually just don't know.
+  if (query.isError) {
+    state = "error";
+  } else if (reservation?.status === "CONFIRMED") {
     state = "success";
   } else if (
     reservation &&

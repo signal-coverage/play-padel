@@ -56,3 +56,6 @@ next-env.d.ts
 
 # Sentry Config File
 .env.sentry-build-plugin
+
+# Mercado Pago wizard state
+.mp-integrate-progress.md

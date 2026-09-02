@@ -8,4 +8,8 @@ export type CourtsTableProps = {
   onEditClosures: (court: CourtRecord) => void;
   onDelete: (court: CourtRecord) => void;
   deletingCourtId: string | null;
+  selectedIds: Set<string>;
+  onToggleSelect: (courtId: string) => void;
+  onToggleSelectAll: () => void;
+  className?: string;
 };

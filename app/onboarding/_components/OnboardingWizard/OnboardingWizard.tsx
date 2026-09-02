@@ -25,6 +25,8 @@ import {
 import { StepIndicator } from "./components/StepIndicator";
 import { ClubBasicsStep } from "./components/steps/ClubBasicsStep";
 import { LegalBillingStep } from "./components/steps/LegalBillingStep";
+import { OperatingHoursStep } from "./components/steps/OperatingHoursStep";
+import { DEFAULT_OPERATING_HOURS_ROWS } from "./components/steps/OperatingHoursStep/consts";
 import { PadelProfileStep } from "./components/steps/PadelProfileStep";
 import { PlanStep } from "./components/steps/PlanStep";
 import { PlayerProfileStep } from "./components/steps/PlayerProfileStep";
@@ -69,6 +71,7 @@ export function OnboardingWizard() {
       // instead of contradicting it with a blank initial state.
       courtRange: COURT_RANGE_OPTIONS.find((option) => option.plan === "PRO")
         ?.value,
+      operatingHours: DEFAULT_OPERATING_HOURS_ROWS,
       displayName: "",
       firstName: user?.firstName ?? "",
       lastName: user?.lastName ?? "",
@@ -337,6 +340,26 @@ export function OnboardingWizard() {
                     <PlanStep
                       control={control}
                       errors={errors}
+                      shouldFocusHeading={shouldFocusHeading}
+                    />
+                  </motion.div>
+                )}
+
+                {currentKey === "operatingHours" && (
+                  <motion.div
+                    key="operatingHours"
+                    className="space-y-4"
+                    custom={direction}
+                    variants={stepVariants}
+                    initial={shouldReduce ? false : "enter"}
+                    animate="center"
+                    exit={shouldReduce ? "center" : "exit"}
+                    transition={stepTransition}
+                  >
+                    <OperatingHoursStep
+                      control={control}
+                      errors={errors}
+                      setValue={setValue}
                       shouldFocusHeading={shouldFocusHeading}
                     />
                   </motion.div>

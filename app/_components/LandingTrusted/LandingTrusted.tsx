@@ -7,7 +7,7 @@ export function LandingTrusted() {
   const shouldReduce = useReducedMotion();
 
   return (
-    <section className="py-28 bg-white">
+    <section className="py-28 bg-background">
       <div
         className={`${CONTAINER} flex flex-col md:flex-row gap-10 md:gap-16`}
       >
@@ -18,7 +18,7 @@ export function LandingTrusted() {
           viewport={{ once: true }}
           transition={{ duration: 0.5, ease }}
         >
-          <span className="inline-flex items-center bg-foreground text-white rounded-full px-4 py-2 text-[13px] font-semibold">
+          <span className="inline-flex items-center bg-foreground text-background rounded-full px-4 py-2 text-[13px] font-semibold">
             By The Numbers
           </span>
         </motion.div>

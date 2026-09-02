@@ -3,11 +3,7 @@ import {
   DEFAULT_SLOT_DURATION_MINUTES,
 } from "@/core/courts/consts";
 import { COURT_SURFACE_OPTIONS } from "./components/CourtFormSheet/components/SurfaceField/consts";
-import type {
-  AvailabilityEntry,
-  CourtAvailability,
-  CourtClosure,
-} from "@/core/courts/types";
+import type { AvailabilityEntry, CourtClosure } from "@/core/courts/types";
 import type {
   AvailabilityDayRow,
   CourtFormValues,
@@ -48,12 +44,20 @@ export function indoorLabel(indoor: boolean): string {
 
 /** Builds the 7-row weekly editor state from whatever entries the server has
  * on file, defaulting unset days to inactive with a sensible 09:00-21:00
- * placeholder window so toggling them on doesn't start from an empty range. */
+ * placeholder window so toggling them on doesn't start from an empty range.
+ *
+ * Accepts either a court's own `CourtAvailability[]` (edit mode) or a club's
+ * `GET /api/clubs/operating-hours` response (create mode) — both are
+ * structurally assignable to `AvailabilityEntry[]`. Presence of a day in the
+ * array means it's active; there's no separate `.active` filter, since
+ * neither persisted shape is ever written with an inactive row (see
+ * setCourtAvailability/setClubOperatingHours's delete-then-recreate-only-
+ * provided-entries pattern). */
 export function buildAvailabilityRows(
-  entries: CourtAvailability[],
+  entries: AvailabilityEntry[],
 ): AvailabilityDayRow[] {
   return DAY_LABELS.map((_, dayOfWeek) => {
-    const entry = entries.find((e) => e.dayOfWeek === dayOfWeek && e.active);
+    const entry = entries.find((e) => e.dayOfWeek === dayOfWeek);
     return {
       dayOfWeek,
       active: Boolean(entry),

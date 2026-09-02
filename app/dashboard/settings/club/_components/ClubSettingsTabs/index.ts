@@ -1,0 +1,1 @@
+export { ClubSettingsTabs } from "./ClubSettingsTabs";

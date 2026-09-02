@@ -3,10 +3,12 @@
 import { useMemo } from "react";
 import { CalendarClock, CalendarOff, Pencil, Trash2 } from "lucide-react";
 import { ColorSwatch } from "@/components/ColorSwatch";
+import { CourtPhotoPreview } from "@/components/CourtPhotoPreview";
 import { DataTable } from "@/components/DataTable";
-import { StatusBox } from "@/components/StatusBox";
+import { SurfacePreview } from "@/components/SurfacePreview";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Tooltip,
@@ -15,6 +17,7 @@ import {
 } from "@/components/ui/tooltip";
 import { formatCourtPrice } from "@/lib/utils/currency";
 import { indoorLabel, surfaceLabel } from "../../utils";
+import { CourtsEmptyState } from "./components/CourtsEmptyState";
 import type { DataTableColumn } from "@/components/DataTable";
 import type { CourtRecord } from "../../types";
 import type { CourtsTableProps } from "./types";
@@ -27,9 +30,33 @@ export function CourtsTable({
   onEditClosures,
   onDelete,
   deletingCourtId,
+  selectedIds,
+  onToggleSelect,
+  onToggleSelectAll,
+  className,
 }: CourtsTableProps) {
+  const allSelected = courts.length > 0 && selectedIds.size === courts.length;
+
   const columns: DataTableColumn<CourtRecord>[] = useMemo(
     () => [
+      {
+        key: "select",
+        header: (
+          <Checkbox
+            checked={allSelected}
+            onCheckedChange={onToggleSelectAll}
+            aria-label="Select all courts"
+          />
+        ),
+        cell: (court) => (
+          <Checkbox
+            checked={selectedIds.has(court.id)}
+            onCheckedChange={() => onToggleSelect(court.id)}
+            aria-label={`Select ${court.name}`}
+          />
+        ),
+        loadingCell: <Skeleton className="h-4 w-4" />,
+      },
       {
         key: "name",
         header: "Name",
@@ -45,8 +72,25 @@ export function CourtsTable({
       {
         key: "surface",
         header: "Surface",
-        cell: (court) => surfaceLabel(court.surface),
+        cell: (court) => (
+          <span className="flex items-center gap-1.5">
+            {surfaceLabel(court.surface)}
+            <SurfacePreview surface={court.surface} color={court.color} />
+          </span>
+        ),
         loadingCell: <Skeleton className="h-4 w-16" />,
+      },
+      {
+        key: "preview",
+        header: "Preview",
+        cell: (court) => (
+          <CourtPhotoPreview
+            photoUrl={court.photoUrl}
+            courtName={court.name}
+            size="sm"
+          />
+        ),
+        loadingCell: <Skeleton className="h-10 w-10 rounded-xs" />,
       },
       {
         key: "type",
@@ -167,21 +211,29 @@ export function CourtsTable({
         ),
       },
     ],
-    [onEdit, onEditAvailability, onEditClosures, onDelete, deletingCourtId],
+    [
+      onEdit,
+      onEditAvailability,
+      onEditClosures,
+      onDelete,
+      deletingCourtId,
+      allSelected,
+      selectedIds,
+      onToggleSelect,
+      onToggleSelectAll,
+    ],
   );
 
   return (
     <DataTable
+      className={className}
       columns={columns}
       rows={courts}
       rowKey={(court) => court.id}
       isLoading={isLoading}
       loadingLabel="Loading courts…"
-      emptyState={
-        <StatusBox>
-          No courts yet. Create your first court to get started.
-        </StatusBox>
-      }
+      emptyState={<CourtsEmptyState />}
+      isRowSelected={(court) => selectedIds.has(court.id)}
     />
   );
 }
