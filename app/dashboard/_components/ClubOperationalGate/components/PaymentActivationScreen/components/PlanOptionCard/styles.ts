@@ -11,11 +11,14 @@ export const hexagonClipPath =
 // The full PLAN_EMPHASIS-driven border/shadow/ring treatment is reserved
 // for the selected card — an unselected card falls back to the Card
 // component's own default neutral border and shadow-card instead, so the
-// selected tile is the only one that reads as "alive" at a glance. A fast,
-// restrained hover lift keeps unselected cards reading as clickable rather
-// than disabled (transition-colors/transition-shadow only, no
-// `transition: all`, no scale/bounce — matches this app's existing
-// interactive-card restraint, see OptionCard/styles.ts).
+// selected tile is the only one that reads as "alive" at a glance.
+// Unselected cards are additionally desaturated + dimmed (grayscale +
+// opacity) so they read as disabled-but-clickable, not just less colorful —
+// both lift back to normal on hover/focus so the card still reads as
+// interactive rather than actually disabled. `filter`/`opacity` get their
+// own transition-* utility alongside the existing color/shadow ones (no
+// `transition: all` — matches this app's existing interactive-card
+// restraint, see OptionCard/styles.ts).
 export function getCardClassName(isSelected: boolean, emphasis: PlanEmphasis) {
   return cn(
     // border-2 (not border) unconditionally: MAX's emphasis.cardBorder below
@@ -25,7 +28,7 @@ export function getCardClassName(isSelected: boolean, emphasis: PlanEmphasis) {
     // the baseline were a plain 1px `border`, selecting MAX would bump it to
     // 2px and grow the card's (height: auto) rendered height by ~2px, which
     // no other tier's selected state does.
-    "relative flex-1 overflow-hidden rounded-sm border-2 py-6 transition-colors transition-shadow",
+    "relative flex-1 overflow-hidden rounded-sm border-2 py-6 transition-colors transition-shadow transition-[filter,opacity]",
     isSelected
       ? cn(
           emphasis.cardBorder,
@@ -33,7 +36,7 @@ export function getCardClassName(isSelected: boolean, emphasis: PlanEmphasis) {
           emphasis.ring,
           "border-primary ring-2 ring-primary ring-offset-2 ring-offset-background",
         )
-      : "hover:border-muted-foreground/30 hover:bg-muted/30",
+      : "grayscale opacity-70 hover:grayscale-0 hover:opacity-100 focus-visible:grayscale-0 focus-visible:opacity-100 hover:border-muted-foreground/30 hover:bg-muted/30",
   );
 }
 

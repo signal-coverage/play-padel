@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { toast } from "sonner";
 import {
   Card,
@@ -13,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useGuardedDialogClose } from "@/hooks/use-guarded-dialog-close";
+import { mercadoPagoLogoLight, mercadoPagoLogoDark } from "@/assets/icons";
 import { MERCADOPAGO_CONNECT_URL } from "./consts";
 import { getMercadoPagoConnectionCopy } from "./utils";
 import {
@@ -55,13 +57,33 @@ export function MercadoPagoConnectionCard() {
 
   return (
     <Card className="max-w-lg">
-      <CardHeader>
+      <CardHeader className="gap-4">
         <CardTitle className="flex items-center gap-2">
-          Mercado Pago
+          <Image
+            src={mercadoPagoLogoLight.default}
+            alt="Mercado Pago"
+            width={200}
+            height={80}
+            className="h-15 w-auto dark:hidden"
+          />
+          <Image
+            src={mercadoPagoLogoDark.default}
+            alt="Mercado Pago"
+            width={200}
+            height={80}
+            className="hidden h-15 w-auto dark:block"
+          />
           {isLoading ? (
             <Skeleton className="h-5 w-20" />
           ) : (
-            <Badge variant={copy.badgeVariant}>{copy.badgeLabel}</Badge>
+            <div className="flex flex-col items-start gap-1">
+              <Badge variant={copy.badgeVariant}>{copy.badgeLabel}</Badge>
+              {copy.accountLabel && (
+                <span className="text-sm text-muted-foreground">
+                  Account: {copy.accountLabel}
+                </span>
+              )}
+            </div>
           )}
         </CardTitle>
         <CardDescription>{copy.description}</CardDescription>

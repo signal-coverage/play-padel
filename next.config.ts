@@ -16,7 +16,7 @@ const nextConfig: NextConfig = {
   },
   allowedDevOrigins: [
     "192.168.100.6",
-    "smartly-riverbank-phoenix.ngrok-free.dev",
+    "daybed-daredevil-turtle.ngrok-free.dev",
   ],
   images: {
     remotePatterns: [

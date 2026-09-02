@@ -13,16 +13,23 @@ vi.mock("../../_lib/find-owned-court", () => ({
   findOwnedCourt: vi.fn(),
 }));
 
-vi.mock("@/core/courts/services/courts.service", () => ({
-  updateCourt: vi.fn(),
-  softDeleteCourt: vi.fn(),
-}));
+vi.mock("@/core/courts/services/courts.service", async () => {
+  const actual = await vi.importActual<
+    typeof import("@/core/courts/services/courts.service")
+  >("@/core/courts/services/courts.service");
+  return {
+    DuplicateCourtNameError: actual.DuplicateCourtNameError,
+    updateCourt: vi.fn(),
+    softDeleteCourt: vi.fn(),
+  };
+});
 
 import { requireOwnerClub } from "../../_lib/require-owner";
 import { requireClubOperational } from "../../_lib/require-club-operational";
 import { findOwnedCourt } from "../../_lib/find-owned-court";
 import {
   updateCourt,
+  DuplicateCourtNameError,
   softDeleteCourt,
 } from "@/core/courts/services/courts.service";
 import { PATCH, DELETE } from "./route";
@@ -89,8 +96,28 @@ describe("PATCH /api/clubs/courts/[courtId]", () => {
     );
 
     expect(requireClubOperationalMock).toHaveBeenCalledWith("club_1");
-    expect(updateCourtMock).toHaveBeenCalled();
+    expect(updateCourtMock).toHaveBeenCalledWith(
+      "club_1",
+      "court_1",
+      expect.objectContaining({ name: "New" }),
+      "user_1",
+    );
     expect(response.status).toBe(200);
+  });
+
+  it("returns 409 when the new name is already taken in this club", async () => {
+    requireClubOperationalMock.mockResolvedValue({ ok: true });
+    findOwnedCourtMock.mockResolvedValue({ id: "court_1" });
+    updateCourtMock.mockRejectedValue(new DuplicateCourtNameError("New"));
+
+    const response = await PATCH(
+      makePatchRequest({ name: "New" }),
+      makeParams(),
+    );
+
+    expect(response.status).toBe(409);
+    const body = await response.json();
+    expect(body.error).toMatch(/already exists/i);
   });
 });
 

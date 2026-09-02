@@ -1,5 +1,7 @@
 "use client";
 
+import { BouncingBall } from "@/components/BouncingBall";
+import { StatusBox } from "@/components/StatusBox";
 import type { ClubOperationalGateProps } from "./types";
 import { useClubOperationalStatus } from "./hooks";
 import { PaymentActivationScreen } from "./components/PaymentActivationScreen";
@@ -7,9 +9,19 @@ import { ClubInactiveCard } from "./components/ClubInactiveCard";
 
 /**
  * Gate for the non-operational club owner dashboard (spec domain:
- * club-operational-gate-overlay). Renders `children` untouched when
- * operational (or while the status fetch is still in flight, so the
- * dashboard never flashes a gate before we actually know the club's state).
+ * club-operational-gate-overlay). Renders `children` only once the status
+ * fetch has actually resolved as operational — while it's still in flight,
+ * this shows a neutral spinner instead of either the real dashboard or a
+ * gate screen.
+ *
+ * This deliberately flips an earlier version of this gate, which rendered
+ * `children` during the loading window too (reasoning: avoid flashing a
+ * gate screen for a club that turns out to be operational). In practice
+ * that traded one flash for a worse one — a non-operational club's owner
+ * would see the real dashboard for a moment before the gate screen replaced
+ * it. A brief neutral spinner is the only option that never flashes the
+ * WRONG state in either direction, at the cost of a short spinner even for
+ * already-operational clubs.
  *
  * When non-operational, `children` are NOT rendered at all — React never
  * mounts that subtree, so none of the underlying page's data-fetching hooks
@@ -25,7 +37,19 @@ import { ClubInactiveCard } from "./components/ClubInactiveCard";
 export function ClubOperationalGate({ children }: ClubOperationalGateProps) {
   const { data: status, isLoading } = useClubOperationalStatus();
 
-  if (isLoading || !status || status.operational) {
+  if (isLoading) {
+    return (
+      <StatusBox className="flex flex-col items-center justify-center gap-3 py-16">
+        <BouncingBall size={32} amplitude={16} />
+        <span className="sr-only">Loading dashboard…</span>
+      </StatusBox>
+    );
+  }
+
+  // Fails open on error (`!status`) — same as before: an owner who already
+  // has an operational club shouldn't get locked out by a flaky status
+  // check, only a genuinely non-operational one should ever see a gate.
+  if (!status || status.operational) {
     return <>{children}</>;
   }
 

@@ -49,6 +49,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     });
 
     await updateCourt(
+      authResult.context.clubId,
       courtId,
       { photoUrl: blob.url },
       authResult.context.userId,

@@ -8,8 +8,11 @@ export type SelectPlanPanelProps = {
   renewalMode: MembershipRenewalModeValue;
   errorMessage: string | null;
   isSubmitting: boolean;
-  onSelectPlan: (plan: Plan) => void;
   onBillingCycleChange: (cycle: BillingCycle) => void;
   onRenewalModeChange: (mode: MembershipRenewalModeValue) => void;
+  // Opens ChangePlanDialog — picking a plan there is what actually calls
+  // back into PlanSelectionModal's `onSelectPlan`; this panel no longer
+  // owns any plan-picking UI itself.
+  onChangePlan: () => void;
   onContinue: () => void;
 };

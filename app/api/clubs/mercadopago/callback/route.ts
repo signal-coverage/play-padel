@@ -3,6 +3,7 @@ import { prisma } from "@/infrastructure/db/client";
 import {
   verifyOAuthState,
   exchangeAuthorizationCode,
+  fetchMercadoPagoUserProfile,
 } from "@/lib/mercadopago/oauth";
 import { encryptToken } from "@/lib/mercadopago/tokenCrypto";
 
@@ -68,6 +69,20 @@ export async function GET(request: NextRequest) {
   const liveMode = tokens.live_mode ?? false;
   const scope = tokens.scope ?? null;
 
+  // Best-effort: this is only used to display which Mercado Pago account is
+  // linked, so a failure here must never block the connection — the tokens
+  // are already valid and get stored regardless.
+  let mpEmail: string | null = null;
+  let mpNickname: string | null = null;
+  try {
+    const profile = await fetchMercadoPagoUserProfile(tokens.access_token);
+    mpEmail = profile.email;
+    mpNickname = profile.nickname;
+  } catch {
+    mpEmail = null;
+    mpNickname = null;
+  }
+
   try {
     await prisma.clubMercadoPagoAccount.upsert({
       where: { clubId: verified.clubId },
@@ -76,6 +91,8 @@ export async function GET(request: NextRequest) {
         mpUserId,
         liveMode,
         scope,
+        mpEmail,
+        mpNickname,
         accessTokenEncrypted,
         refreshTokenEncrypted,
         tokenExpiresAt,
@@ -89,6 +106,8 @@ export async function GET(request: NextRequest) {
         mpUserId,
         liveMode,
         scope,
+        mpEmail,
+        mpNickname,
         accessTokenEncrypted,
         refreshTokenEncrypted,
         tokenExpiresAt,

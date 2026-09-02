@@ -114,4 +114,63 @@ describe("ConfirmedPanel", () => {
       screen.getByText("Mercado Pago is unavailable right now."),
     ).toBeInTheDocument();
   });
+
+  // Lets the owner change plan tier IMMEDIATELY while on a free trial —
+  // both MONTHLY and ANNUAL trials qualify, since neither has been charged
+  // yet. Independent of showPayNow (ANNUAL-only) — a MONTHLY trial gets
+  // Change Plan but never Pay Now.
+  it("shows a Change Plan button when isTrialing and onChangePlan are both provided", () => {
+    render(
+      <ConfirmedPanel onClose={vi.fn()} isTrialing onChangePlan={vi.fn()} />,
+    );
+
+    expect(
+      screen.getByRole("button", { name: "Change Plan" }),
+    ).toBeInTheDocument();
+  });
+
+  it("calls onChangePlan when the Change Plan button is clicked", () => {
+    const onChangePlan = vi.fn();
+    render(
+      <ConfirmedPanel
+        onClose={vi.fn()}
+        isTrialing
+        onChangePlan={onChangePlan}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Change Plan" }));
+
+    expect(onChangePlan).toHaveBeenCalled();
+  });
+
+  it("does not show a Change Plan button when onChangePlan is omitted", () => {
+    render(<ConfirmedPanel onClose={vi.fn()} isTrialing />);
+
+    expect(
+      screen.queryByRole("button", { name: "Change Plan" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("does not show a Change Plan button when not trialing, even if onChangePlan is provided (already-paying clubs use requestPlanChange instead)", () => {
+    render(<ConfirmedPanel onClose={vi.fn()} onChangePlan={vi.fn()} />);
+
+    expect(
+      screen.queryByRole("button", { name: "Change Plan" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("disables the Change Plan button and shows a loading label while isChangingPlan is true", () => {
+    render(
+      <ConfirmedPanel
+        onClose={vi.fn()}
+        isTrialing
+        onChangePlan={vi.fn()}
+        isChangingPlan
+      />,
+    );
+
+    const button = screen.getByRole("button", { name: /changing plan/i });
+    expect(button).toBeDisabled();
+  });
 });

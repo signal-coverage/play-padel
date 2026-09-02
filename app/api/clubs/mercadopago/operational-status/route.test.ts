@@ -45,6 +45,8 @@ describe("GET /api/clubs/mercadopago/operational-status", () => {
     getClubOperationalStatusMock.mockResolvedValue({
       operational: true,
       cause: null,
+      email: "owner@club.com",
+      nickname: "clubowner",
     });
 
     const response = await GET();
@@ -52,7 +54,12 @@ describe("GET /api/clubs/mercadopago/operational-status", () => {
 
     expect(getClubOperationalStatusMock).toHaveBeenCalledWith("club_1");
     expect(response.status).toBe(200);
-    expect(body).toEqual({ operational: true, cause: null });
+    expect(body).toEqual({
+      operational: true,
+      cause: null,
+      email: "owner@club.com",
+      nickname: "clubowner",
+    });
   });
 
   it("returns operational: false, cause: MP_NOT_CONNECTED when MP is not connected", async () => {
@@ -63,13 +70,20 @@ describe("GET /api/clubs/mercadopago/operational-status", () => {
     getClubOperationalStatusMock.mockResolvedValue({
       operational: false,
       cause: "MP_NOT_CONNECTED",
+      email: null,
+      nickname: null,
     });
 
     const response = await GET();
     const body = await response.json();
 
     expect(response.status).toBe(200);
-    expect(body).toEqual({ operational: false, cause: "MP_NOT_CONNECTED" });
+    expect(body).toEqual({
+      operational: false,
+      cause: "MP_NOT_CONNECTED",
+      email: null,
+      nickname: null,
+    });
   });
 
   it("returns operational: false, cause: CLUB_INACTIVE when the club is inactive but MP is connected", async () => {
@@ -80,13 +94,20 @@ describe("GET /api/clubs/mercadopago/operational-status", () => {
     getClubOperationalStatusMock.mockResolvedValue({
       operational: false,
       cause: "CLUB_INACTIVE",
+      email: "owner@club.com",
+      nickname: "clubowner",
     });
 
     const response = await GET();
     const body = await response.json();
 
     expect(response.status).toBe(200);
-    expect(body).toEqual({ operational: false, cause: "CLUB_INACTIVE" });
+    expect(body).toEqual({
+      operational: false,
+      cause: "CLUB_INACTIVE",
+      email: "owner@club.com",
+      nickname: "clubowner",
+    });
   });
 
   it("returns operational: false, cause: MP_NOT_CONNECTED when both conditions fail (precedence)", async () => {
@@ -97,12 +118,19 @@ describe("GET /api/clubs/mercadopago/operational-status", () => {
     getClubOperationalStatusMock.mockResolvedValue({
       operational: false,
       cause: "MP_NOT_CONNECTED",
+      email: null,
+      nickname: null,
     });
 
     const response = await GET();
     const body = await response.json();
 
     expect(response.status).toBe(200);
-    expect(body).toEqual({ operational: false, cause: "MP_NOT_CONNECTED" });
+    expect(body).toEqual({
+      operational: false,
+      cause: "MP_NOT_CONNECTED",
+      email: null,
+      nickname: null,
+    });
   });
 });

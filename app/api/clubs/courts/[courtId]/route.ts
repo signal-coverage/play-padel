@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import {
+  DuplicateCourtNameError,
   softDeleteCourt,
   updateCourt,
 } from "@/core/courts/services/courts.service";
@@ -36,12 +37,16 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 
   try {
     const court = await updateCourt(
+      authResult.context.clubId,
       courtId,
       parsed.data,
       authResult.context.userId,
     );
     return NextResponse.json({ court });
-  } catch {
+  } catch (err) {
+    if (err instanceof DuplicateCourtNameError) {
+      return NextResponse.json({ error: err.message }, { status: 409 });
+    }
     return NextResponse.json(
       { error: "Failed to update court" },
       { status: 500 },

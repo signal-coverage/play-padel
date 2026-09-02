@@ -1,9 +1,9 @@
-import { Spinner } from "@/components/ui/spinner";
+import { BouncingBall } from "@/components/BouncingBall";
 
 export function DashboardLoader() {
   return (
     <div className="h-svh w-full flex flex-col items-center justify-center gap-3">
-      <Spinner className="size-8 text-primary" />
+      <BouncingBall size={32} amplitude={16} />
       <p className="text-sm text-muted-foreground">Loading your workspace…</p>
     </div>
   );

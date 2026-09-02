@@ -6,6 +6,15 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ClubOperationalGate } from "./ClubOperationalGate";
 import type { ClubOperationalStatusResponse } from "./types";
 
+// This gate mounts PaymentActivationScreen -> PlanSelectionModal, which
+// reads the owner's own email via useAuth (to pre-fill the checkout
+// drawer's email step) — mocked directly rather than wrapping every test
+// in a real <AuthProvider>, which would drag in Clerk (same pattern as
+// PlanSelectionModal's own test file).
+vi.mock("@/hooks/use-auth", () => ({
+  useAuth: () => ({ user: { email: "owner@club.com" } }),
+}));
+
 // Minimal valid membership subscription shape for
 // PaymentActivationScreen's GET /api/clubs/membership fetch.
 const PENDING_SUBSCRIPTION = {
@@ -84,7 +93,7 @@ describe("ClubOperationalGate", () => {
     expect(screen.queryByText("Renew your membership")).not.toBeInTheDocument();
   });
 
-  it("renders children without flashing a gate while status is loading", () => {
+  it("shows a neutral loading state, neither children nor a gate, while status is loading", () => {
     // No fetch ever resolves in this test, so the query stays in its
     // loading state for the whole assertion window.
     vi.stubGlobal(
@@ -105,10 +114,11 @@ describe("ClubOperationalGate", () => {
     );
 
     expect(
-      screen.getByRole("button", { name: "Create court" }),
-    ).toBeInTheDocument();
+      screen.queryByRole("button", { name: "Create court" }),
+    ).not.toBeInTheDocument();
     expect(screen.queryByText("Payment activation")).not.toBeInTheDocument();
     expect(screen.queryByText("Renew your membership")).not.toBeInTheDocument();
+    expect(screen.getByText("Loading dashboard…")).toBeInTheDocument();
   });
 
   it("does not mount children at all when MP_NOT_CONNECTED, and renders the payment activation screen instead", async () => {
@@ -154,8 +164,11 @@ describe("ClubOperationalGate", () => {
     expect(screen.queryByText("Create court")).not.toBeInTheDocument();
     expect(document.querySelector(".blur-sm")).not.toBeInTheDocument();
 
+    // The CTA is no longer a permanent dead end — it triggers the
+    // CANCELLED -> PENDING reactivation flow, so it must render enabled
+    // (see ClubInactiveCard.test.tsx for the click-through behavior).
     const cta = screen.getByRole("button", { name: "Renew membership" });
-    expect(cta).toBeDisabled();
+    expect(cta).not.toBeDisabled();
 
     expect(screen.queryByText("Payment activation")).not.toBeInTheDocument();
   });

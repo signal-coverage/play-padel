@@ -53,3 +53,19 @@ export function isAutomatedCheckoutAvailable(plan: Plan): boolean {
   const details = PLAN_DETAILS[plan];
   return details.monthlyPrice !== null || details.annualPrice !== null;
 }
+
+// Only reached after Mercado Pago's own Brick has ALREADY tokenized the
+// card successfully — this is OUR backend (`POST /api/clubs/membership`)
+// rejecting that token, something the Brick has no visibility into and
+// can't show anything for (unlike its own client-side validation errors,
+// which it already renders itself — see MembershipCheckoutDrawer.tsx).
+// This modal is only ever shown to a club OWNER managing their own club's
+// billing (PaymentActivationScreen, UpgradeMembershipButton — both
+// dashboard-only, never player-facing), so a backend failure here is
+// Play Padel's own platform breaking, not something the owner or their
+// club can self-diagnose — "contact support" points at Play Padel, same
+// wording CardTokenForm.tsx already uses for its own unrecoverable
+// (missing public key) error.
+export function resolveCheckoutErrorMessage(rawMessage: string): string {
+  return `${rawMessage} If this keeps happening, contact support.`;
+}

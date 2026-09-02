@@ -4,6 +4,7 @@ import {
   resolveServerStep,
   resolveCheckoutAmount,
   isAutomatedCheckoutAvailable,
+  resolveCheckoutErrorMessage,
 } from "./utils";
 
 describe("isMembershipConfirmed", () => {
@@ -112,5 +113,21 @@ describe("isAutomatedCheckoutAvailable", () => {
     expect(isAutomatedCheckoutAvailable("BASIC")).toBe(true);
     expect(isAutomatedCheckoutAvailable("PRO")).toBe(true);
     expect(isAutomatedCheckoutAvailable("PLUS")).toBe(true);
+  });
+});
+
+describe("resolveCheckoutErrorMessage", () => {
+  it("appends a support-contact instruction to the server's own message", () => {
+    expect(resolveCheckoutErrorMessage("Card declined by issuer.")).toBe(
+      "Card declined by issuer. If this keeps happening, contact support.",
+    );
+  });
+
+  it("appends the same instruction to the generic fallback message", () => {
+    expect(
+      resolveCheckoutErrorMessage("Something went wrong. Please try again."),
+    ).toBe(
+      "Something went wrong. Please try again. If this keeps happening, contact support.",
+    );
   });
 });

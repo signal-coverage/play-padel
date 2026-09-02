@@ -8,6 +8,7 @@ import { DataTable } from "@/components/DataTable";
 import { SurfacePreview } from "@/components/SurfacePreview";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Tooltip,
@@ -29,10 +30,33 @@ export function CourtsTable({
   onEditClosures,
   onDelete,
   deletingCourtId,
+  selectedIds,
+  onToggleSelect,
+  onToggleSelectAll,
   className,
 }: CourtsTableProps) {
+  const allSelected = courts.length > 0 && selectedIds.size === courts.length;
+
   const columns: DataTableColumn<CourtRecord>[] = useMemo(
     () => [
+      {
+        key: "select",
+        header: (
+          <Checkbox
+            checked={allSelected}
+            onCheckedChange={onToggleSelectAll}
+            aria-label="Select all courts"
+          />
+        ),
+        cell: (court) => (
+          <Checkbox
+            checked={selectedIds.has(court.id)}
+            onCheckedChange={() => onToggleSelect(court.id)}
+            aria-label={`Select ${court.name}`}
+          />
+        ),
+        loadingCell: <Skeleton className="h-4 w-4" />,
+      },
       {
         key: "name",
         header: "Name",
@@ -187,7 +211,17 @@ export function CourtsTable({
         ),
       },
     ],
-    [onEdit, onEditAvailability, onEditClosures, onDelete, deletingCourtId],
+    [
+      onEdit,
+      onEditAvailability,
+      onEditClosures,
+      onDelete,
+      deletingCourtId,
+      allSelected,
+      selectedIds,
+      onToggleSelect,
+      onToggleSelectAll,
+    ],
   );
 
   return (
@@ -199,6 +233,7 @@ export function CourtsTable({
       isLoading={isLoading}
       loadingLabel="Loading courts…"
       emptyState={<CourtsEmptyState />}
+      isRowSelected={(court) => selectedIds.has(court.id)}
     />
   );
 }

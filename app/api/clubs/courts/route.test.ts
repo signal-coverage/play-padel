@@ -9,15 +9,22 @@ vi.mock("../_lib/require-club-operational", () => ({
   requireClubOperational: vi.fn(),
 }));
 
-vi.mock("@/core/courts/services/courts.service", () => ({
-  createCourt: vi.fn(),
-  listCourtsByClub: vi.fn(),
-}));
+vi.mock("@/core/courts/services/courts.service", async () => {
+  const actual = await vi.importActual<
+    typeof import("@/core/courts/services/courts.service")
+  >("@/core/courts/services/courts.service");
+  return {
+    DuplicateCourtNameError: actual.DuplicateCourtNameError,
+    createCourt: vi.fn(),
+    listCourtsByClub: vi.fn(),
+  };
+});
 
 import { requireOwnerClub } from "../_lib/require-owner";
 import { requireClubOperational } from "../_lib/require-club-operational";
 import {
   createCourt,
+  DuplicateCourtNameError,
   listCourtsByClub,
 } from "@/core/courts/services/courts.service";
 import { GET, POST } from "./route";
@@ -81,6 +88,17 @@ describe("POST /api/clubs/courts", () => {
       "user_1",
     );
     expect(response.status).toBe(201);
+  });
+
+  it("returns 409 when the name is already taken in this club", async () => {
+    requireClubOperationalMock.mockResolvedValue({ ok: true });
+    createCourtMock.mockRejectedValue(new DuplicateCourtNameError("Court 1"));
+
+    const response = await POST(makeRequest({ name: "Court 1" }));
+
+    expect(response.status).toBe(409);
+    const body = await response.json();
+    expect(body.error).toMatch(/already exists/i);
   });
 });
 

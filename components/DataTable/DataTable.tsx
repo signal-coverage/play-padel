@@ -21,6 +21,8 @@ import type { DataTableProps } from "./types";
 
 const DEFAULT_LOADING_ROW_COUNT = 5;
 const EDGE_FADE_WIDTH_PX = 24;
+const EDGE_COLUMN_PADDING_CLASSNAME =
+  "[&_th:first-child]:pl-4 [&_th:last-child]:pr-4 [&_td:first-child]:pl-4 [&_td:last-child]:pr-4";
 
 export function DataTable<T>({
   columns,
@@ -74,7 +76,7 @@ export function DataTable<T>({
           {loadingLabel}
         </span>
         <div className="min-h-0 min-w-0 flex-1 overflow-auto">
-          <Table aria-hidden="true">
+          <Table aria-hidden="true" className={EDGE_COLUMN_PADDING_CLASSNAME}>
             <TableHeader>
               <TableRow>
                 {columns.map((column) => (
@@ -120,7 +122,7 @@ export function DataTable<T>({
         onScroll={updateFades}
         className="min-h-0 min-w-0 flex-1 overflow-auto"
       >
-        <Table>
+        <Table className={EDGE_COLUMN_PADDING_CLASSNAME}>
           <TableHeader>
             <TableRow>
               {columns.map((column) => (

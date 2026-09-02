@@ -4,6 +4,7 @@ import Image from "next/image";
 import { motion, useReducedMotion } from "framer-motion";
 import { ease, bannerImage } from "./consts";
 import { CONTAINER } from "@/lib/consts";
+import { ArrowUpRight } from "lucide-react";
 
 export function LandingCtaBanner() {
   const shouldReduce = useReducedMotion();
@@ -59,9 +60,10 @@ export function LandingCtaBanner() {
         >
           <Link
             href="/signup"
-            className="inline-flex items-center bg-[#DFFD36] text-[#111111] rounded-full px-7 py-3.5 text-[15px] font-semibold hover:-translate-y-0.5 hover:shadow-xl transition-all duration-200"
+            className="inline-flex items-center gap-2 items-center bg-accent text-accent-foreground rounded-full px-7 py-3.5 text-[15px] font-semibold hover:-translate-y-0.5 hover:shadow-xl transition-all duration-200"
           >
-            Get Started Free
+            Get Started
+            <ArrowUpRight size={15} strokeWidth={2.5} />
           </Link>
           <Link
             href="/signup"

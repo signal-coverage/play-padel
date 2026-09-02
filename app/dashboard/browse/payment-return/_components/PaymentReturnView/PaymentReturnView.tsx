@@ -5,9 +5,10 @@ import Link from "next/link";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { track } from "@vercel/analytics";
 import { track as trackAmplitude } from "@amplitude/unified";
-import { Loader2, CheckCircle2, XCircle } from "lucide-react";
+import { CheckCircle2, XCircle } from "lucide-react";
+import { BouncingBall } from "@/components/BouncingBall";
 import { Button } from "@/components/ui/button";
-import { fireSuccessConfetti } from "@/lib/utils/confetti";
+import { fireSuccessCelebration } from "@/lib/utils/celebration";
 import { usePaymentReturnStatus } from "./hooks";
 
 export function PaymentReturnView({
@@ -23,7 +24,7 @@ export function PaymentReturnView({
     track("payment_confirmed");
     trackAmplitude("payment_confirmed");
     if (!shouldReduceMotion) {
-      fireSuccessConfetti();
+      fireSuccessCelebration();
     }
   }, [state, shouldReduceMotion]);
 
@@ -38,7 +39,9 @@ export function PaymentReturnView({
       ? "Confirming your payment…"
       : state === "success"
         ? "Payment confirmed. Your reservation is booked."
-        : "Payment didn't complete. Your slot hold has expired.";
+        : state === "error"
+          ? "We couldn't check your payment status. Contact the club to confirm your reservation."
+          : "Payment didn't complete. Your slot hold has expired.";
 
   let content: React.ReactNode;
   let contentKey: string;
@@ -60,13 +63,36 @@ export function PaymentReturnView({
     contentKey = "processing";
     content = (
       <>
-        <Loader2 className="h-10 w-10 animate-spin text-muted-foreground" />
+        <BouncingBall size={32} amplitude={16} />
         <div>
           <p className="font-medium">Confirming your payment…</p>
           <p className="text-sm text-muted-foreground">
             This usually takes a few seconds.
           </p>
         </div>
+      </>
+    );
+  } else if (state === "error") {
+    // OUR OWN backend call failed (see hooks.ts's `query.isError` check) —
+    // distinct from "failed" (a genuine, settled payment/hold outcome).
+    // The player can't self-diagnose a platform bug, and unlike an owner
+    // (who'd contact Play Padel support directly, see PlanSelectionModal's
+    // resolveCheckoutErrorMessage), a player's direct point of contact is
+    // the club itself — the club can look up the reservation/charge
+    // through its own dashboard and escalate to Play Padel if needed.
+    contentKey = "error";
+    content = (
+      <>
+        <XCircle className="h-10 w-10 text-destructive" />
+        <div>
+          <p className="font-medium">We couldn&apos;t check your payment</p>
+          <p className="text-sm text-muted-foreground">
+            Contact the club directly to confirm your reservation.
+          </p>
+        </div>
+        <Button asChild>
+          <Link href="/dashboard/my-reservations">View my reservations</Link>
+        </Button>
       </>
     );
   } else if (state === "success") {

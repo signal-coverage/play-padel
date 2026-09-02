@@ -17,9 +17,9 @@ function renderPanel(
     renewalMode: "AUTO" as const,
     errorMessage: null,
     isSubmitting: false,
-    onSelectPlan: vi.fn(),
     onBillingCycleChange: vi.fn(),
     onRenewalModeChange: vi.fn(),
+    onChangePlan: vi.fn(),
     onContinue: vi.fn(),
     ...overrides,
   };
@@ -28,28 +28,45 @@ function renderPanel(
 }
 
 describe("SelectPlanPanel", () => {
-  it("renders every plan as a radio with the selected plan checked", () => {
+  it("shows a single card for the selected plan, with a Change Plan action", () => {
     renderPanel({ selectedPlan: "PRO" });
 
     expect(screen.getByRole("radio", { name: /PRO/ })).toHaveAttribute(
       "aria-checked",
       "true",
     );
-    expect(screen.getByRole("radio", { name: /BASIC/ })).toHaveAttribute(
-      "aria-checked",
-      "false",
-    );
+    expect(
+      screen.getByRole("button", { name: /change plan/i }),
+    ).toBeInTheDocument();
   });
 
-  it("calls onSelectPlan when a different plan card is clicked", () => {
+  it("calls onChangePlan when Change Plan is clicked", () => {
     const props = renderPanel();
 
-    fireEvent.click(screen.getByRole("radio", { name: /PRO/ }));
+    fireEvent.click(screen.getByRole("button", { name: /change plan/i }));
 
-    expect(props.onSelectPlan).toHaveBeenCalledWith("PRO");
+    expect(props.onChangePlan).toHaveBeenCalled();
   });
 
-  it("shows the renewal-mode toggle only for monthly billing", () => {
+  it("renders nothing when there is no selected plan yet", () => {
+    const { container } = render(
+      <SelectPlanPanel
+        selectedPlan={null}
+        billingCycle="monthly"
+        renewalMode="AUTO"
+        errorMessage={null}
+        isSubmitting={false}
+        onBillingCycleChange={vi.fn()}
+        onRenewalModeChange={vi.fn()}
+        onChangePlan={vi.fn()}
+        onContinue={vi.fn()}
+      />,
+    );
+
+    expect(container).toBeEmptyDOMElement();
+  });
+
+  it("shows the renewal-mode toggle for both monthly and annual billing", () => {
     const { rerender } = render(
       <SelectPlanPanel
         selectedPlan="BASIC"
@@ -57,9 +74,9 @@ describe("SelectPlanPanel", () => {
         renewalMode="AUTO"
         errorMessage={null}
         isSubmitting={false}
-        onSelectPlan={vi.fn()}
         onBillingCycleChange={vi.fn()}
         onRenewalModeChange={vi.fn()}
+        onChangePlan={vi.fn()}
         onContinue={vi.fn()}
       />,
     );
@@ -74,15 +91,15 @@ describe("SelectPlanPanel", () => {
         renewalMode="AUTO"
         errorMessage={null}
         isSubmitting={false}
-        onSelectPlan={vi.fn()}
         onBillingCycleChange={vi.fn()}
         onRenewalModeChange={vi.fn()}
+        onChangePlan={vi.fn()}
         onContinue={vi.fn()}
       />,
     );
     expect(
-      screen.queryByRole("radiogroup", { name: /renewal mode/i }),
-    ).not.toBeInTheDocument();
+      screen.getByRole("radiogroup", { name: /renewal mode/i }),
+    ).toBeInTheDocument();
   });
 
   it("disables Continue and shows a contact-us note when MAX is selected", () => {

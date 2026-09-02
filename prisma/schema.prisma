@@ -38,6 +38,7 @@ model Club {
   waitlistEntries        WaitlistEntry[]
   mercadoPagoAccount     ClubMercadoPagoAccount?
   membershipSubscription ClubMembershipSubscription?
+  operatingHours         ClubOperatingHours[]
 
   @@map("clubs")
 }
@@ -79,6 +80,12 @@ model ClubMercadoPagoAccount {
   mpUserId String?
   liveMode Boolean @default(false)
   scope    String?
+
+  // Human-readable identity of the connected account (from GET /users/me),
+  // fetched best-effort at connect time — used only to display which
+  // Mercado Pago account a club is linked to. Never used for auth.
+  mpEmail    String?
+  mpNickname String?
 
   // AES-256-GCM ciphertext (iv + authTag + data, see tokenCrypto.ts) — never
   // plaintext.
@@ -299,6 +306,27 @@ model Court {
 
   @@index([clubId, active])
   @@map("courts")
+}
+
+// Club-level "normally open" days/hours — distinct from CourtAvailability
+// (which drives actual bookable slots per court). Onboarding's operating-
+// hours step writes these; a newly-created court with no explicit
+// availability of its own is seeded from these rows (see
+// resolveDefaultCourtAvailability in core/clubs/services/operatingHours.service.ts).
+// No @@unique — same "delete all, recreate on every write" convention as
+// CourtAvailability, enforced in the service layer rather than the DB.
+model ClubOperatingHours {
+  id        String   @id @default(cuid())
+  clubId    String
+  club      Club     @relation(fields: [clubId], references: [id])
+  dayOfWeek Int
+  startTime String
+  endTime   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([clubId, dayOfWeek])
+  @@map("club_operating_hours")
 }
 
 model CourtAvailability {

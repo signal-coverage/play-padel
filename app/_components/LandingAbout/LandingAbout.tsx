@@ -21,7 +21,7 @@ export function LandingAbout() {
           <br />
           <span className="text-muted-foreground">Clubs Who Want More</span>
         </h2>
-        <span className="inline-flex items-center bg-foreground text-white rounded-full px-4 py-2 text-[13px] font-semibold">
+        <span className="inline-flex items-center bg-foreground text-background rounded-full px-4 py-2 text-[13px] font-semibold">
           Booking, Simplified
         </span>
       </div>
@@ -91,7 +91,7 @@ export function LandingAbout() {
           <Link
             href="#appointment"
             onClick={(e) => scrollToSection(e, "#appointment")}
-            className="absolute left-5 bottom-5 inline-flex items-center gap-1.5 bg-white/90 backdrop-blur-sm text-foreground rounded-full px-4 py-2 text-sm font-semibold hover:bg-white transition-colors"
+            className="absolute left-5 bottom-5 inline-flex items-center gap-1.5 bg-white/90 backdrop-blur-sm text-neutral-900 rounded-full px-4 py-2 text-sm font-semibold hover:bg-white transition-colors"
           >
             Learn More
             <ArrowUpRight size={15} strokeWidth={2.5} />

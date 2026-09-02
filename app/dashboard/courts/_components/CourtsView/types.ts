@@ -23,12 +23,10 @@ export type CourtFormValues = {
   active: boolean;
 };
 
-export type AvailabilityDayRow = {
-  dayOfWeek: number;
-  active: boolean;
-  startTime: string;
-  endTime: string;
-};
+// Relocated to the shared, cross-feature component — see
+// components/AvailabilityRowsEditor/types.ts. Re-exported here so this
+// feature's own CourtFormSheet.tsx/utils.ts imports don't need to change.
+export type { AvailabilityDayRow } from "@/components/AvailabilityRowsEditor";
 
 export type RawCourtClosure = {
   id: string;

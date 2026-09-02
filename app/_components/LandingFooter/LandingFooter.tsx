@@ -14,7 +14,7 @@ export function LandingFooter() {
     <footer className="bg-[#0A0A0A] text-white overflow-hidden">
       <div className={`${CONTAINER} pt-20 pb-0`}>
         <motion.div
-          className="flex flex-col md:flex-row md:justify-between gap-10 mb-20"
+          className="flex flex-col md:flex-row md:justify-between gap-10 mb-15"
           initial={shouldReduce ? false : { opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-60px" }}
@@ -79,10 +79,7 @@ export function LandingFooter() {
           viewport={{ once: true, margin: "-60px" }}
           transition={{ duration: 0.6, ease, delay: 0.1 }}
         >
-          <div
-            className="overflow-hidden leading-none text-[clamp(56px,11vw,160px)]"
-            style={{ height: "0.80em" }}
-          >
+          <div className="overflow-hidden leading-none text-[clamp(56px,11vw,130px)] pb-4">
             <span className="block font-extrabold tracking-[-0.04em] text-[#DFFD36] whitespace-nowrap">
               Play Padel
             </span>

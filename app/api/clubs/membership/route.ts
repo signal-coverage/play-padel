@@ -1,7 +1,10 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { requireOwnerClub } from "../_lib/require-owner";
 import { prisma } from "@/infrastructure/db/client";
-import { createMembershipCheckoutSchema } from "@/core/billing/schemas/membershipCheckout.schema";
+import {
+  createMembershipCheckoutSchema,
+  changeTrialPlanSchema,
+} from "@/core/billing/schemas/membershipCheckout.schema";
 import { PLAN_DETAILS } from "@/lib/consts/planPricing";
 import {
   getMembershipSubscription,
@@ -9,12 +12,16 @@ import {
   attachPendingPreapproval,
   attachPendingPreference,
   startTrial,
+  changeTrialPlan,
 } from "@/core/billing/services/membership.service";
 import {
   getOrCreateMembershipPreapprovalPlanId,
   resolveFreeTrialConfig,
 } from "@/lib/mercadopago/preapprovalPlans";
-import { createMembershipPreapproval } from "@/lib/mercadopago/membershipPreapprovals";
+import {
+  createMembershipPreapproval,
+  updateMembershipPreapprovalAmount,
+} from "@/lib/mercadopago/membershipPreapprovals";
 import { createMembershipPreference } from "@/lib/mercadopago/platformPreferences";
 
 function requireAppUrl(): string {
@@ -300,6 +307,91 @@ export async function POST(request: NextRequest) {
         : "Failed to start membership checkout";
     console.error(
       `[clubs/membership] Failed to start ${cycle} checkout for club ${clubId}:`,
+      err,
+    );
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}
+
+// Changes the caller's own club's plan tier IMMEDIATELY, valid ONLY while
+// the membership subscription is TRIALING — every plan tier currently has a
+// free trial, and while trialing no real charge has happened yet on EITHER
+// cycle (MONTHLY: an authorized-but-uncharged preapproval; ANNUAL: no
+// Mercado Pago object at all), so whatever the owner picks here simply
+// becomes what eventually gets charged. Deliberately separate from
+// `requestPlanChange` (core/billing/services/membership.service.ts), which
+// only applies once ACTIVE and defers to the next renewal boundary with no
+// proration — that mechanism is untouched by this route. Scope is plan tier
+// only, same billing cycle — cycle switching (MONTHLY<->ANNUAL) is not
+// covered here.
+export async function PATCH(request: NextRequest) {
+  const authResult = await requireOwnerClub();
+  if (!authResult.ok) return authResult.response;
+
+  const body = await request.json().catch(() => null);
+  const parsed = changeTrialPlanSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: parsed.error.issues[0]?.message ?? "Invalid input" },
+      { status: 400 },
+    );
+  }
+
+  const clubId = authResult.context.clubId;
+  const existing = await getMembershipSubscription(clubId);
+  if (!existing) {
+    return NextResponse.json(
+      { error: "No membership subscription found" },
+      { status: 404 },
+    );
+  }
+
+  if (existing.status !== "TRIALING") {
+    return NextResponse.json(
+      { error: "Plan can only be changed immediately while on a free trial" },
+      { status: 409 },
+    );
+  }
+
+  const { plan } = parsed.data;
+  const planDetails = PLAN_DETAILS[plan];
+  const price =
+    existing.cycle === "MONTHLY"
+      ? planDetails.monthlyPrice
+      : planDetails.annualPrice;
+
+  if (price == null) {
+    return NextResponse.json(
+      {
+        error: `Plan ${plan} is not available for automated ${existing.cycle === "MONTHLY" ? "monthly" : "annual"} checkout`,
+      },
+      { status: 400 },
+    );
+  }
+
+  try {
+    // MONTHLY already has an authorized preapproval on file — its own
+    // charge amount must be kept in sync via MP's own PUT support for
+    // updating an existing subscription's amount (see
+    // updateMembershipPreapprovalAmount's doc comment). ANNUAL trials never
+    // create a Mercado Pago object at all (see `startTrial`'s ANNUAL
+    // caller above), so there is nothing to update there.
+    if (existing.cycle === "MONTHLY" && existing.mpPreapprovalId) {
+      await updateMembershipPreapprovalAmount(
+        existing.mpPreapprovalId,
+        price,
+        existing.currency,
+      );
+    }
+
+    const subscription = await changeTrialPlan({ clubId, newPlan: plan });
+
+    return NextResponse.json({ subscription });
+  } catch (err) {
+    const message =
+      err instanceof Error ? err.message : "Failed to change plan";
+    console.error(
+      `[clubs/membership] Failed to change trial plan for club ${clubId}:`,
       err,
     );
     return NextResponse.json({ error: message }, { status: 500 });

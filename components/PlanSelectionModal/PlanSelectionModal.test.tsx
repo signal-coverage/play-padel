@@ -11,27 +11,60 @@ import "@testing-library/jest-dom/vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AWAITING_CONFIRMATION_POLL_INTERVAL_MS } from "./consts";
 
+// Mocked purely so the tests below can assert whether the celebration
+// fired — the real module is a plain event dispatch with no DOM/canvas
+// involvement at all (SuccessCelebrationPortal, which isn't mounted in
+// these tests, owns actually rendering anything), so calling it for real
+// here would just be a harmless no-op with no listener attached.
+const { fireSuccessCelebrationMock } = vi.hoisted(() => ({
+  fireSuccessCelebrationMock: vi.fn(),
+}));
+vi.mock("@/lib/utils/celebration", () => ({
+  fireSuccessCelebration: fireSuccessCelebrationMock,
+}));
+
+// PlanSelectionModal now reads the owner's own email (to pre-fill the
+// checkout drawer's email step) via useAuth — mocked directly rather than
+// wrapping every test in a real <AuthProvider>, which would drag in Clerk.
+const { useAuthMock } = vi.hoisted(() => ({
+  useAuthMock: vi.fn(() => ({ user: { email: "owner@club.com" } })),
+}));
+vi.mock("@/hooks/use-auth", () => ({
+  useAuth: useAuthMock,
+}));
+
 // Same pattern as CardTokenForm.test.tsx: stand in for the real Brick so
 // the full MONTHLY flow can be exercised end-to-end without mounting MP's
 // real iframe-based UI.
 vi.mock("@mercadopago/sdk-react", () => ({
   initMercadoPago: vi.fn(),
-  CardPayment: (props: { onSubmit: (formData: unknown) => Promise<void> }) => (
-    <button
-      type="button"
-      onClick={() =>
-        props.onSubmit({
-          token: "tok_test",
-          issuer_id: "1",
-          payment_method_id: "visa",
-          transaction_amount: 30000,
-          installments: 1,
-          payer: { email: "owner@club.com" },
-        })
-      }
-    >
-      Simulate submit
-    </button>
+  CardPayment: (props: {
+    onSubmit: (formData: unknown) => Promise<void>;
+    onError?: (param: { message?: string }) => void;
+  }) => (
+    <>
+      <button
+        type="button"
+        onClick={() =>
+          props.onSubmit({
+            token: "tok_test",
+            issuer_id: "1",
+            payment_method_id: "visa",
+            transaction_amount: 30000,
+            installments: 1,
+            payer: { email: "owner@club.com" },
+          })
+        }
+      >
+        Simulate submit
+      </button>
+      <button
+        type="button"
+        onClick={() => props.onError?.({ message: "invalid card number" })}
+      >
+        Simulate brick error
+      </button>
+    </>
   ),
 }));
 
@@ -72,6 +105,11 @@ function renderModal(
 
 beforeEach(() => {
   vi.stubEnv("NEXT_PUBLIC_MERCADOPAGO_PUBLIC_KEY", "TEST-public-key");
+  fireSuccessCelebrationMock.mockClear();
+  // Re-applied every test rather than relying on afterEach's
+  // `restoreAllMocks()` to preserve it — `vi.fn(impl)`'s own initial
+  // implementation is exactly the kind of thing that call can clear.
+  useAuthMock.mockReturnValue({ user: { email: "owner@club.com" } });
 });
 
 afterEach(() => {
@@ -103,7 +141,26 @@ describe("PlanSelectionModal", () => {
     );
   });
 
-  it("shows the confirmed panel directly when the subscription is already ACTIVE", async () => {
+  it("pre-fills the checkout drawer's email step with the owner's own account email", async () => {
+    renderModal(async (url) => {
+      if (url === "/api/clubs/membership") {
+        return {
+          ok: true,
+          json: async () => ({ subscription: PENDING_SUBSCRIPTION }),
+        };
+      }
+      throw new Error(`unexpected fetch: ${url}`);
+    });
+
+    await screen.findByRole("radio", { name: /BASIC/ });
+    fireEvent.click(screen.getByRole("button", { name: /continue/i }));
+
+    expect(await screen.findByLabelText(/email/i)).toHaveValue(
+      "owner@club.com",
+    );
+  });
+
+  it("shows the confirmed panel directly when the subscription is already ACTIVE, without a celebration", async () => {
     renderModal(async (url) => {
       if (url === "/api/clubs/membership") {
         return {
@@ -117,6 +174,9 @@ describe("PlanSelectionModal", () => {
     });
 
     expect(await screen.findByText("Membership Active")).toBeInTheDocument();
+    // The celebration marks a payment JUST settling, not the owner merely
+    // reopening a dialog that's already been ACTIVE all along.
+    expect(fireSuccessCelebrationMock).not.toHaveBeenCalled();
   });
 
   it("shows a retry state when the subscription fetch fails", async () => {
@@ -166,6 +226,7 @@ describe("PlanSelectionModal", () => {
     fireEvent.change(await screen.findByLabelText(/email/i), {
       target: { value: "owner@club.com" },
     });
+    fireEvent.click(screen.getByRole("button", { name: /verify/i }));
 
     fireEvent.click(
       await screen.findByRole("button", { name: "Simulate submit" }),
@@ -193,6 +254,50 @@ describe("PlanSelectionModal", () => {
     // confirmation, see route.ts), so the trial-specific copy shows instead
     // of the paid-confirmation copy — see ConfirmedPanel's `isTrialing`.
     expect(await screen.findByText("Free Trial Active")).toBeInTheDocument();
+    // Regression: the checkout drawer's own "awaiting confirmation" view
+    // must hand off to the confirmed panel once the server snapshot says
+    // so, same as the Dialog step already does — otherwise the Sheet stays
+    // open forever on top of it (`isDrawerFlow` only ever checked
+    // `localStep`/`billingCycle`, never `isConfirmed`), stuck polling with
+    // no way out short of a manual close.
+    expect(
+      screen.queryByText(/confirming your payment/i),
+    ).not.toBeInTheDocument();
+  });
+
+  // The Brick already renders its own error UI for its own validation
+  // failures (verified live — MP shows e.g. "Something went wrong. Please
+  // try again later." directly above its own "Pay" button); this app's own
+  // error box next to it is reserved for OUR backend rejecting an already-
+  // tokenized card (see the next test), not a second copy of what the
+  // Brick itself already displayed.
+  it("does not show its own error box for the Brick's own validation errors", async () => {
+    renderModal(async (url, init) => {
+      if (
+        url === "/api/clubs/membership" &&
+        (!init || init.method === undefined)
+      ) {
+        return {
+          ok: true,
+          json: async () => ({ subscription: PENDING_SUBSCRIPTION }),
+        };
+      }
+      throw new Error(`unexpected fetch: ${url}`);
+    });
+
+    await screen.findByRole("radio", { name: /BASIC/ });
+    fireEvent.click(screen.getByRole("button", { name: /continue/i }));
+
+    fireEvent.change(await screen.findByLabelText(/email/i), {
+      target: { value: "owner@club.com" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /verify/i }));
+
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Simulate brick error" }),
+    );
+
+    expect(screen.queryByText("invalid card number")).not.toBeInTheDocument();
   });
 
   it("completes the ANNUAL flow: select plan, continue opens the checkout tab, then shows awaiting confirmation", async () => {
@@ -425,6 +530,10 @@ describe("PlanSelectionModal", () => {
         },
         { timeout: AWAITING_CONFIRMATION_POLL_INTERVAL_MS + 3000 },
       );
+      // Same genuine TRIALING -> ACTIVE transition that closes the tab
+      // above also celebrates it — this is the owner's actual payment
+      // settling, tracked live while still on the confirmed panel.
+      expect(fireSuccessCelebrationMock).toHaveBeenCalledTimes(1);
     },
     AWAITING_CONFIRMATION_POLL_INTERVAL_MS + 5000,
   );
@@ -568,6 +677,74 @@ describe("PlanSelectionModal", () => {
       expect(fakeCheckoutWindow.close).toHaveBeenCalledTimes(1);
     });
     expect(await screen.findByText("Membership Active")).toBeInTheDocument();
+  });
+
+  // The gap this fix closes: a TRIALING owner previously had no way to
+  // switch plan tier at all — ConfirmedPanel had no action for it. Since no
+  // real charge has happened yet on either cycle while TRIALING, the change
+  // applies IMMEDIATELY via PATCH, never through the checkout wizard.
+  it("changes plan immediately for a TRIALING subscription via Change Plan, without ever showing the checkout wizard", async () => {
+    let currentPlan = "BASIC";
+    const fetchMock = renderModal(async (url, init) => {
+      if (
+        url === "/api/clubs/membership" &&
+        (!init || init.method === undefined)
+      ) {
+        return {
+          ok: true,
+          json: async () => ({
+            subscription: {
+              ...PENDING_SUBSCRIPTION,
+              plan: currentPlan,
+              status: "TRIALING",
+            },
+          }),
+        };
+      }
+      if (url === "/api/clubs/membership" && init?.method === "PATCH") {
+        currentPlan = "PRO";
+        return {
+          ok: true,
+          json: async () => ({
+            subscription: {
+              ...PENDING_SUBSCRIPTION,
+              plan: "PRO",
+              status: "TRIALING",
+            },
+          }),
+        };
+      }
+      throw new Error(`unexpected fetch: ${url}`);
+    });
+
+    expect(await screen.findByText("Free Trial Active")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Change Plan" }));
+
+    fireEvent.click(await screen.findByRole("radio", { name: /PRO/ }));
+
+    await waitFor(() => {
+      const patchCall = fetchMock.mock.calls.find(
+        ([, init]) => init?.method === "PATCH",
+      );
+      expect(patchCall).toBeDefined();
+    });
+
+    const [, patchInit] = fetchMock.mock.calls.find(
+      ([, init]) => init?.method === "PATCH",
+    ) as [string, RequestInit];
+    expect(JSON.parse(patchInit.body as string)).toEqual({ plan: "PRO" });
+
+    // Never enters the checkout wizard — stays on the confirmed trial panel.
+    expect(screen.getByText("Free Trial Active")).toBeInTheDocument();
+    expect(screen.queryByLabelText(/email/i)).not.toBeInTheDocument();
+
+    // Reopening Change Plan reflects the newly-applied plan as checked,
+    // proving the confirmed subscription's plan actually updated.
+    fireEvent.click(screen.getByRole("button", { name: "Change Plan" }));
+    expect(await screen.findByRole("radio", { name: /PRO/ })).toHaveAttribute(
+      "aria-checked",
+      "true",
+    );
   });
 
   it("goes back from the card step to plan selection", async () => {

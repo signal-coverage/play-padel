@@ -1,12 +1,8 @@
-import type { CardTokenResult } from "../CardTokenForm/types";
-
 export type CardCollectionPanelProps = {
-  amount: number;
   payerEmail: string;
-  errorMessage: string | null;
-  isSubmitting: boolean;
+  // The owner's own account email (from Clerk) — pre-fills the draft field
+  // so most owners can just click Verify, without forcing it: still a
+  // plain editable default, not a locked/verified value.
+  defaultEmail?: string;
   onPayerEmailChange: (email: string) => void;
-  onTokenReady: (result: CardTokenResult) => void;
-  onCardError: (message: string) => void;
-  onBack: () => void;
 };

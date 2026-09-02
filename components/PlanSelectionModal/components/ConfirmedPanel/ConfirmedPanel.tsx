@@ -22,6 +22,9 @@ export function ConfirmedPanel({
   onPayNow,
   isPayNowLoading,
   payNowError,
+  onChangePlan,
+  isChangingPlan,
+  changePlanError,
 }: ConfirmedPanelProps) {
   return (
     <StatusBox className="flex flex-col items-center gap-3 py-12">
@@ -46,6 +49,21 @@ export function ConfirmedPanel({
           </Button>
           {payNowError && (
             <p className="text-sm text-destructive">{payNowError}</p>
+          )}
+        </div>
+      )}
+      {isTrialing && onChangePlan && (
+        <div className="flex flex-col items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onChangePlan}
+            disabled={isChangingPlan}
+          >
+            {isChangingPlan ? "Changing plan..." : "Change Plan"}
+          </Button>
+          {changePlanError && (
+            <p className="text-sm text-destructive">{changePlanError}</p>
           )}
         </div>
       )}

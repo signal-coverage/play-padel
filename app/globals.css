@@ -445,3 +445,96 @@
     display: none;
   }
 }
+
+/* Mercado Pago CardPayment Brick sizing (see CardTokenForm.tsx) — tighter
+   padding/height/font-size than MP's own defaults, so the embedded card
+   form takes up less room inside its drawer. The Brick sets these as
+   literal inline CSS custom properties on its own `#cardPaymentBrick_container`
+   div (verified against a live-rendered Brick, not guessed from docs), so
+   `!important` is required here to win over that inline declaration — a
+   specificity fact, unrelated to whether MP's JS `customization` prop
+   would also reach these (several of them, like `--input-min-height` and
+   `--row-spacing`, aren't part of that prop's documented API at all, only
+   of the raw rendered CSS). Colors are deliberately left at MP's own
+   defaults — see CardTokenForm.tsx's comment on why. */
+#cardPaymentBrick_container {
+  --input-min-height: 30px !important;
+  --input-vertical-padding: 5px !important;
+  --input-horizontal-padding: 10px !important;
+  --label-spacing: 3px !important;
+  --row-spacing: 12px !important;
+  --row-gap: 10px !important;
+  --form-padding: 12px !important;
+  --font-size-extra-extra-small: 10px !important;
+  --font-size-extra-small: 11px !important;
+  --font-size-small: 11px !important;
+  --font-size-medium: 12px !important;
+  --font-size-large: 14px !important;
+  --font-size-extra-large: 16px !important;
+  --font-size-extra-extra-large: 17px !important;
+}
+
+/* Sonner toasts (components/ui/sonner.tsx). The default border/shadow blend
+   too much into the page, especially in dark mode where `--border` is only
+   10% white on a near-black `--popover` background — a toast barely read as
+   its own floating element. A real shadow, a colored left accent, a faint
+   tinted background, and more generous sizing per toast type make it read
+   as an attention-worthy overlay instead of just another (small) card on
+   the page. `!important` because Sonner ships its own base rules on the
+   same `[data-sonner-toast]` element this class sits on, at comparable
+   specificity. */
+.cn-toast {
+  border-width: 1.5px !important;
+  padding: 16px 18px !important;
+  font-size: 0.9375rem !important;
+  box-shadow:
+    0 10px 30px -6px rgb(0 0 0 / 0.18),
+    0 3px 10px -3px rgb(0 0 0 / 0.12) !important;
+}
+
+.dark .cn-toast {
+  box-shadow:
+    0 10px 34px -6px rgb(0 0 0 / 0.6),
+    0 3px 12px -3px rgb(0 0 0 / 0.45) !important;
+}
+
+/* A light tint (not a solid fill) keeps body text readable while still
+   color-coding the toast at a glance — `color-mix` blends toward each
+   theme's own `--popover` so the tint stays correct in both light and dark
+   without a separate `.dark` override. */
+.cn-toast[data-type="success"] {
+  border-left: 3px solid var(--success) !important;
+  background: color-mix(
+    in oklch,
+    var(--success) 12%,
+    var(--popover)
+  ) !important;
+}
+
+.cn-toast[data-type="error"] {
+  border-left: 3px solid var(--destructive) !important;
+  background: color-mix(
+    in oklch,
+    var(--destructive) 12%,
+    var(--popover)
+  ) !important;
+}
+
+.cn-toast[data-type="warning"] {
+  border-left: 3px solid var(--warning) !important;
+  background: color-mix(
+    in oklch,
+    var(--warning) 12%,
+    var(--popover)
+  ) !important;
+}
+
+.cn-toast[data-type="info"],
+.cn-toast[data-type="loading"] {
+  border-left: 3px solid var(--primary) !important;
+  background: color-mix(
+    in oklch,
+    var(--primary) 12%,
+    var(--popover)
+  ) !important;
+}

@@ -33,12 +33,21 @@ describe("getClubOperationalStatus", () => {
   it("reports operational when the club is ACTIVE and MP-connected", async () => {
     findUniqueMock.mockResolvedValue({
       status: "ACTIVE",
-      mercadoPagoAccount: { status: "CONNECTED" },
+      mercadoPagoAccount: {
+        status: "CONNECTED",
+        mpEmail: "owner@club.com",
+        mpNickname: "clubowner",
+      },
     });
 
     const result = await getClubOperationalStatus("club_1");
 
-    expect(result).toEqual({ operational: true, cause: null });
+    expect(result).toEqual({
+      operational: true,
+      cause: null,
+      email: "owner@club.com",
+      nickname: "clubowner",
+    });
   });
 
   it("reports MP_NOT_CONNECTED when the club is ACTIVE but has no MP account", async () => {
@@ -49,29 +58,52 @@ describe("getClubOperationalStatus", () => {
 
     const result = await getClubOperationalStatus("club_1");
 
-    expect(result).toEqual({ operational: false, cause: "MP_NOT_CONNECTED" });
+    expect(result).toEqual({
+      operational: false,
+      cause: "MP_NOT_CONNECTED",
+      email: null,
+      nickname: null,
+    });
   });
 
   it("reports MP_NOT_CONNECTED when the club's MP account status is NOT_CONNECTED", async () => {
     findUniqueMock.mockResolvedValue({
       status: "ACTIVE",
-      mercadoPagoAccount: { status: "NOT_CONNECTED" },
+      mercadoPagoAccount: {
+        status: "NOT_CONNECTED",
+        mpEmail: null,
+        mpNickname: null,
+      },
     });
 
     const result = await getClubOperationalStatus("club_1");
 
-    expect(result).toEqual({ operational: false, cause: "MP_NOT_CONNECTED" });
+    expect(result).toEqual({
+      operational: false,
+      cause: "MP_NOT_CONNECTED",
+      email: null,
+      nickname: null,
+    });
   });
 
   it("reports CLUB_INACTIVE when MP is connected but the club status is not ACTIVE", async () => {
     findUniqueMock.mockResolvedValue({
       status: "SUSPENDED",
-      mercadoPagoAccount: { status: "CONNECTED" },
+      mercadoPagoAccount: {
+        status: "CONNECTED",
+        mpEmail: "owner@club.com",
+        mpNickname: "clubowner",
+      },
     });
 
     const result = await getClubOperationalStatus("club_1");
 
-    expect(result).toEqual({ operational: false, cause: "CLUB_INACTIVE" });
+    expect(result).toEqual({
+      operational: false,
+      cause: "CLUB_INACTIVE",
+      email: "owner@club.com",
+      nickname: "clubowner",
+    });
   });
 
   it("prefers MP_NOT_CONNECTED when both causes apply simultaneously", async () => {
@@ -82,7 +114,12 @@ describe("getClubOperationalStatus", () => {
 
     const result = await getClubOperationalStatus("club_1");
 
-    expect(result).toEqual({ operational: false, cause: "MP_NOT_CONNECTED" });
+    expect(result).toEqual({
+      operational: false,
+      cause: "MP_NOT_CONNECTED",
+      email: null,
+      nickname: null,
+    });
   });
 
   it("reports MP_NOT_CONNECTED when the club itself cannot be found", async () => {
@@ -90,6 +127,11 @@ describe("getClubOperationalStatus", () => {
 
     const result = await getClubOperationalStatus("club_missing");
 
-    expect(result).toEqual({ operational: false, cause: "MP_NOT_CONNECTED" });
+    expect(result).toEqual({
+      operational: false,
+      cause: "MP_NOT_CONNECTED",
+      email: null,
+      nickname: null,
+    });
   });
 });

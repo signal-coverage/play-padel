@@ -10,7 +10,21 @@ export type MercadoPagoConnectionCopy = {
   // connected case; false while loading and for MP_NOT_CONNECTED (nothing
   // to disconnect yet).
   showDisconnect: boolean;
+  // Human-readable identity of the connected Mercado Pago account, e.g.
+  // "clubowner (owner@club.com)". Null while loading, for MP_NOT_CONNECTED,
+  // and whenever neither an email nor a nickname was fetched at connect
+  // time (see lib/mercadopago/oauth.ts's fetchMercadoPagoUserProfile).
+  accountLabel: string | null;
 };
+
+function buildAccountLabel(
+  status: MercadoPagoOperationalStatus,
+): string | null {
+  if (status.nickname && status.email) {
+    return `${status.nickname} (${status.email})`;
+  }
+  return status.nickname ?? status.email ?? null;
+}
 
 /**
  * Maps the operational-status endpoint's `{ operational, cause }` shape to
@@ -37,6 +51,7 @@ export function getMercadoPagoConnectionCopy(
       description: "Checking your Mercado Pago connection…",
       ctaLabel: "Connect Mercado Pago",
       showDisconnect: false,
+      accountLabel: null,
     };
   }
 
@@ -48,6 +63,7 @@ export function getMercadoPagoConnectionCopy(
         "Connect your Mercado Pago account so players can pay for court reservations directly to you.",
       ctaLabel: "Connect Mercado Pago",
       showDisconnect: false,
+      accountLabel: null,
     };
   }
 
@@ -59,6 +75,7 @@ export function getMercadoPagoConnectionCopy(
         "Mercado Pago is connected, but your club membership isn't active — reactivate it to resume accepting payments.",
       ctaLabel: "Switch account",
       showDisconnect: true,
+      accountLabel: buildAccountLabel(status),
     };
   }
 
@@ -69,5 +86,6 @@ export function getMercadoPagoConnectionCopy(
       "Mercado Pago is connected. Players pay you directly for court reservations.",
     ctaLabel: "Switch account",
     showDisconnect: true,
+    accountLabel: buildAccountLabel(status),
   };
 }

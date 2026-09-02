@@ -316,7 +316,11 @@ export function ClubCourtsPanel({
             rowKey={(court) => court.id}
             isLoading={isLoading}
             loadingLabel="Loading courts…"
-            emptyState={<StatusBox>No courts match your filters.</StatusBox>}
+            emptyState={
+              <StatusBox className="flex h-full flex-col items-center justify-center">
+                No courts match your filters.
+              </StatusBox>
+            }
             onRowClick={(court) => onSelectCourt(court.id)}
             isRowSelected={(court) => court.id === selectedCourtId}
           />

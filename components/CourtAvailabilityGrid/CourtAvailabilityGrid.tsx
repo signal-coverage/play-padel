@@ -1,6 +1,6 @@
 "use client";
 
-import { Loader2 } from "lucide-react";
+import { BouncingBall } from "@/components/BouncingBall";
 
 import {
   Table,
@@ -70,7 +70,7 @@ export function CourtAvailabilityGrid({
             className="flex items-center gap-1.5 self-end text-xs text-muted-foreground"
             aria-hidden="true"
           >
-            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            <BouncingBall size={14} amplitude={4} />
             Updating…
           </div>
         )}

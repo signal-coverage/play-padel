@@ -1,5 +1,5 @@
 import crypto from "node:crypto";
-import { MercadoPagoConfig, OAuth } from "mercadopago";
+import { MercadoPagoConfig, OAuth, User } from "mercadopago";
 
 // CSRF-protection state param for the OAuth authorization-code flow (see
 // app/api/clubs/mercadopago/connect + callback routes). The state carries
@@ -153,6 +153,27 @@ export async function exchangeAuthorizationCode(
       redirect_uri: getRedirectUri(),
     },
   });
+}
+
+export type MpUserProfile = {
+  email: string | null;
+  nickname: string | null;
+};
+
+/**
+ * Fetches the connected account's own profile (GET /users/me) using that
+ * account's access token — used only to display which Mercado Pago account
+ * a club is linked to. Never call this with the platform's own token.
+ */
+export async function fetchMercadoPagoUserProfile(
+  accessToken: string,
+): Promise<MpUserProfile> {
+  const user = new User(new MercadoPagoConfig({ accessToken }));
+  const profile = await user.get();
+  return {
+    email: profile.email ?? null,
+    nickname: profile.nickname ?? null,
+  };
 }
 
 /** Refreshes a club's access token using its stored refresh token. */

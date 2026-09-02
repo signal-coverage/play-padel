@@ -17,7 +17,7 @@ import { DayNavigator } from "@/components/CourtAvailabilityGrid/components/DayN
 import type { Slot } from "@/components/CourtAvailabilityGrid";
 import { useGuardedDialogClose } from "@/hooks/use-guarded-dialog-close";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { fireSuccessConfetti } from "@/lib/utils/confetti";
+import { fireSuccessCelebration } from "@/lib/utils/celebration";
 import { ClubListPanel } from "./components/ClubListPanel";
 import { ClubCourtsPanel } from "./components/ClubCourtsPanel";
 import { CourtSchedulePanel } from "./components/CourtSchedulePanel";
@@ -135,7 +135,7 @@ export function BrowseCourts() {
       track("booking_confirmed");
       trackAmplitude("booking_confirmed");
       if (!shouldReduceMotion) {
-        fireSuccessConfetti();
+        fireSuccessCelebration();
       }
       setSelected(null);
     } catch (err) {

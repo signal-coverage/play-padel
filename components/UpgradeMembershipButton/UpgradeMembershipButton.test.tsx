@@ -5,6 +5,14 @@ import "@testing-library/jest-dom/vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { UpgradeMembershipButton } from "./UpgradeMembershipButton";
 
+// This button mounts PlanSelectionModal, which reads the owner's own email
+// via useAuth (to pre-fill the checkout drawer's email step) — mocked
+// directly rather than wrapping every test in a real <AuthProvider>, which
+// would drag in Clerk (same pattern as PlanSelectionModal's own test file).
+vi.mock("@/hooks/use-auth", () => ({
+  useAuth: () => ({ user: { email: "owner@club.com" } }),
+}));
+
 function renderButton() {
   const fetchMock = vi.fn((url: string) => {
     if (url === "/api/clubs/membership") {

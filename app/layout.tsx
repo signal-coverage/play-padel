@@ -6,6 +6,7 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { ui } from "@clerk/ui";
 import { AuthProvider } from "@/providers/auth-provider";
 import { Toaster } from "@/components/ui/sonner";
+import { SuccessCelebrationPortal } from "@/components/SuccessCelebration";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ThemeFavicon } from "@/components/theme-favicon";
 import { LocatorSetup } from "@/components/locator-setup";
@@ -124,7 +125,8 @@ export default function RootLayout({
           >
             <ThemeFavicon />
             <AuthProvider>{children}</AuthProvider>
-            <Toaster />
+            <Toaster position="top-right" />
+            <SuccessCelebrationPortal />
           </ThemeProvider>
         </ClerkProvider>
       </body>

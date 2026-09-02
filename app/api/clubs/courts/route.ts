@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import {
   createCourt,
+  DuplicateCourtNameError,
   listCourtsByClub,
 } from "@/core/courts/services/courts.service";
 import { createCourtSchema } from "@/core/courts/schemas/court.schema";
@@ -45,7 +46,10 @@ export async function POST(request: NextRequest) {
       authResult.context.userId,
     );
     return NextResponse.json({ court }, { status: 201 });
-  } catch {
+  } catch (err) {
+    if (err instanceof DuplicateCourtNameError) {
+      return NextResponse.json({ error: err.message }, { status: 409 });
+    }
     return NextResponse.json(
       { error: "Failed to create court" },
       { status: 500 },

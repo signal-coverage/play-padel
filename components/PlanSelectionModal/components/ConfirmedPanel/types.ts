@@ -19,4 +19,13 @@ export type ConfirmedPanelProps = {
   onPayNow?: () => void;
   isPayNowLoading?: boolean;
   payNowError?: string | null;
+  // Lets the owner change plan tier IMMEDIATELY, valid while TRIALING on
+  // EITHER cycle — unlike `showPayNow` (ANNUAL-only, since MONTHLY already
+  // has an authorized preapproval), neither cycle has been charged yet
+  // during a trial, so there's nothing to lose by switching tiers before
+  // the first real charge. Undefined hides the button entirely — same
+  // optional-prop convention as `showPayNow`.
+  onChangePlan?: () => void;
+  isChangingPlan?: boolean;
+  changePlanError?: string | null;
 };

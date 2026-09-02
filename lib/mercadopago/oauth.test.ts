@@ -4,6 +4,7 @@ const createMock = vi.fn();
 const refreshMock = vi.fn();
 const getAuthorizationURLMock = vi.fn();
 const configConstructorMock = vi.fn();
+const userGetMock = vi.fn();
 
 vi.mock("mercadopago", () => ({
   MercadoPagoConfig: vi.fn().mockImplementation(function (config: unknown) {
@@ -17,6 +18,12 @@ vi.mock("mercadopago", () => ({
       getAuthorizationURL: getAuthorizationURLMock,
     };
   }),
+  User: vi.fn().mockImplementation(function (config: unknown) {
+    return {
+      config,
+      get: userGetMock,
+    };
+  }),
 }));
 
 import {
@@ -25,6 +32,7 @@ import {
   buildMercadoPagoAuthorizationUrl,
   exchangeAuthorizationCode,
   refreshClubAccessToken,
+  fetchMercadoPagoUserProfile,
 } from "@/lib/mercadopago/oauth";
 
 const STATE_SECRET = "test-state-secret";
@@ -39,6 +47,7 @@ beforeEach(() => {
   refreshMock.mockReset();
   getAuthorizationURLMock.mockReset();
   configConstructorMock.mockReset();
+  userGetMock.mockReset();
 });
 
 afterEach(() => {
@@ -147,6 +156,39 @@ describe("exchangeAuthorizationCode", () => {
     await expect(exchangeAuthorizationCode("bad-code")).rejects.toThrow(
       "invalid_grant",
     );
+  });
+});
+
+describe("fetchMercadoPagoUserProfile", () => {
+  it("fetches the connected account's own profile using ITS access token, not the platform's", async () => {
+    userGetMock.mockResolvedValue({
+      email: "owner@club.com",
+      nickname: "clubowner",
+    });
+
+    const result = await fetchMercadoPagoUserProfile("club-own-access-token");
+
+    expect(configConstructorMock).toHaveBeenCalledWith({
+      accessToken: "club-own-access-token",
+    });
+    expect(userGetMock).toHaveBeenCalled();
+    expect(result).toEqual({ email: "owner@club.com", nickname: "clubowner" });
+  });
+
+  it("normalizes missing email/nickname to null", async () => {
+    userGetMock.mockResolvedValue({});
+
+    const result = await fetchMercadoPagoUserProfile("club-own-access-token");
+
+    expect(result).toEqual({ email: null, nickname: null });
+  });
+
+  it("propagates errors from Mercado Pago (e.g. invalid/expired token)", async () => {
+    userGetMock.mockRejectedValue(new Error("invalid_token"));
+
+    await expect(
+      fetchMercadoPagoUserProfile("club-own-access-token"),
+    ).rejects.toThrow("invalid_token");
   });
 });
 

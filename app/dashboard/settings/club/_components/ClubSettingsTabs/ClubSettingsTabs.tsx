@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ClubSettingsView } from "../ClubSettingsView";
 import { MercadoPagoConnectionCard } from "../MercadoPagoConnectionCard";
+import { OperatingHoursSettingsCard } from "../OperatingHoursSettingsCard";
 import { CLUB_SETTINGS_TABS, DEFAULT_CLUB_SETTINGS_TAB } from "./consts";
 import type { ClubSettingsTabValue } from "./types";
 
@@ -44,6 +45,7 @@ export function ClubSettingsTabs() {
     <Tabs
       value={activeTab}
       onValueChange={(value) => setActiveTab(value as ClubSettingsTabValue)}
+      className="h-full min-h-0"
     >
       <TabsList
         variant="line"
@@ -70,14 +72,21 @@ export function ClubSettingsTabs() {
 
       <TabsContent
         value="basic"
-        className="mt-6 animate-in fade-in-0 duration-200"
+        className="mt-6 min-h-0 overflow-y-auto animate-in fade-in-0 duration-200"
       >
         <ClubSettingsView />
       </TabsContent>
 
       <TabsContent
+        value="hours"
+        className="mt-6 min-h-0 overflow-y-auto animate-in fade-in-0 duration-200"
+      >
+        <OperatingHoursSettingsCard />
+      </TabsContent>
+
+      <TabsContent
         value="mercadopago"
-        className="mt-6 animate-in fade-in-0 duration-200"
+        className="mt-6 min-h-0 overflow-y-auto animate-in fade-in-0 duration-200"
       >
         <MercadoPagoConnectionCard />
       </TabsContent>

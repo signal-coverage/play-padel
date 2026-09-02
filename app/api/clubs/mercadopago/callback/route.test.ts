@@ -12,6 +12,7 @@ vi.mock("@/infrastructure/db/client", () => ({
 vi.mock("@/lib/mercadopago/oauth", () => ({
   verifyOAuthState: vi.fn(),
   exchangeAuthorizationCode: vi.fn(),
+  fetchMercadoPagoUserProfile: vi.fn(),
 }));
 
 vi.mock("@/lib/mercadopago/tokenCrypto", () => ({
@@ -22,6 +23,7 @@ import { prisma } from "@/infrastructure/db/client";
 import {
   verifyOAuthState,
   exchangeAuthorizationCode,
+  fetchMercadoPagoUserProfile,
 } from "@/lib/mercadopago/oauth";
 import { GET } from "./route";
 
@@ -32,6 +34,8 @@ const verifyOAuthStateMock = verifyOAuthState as ReturnType<typeof vi.fn>;
 const exchangeAuthorizationCodeMock = exchangeAuthorizationCode as ReturnType<
   typeof vi.fn
 >;
+const fetchMercadoPagoUserProfileMock =
+  fetchMercadoPagoUserProfile as ReturnType<typeof vi.fn>;
 
 function makeRequest(query: string) {
   return new NextRequest(
@@ -44,6 +48,7 @@ beforeEach(() => {
   upsertMock.mockReset();
   verifyOAuthStateMock.mockReset();
   exchangeAuthorizationCodeMock.mockReset();
+  fetchMercadoPagoUserProfileMock.mockReset();
 });
 
 describe("GET /api/clubs/mercadopago/callback", () => {
@@ -57,6 +62,10 @@ describe("GET /api/clubs/mercadopago/callback", () => {
       live_mode: true,
       scope: "read write",
     });
+    fetchMercadoPagoUserProfileMock.mockResolvedValue({
+      email: "owner@club.com",
+      nickname: "clubowner",
+    });
     upsertMock.mockResolvedValue(undefined);
 
     const response = await GET(
@@ -65,6 +74,7 @@ describe("GET /api/clubs/mercadopago/callback", () => {
 
     expect(verifyOAuthStateMock).toHaveBeenCalledWith("valid-state");
     expect(exchangeAuthorizationCodeMock).toHaveBeenCalledWith("auth-code-1");
+    expect(fetchMercadoPagoUserProfileMock).toHaveBeenCalledWith("mp-access");
     expect(upsertMock).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { clubId: "club_1" },
@@ -72,18 +82,58 @@ describe("GET /api/clubs/mercadopago/callback", () => {
           status: "CONNECTED",
           accessTokenEncrypted: "encrypted(mp-access)",
           refreshTokenEncrypted: "encrypted(mp-refresh)",
+          mpEmail: "owner@club.com",
+          mpNickname: "clubowner",
         }),
         create: expect.objectContaining({
           clubId: "club_1",
           status: "CONNECTED",
           accessTokenEncrypted: "encrypted(mp-access)",
           refreshTokenEncrypted: "encrypted(mp-refresh)",
+          mpEmail: "owner@club.com",
+          mpNickname: "clubowner",
         }),
       }),
     );
     expect(response.status).toBe(307);
     const location = response.headers.get("location");
     expect(location).toContain("/dashboard/courts");
+    expect(location).toContain("mpConnect=success");
+  });
+
+  it("still connects the account when fetching the MP profile fails", async () => {
+    verifyOAuthStateMock.mockReturnValue({ clubId: "club_1", ts: Date.now() });
+    exchangeAuthorizationCodeMock.mockResolvedValue({
+      access_token: "mp-access",
+      refresh_token: "mp-refresh",
+      expires_in: 15552000,
+      user_id: 555,
+      live_mode: true,
+      scope: "read write",
+    });
+    fetchMercadoPagoUserProfileMock.mockRejectedValue(
+      new Error("profile_fetch_failed"),
+    );
+    upsertMock.mockResolvedValue(undefined);
+
+    const response = await GET(
+      makeRequest("?code=auth-code-1&state=valid-state"),
+    );
+
+    expect(upsertMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { clubId: "club_1" },
+        update: expect.objectContaining({
+          mpEmail: null,
+          mpNickname: null,
+        }),
+        create: expect.objectContaining({
+          mpEmail: null,
+          mpNickname: null,
+        }),
+      }),
+    );
+    const location = response.headers.get("location");
     expect(location).toContain("mpConnect=success");
   });
 

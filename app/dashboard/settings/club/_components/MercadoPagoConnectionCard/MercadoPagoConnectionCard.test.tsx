@@ -9,6 +9,17 @@ import {
 } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+
+// next/image's default loader calls out to Next's build-time image
+// optimization config, which doesn't exist under Vitest — swap it for a
+// plain <img> so components using it are still renderable in tests.
+vi.mock("next/image", () => ({
+  default: (props: { src: string; alt: string; className?: string }) => (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img src={props.src} alt={props.alt} className={props.className} />
+  ),
+}));
+
 import { MercadoPagoConnectionCard } from "./MercadoPagoConnectionCard";
 import type { MercadoPagoOperationalStatus } from "./types";
 
@@ -88,6 +99,21 @@ describe("MercadoPagoConnectionCard", () => {
       ).toBeInTheDocument(),
     );
     expect(screen.getByRole("button", { name: "Unlink" })).toBeInTheDocument();
+  });
+
+  it("shows the connected account's nickname and email when connected", async () => {
+    renderCard({
+      operational: true,
+      cause: null,
+      email: "owner@club.com",
+      nickname: "clubowner",
+    });
+
+    await waitFor(() =>
+      expect(
+        screen.getByText("Account: clubowner (owner@club.com)"),
+      ).toBeInTheDocument(),
+    );
   });
 
   it("shows Switch account and Unlink buttons when CLUB_INACTIVE", async () => {

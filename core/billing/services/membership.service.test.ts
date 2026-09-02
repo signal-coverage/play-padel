@@ -30,11 +30,13 @@ import {
   recordManualPeriodExpiredWithoutRenewal,
   recordManualLockout,
   requestPlanChange,
+  changeTrialPlan,
   findMembershipSubscriptionByPreapprovalId,
   attachPendingPreapproval,
   attachPendingPreference,
   getMembershipSubscription,
   seedPendingMembershipSubscriptionFromClub,
+  reactivateCancelledSubscription,
 } from "./membership.service";
 
 const findUniqueMock = prisma.clubMembershipSubscription
@@ -98,6 +100,7 @@ describe("ALLOWED_MEMBERSHIP_TRANSITIONS / assertMembershipTransition (pure)", (
     ["PAST_DUE", "PAST_DUE"],
     ["PAST_DUE", "CANCELLED"],
     ["ACTIVE", "CANCELLED"],
+    ["CANCELLED", "PENDING"],
   ] as const)("allows %s -> %s", (from, to) => {
     expect(() => assertMembershipTransition(from, to)).not.toThrow();
   });
@@ -106,6 +109,7 @@ describe("ALLOWED_MEMBERSHIP_TRANSITIONS / assertMembershipTransition (pure)", (
     ["CANCELLED", "ACTIVE"],
     ["CANCELLED", "TRIALING"],
     ["CANCELLED", "PAST_DUE"],
+    ["CANCELLED", "CANCELLED"],
     ["ACTIVE", "TRIALING"],
     ["ACTIVE", "PENDING"],
     ["PAST_DUE", "TRIALING"],
@@ -118,8 +122,8 @@ describe("ALLOWED_MEMBERSHIP_TRANSITIONS / assertMembershipTransition (pure)", (
     );
   });
 
-  it("CANCELLED is terminal — zero allowed outgoing transitions (a fresh subscription must be created instead)", () => {
-    expect(ALLOWED_MEMBERSHIP_TRANSITIONS.CANCELLED).toEqual([]);
+  it("CANCELLED allows exactly one outgoing transition — back to PENDING via an explicit owner-triggered reactivation, never straight back to a paid status", () => {
+    expect(ALLOWED_MEMBERSHIP_TRANSITIONS.CANCELLED).toEqual(["PENDING"]);
   });
 });
 
@@ -302,6 +306,36 @@ describe("startTrial", () => {
     ).rejects.toThrow(/no trial configured/i);
     expect(createMock).not.toHaveBeenCalled();
   });
+
+  // Regression: reactivateCancelledSubscription resets a club back to
+  // PENDING so it can start a trial exactly like a first-time signup — but
+  // that club's Club.status is still INACTIVE from its earlier cancellation
+  // (recordAutoCancellation/recordManualLockout are the only two writers of
+  // Club.status, and both only ever set INACTIVE). Without this, a
+  // reactivated club that reaches TRIALING (the synchronous, no-webhook
+  // confirmation path for a trial-eligible plan) would stay locked behind
+  // ClubOperationalGate forever, since getClubOperationalStatus gates on
+  // Club.status === "ACTIVE", not on the subscription's own status.
+  it("clears Club.status back to ACTIVE when a trial starts (undoes an earlier cancellation)", async () => {
+    findUniqueMock.mockResolvedValue(null);
+    createMock.mockResolvedValue(row({ status: "TRIALING" }));
+    clubUpdateMock.mockResolvedValue({ id: "club_1", status: "ACTIVE" });
+
+    await startTrial({
+      clubId: "club_1",
+      plan: "PRO",
+      cycle: "MONTHLY",
+      renewalMode: "AUTO",
+      currency: "ARS",
+      fallbackWelcomeFreeMonths: 3,
+      now: new Date("2026-01-01T00:00:00Z"),
+    });
+
+    expect(clubUpdateMock).toHaveBeenCalledWith({
+      where: { id: "club_1" },
+      data: { status: "ACTIVE" },
+    });
+  });
 });
 
 describe("recordSuccessfulCharge", () => {
@@ -435,6 +469,42 @@ describe("recordSuccessfulCharge", () => {
     await expect(
       recordSuccessfulCharge({ clubId: "club_404", chargedAt: new Date() }),
     ).rejects.toThrow(/no membership subscription/i);
+  });
+
+  // Regression, same reasoning as startTrial's own test above: a reactivated
+  // club's first real charge (e.g. a non-trial ANNUAL plan, or the eventual
+  // real charge after a reactivated trial ends) must also clear whatever
+  // earlier cancellation left Club.status at INACTIVE — recordAutoCancellation/
+  // recordManualLockout are the only other writers of this field, and both
+  // only ever set INACTIVE, so nothing else ever undoes it.
+  it("clears Club.status back to ACTIVE on a successful charge (undoes an earlier cancellation)", async () => {
+    findUniqueMock.mockResolvedValue(row({ status: "PENDING" }));
+    updateMock.mockResolvedValue(row({ status: "ACTIVE" }));
+    clubUpdateMock.mockResolvedValue({ id: "club_1", status: "ACTIVE" });
+
+    await recordSuccessfulCharge({
+      clubId: "club_1",
+      chargedAt: new Date("2026-01-01T00:00:00Z"),
+    });
+
+    expect(clubUpdateMock).toHaveBeenCalledWith({
+      where: { id: "club_1" },
+      data: { status: "ACTIVE" },
+    });
+  });
+
+  it("does not touch Club.status when the charge is a no-op replay", async () => {
+    findUniqueMock.mockResolvedValue(
+      row({ status: "ACTIVE", lastWebhookEventId: "evt_dup" }),
+    );
+
+    await recordSuccessfulCharge({
+      clubId: "club_1",
+      chargedAt: new Date("2026-03-01T00:00:00Z"),
+      webhookEventId: "evt_dup",
+    });
+
+    expect(clubUpdateMock).not.toHaveBeenCalled();
   });
 });
 
@@ -750,6 +820,38 @@ describe("requestPlanChange (mid-cycle, no proration — takes effect at next re
   });
 });
 
+describe("changeTrialPlan (immediate, TRIALING only — no proration since nothing has been charged yet on either cycle)", () => {
+  it("updates plan immediately when status is TRIALING", async () => {
+    findUniqueMock.mockResolvedValue(
+      row({ status: "TRIALING", plan: "BASIC" }),
+    );
+    updateMock.mockResolvedValue(row({ status: "TRIALING", plan: "PRO" }));
+
+    const result = await changeTrialPlan({
+      clubId: "club_1",
+      newPlan: "PRO",
+    });
+
+    expect(updateMock).toHaveBeenCalledWith({
+      where: { clubId: "club_1" },
+      data: { plan: "PRO" },
+    });
+    expect(result.plan).toBe("PRO");
+  });
+
+  it.each(["PENDING", "ACTIVE", "PAST_DUE", "CANCELLED"] as const)(
+    "throws when status is %s (immediate plan change only applies while TRIALING)",
+    async (status) => {
+      findUniqueMock.mockResolvedValue(row({ status }));
+
+      await expect(
+        changeTrialPlan({ clubId: "club_1", newPlan: "PRO" }),
+      ).rejects.toThrow(/TRIALING/);
+      expect(updateMock).not.toHaveBeenCalled();
+    },
+  );
+});
+
 describe("findMembershipSubscriptionByPreapprovalId (webhook club resolution)", () => {
   it("returns the owning clubId for a known mpPreapprovalId", async () => {
     findFirstMock.mockResolvedValue({ clubId: "club_7" });
@@ -1036,5 +1138,70 @@ describe("seedPendingMembershipSubscriptionFromClub (lazy-create fallback, share
         status: "PENDING",
       },
     });
+  });
+});
+
+describe("reactivateCancelledSubscription (owner-triggered renewal — CANCELLED -> PENDING reset)", () => {
+  it("resets a CANCELLED row to a clean PENDING state, nulling every stale MP/trial/period field", async () => {
+    findUniqueMock.mockResolvedValue(
+      row({
+        status: "CANCELLED",
+        mpPreapprovalId: "preap_old",
+        mpPreferenceId: "pref_old",
+        mpCustomerId: "cust_old",
+        mpCardId: "card_old",
+        trialEndsAt: new Date("2026-01-01T00:00:00Z"),
+        currentPeriodStart: new Date("2026-01-01T00:00:00Z"),
+        currentPeriodEnd: new Date("2026-02-01T00:00:00Z"),
+        pastDueSince: new Date("2026-01-05T00:00:00Z"),
+        pastDueUntil: new Date("2026-01-20T00:00:00Z"),
+        pendingPlan: "PRO",
+        pendingCycle: "ANNUAL",
+        lastWebhookEventId: "evt_old",
+      }),
+    );
+    updateMock.mockResolvedValue(row({ status: "PENDING" }));
+
+    const result = await reactivateCancelledSubscription("club_1");
+
+    expect(updateMock).toHaveBeenCalledWith({
+      where: { clubId: "club_1" },
+      data: {
+        status: "PENDING",
+        mpPreapprovalId: null,
+        mpPreferenceId: null,
+        mpCustomerId: null,
+        mpCardId: null,
+        trialEndsAt: null,
+        currentPeriodStart: null,
+        currentPeriodEnd: null,
+        pastDueSince: null,
+        pastDueUntil: null,
+        pendingPlan: null,
+        pendingCycle: null,
+        lastWebhookEventId: null,
+      },
+    });
+    expect(result.status).toBe("PENDING");
+  });
+
+  it.each(["PENDING", "TRIALING", "ACTIVE", "PAST_DUE"] as const)(
+    "throws when called on a %s subscription (only a CANCELLED one can be reactivated)",
+    async (status) => {
+      findUniqueMock.mockResolvedValue(row({ status }));
+
+      await expect(reactivateCancelledSubscription("club_1")).rejects.toThrow(
+        `Cannot reactivate — subscription is ${status}, expected CANCELLED`,
+      );
+      expect(updateMock).not.toHaveBeenCalled();
+    },
+  );
+
+  it("throws when no subscription row exists for the club", async () => {
+    findUniqueMock.mockResolvedValue(null);
+
+    await expect(reactivateCancelledSubscription("club_404")).rejects.toThrow(
+      /no membership subscription/i,
+    );
   });
 });

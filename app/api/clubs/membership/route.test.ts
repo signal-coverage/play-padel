@@ -18,6 +18,7 @@ vi.mock("@/core/billing/services/membership.service", () => ({
   attachPendingPreapproval: vi.fn(),
   attachPendingPreference: vi.fn(),
   startTrial: vi.fn(),
+  changeTrialPlan: vi.fn(),
 }));
 
 vi.mock("@/lib/mercadopago/preapprovalPlans", () => ({
@@ -27,6 +28,7 @@ vi.mock("@/lib/mercadopago/preapprovalPlans", () => ({
 
 vi.mock("@/lib/mercadopago/membershipPreapprovals", () => ({
   createMembershipPreapproval: vi.fn(),
+  updateMembershipPreapprovalAmount: vi.fn(),
 }));
 
 vi.mock("@/lib/mercadopago/platformPreferences", () => ({
@@ -41,14 +43,18 @@ import {
   attachPendingPreapproval,
   attachPendingPreference,
   startTrial,
+  changeTrialPlan,
 } from "@/core/billing/services/membership.service";
 import {
   getOrCreateMembershipPreapprovalPlanId,
   resolveFreeTrialConfig,
 } from "@/lib/mercadopago/preapprovalPlans";
-import { createMembershipPreapproval } from "@/lib/mercadopago/membershipPreapprovals";
+import {
+  createMembershipPreapproval,
+  updateMembershipPreapprovalAmount,
+} from "@/lib/mercadopago/membershipPreapprovals";
 import { createMembershipPreference } from "@/lib/mercadopago/platformPreferences";
-import { GET, POST } from "./route";
+import { GET, POST, PATCH } from "./route";
 
 const requireOwnerClubMock = requireOwnerClub as ReturnType<typeof vi.fn>;
 const trialConfigFindUniqueMock = prisma.membershipTrialConfig
@@ -73,9 +79,12 @@ const resolveFreeTrialConfigMock = resolveFreeTrialConfig as ReturnType<
 >;
 const createMembershipPreapprovalMock =
   createMembershipPreapproval as ReturnType<typeof vi.fn>;
+const updateMembershipPreapprovalAmountMock =
+  updateMembershipPreapprovalAmount as ReturnType<typeof vi.fn>;
 const createMembershipPreferenceMock = createMembershipPreference as ReturnType<
   typeof vi.fn
 >;
+const changeTrialPlanMock = changeTrialPlan as ReturnType<typeof vi.fn>;
 
 const OWNER_OK = { ok: true, context: { userId: "user_1", clubId: "club_1" } };
 
@@ -127,7 +136,9 @@ beforeEach(() => {
   getOrCreateMembershipPreapprovalPlanIdMock.mockReset();
   resolveFreeTrialConfigMock.mockReset();
   createMembershipPreapprovalMock.mockReset();
+  updateMembershipPreapprovalAmountMock.mockReset();
   createMembershipPreferenceMock.mockReset();
+  changeTrialPlanMock.mockReset();
 
   requireOwnerClubMock.mockResolvedValue(OWNER_OK);
 });
@@ -571,5 +582,151 @@ describe("POST /api/clubs/membership", () => {
       expect(body.checkoutUrl).toBe("https://mp.example.com/checkout");
       expect(body.subscription.status).toBe("TRIALING");
     });
+  });
+});
+
+// Immediate (not deferred-to-next-renewal) plan tier change, valid ONLY
+// while the subscription is TRIALING — since no real charge has happened
+// yet on either cycle, there is nothing to prorate. Deliberately separate
+// from `requestPlanChange` (ACTIVE-only, deferred via pendingPlan), which
+// this route never touches.
+describe("PATCH /api/clubs/membership", () => {
+  function makePatchRequest(body: unknown) {
+    return new NextRequest("http://localhost/api/clubs/membership", {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(body),
+    });
+  }
+
+  it("returns the owner's response when not an owner", async () => {
+    const unauthorized = {
+      ok: false,
+      response: new Response(null, { status: 401 }),
+    };
+    requireOwnerClubMock.mockResolvedValue(unauthorized);
+
+    const response = await PATCH(makePatchRequest({ plan: "PRO" }));
+
+    expect(response.status).toBe(401);
+    expect(getMembershipSubscriptionMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects an invalid plan with 400", async () => {
+    const response = await PATCH(makePatchRequest({ plan: "ENTERPRISE" }));
+
+    expect(response.status).toBe(400);
+    expect(getMembershipSubscriptionMock).not.toHaveBeenCalled();
+  });
+
+  it("returns 404 when no subscription exists for the club", async () => {
+    getMembershipSubscriptionMock.mockResolvedValue(null);
+
+    const response = await PATCH(makePatchRequest({ plan: "PRO" }));
+    const body = await response.json();
+
+    expect(response.status).toBe(404);
+    expect(body.error).toBeTruthy();
+    expect(changeTrialPlanMock).not.toHaveBeenCalled();
+  });
+
+  it("returns 409 when the subscription is not TRIALING", async () => {
+    getMembershipSubscriptionMock.mockResolvedValue(
+      subscriptionRow({ status: "ACTIVE" }),
+    );
+
+    const response = await PATCH(makePatchRequest({ plan: "PRO" }));
+
+    expect(response.status).toBe(409);
+    expect(changeTrialPlanMock).not.toHaveBeenCalled();
+    expect(updateMembershipPreapprovalAmountMock).not.toHaveBeenCalled();
+  });
+
+  it("returns 400 for an unautomatable plan+cycle combo (MAX has no fixed price on either cycle)", async () => {
+    getMembershipSubscriptionMock.mockResolvedValue(
+      subscriptionRow({ status: "TRIALING", cycle: "MONTHLY" }),
+    );
+
+    const response = await PATCH(makePatchRequest({ plan: "MAX" }));
+
+    expect(response.status).toBe(400);
+    expect(changeTrialPlanMock).not.toHaveBeenCalled();
+    expect(updateMembershipPreapprovalAmountMock).not.toHaveBeenCalled();
+  });
+
+  it("updates the Mercado Pago preapproval amount and the DB plan for a TRIALING MONTHLY subscription with an mpPreapprovalId set", async () => {
+    getMembershipSubscriptionMock.mockResolvedValue(
+      subscriptionRow({
+        status: "TRIALING",
+        cycle: "MONTHLY",
+        currency: "ARS",
+        plan: "BASIC",
+        mpPreapprovalId: "preap_1",
+      }),
+    );
+    updateMembershipPreapprovalAmountMock.mockResolvedValue({
+      id: "preap_1",
+      status: "authorized",
+    });
+    changeTrialPlanMock.mockResolvedValue(
+      subscriptionRow({ status: "TRIALING", cycle: "MONTHLY", plan: "PRO" }),
+    );
+
+    const response = await PATCH(makePatchRequest({ plan: "PRO" }));
+    const body = await response.json();
+
+    expect(updateMembershipPreapprovalAmountMock).toHaveBeenCalledWith(
+      "preap_1",
+      50000,
+      "ARS",
+    );
+    expect(changeTrialPlanMock).toHaveBeenCalledWith({
+      clubId: "club_1",
+      newPlan: "PRO",
+    });
+    expect(response.status).toBe(200);
+    expect(body.subscription.plan).toBe("PRO");
+  });
+
+  it("does not touch Mercado Pago for a TRIALING ANNUAL subscription with no mpPreapprovalId, and still updates the plan locally", async () => {
+    getMembershipSubscriptionMock.mockResolvedValue(
+      subscriptionRow({
+        status: "TRIALING",
+        cycle: "ANNUAL",
+        mpPreapprovalId: null,
+      }),
+    );
+    changeTrialPlanMock.mockResolvedValue(
+      subscriptionRow({ status: "TRIALING", cycle: "ANNUAL", plan: "PRO" }),
+    );
+
+    const response = await PATCH(makePatchRequest({ plan: "PRO" }));
+    const body = await response.json();
+
+    expect(updateMembershipPreapprovalAmountMock).not.toHaveBeenCalled();
+    expect(changeTrialPlanMock).toHaveBeenCalledWith({
+      clubId: "club_1",
+      newPlan: "PRO",
+    });
+    expect(response.status).toBe(200);
+    expect(body.subscription.plan).toBe("PRO");
+  });
+
+  it("returns 500 when the Mercado Pago amount update fails", async () => {
+    getMembershipSubscriptionMock.mockResolvedValue(
+      subscriptionRow({
+        status: "TRIALING",
+        cycle: "MONTHLY",
+        mpPreapprovalId: "preap_1",
+      }),
+    );
+    updateMembershipPreapprovalAmountMock.mockRejectedValue(
+      new Error("MP down"),
+    );
+
+    const response = await PATCH(makePatchRequest({ plan: "PRO" }));
+
+    expect(response.status).toBe(500);
+    expect(changeTrialPlanMock).not.toHaveBeenCalled();
   });
 });

@@ -1,8 +1,9 @@
-import { CreditCard, Settings2 } from "lucide-react";
+import { Clock, CreditCard, Settings2 } from "lucide-react";
 import type { ClubSettingsTab } from "./types";
 
 export const CLUB_SETTINGS_TABS: ClubSettingsTab[] = [
   { value: "basic", label: "Basic information", icon: Settings2 },
+  { value: "hours", label: "Operating Hours", icon: Clock },
   { value: "mercadopago", label: "Mercado Pago", icon: CreditCard },
 ];
 

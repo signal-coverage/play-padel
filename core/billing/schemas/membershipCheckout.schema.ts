@@ -49,3 +49,14 @@ export const createMembershipCheckoutSchema = z
 export type CreateMembershipCheckoutInput = z.infer<
   typeof createMembershipCheckoutSchema
 >;
+
+// Request body for `PATCH /api/clubs/membership` — changes plan tier
+// IMMEDIATELY while the subscription is still TRIALING (see
+// membership.service.ts's `changeTrialPlan`). Same plan tier enum as
+// `createMembershipCheckoutSchema` above; scope is plan tier only, same
+// billing cycle — cycle switching is not covered by this schema.
+export const changeTrialPlanSchema = z.object({
+  plan: z.enum(["BASIC", "PRO", "PLUS", "MAX"]),
+});
+
+export type ChangeTrialPlanInput = z.infer<typeof changeTrialPlanSchema>;

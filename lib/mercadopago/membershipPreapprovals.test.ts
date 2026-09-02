@@ -26,6 +26,7 @@ import {
   pauseMembershipPreapproval,
   reactivateMembershipPreapproval,
   getMembershipPreapproval,
+  updateMembershipPreapprovalAmount,
 } from "./membershipPreapprovals";
 
 const getPlatformMercadoPagoClientMock =
@@ -228,6 +229,47 @@ describe("reactivateMembershipPreapproval", () => {
         cycleEndDate: "2026-10-24T12:00:00.000-04:00",
       }),
     ).rejects.toThrow(/reactivat/);
+  });
+});
+
+describe("updateMembershipPreapprovalAmount (immediate TRIALING plan change — MONTHLY only)", () => {
+  it("PUTs the new transaction_amount/currency_id for the given preapproval id", async () => {
+    updateMock.mockResolvedValue(
+      buildPreapprovalResponse({ status: "authorized" }),
+    );
+
+    const result = await updateMembershipPreapprovalAmount(
+      "preap_1",
+      50000,
+      "ARS",
+    );
+
+    expect(updateMock).toHaveBeenCalledWith({
+      id: "preap_1",
+      body: {
+        auto_recurring: { transaction_amount: 50000, currency_id: "ARS" },
+      },
+    });
+    expect(result.status).toBe("authorized");
+  });
+
+  it("threads currency as an explicit parameter, never a hardcoded literal", async () => {
+    updateMock.mockResolvedValue(
+      buildPreapprovalResponse({ status: "authorized" }),
+    );
+
+    await updateMembershipPreapprovalAmount("preap_1", 70000, "USD");
+
+    const callArgs = updateMock.mock.calls[0][0];
+    expect(callArgs.body.auto_recurring.currency_id).toBe("USD");
+  });
+
+  it("throws when Mercado Pago does not confirm the update", async () => {
+    updateMock.mockResolvedValue({});
+
+    await expect(
+      updateMembershipPreapprovalAmount("preap_1", 50000, "ARS"),
+    ).rejects.toThrow(/amount/i);
   });
 });
 

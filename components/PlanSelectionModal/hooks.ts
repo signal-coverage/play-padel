@@ -103,3 +103,58 @@ export function useInitiateMembershipCheckout() {
     },
   });
 }
+
+export type ChangeTrialPlanResult = {
+  subscription: MembershipSubscriptionResponse;
+};
+
+// Changes plan tier IMMEDIATELY while the subscription is still TRIALING —
+// PATCH /api/clubs/membership. Separate mutation from
+// `useInitiateMembershipCheckout` since this never starts a new checkout
+// wizard step: the confirmed panel stays exactly where it is, just with a
+// new plan reflected once the mutation settles.
+export type ReactivateMembershipSubscriptionResult = {
+  subscription: MembershipSubscriptionResponse;
+};
+
+// Resets the caller's own club's CANCELLED subscription back to PENDING —
+// POST /api/clubs/membership/reactivate. Triggered only by an owner
+// explicitly clicking "Renew membership" on `ClubInactiveCard`. On success,
+// every mounted consumer (this modal included, once opened right after)
+// picks up the fresh PENDING snapshot immediately, same "write straight into
+// the cache" convention as `useInitiateMembershipCheckout`/
+// `useChangeTrialPlan` above.
+export function useReactivateMembershipSubscription() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () =>
+      fetchJson<ReactivateMembershipSubscriptionResult>(
+        "/api/clubs/membership/reactivate",
+        { method: "POST" },
+      ),
+    onSuccess: (data) => {
+      queryClient.setQueryData(
+        MEMBERSHIP_SUBSCRIPTION_QUERY_KEY,
+        data.subscription,
+      );
+    },
+  });
+}
+
+export function useChangeTrialPlan() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (plan: Plan) =>
+      fetchJson<ChangeTrialPlanResult>("/api/clubs/membership", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plan }),
+      }),
+    onSuccess: (data) => {
+      queryClient.setQueryData(
+        MEMBERSHIP_SUBSCRIPTION_QUERY_KEY,
+        data.subscription,
+      );
+    },
+  });
+}

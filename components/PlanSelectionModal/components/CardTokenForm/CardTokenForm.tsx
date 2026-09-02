@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { CardPayment, initMercadoPago } from "@mercadopago/sdk-react";
 import { StatusBox } from "@/components/StatusBox";
-import { resolvePublicKey } from "./utils";
+import { resolveCardErrorMessage, resolvePublicKey } from "./utils";
 import type { CardTokenFormProps } from "./types";
 
 // Module-level guard: `initMercadoPago` should only run once per page load
@@ -22,6 +22,25 @@ let hasInitialized = false;
 // integration. See this batch's apply-progress for the full scoping
 // rationale (design.md was silent on the exact client-side tokenization
 // mechanism).
+//
+// Deliberately NO `customization` prop for colors: an earlier version
+// themed this to match the app's own light/dark palette, but a Brick only
+// ever matches about half its surface that way (no documented font-family
+// override exists at all — see MembershipCheckoutDrawer.tsx, which frames
+// this in its own "Mercado Pago" branded card instead). Letting the Brick
+// render its own real, MP-designed colors reads as an intentional
+// third-party payment box rather than a mismatched, half-themed one.
+//
+// Sizing (padding/height/font-size) IS tightened, but via a plain CSS
+// override in app/globals.css (`#cardPaymentBrick_container`), not this
+// prop — verified live that the Brick sets those as literal inline CSS
+// custom properties on its own container div, and several of them
+// (`--input-min-height`, `--row-spacing`, `--row-gap`, `--label-spacing`)
+// aren't in the documented `customVariables` JS API at all, only in the
+// raw rendered CSS. An external stylesheet rule with `!important` can
+// still reach them (inline style vs. a more specific rule, not a JS
+// question); the `customization` prop cannot, since it only ever forwards
+// the keys MP's own types document.
 //
 // NOTE (unverified against a live Brick, flagged as a risk — same class of
 // caution as this change's other MP-SDK-shape inferences, e.g. batch 6's
@@ -52,6 +71,41 @@ export function CardTokenForm({
     );
   }, [publicKey, onError]);
 
+  // `CardPayment`'s own effect tears down and rebuilds the Brick's iframe
+  // (its cleanup calls `.unmount()`) whenever `initialization`/`onSubmit`/
+  // `onError` change BY REFERENCE — that's literally its `useEffect` deps
+  // array. These used to be inline object/function literals, so EVERY
+  // re-render of this component created new ones — including the
+  // re-render `onError` itself triggers upstream via `setCheckoutError`.
+  // Verified live: typing an unrecognized card BIN fired `onError`, which
+  // re-rendered this component, which hard-reset the Brick — the card
+  // fields visibly went blank and reloaded mid-entry, with the error
+  // message left showing underneath. MP's own docs confirm this is by
+  // design, not a Brick bug: changing `initialization` data without going
+  // through their controller "would lead to a duplication of the
+  // Brick... and display an error." Memoizing these is the fix.
+  const initialization = useMemo(
+    () => ({
+      amount,
+      payer: payerEmail ? { email: payerEmail } : undefined,
+    }),
+    [amount, payerEmail],
+  );
+
+  const handleSubmit = useCallback(
+    async (formData: { token: string }) => {
+      onTokenReady({ cardTokenId: formData.token });
+    },
+    [onTokenReady],
+  );
+
+  const handleError = useCallback(
+    (param: { cause?: string; message?: string }) => {
+      onError(resolveCardErrorMessage(param));
+    },
+    [onError],
+  );
+
   if (!publicKey) {
     return (
       <StatusBox className="text-sm text-muted-foreground">
@@ -62,16 +116,10 @@ export function CardTokenForm({
 
   return (
     <CardPayment
-      initialization={{
-        amount,
-        payer: payerEmail ? { email: payerEmail } : undefined,
-      }}
-      onSubmit={async (formData) => {
-        onTokenReady({ cardTokenId: formData.token });
-      }}
-      onError={(param) => {
-        onError(param.message ?? "We couldn't validate your card. Try again.");
-      }}
+      initialization={initialization}
+      onSubmit={handleSubmit}
+      onError={handleError}
+      locale="en-US"
     />
   );
 }

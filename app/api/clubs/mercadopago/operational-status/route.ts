@@ -14,9 +14,8 @@ export async function GET() {
   const authResult = await requireOwnerClub();
   if (!authResult.ok) return authResult.response;
 
-  const { operational, cause } = await getClubOperationalStatus(
-    authResult.context.clubId,
-  );
+  const { operational, cause, email, nickname } =
+    await getClubOperationalStatus(authResult.context.clubId);
 
-  return NextResponse.json({ operational, cause });
+  return NextResponse.json({ operational, cause, email, nickname });
 }

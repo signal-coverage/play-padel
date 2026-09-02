@@ -1,80 +1,72 @@
 "use client";
 
-import { useRef, type KeyboardEvent } from "react";
 import { Button } from "@/components/ui/button";
-import type { Plan } from "@/core/clubs/types";
 import { PlanOptionCard } from "@/app/dashboard/_components/ClubOperationalGate/components/PaymentActivationScreen/components/PlanOptionCard";
-import { PLAN_ORDER } from "../../consts";
 import { isAutomatedCheckoutAvailable } from "../../utils";
 import { BillingCycleToggle } from "../BillingCycleToggle";
 import { RenewalModeToggle } from "../RenewalModeToggle";
-import { resolveNextPlanOnArrowKey } from "./utils";
 import type { SelectPlanPanelProps } from "./types";
 
-// The modal's first step: pick a plan tier, a billing cycle, and (MONTHLY
-// only) a renewal mode, per spec's "Two Separate Membership Actions" and
-// "Monthly Billing Uses Real MP Preapproval". Reuses the existing
-// `PlanOptionCard` grid (per this batch's explicit instruction to reuse,
-// not rebuild it) instead of duplicating its rich visual treatment.
+// The modal's first step: review the club's plan tier, billing cycle, and
+// renewal mode, per spec's "Two Separate Membership Actions". Reuses the
+// existing `PlanOptionCard` (per this batch's explicit instruction to
+// reuse, not rebuild it) instead of duplicating its rich visual treatment.
+//
+// Always shows just the current plan's own card, in an equal-width row next
+// to "Change Plan" + the renewal toggle — the full 4-card picker lives in
+// its own `ChangePlanDialog` now, opened from "Change Plan" rather than
+// replacing this panel's own content in place. `selectedPlan` is only ever
+// null for the brief instant before PlanSelectionModal's sync effect seeds
+// it from the loaded subscription, so there's nothing meaningful to render
+// yet in that instant.
 export function SelectPlanPanel({
   selectedPlan,
   billingCycle,
   renewalMode,
   errorMessage,
   isSubmitting,
-  onSelectPlan,
   onBillingCycleChange,
   onRenewalModeChange,
+  onChangePlan,
   onContinue,
 }: SelectPlanPanelProps) {
-  const cardRefs = useRef<Partial<Record<Plan, HTMLButtonElement | null>>>({});
+  if (!selectedPlan) return null;
 
-  function handleGroupKeyDown(event: KeyboardEvent<HTMLDivElement>) {
-    if (!selectedPlan) return;
-    const nextPlan = resolveNextPlanOnArrowKey(event.key, selectedPlan);
-    if (!nextPlan) return;
-    event.preventDefault();
-    onSelectPlan(nextPlan);
-    cardRefs.current[nextPlan]?.focus();
-  }
-
-  const canCheckout = selectedPlan
-    ? isAutomatedCheckoutAvailable(selectedPlan)
-    : false;
+  const canCheckout = isAutomatedCheckoutAvailable(selectedPlan);
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-6">
       <BillingCycleToggle
         value={billingCycle}
         onChange={onBillingCycleChange}
       />
 
-      <div
-        role="radiogroup"
-        aria-label="Plan"
-        onKeyDown={handleGroupKeyDown}
-        className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"
-      >
-        {PLAN_ORDER.map((plan, index) => (
-          <PlanOptionCard
-            key={plan}
-            ref={(el) => {
-              cardRefs.current[plan] = el;
-            }}
-            plan={plan}
-            isSelected={plan === selectedPlan}
-            billingCycle={billingCycle}
-            onSelect={onSelectPlan}
-            index={index}
+      {/* `grid grid-cols-2` (not `flex`) so the card and the action panel
+          split the row exactly evenly — `PlanOptionCard` carries its own
+          `flex-1`, which only sizes it relative to a sibling inside a flex
+          row, not to a fixed equal share of it. */}
+      <div className="grid grid-cols-2 gap-4">
+        <PlanOptionCard
+          plan={selectedPlan}
+          isSelected
+          billingCycle={billingCycle}
+          onSelect={() => {}}
+          index={0}
+        />
+
+        <div className="flex flex-col justify-between">
+          <Button type="button" className="h-14" onClick={onChangePlan}>
+            Change Plan
+          </Button>
+
+          <RenewalModeToggle
+            value={renewalMode}
+            onChange={onRenewalModeChange}
           />
-        ))}
+        </div>
       </div>
 
-      {billingCycle === "monthly" && (
-        <RenewalModeToggle value={renewalMode} onChange={onRenewalModeChange} />
-      )}
-
-      {selectedPlan && !canCheckout && (
+      {!canCheckout && (
         <p className="text-xs text-muted-foreground">
           {selectedPlan} is a custom, contact-us tier — reach out to our team to
           get set up.
@@ -91,7 +83,7 @@ export function SelectPlanPanel({
         <Button
           type="button"
           onClick={onContinue}
-          disabled={!selectedPlan || !canCheckout || isSubmitting}
+          disabled={!canCheckout || isSubmitting}
         >
           {isSubmitting ? "Starting checkout…" : "Continue"}
         </Button>

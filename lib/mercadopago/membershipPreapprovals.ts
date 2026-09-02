@@ -117,6 +117,48 @@ export async function pauseMembershipPreapproval(
 }
 
 /**
+ * Updates the transaction amount of an already-authorized preapproval —
+ * confirmed live against Mercado Pago's own `PUT /preapproval/{id}` docs
+ * ("Modificar monto: Permite modificar el monto de una suscripción
+ * existente"). Used exclusively by the immediate TRIALING plan-change flow
+ * (`PATCH /api/clubs/membership`, MONTHLY cycle only): since a MONTHLY trial
+ * already has an authorized preapproval on file (see
+ * `createMembershipPreapproval`), simply overwriting the local `plan` column
+ * would leave Mercado Pago's own object charging the OLD plan's amount once
+ * the trial ends. This keeps the two in sync without cancelling and
+ * recreating the preapproval. The installed SDK's own
+ * `updatePreApprovalRequest.auto_recurring` type already declares
+ * `transaction_amount`/`currency_id` (see the comment on
+ * `ReactivateAutoRecurringBody` above for the same SDK type's own
+ * `end_date` gap), so no local type augmentation is needed here.
+ */
+export async function updateMembershipPreapprovalAmount(
+  preapprovalId: string,
+  transactionAmount: number,
+  currency: string,
+): Promise<{ id: string; status: string }> {
+  const client = getPlatformMercadoPagoClient();
+  const preApproval = new PreApproval(client);
+  const result = await preApproval.update({
+    id: preapprovalId,
+    body: {
+      auto_recurring: {
+        transaction_amount: transactionAmount,
+        currency_id: currency,
+      },
+    },
+  });
+
+  if (!result.id || !result.status) {
+    throw new Error(
+      "Mercado Pago did not confirm updating the preapproval amount (missing id/status)",
+    );
+  }
+
+  return { id: result.id, status: result.status };
+}
+
+/**
  * Retrieves a preapproval's current state directly from Mercado Pago. Used
  * by the cron backstop (Phase 5) to reconcile an AUTO-mode subscription that
  * appears stuck in `PAST_DUE` well past the point MP's own recycling/dunning

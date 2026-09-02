@@ -82,18 +82,45 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Guards against out-of-order responses: if a newer call to
   // fetchProfile starts before this one resolves, this one's result is
   // discarded so a stale response can never overwrite fresher state.
+  //
+  // Retries a non-401 failure a few times before giving up: reproduced
+  // live, a single transient /api/me miss (a dev-server cold-start 404 on
+  // the route itself, right after `npm run dev`) used to be coerced into
+  // "profile: null" permanently — this effect only ever runs once per
+  // `clerkUser.id` (see below), so nothing ever asked again. For an
+  // already-onboarded owner, that silently disagreed forever with
+  // OnboardingLayout's server-side check (reads Prisma directly, unaffected
+  // by this), which kept correctly bouncing them back to /dashboard —
+  // an infinite /dashboard <-> /onboarding loop with only one /api/me call
+  // ever logged. A 401 is excluded: it's an authoritative "not
+  // authenticated" answer, not a transient hiccup, so retrying it would
+  // only waste time before landing on the same result.
   const fetchProfile = useCallback(async () => {
     const requestId = ++latestRequestRef.current;
-    try {
-      const res = await fetch("/api/me");
-      const data = res.ok ? await res.json() : { profile: null };
-      if (latestRequestRef.current === requestId) {
-        setProfile(data?.profile ?? null);
+    const MAX_ATTEMPTS = 3;
+
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+      try {
+        const res = await fetch("/api/me");
+        if (res.ok) {
+          const data = await res.json();
+          if (latestRequestRef.current === requestId) {
+            setProfile(data?.profile ?? null);
+          }
+          return;
+        }
+        if (res.status === 401) break;
+      } catch {
+        // Network error — fall through to retry.
       }
-    } catch {
-      if (latestRequestRef.current === requestId) {
-        setProfile(null);
+
+      if (attempt < MAX_ATTEMPTS) {
+        await new Promise((resolve) => setTimeout(resolve, attempt * 150));
       }
+    }
+
+    if (latestRequestRef.current === requestId) {
+      setProfile(null);
     }
   }, []);
 

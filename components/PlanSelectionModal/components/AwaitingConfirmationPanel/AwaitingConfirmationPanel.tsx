@@ -1,6 +1,6 @@
 "use client";
 
-import { Loader2 } from "lucide-react";
+import { BouncingBall } from "@/components/BouncingBall";
 import { Button } from "@/components/ui/button";
 import { StatusBox } from "@/components/StatusBox";
 import type { AwaitingConfirmationPanelProps } from "./types";
@@ -17,10 +17,7 @@ export function AwaitingConfirmationPanel({
 }: AwaitingConfirmationPanelProps) {
   return (
     <StatusBox className="flex flex-col items-center gap-3 py-12">
-      <Loader2
-        className="size-6 animate-spin text-muted-foreground"
-        aria-hidden="true"
-      />
+      <BouncingBall size={32} amplitude={16} />
       <p>
         We&apos;re confirming your payment with Mercado Pago. This usually takes
         less than a minute.

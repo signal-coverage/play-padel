@@ -82,9 +82,11 @@ async function requireSubscription(clubId: string): Promise<SubscriptionRow> {
  * legitimate real-world event re-confirms the same status (a monthly AUTO
  * renewal charge while already ACTIVE, or a second recycling retry while
  * already PAST_DUE) — see spec's "Webhook-Only State Confirmation" and
- * design's grace-period decisions. `CANCELLED` is terminal: once cancelled,
- * a club must go through a brand-new subscription, never straight back to
- * ACTIVE — see design's "Pause vs. cancel semantics" decision.
+ * design's grace-period decisions. `CANCELLED` is almost terminal: a club
+ * must go through a brand-new checkout attempt, never straight back to
+ * ACTIVE — see design's "Pause vs. cancel semantics" decision. The one
+ * narrow exception is `CANCELLED -> PENDING`, an explicit owner-triggered
+ * reactivation (see `reactivateCancelledSubscription` below).
  */
 export const ALLOWED_MEMBERSHIP_TRANSITIONS: Record<
   MembershipStatusValue,
@@ -94,7 +96,12 @@ export const ALLOWED_MEMBERSHIP_TRANSITIONS: Record<
   TRIALING: ["TRIALING", "ACTIVE", "CANCELLED"],
   ACTIVE: ["ACTIVE", "PAST_DUE", "CANCELLED"],
   PAST_DUE: ["PAST_DUE", "ACTIVE", "CANCELLED"],
-  CANCELLED: [],
+  // Almost terminal: the one narrow exception is CANCELLED -> PENDING,
+  // triggered only by an owner explicitly clicking "Renew membership" (see
+  // `reactivateCancelledSubscription` below). Once reset to PENDING, the
+  // existing PENDING-only checkout flow just works unmodified, exactly like
+  // a first-time signup.
+  CANCELLED: ["PENDING"],
 };
 
 export class InvalidMembershipTransitionError extends Error {
@@ -311,6 +318,18 @@ export async function startTrial(
         data: { clubId: input.clubId, ...data },
       });
 
+  // A trial reaching TRIALING is a confirmed state (isMembershipConfirmed),
+  // so the club must be operational again — most relevantly, a club coming
+  // back from CANCELLED via reactivateCancelledSubscription (reset to
+  // PENDING, then this) needs its earlier `Club.status = "INACTIVE"` (set by
+  // recordAutoCancellation/recordManualLockout, the only other writers of
+  // this field) undone here, or it would stay locked out of
+  // ClubOperationalGate forever despite an actually-confirmed membership.
+  await prisma.club.update({
+    where: { id: input.clubId },
+    data: { status: "ACTIVE" },
+  });
+
   return toSnapshot(row);
 }
 
@@ -367,6 +386,16 @@ export async function recordSuccessfulCharge(
       pastDueUntil: null,
       lastWebhookEventId: input.webhookEventId ?? current.lastWebhookEventId,
     },
+  });
+
+  // Same reasoning as startTrial's own Club.status reset: a real charge
+  // confirms the membership, so any earlier `Club.status = "INACTIVE"`
+  // (recordAutoCancellation/recordManualLockout, the only other writers of
+  // this field) must be undone here — otherwise a reactivated club stays
+  // locked out of ClubOperationalGate even after successfully paying.
+  await prisma.club.update({
+    where: { id: input.clubId },
+    data: { status: "ACTIVE" },
   });
 
   return toSnapshot(row);
@@ -556,6 +585,43 @@ export async function recordManualLockout(
   return toSnapshot(row);
 }
 
+export interface ChangeTrialPlanInput {
+  clubId: string;
+  newPlan: Plan;
+}
+
+/**
+ * Changes a club's plan tier IMMEDIATELY while the subscription is still
+ * TRIALING — deliberately separate from `requestPlanChange` above, which
+ * only applies once ACTIVE and defers the change to the next renewal
+ * boundary with no proration. While TRIALING, no real charge has happened
+ * yet on EITHER cycle (MONTHLY already has an authorized-but-uncharged
+ * preapproval; ANNUAL has no Mercado Pago object at all), so there is
+ * nothing to prorate — whatever plan the owner picks simply becomes what
+ * eventually gets charged. Same billing cycle only: this never touches
+ * `cycle`. Overwrites `plan` directly (never `pendingPlan`/`pendingCycle`,
+ * which exist solely for the deferred ACTIVE-only mechanism).
+ */
+export async function changeTrialPlan(
+  input: ChangeTrialPlanInput,
+): Promise<MembershipSubscriptionSnapshot> {
+  const current = await requireSubscription(input.clubId);
+  const currentStatus = current.status as MembershipStatusValue;
+
+  if (currentStatus !== "TRIALING") {
+    throw new Error(
+      "Plan can only be changed immediately while the membership subscription is TRIALING",
+    );
+  }
+
+  const row = await prisma.clubMembershipSubscription.update({
+    where: { clubId: input.clubId },
+    data: { plan: input.newPlan },
+  });
+
+  return toSnapshot(row);
+}
+
 /**
  * Resolves which club a Mercado Pago preapproval id belongs to. Consumed by
  * the membership webhook route (Phase 4) to figure out whose subscription a
@@ -725,6 +791,70 @@ export async function requestPlanChange(
   const row = await prisma.clubMembershipSubscription.update({
     where: { clubId: input.clubId },
     data: { pendingPlan, pendingCycle },
+  });
+
+  return toSnapshot(row);
+}
+
+/**
+ * Resets a CANCELLED subscription back to a clean PENDING state so the
+ * owner can start a brand-new checkout through the existing, unmodified
+ * PENDING-based flow (`PlanSelectionModal` -> `POST /api/clubs/membership`),
+ * exactly like a first-time signup. Triggered only by an explicit owner
+ * action ("Renew membership" on `ClubInactiveCard`) — this is the single
+ * narrow `CANCELLED -> PENDING` transition allowed in
+ * `ALLOWED_MEMBERSHIP_TRANSITIONS` above; every other function in this file
+ * still refuses to touch a CANCELLED row.
+ *
+ * This is a FULL reset, not a partial one: a cancelled subscription's old MP
+ * identifiers (preapproval/preference/customer/card), trial dates, and
+ * billing-period dates are all stale relative to a brand-new checkout
+ * attempt. Leaving any of them in place risks the new checkout accidentally
+ * reusing a dead MP object (e.g. a cancelled preapproval id) or a stale
+ * trial-eligibility window computed against the previous subscription's
+ * lifecycle. Nulling every one of them guarantees the next checkout behaves
+ * identically to a club's very first one.
+ *
+ * Deliberately does NOT touch `Club.status` — it stays `INACTIVE` until a
+ * real charge later confirms via the existing webhook path
+ * (`lib/mercadopago/membershipWebhookHandlers.ts`), the same state a
+ * first-time owner mid-checkout is already in.
+ */
+export async function reactivateCancelledSubscription(
+  clubId: string,
+): Promise<MembershipSubscriptionSnapshot> {
+  const current = await requireSubscription(clubId);
+  const currentStatus = current.status as MembershipStatusValue;
+
+  if (currentStatus !== "CANCELLED") {
+    throw new Error(
+      `Cannot reactivate — subscription is ${currentStatus}, expected CANCELLED`,
+    );
+  }
+
+  // Belt-and-suspenders documentation of intent, consistent with how every
+  // other transition in this file is guarded — passes given
+  // `ALLOWED_MEMBERSHIP_TRANSITIONS.CANCELLED` above, never actually thrown
+  // given the explicit check right above it.
+  assertMembershipTransition(currentStatus, "PENDING");
+
+  const row = await prisma.clubMembershipSubscription.update({
+    where: { clubId },
+    data: {
+      status: "PENDING",
+      mpPreapprovalId: null,
+      mpPreferenceId: null,
+      mpCustomerId: null,
+      mpCardId: null,
+      trialEndsAt: null,
+      currentPeriodStart: null,
+      currentPeriodEnd: null,
+      pastDueSince: null,
+      pastDueUntil: null,
+      pendingPlan: null,
+      pendingCycle: null,
+      lastWebhookEventId: null,
+    },
   });
 
   return toSnapshot(row);

@@ -21,16 +21,6 @@ export function LandingFeatures() {
     <section id="features" className={`${CONTAINER} py-12`}>
       <div className="grid md:grid-cols-2 gap-10">
         <div className="flex flex-col gap-6">
-          <motion.span
-            className="self-start inline-flex items-center bg-foreground text-white rounded-full px-4 py-2 text-[13px] font-semibold"
-            initial={shouldReduce ? false : { opacity: 0, y: 12 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, ease }}
-          >
-            One Platform. Every Court.
-          </motion.span>
-
           <div className="relative rounded-[28px] overflow-hidden flex-1 min-h-90">
             <AnimatePresence mode="wait" initial={false}>
               <motion.div
@@ -51,43 +41,50 @@ export function LandingFeatures() {
               </motion.div>
             </AnimatePresence>
           </div>
+          <motion.span
+            className="self-start inline-flex items-center bg-foreground text-white rounded-full px-4 py-2 text-[13px] font-semibold"
+            initial={shouldReduce ? false : { opacity: 0, y: 12 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, ease }}
+          >
+            One Platform. Every Court.
+          </motion.span>
         </div>
 
         <div className="flex flex-col justify-between gap-10 pt-0 pb-6">
-          <div className="flex flex-col gap-4">
-            <div className="flex items-center gap-2 shrink-0">
-              <button
-                type="button"
-                onClick={goPrev}
-                aria-label="Previous feature"
-                className="w-11 h-11 rounded-full border border-border text-foreground flex items-center justify-center hover:border-foreground transition-colors"
-              >
-                <ArrowLeft size={16} strokeWidth={2} />
-              </button>
-              <button
-                type="button"
-                onClick={goNext}
-                aria-label="Next feature"
-                className="w-11 h-11 rounded-full border border-border text-foreground flex items-center justify-center hover:border-foreground transition-colors"
-              >
-                <ArrowRight size={16} strokeWidth={2} />
-              </button>
-            </div>
-            <motion.h2
-              className="text-3xl md:text-[34px] font-bold leading-tight tracking-tight"
-              initial={shouldReduce ? false : { opacity: 0, y: 12 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, ease, delay: 0.05 }}
-            >
-              <span className="text-foreground">Everything You Need</span>
-              <br />
-              <span className="text-muted-foreground">to Book and Manage</span>
-            </motion.h2>
-          </div>
+          <motion.h2
+            className="text-3xl md:text-[34px] font-bold leading-tight tracking-tight"
+            initial={shouldReduce ? false : { opacity: 0, y: 12 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, ease, delay: 0.05 }}
+          >
+            <span className="text-foreground">Everything You Need</span>
+            <br />
+            <span className="text-muted-foreground">to Book and Manage</span>
+          </motion.h2>
 
           <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6 sm:gap-8">
             <div className="max-w-full sm:max-w-70">
+              <div className="flex items-center gap-2 shrink-0 mb-4">
+                <button
+                  type="button"
+                  onClick={goPrev}
+                  aria-label="Previous feature"
+                  className="w-11 h-11 rounded-full border border-border text-foreground flex items-center justify-center hover:border-foreground transition-colors"
+                >
+                  <ArrowLeft size={16} strokeWidth={2} />
+                </button>
+                <button
+                  type="button"
+                  onClick={goNext}
+                  aria-label="Next feature"
+                  className="w-11 h-11 rounded-full border border-border text-foreground flex items-center justify-center hover:border-foreground transition-colors"
+                >
+                  <ArrowRight size={16} strokeWidth={2} />
+                </button>
+              </div>
               <AnimatePresence mode="wait" initial={false}>
                 <motion.div
                   key={current.title}

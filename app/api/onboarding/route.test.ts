@@ -18,6 +18,10 @@ vi.mock("@/core/clubs/services/clubs.service", () => ({
   createClub: vi.fn(),
 }));
 
+vi.mock("@/core/clubs/services/operatingHours.service", () => ({
+  setClubOperatingHours: vi.fn(),
+}));
+
 vi.mock("@/core/billing/services/membership.service", () => ({
   createPendingMembershipSubscription: vi.fn(),
 }));
@@ -29,6 +33,7 @@ vi.mock("@/core/audit/services/audit.service", () => ({
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { prisma } from "@/infrastructure/db/client";
 import { createClub } from "@/core/clubs/services/clubs.service";
+import { setClubOperatingHours } from "@/core/clubs/services/operatingHours.service";
 import { createPendingMembershipSubscription } from "@/core/billing/services/membership.service";
 import { logAudit } from "@/core/audit/services/audit.service";
 import { POST } from "./route";
@@ -40,9 +45,18 @@ const findUniqueMock = prisma.userProfile.findUnique as ReturnType<
 >;
 const upsertMock = prisma.userProfile.upsert as ReturnType<typeof vi.fn>;
 const createClubMock = createClub as ReturnType<typeof vi.fn>;
+const setClubOperatingHoursMock = setClubOperatingHours as ReturnType<
+  typeof vi.fn
+>;
 const createPendingMembershipSubscriptionMock =
   createPendingMembershipSubscription as ReturnType<typeof vi.fn>;
 const logAuditMock = logAudit as ReturnType<typeof vi.fn>;
+
+const DEFAULT_OWNER_OPERATING_HOURS = [
+  { dayOfWeek: 1, active: true, startTime: "09:00", endTime: "21:00" },
+  { dayOfWeek: 2, active: true, startTime: "09:00", endTime: "21:00" },
+  { dayOfWeek: 3, active: false, startTime: "09:00", endTime: "21:00" },
+];
 
 function ownerBody(overrides: Record<string, unknown> = {}) {
   return {
@@ -55,6 +69,7 @@ function ownerBody(overrides: Record<string, unknown> = {}) {
     timezone: "America/Argentina/Buenos_Aires",
     currency: "ARS",
     courtRange: "3-4",
+    operatingHours: DEFAULT_OWNER_OPERATING_HOURS,
     address: "Main St 123",
     displayName: "Owner Name",
     confirmedAge: true,
@@ -91,6 +106,7 @@ describe("POST /api/onboarding", () => {
     findUniqueMock.mockReset();
     upsertMock.mockReset();
     createClubMock.mockReset();
+    setClubOperatingHoursMock.mockReset();
     createPendingMembershipSubscriptionMock.mockReset();
     logAuditMock.mockReset();
 
@@ -142,12 +158,42 @@ describe("POST /api/onboarding", () => {
     });
   });
 
+  it("owner path: seeds the club's operating hours from the filtered/mapped active days", async () => {
+    createClubMock.mockResolvedValue({
+      id: "club_1",
+      name: "Test Club",
+      plan: "PRO",
+    });
+
+    await POST(makeRequest(ownerBody()));
+
+    expect(setClubOperatingHoursMock).toHaveBeenCalledWith("club_1", [
+      { dayOfWeek: 1, startTime: "09:00", endTime: "21:00" },
+      { dayOfWeek: 2, startTime: "09:00", endTime: "21:00" },
+    ]);
+  });
+
+  // A defensive-only branch: onboardingFormSchema's superRefine already
+  // requires >=1 active operatingHours entry for any owner payload that
+  // passes validation (see app/onboarding/types.ts), so a real request can
+  // never reach the route with an empty/missing operatingHours — confirmed
+  // here by the 400 rather than a 200, since parsing fails before this
+  // route's own club-creation logic ever runs.
+  it("owner path: rejects with 400 before ever creating a club when operatingHours has no active day (schema-enforced)", async () => {
+    const response = await POST(makeRequest(ownerBody({ operatingHours: [] })));
+
+    expect(response.status).toBe(400);
+    expect(createClubMock).not.toHaveBeenCalled();
+    expect(setClubOperatingHoursMock).not.toHaveBeenCalled();
+  });
+
   it("player path: does not touch the membership subscription service at all", async () => {
     const response = await POST(makeRequest(playerBody()));
 
     expect(response.status).toBe(200);
     expect(createClubMock).not.toHaveBeenCalled();
     expect(createPendingMembershipSubscriptionMock).not.toHaveBeenCalled();
+    expect(setClubOperatingHoursMock).not.toHaveBeenCalled();
   });
 
   it("returns 500 without upserting the profile when seeding the membership subscription fails", async () => {
