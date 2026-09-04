@@ -68,7 +68,6 @@ function ownerBody(overrides: Record<string, unknown> = {}) {
     taxId: "30-12345678-9",
     timezone: "America/Argentina/Buenos_Aires",
     currency: "ARS",
-    courtRange: "3-4",
     operatingHours: DEFAULT_OWNER_OPERATING_HOURS,
     address: "Main St 123",
     displayName: "Owner Name",
@@ -133,7 +132,7 @@ describe("POST /api/onboarding", () => {
     createClubMock.mockResolvedValue({
       id: "club_1",
       name: "Test Club",
-      plan: "PRO",
+      plan: "BASIC",
     });
 
     const response = await POST(makeRequest(ownerBody()));
@@ -142,10 +141,10 @@ describe("POST /api/onboarding", () => {
     expect(response.status).toBe(200);
     expect(json).toEqual({ role: "owner", clubId: "club_1" });
 
-    // Club.plan is still written directly by createClub (needed for court
-    // capacity immediately) — see design's Onboarding flow.
+    // Plan/membership tier selection now happens later, in the dashboard's
+    // payment-activation gate — every new club is created on BASIC.
     expect(createClubMock).toHaveBeenCalledWith(
-      expect.objectContaining({ plan: "PRO" }),
+      expect.objectContaining({ plan: "BASIC" }),
       "user_1",
     );
 
@@ -153,7 +152,7 @@ describe("POST /api/onboarding", () => {
     // object yet.
     expect(createPendingMembershipSubscriptionMock).toHaveBeenCalledWith({
       clubId: "club_1",
-      plan: "PRO",
+      plan: "BASIC",
       currency: "ARS",
     });
   });
@@ -162,7 +161,7 @@ describe("POST /api/onboarding", () => {
     createClubMock.mockResolvedValue({
       id: "club_1",
       name: "Test Club",
-      plan: "PRO",
+      plan: "BASIC",
     });
 
     await POST(makeRequest(ownerBody()));
@@ -187,6 +186,55 @@ describe("POST /api/onboarding", () => {
     expect(setClubOperatingHoursMock).not.toHaveBeenCalled();
   });
 
+  it("owner path: accepts an active day whose end time is numerically before its start time (overnight hours)", async () => {
+    createClubMock.mockResolvedValue({
+      id: "club_1",
+      name: "Test Club",
+      plan: "BASIC",
+    });
+
+    const response = await POST(
+      makeRequest(
+        ownerBody({
+          operatingHours: [
+            {
+              dayOfWeek: 1,
+              active: true,
+              startTime: "21:00",
+              endTime: "02:00",
+            },
+          ],
+        }),
+      ),
+    );
+
+    expect(response.status).toBe(200);
+    expect(setClubOperatingHoursMock).toHaveBeenCalledWith("club_1", [
+      { dayOfWeek: 1, startTime: "21:00", endTime: "02:00" },
+    ]);
+  });
+
+  it("owner path: rejects with 400 when an active day's start and end time are the same", async () => {
+    const response = await POST(
+      makeRequest(
+        ownerBody({
+          operatingHours: [
+            {
+              dayOfWeek: 1,
+              active: true,
+              startTime: "09:00",
+              endTime: "09:00",
+            },
+          ],
+        }),
+      ),
+    );
+
+    expect(response.status).toBe(400);
+    expect(createClubMock).not.toHaveBeenCalled();
+    expect(setClubOperatingHoursMock).not.toHaveBeenCalled();
+  });
+
   it("player path: does not touch the membership subscription service at all", async () => {
     const response = await POST(makeRequest(playerBody()));
 
@@ -200,7 +248,7 @@ describe("POST /api/onboarding", () => {
     createClubMock.mockResolvedValue({
       id: "club_1",
       name: "Test Club",
-      plan: "PRO",
+      plan: "BASIC",
     });
     createPendingMembershipSubscriptionMock.mockRejectedValue(
       new Error("db unavailable"),

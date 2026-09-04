@@ -39,10 +39,18 @@ vi.mock("@/hooks/use-auth", () => ({
 vi.mock("@mercadopago/sdk-react", () => ({
   initMercadoPago: vi.fn(),
   CardPayment: (props: {
+    initialization?: {
+      payer?: { identification?: { type: string; number: string } };
+    };
     onSubmit: (formData: unknown) => Promise<void>;
     onError?: (param: { message?: string }) => void;
   }) => (
     <>
+      <span data-testid="brick-identification">
+        {props.initialization?.payer?.identification
+          ? `${props.initialization.payer.identification.type}:${props.initialization.payer.identification.number}`
+          : ""}
+      </span>
       <button
         type="button"
         onClick={() =>
@@ -52,7 +60,10 @@ vi.mock("@mercadopago/sdk-react", () => ({
             payment_method_id: "visa",
             transaction_amount: 30000,
             installments: 1,
-            payer: { email: "owner@club.com" },
+            payer: {
+              email: "owner@club.com",
+              identification: props.initialization?.payer?.identification,
+            },
           })
         }
       >
@@ -745,6 +756,177 @@ describe("PlanSelectionModal", () => {
       "aria-checked",
       "true",
     );
+  });
+
+  // Confirms facts 1-4 of the identification-prefill feature: a club with a
+  // known `taxId` and no previously-saved identification shows the
+  // save-identification checkbox pre-checked, with the club's own CUIT
+  // prefilled through to the (real, unmocked) CardTokenForm's Brick
+  // initialization — and submitting with the box still checked sends both
+  // `identification` and `saveIdentification: true` in the checkout POST
+  // body.
+  it("pre-checks the save-identification checkbox with the club's own taxId prefilled, and sends identification + saveIdentification on submit", async () => {
+    const fetchMock = renderModal(async (url, init) => {
+      if (
+        url === "/api/clubs/membership" &&
+        (!init || init.method === undefined)
+      ) {
+        return {
+          ok: true,
+          json: async () => ({ subscription: PENDING_SUBSCRIPTION }),
+        };
+      }
+      if (url === "/api/clubs") {
+        return {
+          ok: true,
+          json: async () => ({ club: { taxId: "30-11111111-1" } }),
+        };
+      }
+      if (url === "/api/clubs/membership" && init?.method === "POST") {
+        return {
+          ok: true,
+          json: async () => ({
+            subscription: { ...PENDING_SUBSCRIPTION, status: "TRIALING" },
+            mpPreapprovalId: "preapproval_1",
+          }),
+        };
+      }
+      throw new Error(`unexpected fetch: ${url}`);
+    });
+
+    await screen.findByRole("radio", { name: /BASIC/ });
+    fireEvent.click(screen.getByRole("button", { name: /continue/i }));
+
+    fireEvent.change(await screen.findByLabelText(/email/i), {
+      target: { value: "owner@club.com" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /verify/i }));
+
+    expect(await screen.findByRole("checkbox")).toBeChecked();
+    expect(await screen.findByTestId("brick-identification")).toHaveTextContent(
+      "CUIT:30-11111111-1",
+    );
+
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Simulate submit" }),
+    );
+
+    await waitFor(() => {
+      const postCall = fetchMock.mock.calls.find(
+        ([u, i]) => u === "/api/clubs/membership" && i?.method === "POST",
+      );
+      expect(postCall).toBeDefined();
+    });
+
+    const [, postInit] = fetchMock.mock.calls.find(
+      ([u, i]) => u === "/api/clubs/membership" && i?.method === "POST",
+    ) as [string, RequestInit];
+    expect(JSON.parse(postInit.body as string)).toEqual({
+      plan: "BASIC",
+      cycle: "MONTHLY",
+      renewalMode: "AUTO",
+      payerEmail: "owner@club.com",
+      cardTokenId: "tok_test",
+      identification: { type: "CUIT", number: "30-11111111-1" },
+      saveIdentification: true,
+    });
+  });
+
+  it("uses the subscription's own previously-saved identification instead of re-deriving from the club's taxId", async () => {
+    renderModal(async (url, init) => {
+      if (
+        url === "/api/clubs/membership" &&
+        (!init || init.method === undefined)
+      ) {
+        return {
+          ok: true,
+          json: async () => ({
+            subscription: {
+              ...PENDING_SUBSCRIPTION,
+              payerIdentificationType: "DNI",
+              payerIdentificationNumber: "12345678",
+            },
+          }),
+        };
+      }
+      if (url === "/api/clubs") {
+        return {
+          ok: true,
+          json: async () => ({ club: { taxId: "30-11111111-1" } }),
+        };
+      }
+      throw new Error(`unexpected fetch: ${url}`);
+    });
+
+    await screen.findByRole("radio", { name: /BASIC/ });
+    fireEvent.click(screen.getByRole("button", { name: /continue/i }));
+
+    fireEvent.change(await screen.findByLabelText(/email/i), {
+      target: { value: "owner@club.com" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /verify/i }));
+
+    expect(await screen.findByTestId("brick-identification")).toHaveTextContent(
+      "DNI:12345678",
+    );
+  });
+
+  it("sends no identification/saveIdentification when the save-identification checkbox is unchecked", async () => {
+    const fetchMock = renderModal(async (url, init) => {
+      if (
+        url === "/api/clubs/membership" &&
+        (!init || init.method === undefined)
+      ) {
+        return {
+          ok: true,
+          json: async () => ({ subscription: PENDING_SUBSCRIPTION }),
+        };
+      }
+      if (url === "/api/clubs") {
+        return {
+          ok: true,
+          json: async () => ({ club: { taxId: "30-11111111-1" } }),
+        };
+      }
+      if (url === "/api/clubs/membership" && init?.method === "POST") {
+        return {
+          ok: true,
+          json: async () => ({
+            subscription: { ...PENDING_SUBSCRIPTION, status: "TRIALING" },
+            mpPreapprovalId: "preapproval_1",
+          }),
+        };
+      }
+      throw new Error(`unexpected fetch: ${url}`);
+    });
+
+    await screen.findByRole("radio", { name: /BASIC/ });
+    fireEvent.click(screen.getByRole("button", { name: /continue/i }));
+
+    fireEvent.change(await screen.findByLabelText(/email/i), {
+      target: { value: "owner@club.com" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /verify/i }));
+
+    fireEvent.click(await screen.findByRole("checkbox"));
+
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Simulate submit" }),
+    );
+
+    await waitFor(() => {
+      const postCall = fetchMock.mock.calls.find(
+        ([u, i]) => u === "/api/clubs/membership" && i?.method === "POST",
+      );
+      expect(postCall).toBeDefined();
+    });
+
+    const [, postInit] = fetchMock.mock.calls.find(
+      ([u, i]) => u === "/api/clubs/membership" && i?.method === "POST",
+    ) as [string, RequestInit];
+    const body = JSON.parse(postInit.body as string);
+    expect(body.identification).toBeUndefined();
+    expect(body.saveIdentification).toBeUndefined();
   });
 
   it("goes back from the card step to plan selection", async () => {

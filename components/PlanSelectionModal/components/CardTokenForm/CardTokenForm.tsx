@@ -51,6 +51,7 @@ let hasInitialized = false;
 export function CardTokenForm({
   amount,
   payerEmail,
+  identification,
   onTokenReady,
   onError,
 }: CardTokenFormProps) {
@@ -87,14 +88,28 @@ export function CardTokenForm({
   const initialization = useMemo(
     () => ({
       amount,
-      payer: payerEmail ? { email: payerEmail } : undefined,
+      payer:
+        payerEmail || identification
+          ? { email: payerEmail, identification }
+          : undefined,
     }),
-    [amount, payerEmail],
+    [amount, payerEmail, identification],
   );
 
   const handleSubmit = useCallback(
-    async (formData: { token: string }) => {
-      onTokenReady({ cardTokenId: formData.token });
+    async (formData: {
+      token: string;
+      payer?: {
+        email?: string;
+        identification?: { type: string; number: string };
+      };
+    }) => {
+      onTokenReady({
+        cardTokenId: formData.token,
+        ...(formData.payer?.identification
+          ? { identification: formData.payer.identification }
+          : {}),
+      });
     },
     [onTokenReady],
   );

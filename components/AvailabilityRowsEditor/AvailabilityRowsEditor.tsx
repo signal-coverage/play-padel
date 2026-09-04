@@ -2,9 +2,9 @@
 
 import { cn } from "@/lib/utils/utils";
 import { DAY_LABELS } from "@/core/courts/consts";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { TimeInput } from "@/components/ui/time-input";
 import { QuickSetupPanel } from "./components/QuickSetupPanel";
 import type { AvailabilityDayRow, AvailabilityRowsEditorProps } from "./types";
 
@@ -72,12 +72,11 @@ export function AvailabilityRowsEditor({
                   >
                     Start
                   </Label>
-                  <Input
+                  <TimeInput
                     id={`day-${row.dayOfWeek}-start`}
-                    type="time"
                     value={row.startTime}
-                    onChange={(e) =>
-                      updateRow(row.dayOfWeek, { startTime: e.target.value })
+                    onChange={(value) =>
+                      updateRow(row.dayOfWeek, { startTime: value })
                     }
                     disabled={!row.active}
                   />
@@ -89,12 +88,11 @@ export function AvailabilityRowsEditor({
                   >
                     End
                   </Label>
-                  <Input
+                  <TimeInput
                     id={`day-${row.dayOfWeek}-end`}
-                    type="time"
                     value={row.endTime}
-                    onChange={(e) =>
-                      updateRow(row.dayOfWeek, { endTime: e.target.value })
+                    onChange={(value) =>
+                      updateRow(row.dayOfWeek, { endTime: value })
                     }
                     disabled={!row.active}
                   />

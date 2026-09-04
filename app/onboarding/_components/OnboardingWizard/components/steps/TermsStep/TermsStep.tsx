@@ -57,7 +57,7 @@ export function TermsStep({
               htmlFor="confirmedAge"
               className="text-sm font-normal leading-snug"
             >
-              I confirm I am 18 years of age or older.
+              I <b>confirm I am 18 years of age or older.</b>
             </Label>
           </div>
         )}
@@ -78,7 +78,7 @@ export function TermsStep({
               htmlFor="acceptedTerms"
               className="text-sm font-normal leading-snug"
             >
-              I agree to the Terms and Conditions.
+              I <b>agree</b> to the <b>Terms and Conditions.</b>
             </Label>
           </div>
         )}

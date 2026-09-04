@@ -95,7 +95,7 @@ describe("OperatingHoursSettingsCard", () => {
     ]);
   });
 
-  it("disables Save when an active day has an end time at or before its start time", async () => {
+  it("keeps Save enabled for an overnight-shaped entry whose end time is before its start time", async () => {
     const { container } = renderCard([
       { dayOfWeek: 1, startTime: "09:00", endTime: "21:00" },
     ]);
@@ -111,6 +111,26 @@ describe("OperatingHoursSettingsCard", () => {
     expect(mondayEndInput).not.toBeNull();
     fireEvent.change(mondayEndInput as Element, {
       target: { value: "08:00" },
+    });
+
+    expect(
+      screen.getByRole("button", { name: /save changes/i }),
+    ).not.toBeDisabled();
+  });
+
+  it("disables Save when an active day's end time equals its start time", async () => {
+    const { container } = renderCard([
+      { dayOfWeek: 1, startTime: "09:00", endTime: "21:00" },
+    ]);
+
+    await waitFor(() =>
+      expect(container.querySelector("#day-1-end")).toHaveValue("21:00"),
+    );
+
+    const mondayEndInput = container.querySelector("#day-1-end");
+    expect(mondayEndInput).not.toBeNull();
+    fireEvent.change(mondayEndInput as Element, {
+      target: { value: "09:00" },
     });
 
     expect(

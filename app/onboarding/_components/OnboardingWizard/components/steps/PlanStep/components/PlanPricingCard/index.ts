@@ -1,1 +1,0 @@
-export { PlanPricingCard } from "./PlanPricingCard";

@@ -6,10 +6,16 @@ import "@testing-library/jest-dom/vitest";
 vi.mock("../CardTokenForm", () => ({
   CardTokenForm: (props: {
     payerEmail?: string;
+    identification?: { type: string; number: string };
     onTokenReady: (result: { cardTokenId: string }) => void;
   }) => (
     <div data-testid="mock-card-token-form">
       <span data-testid="card-form-email">{props.payerEmail ?? ""}</span>
+      <span data-testid="card-form-identification">
+        {props.identification
+          ? `${props.identification.type}:${props.identification.number}`
+          : ""}
+      </span>
       <button
         type="button"
         onClick={() => props.onTokenReady({ cardTokenId: "tok_xyz" })}
@@ -44,6 +50,8 @@ function renderDrawer(
     view: "collect-card" as const,
     amount: 30000,
     payerEmail: "",
+    saveIdentification: false,
+    onSaveIdentificationChange: vi.fn(),
     checkoutError: null,
     isSubmitting: false,
     isRefreshing: false,
@@ -99,6 +107,40 @@ describe("MembershipCheckoutDrawer", () => {
     });
 
     expect(screen.getByText("Card declined")).toBeInTheDocument();
+  });
+
+  it("does not show the save-identification checkbox when no identification is known", () => {
+    renderDrawer({ payerEmail: "owner@club.com", identification: undefined });
+
+    expect(
+      screen.queryByText(/save this id for future payments/i),
+    ).not.toBeInTheDocument();
+  });
+
+  it("shows the save-identification checkbox and threads identification through to CardTokenForm when identification is known", () => {
+    renderDrawer({
+      payerEmail: "owner@club.com",
+      identification: { type: "CUIT", number: "30-12345678-9" },
+    });
+
+    expect(
+      screen.getByText(/save this id for future payments/i),
+    ).toBeInTheDocument();
+    expect(screen.getByTestId("card-form-identification")).toHaveTextContent(
+      "CUIT:30-12345678-9",
+    );
+  });
+
+  it("calls onSaveIdentificationChange when the checkbox is toggled", () => {
+    const props = renderDrawer({
+      payerEmail: "owner@club.com",
+      identification: { type: "CUIT", number: "30-12345678-9" },
+      saveIdentification: true,
+    });
+
+    fireEvent.click(screen.getByRole("checkbox"));
+
+    expect(props.onSaveIdentificationChange).toHaveBeenCalledWith(false);
   });
 
   it("calls onBack when Back is clicked on the email step", () => {

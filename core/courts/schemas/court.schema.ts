@@ -14,8 +14,8 @@ const availabilityEntrySchema = z
       .regex(timeRegex, "Start time must be in HH:mm format"),
     endTime: z.string().regex(timeRegex, "End time must be in HH:mm format"),
   })
-  .refine((entry) => entry.endTime > entry.startTime, {
-    message: "End time must be after start time",
+  .refine((entry) => entry.startTime !== entry.endTime, {
+    message: "Start and end time cannot be the same",
     path: ["endTime"],
   });
 
@@ -28,6 +28,9 @@ export const createCourtSchema = z.object({
   surface: z.string().optional(),
   indoor: z.boolean().optional(),
   color: z.string().optional(),
+  wallType: z.string().optional(),
+  lighting: z.boolean().optional(),
+  netType: z.string().optional(),
   photoUrl: z.string().url().optional(),
   slotDurationMinutes: z.number().int().positive().optional(),
   reservationFee: z.number().nonnegative().optional(),
@@ -43,6 +46,9 @@ export const updateCourtSchema = z.object({
   surface: z.string().optional(),
   indoor: z.boolean().optional(),
   color: z.string().optional(),
+  wallType: z.string().optional(),
+  lighting: z.boolean().optional(),
+  netType: z.string().optional(),
   photoUrl: z.string().url().optional(),
   slotDurationMinutes: z.number().int().positive().optional(),
   reservationFee: z.number().nonnegative().optional(),

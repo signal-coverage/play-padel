@@ -68,12 +68,32 @@ export function useMembershipSubscription(
   });
 }
 
+// Reads the caller's own club's onboarding-collected tax id (`Club.taxId`,
+// the club's own CUIT — see onboarding's LegalBillingStep) — used purely as
+// a convenience default to prefill the Mercado Pago Card Payment Brick's
+// identification field (see PlanSelectionModal's `handleTokenReady`/
+// identification derivation). Duplicated (a few lines) rather than importing
+// `app/dashboard/settings/club/_components/ClubSettingsView/hooks.ts`'s own
+// `useCurrentClub`, per this repo's SRP-per-folder convention — same
+// reasoning as this file's own `fetchJson` duplication above.
+export function useCurrentClubTaxId() {
+  return useQuery({
+    queryKey: ["clubs", "current", "tax-id"],
+    queryFn: () =>
+      fetchJson<{ club: { taxId?: string | null } }>("/api/clubs").then(
+        (data) => data.club.taxId ?? null,
+      ),
+  });
+}
+
 export type InitiateMembershipCheckoutInput = {
   plan: Plan;
   cycle: MembershipCycleValue;
   renewalMode?: MembershipRenewalModeValue;
   payerEmail?: string;
   cardTokenId?: string;
+  identification?: { type: string; number: string };
+  saveIdentification?: boolean;
 };
 
 export type InitiateMembershipCheckoutResult = {

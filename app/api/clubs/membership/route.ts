@@ -13,6 +13,7 @@ import {
   attachPendingPreference,
   startTrial,
   changeTrialPlan,
+  saveMembershipPayerIdentification,
 } from "@/core/billing/services/membership.service";
 import {
   getOrCreateMembershipPreapprovalPlanId,
@@ -95,7 +96,15 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const { plan, cycle, renewalMode, payerEmail, cardTokenId } = parsed.data;
+  const {
+    plan,
+    cycle,
+    renewalMode,
+    payerEmail,
+    cardTokenId,
+    identification,
+    saveIdentification,
+  } = parsed.data;
   const clubId = authResult.context.clubId;
   const planDetails = PLAN_DETAILS[plan];
 
@@ -191,7 +200,7 @@ export async function POST(request: NextRequest) {
         planDetails.welcomeFreeMonths,
       );
 
-      const subscription = freeTrial
+      let subscription = freeTrial
         ? await startTrial({
             clubId,
             plan,
@@ -210,6 +219,17 @@ export async function POST(request: NextRequest) {
             currency,
             mpPreapprovalId: preapproval.id,
           });
+
+      // Only meaningful alongside a real card token, so this only ever runs
+      // in the MONTHLY branch — never ANNUAL. Requires BOTH the opt-in flag
+      // AND the actual identification the owner confirmed; never persists
+      // one without the other (see membershipCheckout.schema.ts).
+      if (saveIdentification === true && identification) {
+        subscription = await saveMembershipPayerIdentification(
+          clubId,
+          identification,
+        );
+      }
 
       return NextResponse.json({
         subscription,

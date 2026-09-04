@@ -21,6 +21,9 @@ export function courtToFormValues(
     surface: court?.surface ?? "",
     indoor: court?.indoor ?? false,
     color: court?.color ?? DEFAULT_COURT_COLOR,
+    wallType: court?.wallType ?? "",
+    lighting: court?.lighting ?? false,
+    netType: court?.netType ?? "",
     photoUrl: court?.photoUrl,
     slotDurationMinutes:
       court?.slotDurationMinutes ?? DEFAULT_SLOT_DURATION_MINUTES,

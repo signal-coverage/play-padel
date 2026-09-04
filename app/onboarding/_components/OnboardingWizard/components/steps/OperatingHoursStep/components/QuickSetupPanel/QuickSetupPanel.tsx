@@ -3,8 +3,8 @@
 import { useState } from "react";
 import { Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { TimeInput } from "@/components/ui/time-input";
 import { DEFAULT_QUICK_SETUP_END, DEFAULT_QUICK_SETUP_START } from "./consts";
 import type { QuickSetupPanelProps } from "./types";
 
@@ -36,11 +36,10 @@ export function QuickSetupPanel({ onApply }: QuickSetupPanelProps) {
           >
             Start
           </Label>
-          <Input
+          <TimeInput
             id="operating-hours-quick-setup-start"
-            type="time"
             value={startTime}
-            onChange={(e) => setStartTime(e.target.value)}
+            onChange={setStartTime}
           />
         </div>
         <div className="flex min-w-28 flex-1 flex-col gap-1.5">
@@ -50,11 +49,10 @@ export function QuickSetupPanel({ onApply }: QuickSetupPanelProps) {
           >
             End
           </Label>
-          <Input
+          <TimeInput
             id="operating-hours-quick-setup-end"
-            type="time"
             value={endTime}
-            onChange={(e) => setEndTime(e.target.value)}
+            onChange={setEndTime}
           />
         </div>
         <Button

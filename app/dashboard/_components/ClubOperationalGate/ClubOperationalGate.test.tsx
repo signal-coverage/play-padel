@@ -130,9 +130,9 @@ describe("ClubOperationalGate", () => {
     expect(heading).toBeInTheDocument();
 
     // The membership summary and "Pay Membership" action show once the
-    // subscription snapshot loads; "Link Mercado Pago account" stays
-    // disabled until membership is confirmed (spec's "Two Separate
-    // Membership Actions").
+    // subscription snapshot loads; the payout-method cards (Mercado
+    // Pago/bank transfer) stay hidden entirely until membership is confirmed
+    // (spec's "Two Separate Membership Actions").
     await waitFor(() => {
       expect(screen.getByText(/BASIC/)).toBeInTheDocument();
       expect(
@@ -140,9 +140,7 @@ describe("ClubOperationalGate", () => {
       ).toBeInTheDocument();
     });
 
-    expect(
-      screen.getByRole("button", { name: "Link Mercado Pago account" }),
-    ).toBeDisabled();
+    expect(screen.queryByText("Bank Transfer")).not.toBeInTheDocument();
 
     // This is the actual point of the fix: the gated-out page content must
     // be entirely absent from the DOM, not just visually hidden — no blur

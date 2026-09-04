@@ -50,8 +50,10 @@ const rule = {
   },
 };
 
-export default {
+const plugin = {
   rules: {
     "sort-index-exports": rule,
   },
 };
+
+export default plugin;

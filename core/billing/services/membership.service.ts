@@ -25,6 +25,8 @@ export interface MembershipSubscriptionSnapshot {
   mpPreferenceId: string | null;
   mpCustomerId: string | null;
   mpCardId: string | null;
+  payerIdentificationType: string | null;
+  payerIdentificationNumber: string | null;
   trialEndsAt: Date | null;
   currentPeriodStart: Date | null;
   currentPeriodEnd: Date | null;
@@ -54,6 +56,8 @@ function toSnapshot(row: SubscriptionRow): MembershipSubscriptionSnapshot {
     mpPreferenceId: row.mpPreferenceId ?? null,
     mpCustomerId: row.mpCustomerId ?? null,
     mpCardId: row.mpCardId ?? null,
+    payerIdentificationType: row.payerIdentificationType ?? null,
+    payerIdentificationNumber: row.payerIdentificationNumber ?? null,
     trialEndsAt: row.trialEndsAt ?? null,
     currentPeriodStart: row.currentPeriodStart ?? null,
     currentPeriodEnd: row.currentPeriodEnd ?? null,
@@ -108,6 +112,30 @@ export class InvalidMembershipTransitionError extends Error {
   constructor(from: MembershipStatusValue, to: MembershipStatusValue) {
     super(`Cannot transition membership status from ${from} to ${to}`);
     this.name = "InvalidMembershipTransitionError";
+  }
+}
+
+/** Thrown by `activateFreePlan` when the given `clubId` has no `Club` row. */
+export class ClubNotFoundError extends Error {
+  constructor(clubId: string) {
+    super(`Club ${clubId} not found`);
+    this.name = "ClubNotFoundError";
+  }
+}
+
+/**
+ * Thrown by `activateFreePlan`'s safety guard when the club already has a
+ * real (or real-attempt) Mercado Pago subscription — a non-null
+ * `mpPreapprovalId`/`mpPreferenceId` — and `force` was not passed. Prevents
+ * an admin from accidentally converting a real paying club to FREE by
+ * mistyping a `clubId`.
+ */
+export class RealSubscriptionExistsError extends Error {
+  constructor() {
+    super(
+      "Club already has a real Mercado Pago subscription — pass force to override",
+    );
+    this.name = "RealSubscriptionExistsError";
   }
 }
 
@@ -622,6 +650,100 @@ export async function changeTrialPlan(
   return toSnapshot(row);
 }
 
+export interface ActivateFreePlanInput {
+  clubId: string;
+  /**
+   * Overrides the safety guard that otherwise refuses to touch a
+   * subscription that already has a real `mpPreapprovalId`/`mpPreferenceId`.
+   * Defaults to `false`.
+   */
+  force?: boolean;
+  now?: Date;
+}
+
+/**
+ * Admin-only override: activates the hidden "FREE" plan tier for a club so
+ * the app owner can unblock `ClubOperationalGate` for internal testing (e.g.
+ * exercising the player-side reservation payment flow) without a real
+ * Mercado Pago checkout. Mirrors `startTrial`/`recordSuccessfulCharge`'s
+ * `Club.status = "ACTIVE"` side effect to reverse any prior lockout.
+ *
+ * Deliberately bypasses `assertMembershipTransition` — this is an explicit
+ * admin action overriding billing state outside the normal event-driven
+ * lifecycle, the same philosophy as `app/api/admin/club-status/route.ts`
+ * overriding `Club.status` outside the billing state machine's own
+ * transitions.
+ *
+ * Safety guard: refuses to overwrite an existing subscription that already
+ * has a real MP preapproval/preference id unless `force` is explicitly
+ * passed (see `RealSubscriptionExistsError`) — a net against accidentally
+ * converting a real paying club to FREE via a mistyped `clubId`.
+ */
+export async function activateFreePlan(
+  input: ActivateFreePlanInput,
+): Promise<MembershipSubscriptionSnapshot> {
+  const now = input.now ?? new Date();
+
+  const club = await prisma.club.findUnique({
+    where: { id: input.clubId },
+    select: { currency: true },
+  });
+  if (!club) {
+    throw new ClubNotFoundError(input.clubId);
+  }
+
+  const existing = await prisma.clubMembershipSubscription.findUnique({
+    where: { clubId: input.clubId },
+  });
+
+  const hasRealSubscription =
+    existing != null &&
+    (existing.mpPreapprovalId != null || existing.mpPreferenceId != null);
+
+  if (hasRealSubscription && !input.force) {
+    throw new RealSubscriptionExistsError();
+  }
+
+  const data = {
+    plan: "FREE" as const,
+    cycle: "ANNUAL" as const,
+    renewalMode: "MANUAL" as const,
+    status: "ACTIVE" as const,
+    currency: club.currency,
+    currentPeriodStart: now,
+    currentPeriodEnd: null,
+    mpPreapprovalId: null,
+    mpPreferenceId: null,
+    mpCustomerId: null,
+    mpCardId: null,
+    pendingPlan: null,
+    pendingCycle: null,
+    pastDueSince: null,
+    pastDueUntil: null,
+    trialEndsAt: null,
+  };
+
+  const row = existing
+    ? await prisma.clubMembershipSubscription.update({
+        where: { clubId: input.clubId },
+        data,
+      })
+    : await prisma.clubMembershipSubscription.create({
+        data: { clubId: input.clubId, ...data },
+      });
+
+  // Same reasoning as startTrial's/recordSuccessfulCharge's own Club.status
+  // reset: reverses any prior lockout (recordAutoCancellation/
+  // recordManualLockout are the only other writers of this field) so the
+  // club is immediately operational for testing.
+  await prisma.club.update({
+    where: { id: input.clubId },
+    data: { status: "ACTIVE" },
+  });
+
+  return toSnapshot(row);
+}
+
 /**
  * Resolves which club a Mercado Pago preapproval id belongs to. Consumed by
  * the membership webhook route (Phase 4) to figure out whose subscription a
@@ -756,6 +878,36 @@ export async function getMembershipSubscription(
     where: { clubId },
   });
   return existing ? toSnapshot(existing) : null;
+}
+
+/**
+ * Persists the cardholder identification (type/number, e.g. `{ type: "CUIT",
+ * number: "30-12345678-9" }`) the owner actually confirmed while entering a
+ * card via the Mercado Pago Card Payment Brick — only ever called when the
+ * owner explicitly opts in via the checkout drawer's "Save this ID for
+ * future payments" checkbox (see app/api/clubs/membership/route.ts's POST
+ * handler). Remembered so a LATER card re-collection (a renewal or plan
+ * change) can prefill the Brick's identification field with what was
+ * actually confirmed last time, instead of always falling back to the
+ * club's own onboarding-collected `Club.taxId`. Assumes the subscription row
+ * already exists — this is only ever invoked right after a MONTHLY checkout
+ * in the same request that just confirmed/attached a preapproval, so a
+ * straightforward `update` (rather than `requireSubscription`'s extra guard)
+ * is enough here.
+ */
+export async function saveMembershipPayerIdentification(
+  clubId: string,
+  identification: { type: string; number: string },
+): Promise<MembershipSubscriptionSnapshot> {
+  const row = await prisma.clubMembershipSubscription.update({
+    where: { clubId },
+    data: {
+      payerIdentificationType: identification.type,
+      payerIdentificationNumber: identification.number,
+    },
+  });
+
+  return toSnapshot(row);
 }
 
 export interface RequestPlanChangeInput {

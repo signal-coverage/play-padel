@@ -88,4 +88,29 @@ describe("GateScreen", () => {
 
     expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
   });
+
+  it("renders without a submit button when submitLabel is omitted", () => {
+    render(
+      <GateScreen title="Some gate" description="Some explanation.">
+        <div>Body content</div>
+      </GateScreen>,
+    );
+
+    expect(screen.getByText("Body content")).toBeInTheDocument();
+    expect(screen.queryByRole("button")).not.toBeInTheDocument();
+  });
+
+  it("still renders the submit button when submitLabel is provided (regression: ClubInactiveCard)", () => {
+    render(
+      <GateScreen
+        title="Some gate"
+        description="Some explanation."
+        submitLabel="Renew membership"
+      />,
+    );
+
+    expect(
+      screen.getByRole("button", { name: "Renew membership" }),
+    ).toBeInTheDocument();
+  });
 });

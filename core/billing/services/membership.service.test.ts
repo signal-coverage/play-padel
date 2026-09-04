@@ -37,6 +37,10 @@ import {
   getMembershipSubscription,
   seedPendingMembershipSubscriptionFromClub,
   reactivateCancelledSubscription,
+  saveMembershipPayerIdentification,
+  activateFreePlan,
+  ClubNotFoundError,
+  RealSubscriptionExistsError,
 } from "./membership.service";
 
 const findUniqueMock = prisma.clubMembershipSubscription
@@ -747,6 +751,32 @@ describe("recordManualLockout (MANUAL's sole/authoritative lockout trigger, cron
   });
 });
 
+describe("saveMembershipPayerIdentification", () => {
+  it("persists the confirmed identification type/number and returns the updated snapshot", async () => {
+    updateMock.mockResolvedValue(
+      row({
+        payerIdentificationType: "CUIT",
+        payerIdentificationNumber: "30-12345678-9",
+      }),
+    );
+
+    const result = await saveMembershipPayerIdentification("club_1", {
+      type: "CUIT",
+      number: "30-12345678-9",
+    });
+
+    expect(updateMock).toHaveBeenCalledWith({
+      where: { clubId: "club_1" },
+      data: {
+        payerIdentificationType: "CUIT",
+        payerIdentificationNumber: "30-12345678-9",
+      },
+    });
+    expect(result.payerIdentificationType).toBe("CUIT");
+    expect(result.payerIdentificationNumber).toBe("30-12345678-9");
+  });
+});
+
 describe("requestPlanChange (mid-cycle, no proration — takes effect at next renewal boundary)", () => {
   it("sets pendingPlan on an ACTIVE subscription without changing the current plan immediately", async () => {
     findUniqueMock.mockResolvedValue(
@@ -1203,5 +1233,165 @@ describe("reactivateCancelledSubscription (owner-triggered renewal — CANCELLED
     await expect(reactivateCancelledSubscription("club_404")).rejects.toThrow(
       /no membership subscription/i,
     );
+  });
+});
+
+describe("activateFreePlan (admin-only override — unblocks ClubOperationalGate for internal testing)", () => {
+  it("throws ClubNotFoundError when the club doesn't exist", async () => {
+    clubFindUniqueMock.mockResolvedValue(null);
+
+    await expect(activateFreePlan({ clubId: "club_ghost" })).rejects.toThrow(
+      ClubNotFoundError,
+    );
+    expect(findUniqueMock).not.toHaveBeenCalled();
+    expect(createMock).not.toHaveBeenCalled();
+    expect(updateMock).not.toHaveBeenCalled();
+  });
+
+  it("creates a fresh ACTIVE/FREE subscription when none exists yet", async () => {
+    clubFindUniqueMock.mockResolvedValue({ currency: "ARS" });
+    findUniqueMock.mockResolvedValue(null);
+    createMock.mockResolvedValue(
+      row({
+        plan: "FREE",
+        cycle: "ANNUAL",
+        renewalMode: "MANUAL",
+        status: "ACTIVE",
+        currency: "ARS",
+      }),
+    );
+    clubUpdateMock.mockResolvedValue({ id: "club_1", status: "ACTIVE" });
+
+    const result = await activateFreePlan({
+      clubId: "club_1",
+      now: new Date("2026-01-01T00:00:00Z"),
+    });
+
+    expect(createMock).toHaveBeenCalledWith({
+      data: {
+        clubId: "club_1",
+        plan: "FREE",
+        cycle: "ANNUAL",
+        renewalMode: "MANUAL",
+        status: "ACTIVE",
+        currency: "ARS",
+        currentPeriodStart: new Date("2026-01-01T00:00:00Z"),
+        currentPeriodEnd: null,
+        mpPreapprovalId: null,
+        mpPreferenceId: null,
+        mpCustomerId: null,
+        mpCardId: null,
+        pendingPlan: null,
+        pendingCycle: null,
+        pastDueSince: null,
+        pastDueUntil: null,
+        trialEndsAt: null,
+      },
+    });
+    expect(updateMock).not.toHaveBeenCalled();
+    expect(result.status).toBe("ACTIVE");
+    expect(result.plan).toBe("FREE");
+  });
+
+  it("updates an existing non-paid subscription in place instead of creating a new row", async () => {
+    clubFindUniqueMock.mockResolvedValue({ currency: "USD" });
+    findUniqueMock.mockResolvedValue(row({ status: "PENDING", plan: "BASIC" }));
+    updateMock.mockResolvedValue(
+      row({
+        plan: "FREE",
+        cycle: "ANNUAL",
+        renewalMode: "MANUAL",
+        status: "ACTIVE",
+        currency: "USD",
+      }),
+    );
+    clubUpdateMock.mockResolvedValue({ id: "club_1", status: "ACTIVE" });
+
+    await activateFreePlan({
+      clubId: "club_1",
+      now: new Date("2026-01-01T00:00:00Z"),
+    });
+
+    expect(updateMock).toHaveBeenCalledWith({
+      where: { clubId: "club_1" },
+      data: {
+        plan: "FREE",
+        cycle: "ANNUAL",
+        renewalMode: "MANUAL",
+        status: "ACTIVE",
+        currency: "USD",
+        currentPeriodStart: new Date("2026-01-01T00:00:00Z"),
+        currentPeriodEnd: null,
+        mpPreapprovalId: null,
+        mpPreferenceId: null,
+        mpCustomerId: null,
+        mpCardId: null,
+        pendingPlan: null,
+        pendingCycle: null,
+        pastDueSince: null,
+        pastDueUntil: null,
+        trialEndsAt: null,
+      },
+    });
+    expect(createMock).not.toHaveBeenCalled();
+  });
+
+  it("refuses to overwrite a subscription with a real mpPreapprovalId when force is not passed", async () => {
+    clubFindUniqueMock.mockResolvedValue({ currency: "ARS" });
+    findUniqueMock.mockResolvedValue(
+      row({ status: "ACTIVE", plan: "PRO", mpPreapprovalId: "preap_real" }),
+    );
+
+    await expect(activateFreePlan({ clubId: "club_1" })).rejects.toThrow(
+      RealSubscriptionExistsError,
+    );
+    expect(updateMock).not.toHaveBeenCalled();
+    expect(createMock).not.toHaveBeenCalled();
+    expect(clubUpdateMock).not.toHaveBeenCalled();
+  });
+
+  it("refuses to overwrite a subscription with a real mpPreferenceId when force is not passed", async () => {
+    clubFindUniqueMock.mockResolvedValue({ currency: "ARS" });
+    findUniqueMock.mockResolvedValue(
+      row({ status: "ACTIVE", plan: "PRO", mpPreferenceId: "pref_real" }),
+    );
+
+    await expect(activateFreePlan({ clubId: "club_1" })).rejects.toThrow(
+      RealSubscriptionExistsError,
+    );
+    expect(updateMock).not.toHaveBeenCalled();
+  });
+
+  it("succeeds despite an existing real mpPreapprovalId when force is true", async () => {
+    clubFindUniqueMock.mockResolvedValue({ currency: "ARS" });
+    findUniqueMock.mockResolvedValue(
+      row({ status: "ACTIVE", plan: "PRO", mpPreapprovalId: "preap_real" }),
+    );
+    updateMock.mockResolvedValue(row({ plan: "FREE", status: "ACTIVE" }));
+    clubUpdateMock.mockResolvedValue({ id: "club_1", status: "ACTIVE" });
+
+    const result = await activateFreePlan({ clubId: "club_1", force: true });
+
+    expect(updateMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { clubId: "club_1" },
+        data: expect.objectContaining({ plan: "FREE", mpPreapprovalId: null }),
+      }),
+    );
+    expect(result.plan).toBe("FREE");
+  });
+
+  it("sets Club.status = ACTIVE as a side effect", async () => {
+    clubFindUniqueMock.mockResolvedValue({ currency: "ARS" });
+    findUniqueMock.mockResolvedValue(null);
+    createMock.mockResolvedValue(row({ plan: "FREE", status: "ACTIVE" }));
+    clubUpdateMock.mockResolvedValue({ id: "club_1", status: "ACTIVE" });
+
+    await activateFreePlan({ clubId: "club_1" });
+
+    expect(clubUpdateMock).toHaveBeenCalledWith({
+      where: { id: "club_1" },
+      data: { status: "ACTIVE" },
+    });
   });
 });

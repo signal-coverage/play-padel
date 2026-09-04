@@ -9,6 +9,11 @@ export const courtFormSchema = z.object({
   surface: z.string().min(1, "Surface is required"),
   indoor: z.boolean(),
   color: z.string().min(1, "Color is required"),
+  // Genuinely optional physical characteristics — a court without a chosen
+  // wall/net type is still valid, unlike surface/color above.
+  wallType: z.string().optional(),
+  lighting: z.boolean(),
+  netType: z.string().optional(),
   // Optional, unlike name/surface/color: a court without a photo is valid.
   photoUrl: z.string().url().optional(),
   slotDurationMinutes: z

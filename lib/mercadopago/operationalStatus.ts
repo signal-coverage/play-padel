@@ -5,14 +5,19 @@ export type ClubOperationalCause = "MP_NOT_CONNECTED" | "CLUB_INACTIVE";
 
 /**
  * Query-level Prisma `where` fragment expressing "this club is operational":
- * `status === ACTIVE` AND it has a `CONNECTED` Mercado Pago account. Reused
- * by list-query call sites (`listActiveClubs`, `listCourtsByClub`) so the
- * definition of "operational" never drifts between the mutation guard, the
- * read filters, and the UI status endpoint — all of which share this module.
+ * `status === ACTIVE` AND it has SOME way to get paid for reservations —
+ * either a `CONNECTED` Mercado Pago account OR a configured bank transfer
+ * account (`ClubBankTransferAccount`). Reused by list-query call sites
+ * (`listActiveClubs`, `listCourtsByClub`) so the definition of "operational"
+ * never drifts between the mutation guard, the read filters, and the UI
+ * status endpoint — all of which share this module.
  */
 export const CLUB_OPERATIONAL_WHERE: Prisma.ClubWhereInput = {
   status: "ACTIVE",
-  mercadoPagoAccount: { status: "CONNECTED" },
+  OR: [
+    { mercadoPagoAccount: { status: "CONNECTED" } },
+    { bankTransferAccount: { isNot: null } },
+  ],
 };
 
 /**
@@ -22,7 +27,10 @@ export const CLUB_OPERATIONAL_WHERE: Prisma.ClubWhereInput = {
  * Precedence when both causes apply: MP_NOT_CONNECTED wins, since it's the
  * one with a functional CTA (connect flow) in this change — see design.md's
  * "Priority When Both Causes Apply" requirement. A club that cannot be found
- * at all is treated the same as MP_NOT_CONNECTED (fails both checks).
+ * at all is treated the same as MP_NOT_CONNECTED (fails both checks). Note
+ * the cause is still literally named MP_NOT_CONNECTED even though it now
+ * also covers "no bank transfer account either" — it fires whenever the club
+ * has NO payout method at all, Mercado Pago or bank transfer.
  */
 export async function getClubOperationalStatus(clubId: string): Promise<{
   operational: boolean;
@@ -37,6 +45,7 @@ export async function getClubOperationalStatus(clubId: string): Promise<{
       mercadoPagoAccount: {
         select: { status: true, mpEmail: true, mpNickname: true },
       },
+      bankTransferAccount: { select: { id: true } },
     },
   });
 
@@ -44,7 +53,8 @@ export async function getClubOperationalStatus(clubId: string): Promise<{
   const nickname = club?.mercadoPagoAccount?.mpNickname ?? null;
 
   const mpConnected = club?.mercadoPagoAccount?.status === "CONNECTED";
-  if (!mpConnected) {
+  const hasPayoutMethod = mpConnected || Boolean(club?.bankTransferAccount);
+  if (!hasPayoutMethod) {
     return { operational: false, cause: "MP_NOT_CONNECTED", email, nickname };
   }
 

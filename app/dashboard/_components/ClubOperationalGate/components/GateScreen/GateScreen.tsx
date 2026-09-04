@@ -22,7 +22,12 @@ export function GateScreen({
   onSubmit,
 }: GateScreenProps) {
   return (
-    <div className="flex h-full w-full flex-col items-center justify-center">
+    // overflow-y-auto is load-bearing: this screen's ancestor `<main>`
+    // (DashboardShell.tsx) is `md:overflow-hidden` on desktop — other
+    // dashboard pages manage their own internal scroll region rather than
+    // relying on it, and this one previously had none, so content taller
+    // than the viewport was silently clipped with no way to reach it.
+    <div className="flex h-full w-full flex-col items-center justify-center overflow-y-auto">
       <div
         className={cn(
           "mx-auto flex w-full max-w-lg flex-col gap-4",
@@ -47,15 +52,17 @@ export function GateScreen({
           </>
         ) : null}
 
-        <div className="flex justify-end">
-          <Button
-            type="button"
-            onClick={() => onSubmit?.()}
-            disabled={submitDisabled}
-          >
-            {submitLabel}
-          </Button>
-        </div>
+        {submitLabel ? (
+          <div className="flex justify-end">
+            <Button
+              type="button"
+              onClick={() => onSubmit?.()}
+              disabled={submitDisabled}
+            >
+              {submitLabel}
+            </Button>
+          </div>
+        ) : null}
       </div>
     </div>
   );

@@ -2,7 +2,7 @@ import { prisma } from "@/infrastructure/db/client";
 import { Prisma } from "@/lib/generated/prisma/client";
 import { logAudit } from "@/core/audit/services/audit.service";
 import { CLUB_OPERATIONAL_WHERE } from "@/lib/mercadopago/operationalStatus";
-import { startOfDay, endOfDay, addMinutes, format } from "date-fns";
+import { startOfDay, endOfDay, addMinutes, addDays, format } from "date-fns";
 import type {
   Court,
   CourtAvailability,
@@ -63,6 +63,9 @@ function toCourt(row: CourtRow): Court {
     surface: row.surface ?? undefined,
     indoor: row.indoor,
     color: row.color ?? undefined,
+    wallType: row.wallType ?? undefined,
+    lighting: row.lighting,
+    netType: row.netType ?? undefined,
     photoUrl: row.photoUrl ?? undefined,
     slotDurationMinutes: row.slotDurationMinutes,
     reservationFee: row.reservationFee ?? undefined,
@@ -117,6 +120,9 @@ export async function createCourt(
       surface: input.surface ?? null,
       indoor: input.indoor ?? false,
       color: input.color ?? null,
+      wallType: input.wallType ?? null,
+      lighting: input.lighting ?? false,
+      netType: input.netType ?? null,
       photoUrl: input.photoUrl ?? null,
       ...(input.slotDurationMinutes !== undefined && {
         slotDurationMinutes: input.slotDurationMinutes,
@@ -181,6 +187,11 @@ export async function updateCourt(
       ...(input.surface !== undefined && { surface: input.surface ?? null }),
       ...(input.indoor !== undefined && { indoor: input.indoor }),
       ...(input.color !== undefined && { color: input.color ?? null }),
+      ...(input.wallType !== undefined && {
+        wallType: input.wallType ?? null,
+      }),
+      ...(input.lighting !== undefined && { lighting: input.lighting }),
+      ...(input.netType !== undefined && { netType: input.netType ?? null }),
       ...(input.photoUrl !== undefined && {
         photoUrl: input.photoUrl ?? null,
       }),
@@ -433,6 +444,21 @@ function timeToDateOnDay(day: Date, time: string): Date {
   return result;
 }
 
+// An availability window whose endTime is numerically <= its startTime
+// (e.g. "21:00" -> "02:00") closes after midnight, so its end instant falls
+// on the following calendar day. String comparison is safe here since both
+// values are zero-padded "HH:mm" of equal length. startTime === endTime is
+// rejected by the schema before this is ever reached, so that case never
+// needs to be distinguished from a genuine overnight window here.
+function resolveWindowEnd(
+  date: Date,
+  startTime: string,
+  endTime: string,
+): Date {
+  const endDay = endTime <= startTime ? addDays(date, 1) : date;
+  return timeToDateOnDay(endDay, endTime);
+}
+
 /**
  * dayOfWeek is derived from the server's local calendar day (date.getDay(),
  * 0 = Sunday .. 6 = Saturday) — the same convention CourtAvailability rows
@@ -466,7 +492,16 @@ export async function getCourtSlots(
     where: {
       courtId,
       status: { in: [...ACTIVE_RESERVATION_STATUSES] },
-      scheduledStart: { gte: startOfDay(date), lte: endOfDay(date) },
+      // Widened to date+1 (rather than just endOfDay(date)) so an overnight
+      // availability window's after-midnight slots — and any reservations
+      // against them — are still picked up. Applied unconditionally rather
+      // than only when a window happens to be overnight: the extra rows
+      // fetched don't change results since the per-slot overlap check below
+      // already filters correctly by instant.
+      scheduledStart: {
+        gte: startOfDay(date),
+        lte: endOfDay(addDays(date, 1)),
+      },
       // A SCHEDULED (pending-payment) hold that's past its expiry no longer
       // blocks the slot — treated as lapsed rather than actively cancelled
       // (see docs: Payments spec, "Handled lazily").
@@ -482,7 +517,10 @@ export async function getCourtSlots(
     where: {
       courtId,
       cancelledAt: null,
-      startsAt: { lte: endOfDay(date) },
+      // Same widened upper bound as the reservation query above, and for
+      // the same reason: an overnight window's after-midnight slots can
+      // overlap a closure that starts on date+1.
+      startsAt: { lte: endOfDay(addDays(date, 1)) },
       endsAt: { gte: startOfDay(date) },
     },
     select: { startsAt: true, endsAt: true, reason: true },
@@ -492,7 +530,7 @@ export async function getCourtSlots(
 
   for (const window of availabilityRows) {
     const windowStart = timeToDateOnDay(date, window.startTime);
-    const windowEnd = timeToDateOnDay(date, window.endTime);
+    const windowEnd = resolveWindowEnd(date, window.startTime, window.endTime);
 
     let slotStart = windowStart;
     while (addMinutes(slotStart, court.slotDurationMinutes) <= windowEnd) {
@@ -583,7 +621,15 @@ export async function getClubsAvailability(
     where: {
       courtId: { in: courtIds },
       status: { in: [...ACTIVE_RESERVATION_STATUSES] },
-      scheduledStart: { gte: startOfDay(date), lte: endOfDay(date) },
+      // Same widened upper bound as getCourtSlots: an overnight window's
+      // after-midnight slots (and reservations against them) fall on
+      // date+1, applied unconditionally since the extra rows don't change
+      // results — the per-slot overlap check below already filters
+      // correctly by instant.
+      scheduledStart: {
+        gte: startOfDay(date),
+        lte: endOfDay(addDays(date, 1)),
+      },
       // Same lapsed-hold exception as getCourtSlots: an unpaid SCHEDULED
       // hold past its expiry no longer blocks the slot.
       NOT: {
@@ -603,7 +649,8 @@ export async function getClubsAvailability(
     where: {
       courtId: { in: courtIds },
       cancelledAt: null,
-      startsAt: { lte: endOfDay(date) },
+      // Same widened upper bound as getCourtSlots, for the same reason.
+      startsAt: { lte: endOfDay(addDays(date, 1)) },
       endsAt: { gte: startOfDay(date) },
     },
     select: { courtId: true, startsAt: true, endsAt: true, reason: true },
@@ -645,7 +692,11 @@ export async function getClubsAvailability(
     let courtHasFree = false;
     for (const window of windows) {
       const windowStart = timeToDateOnDay(date, window.startTime);
-      const windowEnd = timeToDateOnDay(date, window.endTime);
+      const windowEnd = resolveWindowEnd(
+        date,
+        window.startTime,
+        window.endTime,
+      );
 
       let slotStart = windowStart;
       while (addMinutes(slotStart, court.slotDurationMinutes) <= windowEnd) {

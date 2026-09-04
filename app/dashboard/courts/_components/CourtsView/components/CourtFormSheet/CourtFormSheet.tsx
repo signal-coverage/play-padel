@@ -34,6 +34,8 @@ import { courtFormSchema } from "./consts";
 import { SurfaceField } from "./components/SurfaceField";
 import { CourtTypeField } from "./components/CourtTypeField";
 import { ColorField } from "./components/ColorField";
+import { WallTypeField } from "./components/WallTypeField";
+import { NetTypeField } from "./components/NetTypeField";
 import { PhotoField } from "./components/PhotoField";
 import { SlotDurationField } from "./components/SlotDurationField";
 import { AvailabilityRowsEditor } from "@/components/AvailabilityRowsEditor";
@@ -163,6 +165,9 @@ export function CourtFormSheet({
   const surface = useWatch({ control, name: "surface" });
   const indoor = useWatch({ control, name: "indoor" });
   const color = useWatch({ control, name: "color" });
+  const wallType = useWatch({ control, name: "wallType" });
+  const lighting = useWatch({ control, name: "lighting" });
+  const netType = useWatch({ control, name: "netType" });
   const photoUrl = useWatch({ control, name: "photoUrl" });
   const slotDurationMinutes = useWatch({
     control,
@@ -173,11 +178,12 @@ export function CourtFormSheet({
   const active = useWatch({ control, name: "active" });
 
   // Ported from AvailabilityRowsEditor's old pre-save check: every active
-  // day must have an end time after its start time. Factored into the
-  // single submit button's disabled condition now that there's one shared
-  // submit action instead of a separate "Save schedule" button.
+  // day's end time must differ from its start time (a numerically-earlier
+  // end time is a valid overnight window, e.g. 21:00-02:00). Factored into
+  // the single submit button's disabled condition now that there's one
+  // shared submit action instead of a separate "Save schedule" button.
   const isAvailabilityValid = availabilityRows.every(
-    (row) => !row.active || row.endTime > row.startTime,
+    (row) => !row.active || row.endTime !== row.startTime,
   );
 
   async function submit(values: CourtFormValues) {
@@ -285,6 +291,39 @@ export function CourtFormSheet({
                   />
                 </FieldSet>
               </div>
+
+              <FieldSet>
+                <FieldLegend variant="label">Wall type</FieldLegend>
+                <WallTypeField
+                  name="court-wall-type"
+                  value={wallType ?? ""}
+                  onChange={(value) =>
+                    setValue("wallType", value, { shouldTouch: true })
+                  }
+                />
+              </FieldSet>
+
+              <FieldSet>
+                <FieldLegend variant="label">Net type</FieldLegend>
+                <NetTypeField
+                  name="court-net-type"
+                  value={netType ?? ""}
+                  onChange={(value) =>
+                    setValue("netType", value, { shouldTouch: true })
+                  }
+                />
+              </FieldSet>
+
+              <Field orientation="horizontal">
+                <FieldLabel htmlFor="court-lighting">Has lighting</FieldLabel>
+                <Switch
+                  id="court-lighting"
+                  checked={lighting}
+                  onCheckedChange={(checked) =>
+                    setValue("lighting", checked, { shouldTouch: true })
+                  }
+                />
+              </Field>
 
               <div className="flex gap-4">
                 <Field className="flex-1">

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { BankTransferAccountSettingsCard } from "../BankTransferAccountSettingsCard";
 import { ClubSettingsView } from "../ClubSettingsView";
 import { MercadoPagoConnectionCard } from "../MercadoPagoConnectionCard";
 import { OperatingHoursSettingsCard } from "../OperatingHoursSettingsCard";
@@ -89,6 +90,13 @@ export function ClubSettingsTabs() {
         className="mt-6 min-h-0 overflow-y-auto animate-in fade-in-0 duration-200"
       >
         <MercadoPagoConnectionCard />
+      </TabsContent>
+
+      <TabsContent
+        value="bank-transfer"
+        className="mt-6 min-h-0 overflow-y-auto animate-in fade-in-0 duration-200"
+      >
+        <BankTransferAccountSettingsCard />
       </TabsContent>
     </Tabs>
   );

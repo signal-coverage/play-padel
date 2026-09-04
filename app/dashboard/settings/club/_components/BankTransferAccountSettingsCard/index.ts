@@ -1,0 +1,1 @@
+export { BankTransferAccountSettingsCard } from "./BankTransferAccountSettingsCard";

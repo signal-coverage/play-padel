@@ -1,31 +1,7 @@
 import { z } from "zod";
-import type { Plan } from "@/core/clubs/types";
 
 export const ONBOARDING_USER_TYPES = ["player", "owner"] as const;
 export type OnboardingUserType = (typeof ONBOARDING_USER_TYPES)[number];
-
-// Owner picks a court-count range instead of typing a raw number; the range
-// is purely a plan-tier signal (no Court rows are created here — see
-// /dashboard/courts for actual court creation). Shared between the UI (step
-// options) and the API route (deriving the Plan for createClub) so the
-// value->plan mapping only lives in one place.
-export const COURT_RANGE_OPTIONS: {
-  value: string;
-  label: string;
-  plan: Plan;
-  note?: string;
-}[] = [
-  { value: "1-2", label: "1–2 courts", plan: "BASIC" },
-  { value: "3-4", label: "3–4 courts", plan: "PRO" },
-  { value: "5-7", label: "5–7 courts", plan: "PLUS" },
-  {
-    value: "8+",
-    label: "8+ courts",
-    plan: "MAX",
-    note: "Custom pricing — our team will reach out to configure enterprise pricing.",
-  },
-];
-export type CourtRangeValue = (typeof COURT_RANGE_OPTIONS)[number]["value"];
 
 // Matches prisma/schema.prisma's Gender enum. Defined as a plain literal
 // union here rather than importing the generated Prisma enum, following the
@@ -69,9 +45,7 @@ export const onboardingFormSchema = z
     taxId: z.string().optional(),
     timezone: z.string().optional(),
     currency: z.string().optional(),
-    // Step 4 (owner only) — plan / court count
-    courtRange: z.string().optional(),
-    // Step 5 (owner only) — weekly operating hours: club-level "normally
+    // Step 4 (owner only) — weekly operating hours: club-level "normally
     // open" days/hours, distinct from per-court CourtAvailability. Always
     // exactly 7 entries in practice (one per day of week, active: false for
     // closed days) — enforced by the superRefine branch below, not the shape
@@ -115,15 +89,7 @@ export const onboardingFormSchema = z
   .superRefine((data, ctx) => {
     if (data.userType === "owner") {
       const requiredTextFields: [
-        (
-          | "name"
-          | "phone"
-          | "address"
-          | "legalName"
-          | "taxId"
-          | "courtRange"
-          | "displayName"
-        ),
+        "name" | "phone" | "address" | "legalName" | "taxId" | "displayName",
         string,
       ][] = [
         ["name", "Club name is required"],
@@ -131,7 +97,6 @@ export const onboardingFormSchema = z
         ["address", "Address is required"],
         ["legalName", "Legal name is required"],
         ["taxId", "Tax ID is required"],
-        ["courtRange", "Please select a court range"],
         ["displayName", "Display name is required"],
       ];
 
@@ -159,10 +124,10 @@ export const onboardingFormSchema = z
         });
       } else {
         operatingHours.forEach((entry, index) => {
-          if (entry.active && entry.endTime <= entry.startTime) {
+          if (entry.active && entry.startTime === entry.endTime) {
             ctx.addIssue({
               code: "custom",
-              message: "End time must be after start time",
+              message: "Start and end time cannot be the same",
               path: ["operatingHours", index, "endTime"],
             });
           }
@@ -210,7 +175,6 @@ export const OWNER_FLOW = [
   "userType",
   "clubBasics",
   "legalBilling",
-  "plan",
   "operatingHours",
   "profile",
   "terms",
@@ -235,7 +199,6 @@ export const STEP_FIELDS: Record<
     "zipCode",
   ],
   legalBilling: ["legalName", "taxId"],
-  plan: ["courtRange"],
   operatingHours: ["operatingHours"],
   profile: ["displayName"],
   playerProfile: [
