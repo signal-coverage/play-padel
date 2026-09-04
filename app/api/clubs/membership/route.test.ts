@@ -19,6 +19,7 @@ vi.mock("@/core/billing/services/membership.service", () => ({
   attachPendingPreference: vi.fn(),
   startTrial: vi.fn(),
   changeTrialPlan: vi.fn(),
+  saveMembershipPayerIdentification: vi.fn(),
 }));
 
 vi.mock("@/lib/mercadopago/preapprovalPlans", () => ({
@@ -44,6 +45,7 @@ import {
   attachPendingPreference,
   startTrial,
   changeTrialPlan,
+  saveMembershipPayerIdentification,
 } from "@/core/billing/services/membership.service";
 import {
   getOrCreateMembershipPreapprovalPlanId,
@@ -85,6 +87,8 @@ const createMembershipPreferenceMock = createMembershipPreference as ReturnType<
   typeof vi.fn
 >;
 const changeTrialPlanMock = changeTrialPlan as ReturnType<typeof vi.fn>;
+const saveMembershipPayerIdentificationMock =
+  saveMembershipPayerIdentification as ReturnType<typeof vi.fn>;
 
 const OWNER_OK = { ok: true, context: { userId: "user_1", clubId: "club_1" } };
 
@@ -139,6 +143,7 @@ beforeEach(() => {
   updateMembershipPreapprovalAmountMock.mockReset();
   createMembershipPreferenceMock.mockReset();
   changeTrialPlanMock.mockReset();
+  saveMembershipPayerIdentificationMock.mockReset();
 
   requireOwnerClubMock.mockResolvedValue(OWNER_OK);
 });
@@ -427,6 +432,95 @@ describe("POST /api/clubs/membership", () => {
         }),
       );
       expect(attachPendingPreapprovalMock).not.toHaveBeenCalled();
+      expect(response.status).toBe(200);
+    });
+
+    // Identification is only meaningful alongside a real card token, so it's
+    // wired up ONLY in this MONTHLY branch — never ANNUAL, never GET/PATCH.
+    it("saves the confirmed identification and returns its snapshot when saveIdentification is true and identification is present", async () => {
+      getMembershipSubscriptionMock.mockResolvedValue(subscriptionRow());
+      getOrCreateMembershipPreapprovalPlanIdMock.mockResolvedValue({
+        id: "plan_1",
+      });
+      createMembershipPreapprovalMock.mockResolvedValue({
+        id: "preap_1",
+        status: "authorized",
+      });
+      trialConfigFindUniqueMock.mockResolvedValue(null);
+      resolveFreeTrialConfigMock.mockReturnValue(undefined);
+      attachPendingPreapprovalMock.mockResolvedValue(
+        subscriptionRow({ mpPreapprovalId: "preap_1" }),
+      );
+      saveMembershipPayerIdentificationMock.mockResolvedValue(
+        subscriptionRow({
+          mpPreapprovalId: "preap_1",
+          payerIdentificationType: "CUIT",
+          payerIdentificationNumber: "30-12345678-9",
+        }),
+      );
+
+      const response = await POST(
+        makePostRequest({
+          ...monthlyBody,
+          identification: { type: "CUIT", number: "30-12345678-9" },
+          saveIdentification: true,
+        }),
+      );
+      const body = await response.json();
+
+      expect(saveMembershipPayerIdentificationMock).toHaveBeenCalledWith(
+        "club_1",
+        { type: "CUIT", number: "30-12345678-9" },
+      );
+      expect(response.status).toBe(200);
+      expect(body.subscription.payerIdentificationType).toBe("CUIT");
+      expect(body.subscription.payerIdentificationNumber).toBe("30-12345678-9");
+      expect(body.mpPreapprovalId).toBe("preap_1");
+    });
+
+    it("behaves exactly as before (no saveMembershipPayerIdentification call) when neither identification nor saveIdentification is present", async () => {
+      getMembershipSubscriptionMock.mockResolvedValue(subscriptionRow());
+      getOrCreateMembershipPreapprovalPlanIdMock.mockResolvedValue({
+        id: "plan_1",
+      });
+      createMembershipPreapprovalMock.mockResolvedValue({
+        id: "preap_1",
+        status: "authorized",
+      });
+      trialConfigFindUniqueMock.mockResolvedValue(null);
+      resolveFreeTrialConfigMock.mockReturnValue(undefined);
+      attachPendingPreapprovalMock.mockResolvedValue(
+        subscriptionRow({ mpPreapprovalId: "preap_1" }),
+      );
+
+      const response = await POST(makePostRequest(monthlyBody));
+      const body = await response.json();
+
+      expect(saveMembershipPayerIdentificationMock).not.toHaveBeenCalled();
+      expect(response.status).toBe(200);
+      expect(body.mpPreapprovalId).toBe("preap_1");
+    });
+
+    it("never calls saveMembershipPayerIdentification with incomplete data (saveIdentification true but no identification)", async () => {
+      getMembershipSubscriptionMock.mockResolvedValue(subscriptionRow());
+      getOrCreateMembershipPreapprovalPlanIdMock.mockResolvedValue({
+        id: "plan_1",
+      });
+      createMembershipPreapprovalMock.mockResolvedValue({
+        id: "preap_1",
+        status: "authorized",
+      });
+      trialConfigFindUniqueMock.mockResolvedValue(null);
+      resolveFreeTrialConfigMock.mockReturnValue(undefined);
+      attachPendingPreapprovalMock.mockResolvedValue(
+        subscriptionRow({ mpPreapprovalId: "preap_1" }),
+      );
+
+      const response = await POST(
+        makePostRequest({ ...monthlyBody, saveIdentification: true }),
+      );
+
+      expect(saveMembershipPayerIdentificationMock).not.toHaveBeenCalled();
       expect(response.status).toBe(200);
     });
 

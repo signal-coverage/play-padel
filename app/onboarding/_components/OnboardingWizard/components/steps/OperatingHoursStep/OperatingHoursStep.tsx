@@ -4,9 +4,9 @@ import { useEffect, useRef } from "react";
 import { useWatch } from "react-hook-form";
 import { cn } from "@/lib/utils/utils";
 import { DAY_LABELS } from "@/core/courts/consts";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { TimeInput } from "@/components/ui/time-input";
 import { FieldError } from "@/components/ui/field";
 import { QuickSetupPanel } from "./components/QuickSetupPanel";
 import { DEFAULT_OPERATING_HOURS_ROWS } from "./consts";
@@ -110,12 +110,11 @@ export function OperatingHoursStep({
                     >
                       Start
                     </Label>
-                    <Input
+                    <TimeInput
                       id={`operating-hours-day-${row.dayOfWeek}-start`}
-                      type="time"
                       value={row.startTime}
-                      onChange={(e) =>
-                        updateRow(row.dayOfWeek, { startTime: e.target.value })
+                      onChange={(value) =>
+                        updateRow(row.dayOfWeek, { startTime: value })
                       }
                       disabled={!row.active}
                     />
@@ -127,12 +126,11 @@ export function OperatingHoursStep({
                     >
                       End
                     </Label>
-                    <Input
+                    <TimeInput
                       id={`operating-hours-day-${row.dayOfWeek}-end`}
-                      type="time"
                       value={row.endTime}
-                      onChange={(e) =>
-                        updateRow(row.dayOfWeek, { endTime: e.target.value })
+                      onChange={(value) =>
+                        updateRow(row.dayOfWeek, { endTime: value })
                       }
                       disabled={!row.active}
                     />

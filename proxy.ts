@@ -13,6 +13,11 @@ const isPublicRoute = createRouteMatcher([
   // Same reasoning — these carry their own MEMBERSHIP_ADMIN_SECRET bearer
   // check instead of a Clerk session (see app/api/admin/club-status/route.ts).
   "/api/admin/(.*)",
+  // The admin UI pages themselves (e.g. app/admin/club-status/page.tsx) have
+  // no gate of their own either — every mutating call they make still
+  // requires the same MEMBERSHIP_ADMIN_SECRET bearer secret above, entered
+  // by hand on the page, not a Clerk session.
+  "/admin/(.*)",
   "/invite-error(.*)",
 ]);
 

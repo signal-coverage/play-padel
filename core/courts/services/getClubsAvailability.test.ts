@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { startOfDay, endOfDay, subDays } from "date-fns";
+import { startOfDay, endOfDay, subDays, addDays } from "date-fns";
 
 // courts.service.ts eagerly constructs a real Prisma/Neon client at import
 // time — mock it so importing the module doesn't require a real
@@ -470,6 +470,77 @@ describe("getClubsAvailability", () => {
     expect(result.get("club-1")).toEqual({
       courtCount: 1,
       hasAvailabilityToday: false,
+    });
+  });
+
+  describe("overnight windows (endTime <= startTime, closes after midnight)", () => {
+    it("marks a club as available for an overnight window whose free slots fall before and after midnight", async () => {
+      courtFindManyMock.mockImplementation(
+        fakeFindMany([makeCourt({ id: "court-1", clubId: "club-1" })]),
+      );
+      availabilityFindManyMock.mockImplementation(
+        fakeFindMany([makeAvailability("court-1", "21:00", "02:00")]),
+      );
+      reservationFindManyMock.mockImplementation(fakeFindMany([]));
+      closureFindManyMock.mockImplementation(fakeFindMany([]));
+
+      const result = await getClubsAvailability(["club-1"], DATE);
+
+      expect(result.get("club-1")).toEqual({
+        courtCount: 1,
+        hasAvailabilityToday: true,
+      });
+    });
+
+    // This is the actual regression test for the widened query bound: a
+    // reservation sitting entirely after midnight (on DATE + 1, between
+    // 00:00 and 02:00) must still be picked up by the reservation.findMany
+    // query and block those slots. Against the old `endOfDay(date)` upper
+    // bound this reservation would silently fall outside the query result,
+    // and the 00:00–01:00 / 01:00–02:00 slots would be wrongly reported as
+    // free. Every other generated slot (21-22, 22-23, 23-00) is also booked
+    // so the only way the club could end up "available" is if the
+    // after-midnight reservation was missed.
+    it("still blocks a slot for a reservation that falls after midnight, inside the overnight window", async () => {
+      courtFindManyMock.mockImplementation(
+        fakeFindMany([makeCourt({ id: "court-1", clubId: "club-1" })]),
+      );
+      availabilityFindManyMock.mockImplementation(
+        fakeFindMany([makeAvailability("court-1", "21:00", "02:00")]),
+      );
+      reservationFindManyMock.mockImplementation(
+        fakeFindMany([
+          makeReservation({
+            id: "r-evening",
+            courtId: "court-1",
+            startTime: "21:00",
+            endTime: "23:00",
+          }),
+          {
+            id: "r-crosses-midnight",
+            courtId: "court-1",
+            status: "CONFIRMED",
+            scheduledStart: timeOnDate(DATE, "23:00"),
+            scheduledEnd: timeOnDate(addDays(DATE, 1), "00:00"),
+            paymentExpiresAt: null,
+          },
+          makeReservation({
+            id: "r-after-midnight",
+            courtId: "court-1",
+            startTime: "00:00",
+            endTime: "02:00",
+            date: addDays(DATE, 1),
+          }),
+        ]),
+      );
+      closureFindManyMock.mockImplementation(fakeFindMany([]));
+
+      const result = await getClubsAvailability(["club-1"], DATE);
+
+      expect(result.get("club-1")).toEqual({
+        courtCount: 1,
+        hasAvailabilityToday: false,
+      });
     });
   });
 });

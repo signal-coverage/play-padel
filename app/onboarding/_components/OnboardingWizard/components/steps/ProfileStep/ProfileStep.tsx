@@ -19,7 +19,6 @@ export function ProfileStep({
   province,
   city,
   zipCode,
-  courtRangeLabel,
   shouldFocusHeading,
 }: ProfileStepProps) {
   const headingRef = useRef<HTMLHeadingElement>(null);
@@ -73,7 +72,6 @@ export function ProfileStep({
         <SummaryRow label="Zip code" value={zipCode} />
         <SummaryRow label="Legal name" value={legalName} />
         <SummaryRow label="Tax ID" value={taxId} />
-        <SummaryRow label="Courts" value={courtRangeLabel} />
       </MutedPanel>
     </>
   );

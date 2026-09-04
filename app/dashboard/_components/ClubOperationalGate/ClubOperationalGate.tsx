@@ -1,7 +1,6 @@
 "use client";
 
 import { BouncingBall } from "@/components/BouncingBall";
-import { StatusBox } from "@/components/StatusBox";
 import type { ClubOperationalGateProps } from "./types";
 import { useClubOperationalStatus } from "./hooks";
 import { PaymentActivationScreen } from "./components/PaymentActivationScreen";
@@ -38,11 +37,15 @@ export function ClubOperationalGate({ children }: ClubOperationalGateProps) {
   const { data: status, isLoading } = useClubOperationalStatus();
 
   if (isLoading) {
+    // Fills the gate's full slot height, same shell GateScreen uses for the
+    // other non-operational states below — StatusBox is a padded, bordered
+    // card sized to its own content, not the page-content area, so the ball
+    // sat high instead of centered in the middle of the dashboard.
     return (
-      <StatusBox className="flex flex-col items-center justify-center gap-3 py-16">
+      <div className="flex h-full w-full flex-col items-center justify-center gap-3">
         <BouncingBall size={32} amplitude={16} />
         <span className="sr-only">Loading dashboard…</span>
-      </StatusBox>
+      </div>
     );
   }
 

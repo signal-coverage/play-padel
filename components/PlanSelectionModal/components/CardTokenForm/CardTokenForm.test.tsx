@@ -21,7 +21,13 @@ const { initMercadoPagoMock, receivedBrickProps } = vi.hoisted(() => ({
 vi.mock("@mercadopago/sdk-react", () => ({
   initMercadoPago: initMercadoPagoMock,
   CardPayment: (props: {
-    initialization: { amount: number; payer?: { email?: string } };
+    initialization: {
+      amount: number;
+      payer?: {
+        email?: string;
+        identification?: { type: string; number: string };
+      };
+    };
     onSubmit: (formData: unknown) => Promise<void>;
     onError?: (param: { cause?: string; message?: string }) => void;
   }) => {
@@ -36,6 +42,12 @@ vi.mock("@mercadopago/sdk-react", () => ({
         <span data-testid="brick-email">
           {props.initialization.payer?.email ?? ""}
         </span>
+        <span data-testid="brick-identification-type">
+          {props.initialization.payer?.identification?.type ?? ""}
+        </span>
+        <span data-testid="brick-identification-number">
+          {props.initialization.payer?.identification?.number ?? ""}
+        </span>
         <button
           type="button"
           onClick={() =>
@@ -45,7 +57,10 @@ vi.mock("@mercadopago/sdk-react", () => ({
               payment_method_id: "visa",
               transaction_amount: props.initialization.amount,
               installments: 1,
-              payer: { email: props.initialization.payer?.email },
+              payer: {
+                email: props.initialization.payer?.email,
+                identification: props.initialization.payer?.identification,
+              },
             })
           }
         >
@@ -112,6 +127,44 @@ describe("CardTokenForm", () => {
     expect(screen.getByTestId("brick-email")).toHaveTextContent(
       "owner@club.com",
     );
+  });
+
+  it("passes identification through to the Brick's initialization.payer", () => {
+    render(
+      <CardTokenForm
+        amount={50000}
+        payerEmail="owner@club.com"
+        identification={{ type: "CUIT", number: "30-12345678-9" }}
+        onTokenReady={vi.fn()}
+        onError={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByTestId("brick-identification-type")).toHaveTextContent(
+      "CUIT",
+    );
+    expect(screen.getByTestId("brick-identification-number")).toHaveTextContent(
+      "30-12345678-9",
+    );
+  });
+
+  it("calls onTokenReady with the identification confirmed in the Brick's onSubmit", () => {
+    const onTokenReady = vi.fn();
+    render(
+      <CardTokenForm
+        amount={30000}
+        identification={{ type: "CUIT", number: "30-12345678-9" }}
+        onTokenReady={onTokenReady}
+        onError={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Simulate submit" }));
+
+    expect(onTokenReady).toHaveBeenCalledWith({
+      cardTokenId: "tok_abc123",
+      identification: { type: "CUIT", number: "30-12345678-9" },
+    });
   });
 
   it("calls onTokenReady with the token from the Brick's onSubmit", () => {

@@ -1,0 +1,1 @@
+export { MercadoPagoConnectedDialog } from "./MercadoPagoConnectedDialog";

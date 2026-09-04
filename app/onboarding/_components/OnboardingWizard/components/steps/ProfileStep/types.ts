@@ -14,5 +14,4 @@ export type ProfileStepProps = Pick<
   province: string;
   city: string;
   zipCode: string;
-  courtRangeLabel: string;
 };

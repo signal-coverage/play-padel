@@ -1,6 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 
-export type ClubSettingsTabValue = "basic" | "hours" | "mercadopago";
+export type ClubSettingsTabValue =
+  "basic" | "hours" | "mercadopago" | "bank-transfer";
 
 export type ClubSettingsTab = {
   value: ClubSettingsTabValue;

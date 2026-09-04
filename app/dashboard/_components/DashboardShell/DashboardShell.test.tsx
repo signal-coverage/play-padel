@@ -21,8 +21,19 @@ import type { AppUser } from "@/providers/auth-provider";
 
 const replaceMock = vi.fn();
 
+// Mutable so individual tests can control what the mocked
+// useSearchParams()/usePathname() return (mirroring the `vi.mocked(useAuth)
+// .mockReturnValue(...)` per-test control technique used below for
+// useAuth) — the 5 pre-existing tests never touch these and get the
+// no-op defaults, so the new mpConnect-consuming effect is a no-op for all
+// of them.
+let mockSearchParams = new URLSearchParams();
+let mockPathname = "/dashboard";
+
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ replace: replaceMock, push: vi.fn() }),
+  useSearchParams: () => mockSearchParams,
+  usePathname: () => mockPathname,
 }));
 
 vi.mock("@/hooks/use-auth", () => ({
@@ -73,6 +84,8 @@ describe("DashboardShell — ClubOperationalGate regression vs. DashboardGuard",
   beforeEach(() => {
     vi.restoreAllMocks();
     replaceMock.mockClear();
+    mockSearchParams = new URLSearchParams();
+    mockPathname = "/dashboard";
   });
 
   afterEach(() => {
@@ -221,5 +234,64 @@ describe("DashboardShell — ClubOperationalGate regression vs. DashboardGuard",
 
     expect(replaceMock).not.toHaveBeenCalledWith("/onboarding");
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("opens MercadoPagoConnectedDialog and strips ?mpConnect=success from the URL for an owner landing from the OAuth redirect", async () => {
+    mockAuth({ role: "owner", clubId: "club_1" });
+    mockSearchParams = new URLSearchParams("mpConnect=success");
+    mockPathname = "/dashboard/courts";
+    const fetchMock = vi.fn((url: string) => {
+      if (url.includes("/mercadopago/operational-status")) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({ operational: true, cause: null }),
+        });
+      }
+      if (url === "/api/clubs/bank-transfer-account") {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({ account: null }),
+        });
+      }
+      throw new Error(`unexpected fetch: ${url}`);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(
+      <DashboardShell>
+        <div>Dashboard page content</div>
+      </DashboardShell>,
+    );
+
+    await waitFor(() =>
+      expect(screen.getByText("Dashboard page content")).toBeInTheDocument(),
+    );
+
+    await waitFor(() =>
+      expect(screen.getByText("Mercado Pago connected!")).toBeInTheDocument(),
+    );
+
+    expect(replaceMock).toHaveBeenCalledWith("/dashboard/courts");
+  });
+
+  it("never opens MercadoPagoConnectedDialog for a player, even with ?mpConnect=success in the URL", async () => {
+    mockAuth({ role: "player", clubId: null });
+    mockSearchParams = new URLSearchParams("mpConnect=success");
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(
+      <DashboardShell>
+        <div>Dashboard page content</div>
+      </DashboardShell>,
+    );
+
+    await waitFor(() =>
+      expect(screen.getByText("Dashboard page content")).toBeInTheDocument(),
+    );
+
+    expect(
+      screen.queryByText("Mercado Pago connected!"),
+    ).not.toBeInTheDocument();
   });
 });

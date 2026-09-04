@@ -5,10 +5,8 @@ import { createClub } from "@/core/clubs/services/clubs.service";
 import { setClubOperatingHours } from "@/core/clubs/services/operatingHours.service";
 import { createPendingMembershipSubscription } from "@/core/billing/services/membership.service";
 import { logAudit } from "@/core/audit/services/audit.service";
-import {
-  onboardingFormSchema,
-  COURT_RANGE_OPTIONS,
-} from "@/app/onboarding/types";
+import type { Plan } from "@/core/clubs/types";
+import { onboardingFormSchema } from "@/app/onboarding/types";
 
 // Completes onboarding for the current Clerk user: player -> UserProfile only
 // (no club), owner -> Club + UserProfile pointing at it. Upserts on the
@@ -141,10 +139,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ role: "player", clubId: null });
     }
 
-    // Validated by onboardingFormSchema's superRefine when userType === "owner".
-    const plan =
-      COURT_RANGE_OPTIONS.find((option) => option.value === data.courtRange)
-        ?.plan ?? "BASIC";
+    // Plan/membership tier selection now happens later, in the dashboard's
+    // payment-activation gate — every new club starts on BASIC (matches
+    // Club.plan's own @default(BASIC) in prisma/schema.prisma).
+    const plan: Plan = "BASIC";
 
     const club = await createClub(
       {

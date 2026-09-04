@@ -6,6 +6,7 @@ import {
   waitFor,
   cleanup,
   fireEvent,
+  within,
 } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -108,7 +109,14 @@ async function openFormAndFillMinimumFields() {
   fireEvent.change(screen.getByLabelText(/^name/i), {
     target: { value: "Court 1" },
   });
-  fireEvent.click(screen.getByRole("radio", { name: "Concrete" }));
+  // Scoped to the Surface fieldset: the new Wall type field also offers a
+  // "Concrete" radio option, so an unscoped query would now match both.
+  fireEvent.click(
+    within(screen.getByRole("group", { name: /^surface/i })).getByRole(
+      "radio",
+      { name: "Concrete" },
+    ),
+  );
   fireEvent.change(screen.getByLabelText(/reservation fee/i), {
     target: { value: "5000" },
   });

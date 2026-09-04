@@ -12,6 +12,8 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import { formatCurrency } from "@/lib/utils/planPricing";
 import { CardCollectionPanel } from "../CardCollectionPanel";
 import { CardTokenForm } from "../CardTokenForm";
@@ -44,6 +46,9 @@ export function MembershipCheckoutDrawer({
   amount,
   payerEmail,
   defaultEmail,
+  identification,
+  saveIdentification,
+  onSaveIdentificationChange,
   checkoutError,
   isSubmitting,
   isRefreshing,
@@ -174,10 +179,37 @@ export function MembershipCheckoutDrawer({
                       </div>
                     )}
 
+                    {identification && (
+                      // Rendered here, OUTSIDE the Brick's own iframe
+                      // content (never passed as an `initialization` prop
+                      // into it) — the Brick controls its own internal
+                      // fields entirely; this only toggles whether WE save
+                      // whatever identification the owner confirms. Only
+                      // shown when an identification value actually exists
+                      // to offer saving (the club's own taxId, or a
+                      // previously-saved one) — nothing to save otherwise.
+                      <div className="flex items-center gap-2 px-3 pt-2">
+                        <Checkbox
+                          id="save-identification"
+                          checked={saveIdentification}
+                          onCheckedChange={(checked) =>
+                            onSaveIdentificationChange(checked === true)
+                          }
+                        />
+                        <Label
+                          htmlFor="save-identification"
+                          className="text-xs font-normal text-muted-foreground"
+                        >
+                          Save this ID for future payments
+                        </Label>
+                      </div>
+                    )}
+
                     <div className="flex flex-1 flex-col gap-1 overflow-y-auto p-0">
                       <CardTokenForm
                         amount={amount}
                         payerEmail={payerEmail}
+                        identification={identification}
                         onTokenReady={onTokenReady}
                         onError={onCardError}
                       />

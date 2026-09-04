@@ -39,6 +39,7 @@ model Club {
   mercadoPagoAccount     ClubMercadoPagoAccount?
   membershipSubscription ClubMembershipSubscription?
   operatingHours         ClubOperatingHours[]
+  bankTransferAccount    ClubBankTransferAccount?
 
   @@map("clubs")
 }
@@ -48,6 +49,12 @@ enum Plan {
   PRO
   PLUS
   MAX
+  // Hidden, admin-only tier — never offered through the real plan picker
+  // (components/PlanSelectionModal/consts.ts's PLAN_ORDER omits it).
+  // Activated only via activateFreePlan (core/billing/services/
+  // membership.service.ts) to unblock a club's dashboard for internal
+  // testing without a real Mercado Pago subscription.
+  FREE
 }
 
 enum ClubStatus {
@@ -149,6 +156,15 @@ model ClubMembershipSubscription {
   mpPreferenceId  String? // ANNUAL only — one-time Checkout Pro preference id
   mpCustomerId    String?
   mpCardId        String?
+
+  // Owner-confirmed cardholder identification (DNI/CUIT type + number),
+  // saved only when the owner explicitly opts in via the "Save this ID for
+  // future payments" checkbox during MONTHLY checkout — remembered so a
+  // later renewal/plan-change card re-collection can prefill the Mercado
+  // Pago Card Payment Brick's identification field again instead of always
+  // falling back to the club's own onboarding-collected `Club.taxId`.
+  payerIdentificationType   String?
+  payerIdentificationNumber String?
 
   // Authoritative for ANNUAL only (no native MP trial-without-charge exists
   // for one-off Checkout Pro). Informational mirror for MONTHLY — MP's own
@@ -287,6 +303,9 @@ model Court {
   surface             String?
   indoor              Boolean   @default(false)
   color               String?
+  wallType            String?
+  lighting            Boolean   @default(false)
+  netType             String?
   photoUrl            String?
   slotDurationMinutes Int       @default(90)
   reservationFee      Float?
@@ -327,6 +346,25 @@ model ClubOperatingHours {
 
   @@index([clubId, dayOfWeek])
   @@map("club_operating_hours")
+}
+
+// One-to-one per club (see `Club.bankTransferAccount`). Lets an owner accept
+// manual bank-transfer payments as an alternative payout destination to
+// Mercado Pago — club-side configuration only; no player-facing checkout
+// path reads this yet.
+model ClubBankTransferAccount {
+  id                String   @id @default(cuid())
+  clubId            String   @unique
+  club              Club     @relation(fields: [clubId], references: [id])
+  bankName          String
+  cbu               String
+  alias             String?
+  accountHolderName String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  updatedBy         String
+
+  @@map("club_bank_transfer_accounts")
 }
 
 model CourtAvailability {

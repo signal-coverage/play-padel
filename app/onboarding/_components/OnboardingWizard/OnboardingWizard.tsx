@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
@@ -11,14 +11,12 @@ import { useAuth } from "@/hooks/use-auth";
 import { Card } from "@/components/ui/card";
 import { LogoBadge } from "@/components/LogoBadge";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils/utils";
 import { TIMEZONES } from "@/lib/consts";
 import {
   onboardingFormSchema,
   STEP_FIELDS,
   PLAYER_FLOW,
   OWNER_FLOW,
-  COURT_RANGE_OPTIONS,
   type OnboardingFormValues,
   type OnboardingStepKey,
 } from "@/app/onboarding/types";
@@ -28,7 +26,6 @@ import { LegalBillingStep } from "./components/steps/LegalBillingStep";
 import { OperatingHoursStep } from "./components/steps/OperatingHoursStep";
 import { DEFAULT_OPERATING_HOURS_ROWS } from "./components/steps/OperatingHoursStep/consts";
 import { PadelProfileStep } from "./components/steps/PadelProfileStep";
-import { PlanStep } from "./components/steps/PlanStep";
 import { PlayerProfileStep } from "./components/steps/PlayerProfileStep";
 import { ProfileStep } from "./components/steps/ProfileStep";
 import { TermsStep } from "./components/steps/TermsStep";
@@ -66,11 +63,6 @@ export function OnboardingWizard() {
       taxId: "",
       timezone: TIMEZONES[0].value,
       currency: "ARS",
-      // PRO is the highlighted "Most Popular" option in PlanStep — default
-      // to it rather than leaving the choice blank, matching that nudge
-      // instead of contradicting it with a blank initial state.
-      courtRange: COURT_RANGE_OPTIONS.find((option) => option.plan === "PRO")
-        ?.value,
       operatingHours: DEFAULT_OPERATING_HOURS_ROWS,
       displayName: "",
       firstName: user?.firstName ?? "",
@@ -238,19 +230,9 @@ export function OnboardingWizard() {
     }
   }
 
-  const selectedCourtRange = useMemo(
-    () => COURT_RANGE_OPTIONS.find((o) => o.value === watchedValues.courtRange),
-    [watchedValues.courtRange],
-  );
-
   return (
     <div className="min-h-dvh flex items-center justify-center p-4 bg-muted">
-      <div
-        className={cn(
-          "w-full transition-[max-width] duration-300 ease-out",
-          currentKey === "plan" ? "max-w-3xl" : "max-w-xl",
-        )}
-      >
+      <div className="w-full max-w-xl transition-[max-width] duration-300 ease-out">
         <div className="mb-6 text-center">
           <LogoBadge size="md" className="mb-3" />
           <h1 className="text-2xl font-bold text-foreground">
@@ -326,25 +308,6 @@ export function OnboardingWizard() {
                   </motion.div>
                 )}
 
-                {currentKey === "plan" && (
-                  <motion.div
-                    key="plan"
-                    className="space-y-4"
-                    custom={direction}
-                    variants={stepVariants}
-                    initial={shouldReduce ? false : "enter"}
-                    animate="center"
-                    exit={shouldReduce ? "center" : "exit"}
-                    transition={stepTransition}
-                  >
-                    <PlanStep
-                      control={control}
-                      errors={errors}
-                      shouldFocusHeading={shouldFocusHeading}
-                    />
-                  </motion.div>
-                )}
-
                 {currentKey === "operatingHours" && (
                   <motion.div
                     key="operatingHours"
@@ -389,11 +352,6 @@ export function OnboardingWizard() {
                       province={watchedValues.province ?? ""}
                       city={watchedValues.city ?? ""}
                       zipCode={watchedValues.zipCode ?? ""}
-                      courtRangeLabel={
-                        selectedCourtRange?.label ??
-                        watchedValues.courtRange ??
-                        ""
-                      }
                       shouldFocusHeading={shouldFocusHeading}
                     />
                   </motion.div>

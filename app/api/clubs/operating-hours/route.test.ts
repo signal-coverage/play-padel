@@ -85,14 +85,30 @@ describe("PUT /api/clubs/operating-hours", () => {
     expect(setClubOperatingHoursMock).not.toHaveBeenCalled();
   });
 
-  it("returns 400 for invalid entries", async () => {
+  it("accepts an overnight entry whose end time is numerically before its start time (closes after midnight)", async () => {
+    requireOwnerClubMock.mockResolvedValue({
+      ok: true,
+      context: { userId: "user_1", clubId: "club_1" },
+    });
+    const entries = [{ dayOfWeek: 1, startTime: "21:00", endTime: "09:00" }];
+    setClubOperatingHoursMock.mockResolvedValue(entries);
+
+    const response = await PUT(putRequest(entries));
+    const body = await response.json();
+
+    expect(setClubOperatingHoursMock).toHaveBeenCalledWith("club_1", entries);
+    expect(response.status).toBe(200);
+    expect(body).toEqual({ operatingHours: entries });
+  });
+
+  it("returns 400 when start and end time are the same", async () => {
     requireOwnerClubMock.mockResolvedValue({
       ok: true,
       context: { userId: "user_1", clubId: "club_1" },
     });
 
     const response = await PUT(
-      putRequest([{ dayOfWeek: 1, startTime: "21:00", endTime: "09:00" }]),
+      putRequest([{ dayOfWeek: 1, startTime: "09:00", endTime: "09:00" }]),
     );
 
     expect(response.status).toBe(400);

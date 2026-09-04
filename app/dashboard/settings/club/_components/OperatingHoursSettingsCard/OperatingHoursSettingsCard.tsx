@@ -30,10 +30,12 @@ export function OperatingHoursSettingsCard() {
     setSeeded(true);
   }
 
-  // Same end-time-after-start-time rule CourtFormSheet.tsx already
-  // establishes for its own availability step.
+  // Only a same start/end time is invalid — an active day whose end time is
+  // numerically before its start time (e.g. 21:00-02:00) means the club
+  // closes after midnight, which is a valid overnight window. Same rule
+  // CourtFormSheet.tsx already establishes for its own availability step.
   const isAvailabilityValid = rows.every(
-    (row) => !row.active || row.endTime > row.startTime,
+    (row) => !row.active || row.endTime !== row.startTime,
   );
 
   async function handleSave() {

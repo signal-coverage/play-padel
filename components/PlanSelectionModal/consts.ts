@@ -3,9 +3,9 @@ import type { MembershipRenewalModeValue } from "@/core/billing/services/members
 import type { BillingCycle } from "./types";
 
 // Plan pricing/marketing data lives in lib/consts/planPricing.ts, shared
-// with PaymentActivationScreen/components/PlanOptionCard and
-// PlanStep/components/PlanPricingCard so the real pricing data never drifts
-// between the three places it's shown. Re-exported here so this component
+// with PaymentActivationScreen/components/PlanOptionCard so the real pricing
+// data never drifts between the two places it's shown. Re-exported here so
+// this component
 // keeps importing from a local, folder-scoped path per the SRP-per-folder
 // convention, instead of reaching into lib/consts directly from the .tsx.
 export { PLAN_DETAILS } from "@/lib/consts/planPricing";

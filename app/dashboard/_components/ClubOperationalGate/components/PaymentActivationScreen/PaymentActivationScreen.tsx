@@ -2,13 +2,16 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatusBox } from "@/components/StatusBox";
 import { PlanSelectionModal } from "@/components/PlanSelectionModal";
 import { useMembershipSubscription } from "@/components/PlanSelectionModal/hooks";
 import { isMembershipConfirmed } from "@/components/PlanSelectionModal/utils";
-import { MERCADOPAGO_CONNECT_URL } from "../../consts";
+import { MercadoPagoConnectionCard } from "@/app/dashboard/settings/club/_components/MercadoPagoConnectionCard";
+import { BankTransferAccountSettingsCard } from "@/app/dashboard/settings/club/_components/BankTransferAccountSettingsCard";
 import { GateScreen } from "../GateScreen";
+import { ActivationStepIndicator } from "./components/ActivationStepIndicator";
 import { MEMBERSHIP_STATUS_LABELS } from "./consts";
 
 // Cause A from spec's club-operational-gate-overlay domain: club finished
@@ -16,10 +19,23 @@ import { MEMBERSHIP_STATUS_LABELS } from "./consts";
 // old McNotConnectedCard. Rendered directly as the dashboard's
 // page-content when this cause is active (not a dialog), so it also
 // surfaces the "Pay Membership" action (opens the shared
-// `PlanSelectionModal`) before letting the owner link Mercado Pago, since
-// spec's "Two Separate Membership Actions" requires both a confirmed
-// membership payment AND a connected account before reservations can be
-// accepted.
+// `PlanSelectionModal`) before letting the owner configure a payout method,
+// since spec's "Two Separate Membership Actions" requires both a confirmed
+// membership payment AND a way to get paid (Mercado Pago OR a bank transfer
+// account) before reservations can be accepted.
+//
+// Two real steps, not just a reveal-in-place: step 1 (membership) is the
+// only thing shown until it's confirmed, then step 2 (payout method)
+// REPLACES it — mirroring MembershipCheckoutDrawer's own two-step shape.
+// `currentStep` is derived from `isConfirmed`, not separate local state:
+// once the checkout flow (PlanSelectionModal, or the awaiting-confirmation
+// webhook poll it starts) actually confirms the subscription, this screen's
+// own `useMembershipSubscription()` query picks that up and the step
+// advances on its own — no manual "Next" click, since step 2 is gated
+// behind a real precondition, not a free navigation choice. GateScreen's
+// submitLabel/onSubmit are intentionally omitted (see GateScreen's
+// optional-submit widening) — this screen has no single primary action of
+// its own, each step's own content carries its own action(s).
 export function PaymentActivationScreen() {
   const {
     data: subscription,
@@ -32,31 +48,31 @@ export function PaymentActivationScreen() {
   const isConfirmed = subscription
     ? isMembershipConfirmed(subscription.status)
     : false;
-  const isBusy = isLoading;
-
-  function handleLinkMercadoPago() {
-    window.location.href = MERCADOPAGO_CONNECT_URL;
-  }
+  const currentStep: 0 | 1 = isConfirmed ? 1 : 0;
 
   return (
     <GateScreen
       title="Payment activation"
-      description="Your club needs an active membership and a connected Mercado Pago account before it can start accepting reservations."
-      submitLabel="Link Mercado Pago account"
-      submitDisabled={isBusy || isError || !isConfirmed}
-      onSubmit={handleLinkMercadoPago}
+      description="Your club needs an active membership and a way to receive reservation payments — connect Mercado Pago or add your bank account — before it can start accepting reservations."
+      contentClassName={isConfirmed ? "max-w-3xl" : undefined}
     >
-      <div className="flex flex-col gap-4 px-2 py-4">
-        {isError ? (
+      <ActivationStepIndicator current={currentStep} />
+
+      {isError ? (
+        <div className="px-2 py-4">
           <StatusBox className="flex flex-col items-center justify-center gap-3 py-16">
             <p>We couldn&apos;t load your membership. Try again.</p>
             <Button type="button" variant="outline" onClick={() => refetch()}>
               Retry
             </Button>
           </StatusBox>
-        ) : isLoading || !subscription ? (
+        </div>
+      ) : isLoading || !subscription ? (
+        <div className="px-2 py-4">
           <Skeleton className="h-24 w-full" />
-        ) : (
+        </div>
+      ) : currentStep === 0 ? (
+        <div className="flex flex-col gap-4 px-2 py-4">
           <div className="flex items-center justify-between gap-4 rounded-md border p-4">
             <div>
               <p className="text-sm font-medium text-foreground">
@@ -67,17 +83,26 @@ export function PaymentActivationScreen() {
                 Status: {MEMBERSHIP_STATUS_LABELS[subscription.status]}
               </p>
             </div>
-            <Button
-              type="button"
-              onClick={() => setIsModalOpen(true)}
-              disabled={isConfirmed}
-              variant={isConfirmed ? "outline" : "default"}
-            >
-              {isConfirmed ? "Membership Active" : "Pay Membership"}
+            <Button type="button" onClick={() => setIsModalOpen(true)}>
+              Pay Membership
             </Button>
           </div>
-        )}
-      </div>
+        </div>
+      ) : (
+        // Step 2 — two columns per AGENTS.md's documented wide-drawer/
+        // two-column exception (GateScreen widened past its default
+        // max-w-lg via contentClassName above): Mercado Pago on the left,
+        // bank transfer on the right, separated by a vertical Separator.
+        <div className="flex gap-6 px-2 py-4">
+          <div className="flex flex-1 flex-col gap-4">
+            <MercadoPagoConnectionCard />
+          </div>
+          <Separator orientation="vertical" />
+          <div className="flex flex-1 flex-col gap-4">
+            <BankTransferAccountSettingsCard />
+          </div>
+        </div>
+      )}
 
       <PlanSelectionModal open={isModalOpen} onOpenChange={setIsModalOpen} />
     </GateScreen>

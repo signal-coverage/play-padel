@@ -24,6 +24,8 @@ export type MembershipSubscriptionResponse = {
   currency: string;
   trialEndsAt: string | null;
   currentPeriodEnd: string | null;
+  payerIdentificationType?: string | null;
+  payerIdentificationNumber?: string | null;
 };
 
 // Local copy of BillingCycleToggle/types.ts's `BillingCycle` union — same

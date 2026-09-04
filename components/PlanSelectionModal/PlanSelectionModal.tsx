@@ -20,6 +20,7 @@ import type { MembershipRenewalModeValue } from "@/core/billing/services/members
 import { AWAITING_CONFIRMATION_POLL_INTERVAL_MS } from "./consts";
 import {
   useChangeTrialPlan,
+  useCurrentClubTaxId,
   useInitiateMembershipCheckout,
   useMembershipSubscription,
 } from "./hooks";
@@ -75,6 +76,12 @@ export function PlanSelectionModal({
   const [renewalMode, setRenewalMode] =
     useState<MembershipRenewalModeValue>("AUTO");
   const [payerEmail, setPayerEmail] = useState("");
+  // Default true: a convenience toggle for saving the club's own
+  // already-known, non-sensitive-beyond-Settings tax id — not an
+  // opt-in-by-default risk (see identification derivation below, which only
+  // ever offers the checkbox at all when something is actually known to
+  // save).
+  const [saveIdentification, setSaveIdentification] = useState(true);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [openedExternalTab, setOpenedExternalTab] = useState(false);
   const [payNowError, setPayNowError] = useState<string | null>(null);
@@ -113,6 +120,26 @@ export function PlanSelectionModal({
   });
   const initiateCheckout = useInitiateMembershipCheckout();
   const changeTrialPlan = useChangeTrialPlan();
+  const { data: clubTaxId } = useCurrentClubTaxId();
+
+  // Prefill precedence: whatever identification the owner already
+  // confirmed and saved on a PREVIOUS checkout wins (mirrors exactly what
+  // will actually be charged next time) — otherwise fall back to the
+  // club's own onboarding-collected `Club.taxId` as a convenience default,
+  // never an authoritative source (see route.ts's POST handler doc
+  // comment). `undefined` when neither is known, which also hides the
+  // "Save this ID for future payments" checkbox entirely (nothing to
+  // offer saving).
+  const identification =
+    subscription?.payerIdentificationType &&
+    subscription?.payerIdentificationNumber
+      ? {
+          type: subscription.payerIdentificationType,
+          number: subscription.payerIdentificationNumber,
+        }
+      : clubTaxId
+        ? { type: "CUIT", number: clubTaxId }
+        : undefined;
 
   const serverStep = resolveServerStep({
     isLoading,
@@ -328,9 +355,20 @@ export function PlanSelectionModal({
   // the whole object here would have silently defeated this useCallback on
   // every render, same failure mode as this comment is fixing.
   const handleTokenReady = useCallback(
-    ({ cardTokenId }: { cardTokenId: string }) => {
+    ({
+      cardTokenId,
+      identification: confirmedIdentification,
+    }: {
+      cardTokenId: string;
+      identification?: { type: string; number: string };
+    }) => {
       if (!selectedPlan) return;
       setCheckoutError(null);
+      // Never send `saveIdentification: true` with no identification —
+      // only persist when BOTH the checkbox is checked AND the Brick
+      // actually confirmed one.
+      const shouldSaveIdentification =
+        saveIdentification && Boolean(confirmedIdentification);
       initiateCheckout.mutate(
         {
           plan: selectedPlan,
@@ -338,6 +376,12 @@ export function PlanSelectionModal({
           renewalMode,
           payerEmail,
           cardTokenId,
+          ...(shouldSaveIdentification
+            ? {
+                identification: confirmedIdentification,
+                saveIdentification: true,
+              }
+            : {}),
         },
         {
           onSuccess: () => setLocalStep("awaiting-confirmation"),
@@ -349,7 +393,13 @@ export function PlanSelectionModal({
     // Deliberately NOT `initiateCheckout` (the whole object) — see the
     // comment above.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [selectedPlan, renewalMode, payerEmail, initiateCheckout.mutate],
+    [
+      selectedPlan,
+      renewalMode,
+      payerEmail,
+      saveIdentification,
+      initiateCheckout.mutate,
+    ],
   );
 
   const checkoutAmount = selectedPlan
@@ -489,6 +539,9 @@ export function PlanSelectionModal({
         amount={checkoutAmount ?? 0}
         payerEmail={payerEmail}
         defaultEmail={user?.email ?? undefined}
+        identification={identification}
+        saveIdentification={saveIdentification}
+        onSaveIdentificationChange={setSaveIdentification}
         checkoutError={checkoutError}
         isSubmitting={initiateCheckout.isPending}
         isRefreshing={isFetching}

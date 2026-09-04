@@ -2,18 +2,23 @@ import {
   Crown,
   LayoutGrid,
   Sparkles,
+  Wrench,
   Zap,
   type LucideIcon,
 } from "lucide-react";
 import type { Plan } from "@/core/clubs/types";
 
 // One icon per tier, escalating in visual weight — matches the option
-// list's LayoutGrid for BASIC, then builds up toward MAX.
+// list's LayoutGrid for BASIC, then builds up toward MAX. FREE is the
+// hidden admin-only testing tier (never shown to real customers — see
+// PLAN_ORDER in components/PlanSelectionModal/consts.ts) and gets a
+// distinct Wrench icon since it's not part of the real pricing ladder.
 export const PLAN_ICONS: Record<Plan, LucideIcon> = {
   BASIC: LayoutGrid,
   PRO: Zap,
   PLUS: Sparkles,
   MAX: Crown,
+  FREE: Wrench,
 };
 
 // Visual "richness" scale for PlanPricingCard, all built from the same
@@ -57,14 +62,23 @@ export const PLAN_EMPHASIS: Record<Plan, PlanEmphasis> = {
     iconShadow: "shadow-[0_10px_24px_-6px_var(--color-primary)]",
     ring: "ring-1 ring-primary/25 ring-offset-2 ring-offset-background",
   },
+  // Never actually rendered — FREE is never in PLAN_ORDER, so no real
+  // pricing card ever reads this. Reuses BASIC's minimal emphasis since it
+  // is purely dead-code-shaped scaffolding to satisfy Record<Plan, ...>.
+  FREE: {
+    cardBorder: "border-primary/15",
+    cardShadow: "shadow-[0_0_24px_-18px_var(--color-primary)]",
+    wash: "from-primary/8 via-primary/3 to-transparent",
+    iconShadow: "shadow-[0_4px_12px_-6px_var(--color-primary)]",
+  },
 };
 
-// Pricing data for each tier, shown by PlanPricingCard. Court-count ranges
-// live in COURT_RANGE_OPTIONS (app/onboarding/types.ts) — this only holds
-// the pricing/marketing details for the plan the owner lands on once they
-// pick a court range. MAX has no fixed price (custom/enterprise), so its
-// price and welcome-free-months fields are null and priceNote carries the
-// "contact us" copy instead.
+// Pricing/marketing details for each plan tier, shown by PlanOptionCard
+// (dashboard payment-activation gate) and PlanSelectionModal. Plan tier is
+// now chosen from the dashboard gate rather than at onboarding — this only
+// holds the pricing/marketing copy, not the tier-selection logic. MAX has no
+// fixed price (custom/enterprise), so its price and welcome-free-months
+// fields are null and priceNote carries the "contact us" copy instead.
 export type PlanDetails = {
   tagline: string;
   monthlyPrice: number | null;
@@ -124,5 +138,16 @@ export const PLAN_DETAILS: Record<Plan, PlanDetails> = {
       "Custom integrations",
       "Enterprise support",
     ],
+  },
+  // Internal testing plan only — activated exclusively via the admin-only
+  // `activateFreePlan` (core/billing/services/membership.service.ts) through
+  // app/admin/club-status. Never rendered to a real customer since "FREE" is
+  // deliberately excluded from PLAN_ORDER.
+  FREE: {
+    tagline: "Internal testing plan — not available to customers.",
+    monthlyPrice: 0,
+    annualPrice: 0,
+    welcomeFreeMonths: null,
+    features: [],
   },
 };

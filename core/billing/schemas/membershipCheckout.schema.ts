@@ -19,6 +19,17 @@ export const createMembershipCheckoutSchema = z
     renewalMode: z.enum(["AUTO", "MANUAL"]).optional(),
     payerEmail: z.string().email().optional(),
     cardTokenId: z.string().min(1).optional(),
+    // Cardholder identification (DNI/CUIT type + number) the owner confirmed
+    // while entering their card via the Brick, and whether to persist it for
+    // next time (see membership.service.ts's
+    // `saveMembershipPayerIdentification`). Both stay fully optional in
+    // EVERY case — including MONTHLY requests that don't want to save
+    // anything, and ANNUAL requests, which never carry a card token at all —
+    // never required via `.superRefine` below.
+    identification: z
+      .object({ type: z.string().min(1), number: z.string().min(1) })
+      .optional(),
+    saveIdentification: z.boolean().optional(),
   })
   .superRefine((data, ctx) => {
     if (data.cycle === "MONTHLY") {

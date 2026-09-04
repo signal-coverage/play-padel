@@ -50,6 +50,9 @@ const COURT_ROW = {
   surface: null,
   indoor: false,
   color: null,
+  wallType: null,
+  lighting: false,
+  netType: null,
   photoUrl: null,
   slotDurationMinutes: 90,
   reservationFee: null,
@@ -197,6 +200,105 @@ describe("createCourt — availability seeding", () => {
 
     expect(resolveDefaultCourtAvailabilityMock).toHaveBeenCalledWith("club_1");
     expect(createAvailabilityManyMock).toHaveBeenCalled();
+  });
+});
+
+describe("createCourt — physical characteristics", () => {
+  it("passes wallType, lighting, and netType through to the created row", async () => {
+    findFirstMock.mockResolvedValue(null);
+    createMock.mockResolvedValue({
+      ...COURT_ROW,
+      wallType: "blindex",
+      lighting: true,
+      netType: "professional",
+    });
+    createAvailabilityManyMock.mockResolvedValue({ count: 0 });
+    resolveDefaultCourtAvailabilityMock.mockResolvedValue([]);
+
+    const court = await createCourt(
+      "club_1",
+      {
+        name: "Court 1",
+        wallType: "blindex",
+        lighting: true,
+        netType: "professional",
+      },
+      "user_1",
+    );
+
+    expect(createMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          wallType: "blindex",
+          lighting: true,
+          netType: "professional",
+        }),
+      }),
+    );
+    expect(court.wallType).toBe("blindex");
+    expect(court.lighting).toBe(true);
+    expect(court.netType).toBe("professional");
+  });
+
+  it("defaults wallType/netType to null and lighting to false when omitted", async () => {
+    findFirstMock.mockResolvedValue(null);
+    createMock.mockResolvedValue(COURT_ROW);
+    createAvailabilityManyMock.mockResolvedValue({ count: 0 });
+    resolveDefaultCourtAvailabilityMock.mockResolvedValue([]);
+
+    await createCourt("club_1", { name: "Court 1" }, "user_1");
+
+    expect(createMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          wallType: null,
+          lighting: false,
+          netType: null,
+        }),
+      }),
+    );
+  });
+});
+
+describe("updateCourt — physical characteristics", () => {
+  it("threads wallType, lighting, and netType into the update payload", async () => {
+    updateMock.mockResolvedValue({
+      ...COURT_ROW,
+      wallType: "concrete",
+      lighting: true,
+      netType: "standard",
+    });
+
+    const court = await updateCourt(
+      "club_1",
+      "court_1",
+      { wallType: "concrete", lighting: true, netType: "standard" },
+      "user_1",
+    );
+
+    expect(updateMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          wallType: "concrete",
+          lighting: true,
+          netType: "standard",
+        }),
+      }),
+    );
+    expect(court.wallType).toBe("concrete");
+    expect(court.lighting).toBe(true);
+    expect(court.netType).toBe("standard");
+  });
+
+  it("omits wallType/lighting/netType from the update payload when not provided", async () => {
+    updateMock.mockResolvedValue(COURT_ROW);
+
+    await updateCourt("club_1", "court_1", { name: "Court 1" }, "user_1");
+
+    const dataArg = updateMock.mock.calls[0][0].data;
+    expect(dataArg).not.toHaveProperty("wallType");
+    expect(dataArg).not.toHaveProperty("lighting");
+    expect(dataArg).not.toHaveProperty("netType");
   });
 });
 
