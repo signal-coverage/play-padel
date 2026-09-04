@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
 import {
@@ -13,7 +13,20 @@ import { DashboardLoader } from "@/app/dashboard/_components/DashboardLoader";
 import { MercadoPagoConnectedDialog } from "@/app/dashboard/_components/MercadoPagoConnectedDialog";
 import { ReactQueryProvider } from "@/providers/query-provider";
 
+// `useSearchParams()` below opts this tree out of static rendering unless
+// wrapped in Suspense (see https://nextjs.org/docs/messages/missing-suspense-with-csr-bailout)
+// — the dashboard layout mounts this with no Suspense boundary of its own,
+// which made `next build` fail prerendering any dashboard route with no
+// other dynamic dependency (e.g. /dashboard/browse/payment-return).
 export function DashboardShell({ children }: { children: React.ReactNode }) {
+  return (
+    <Suspense fallback={<DashboardLoader />}>
+      <DashboardShellContent>{children}</DashboardShellContent>
+    </Suspense>
+  );
+}
+
+function DashboardShellContent({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
