@@ -5,6 +5,14 @@ vi.mock("@clerk/nextjs/server", () => ({
   currentUser: vi.fn(),
 }));
 
+vi.mock("botid/server", () => ({
+  checkBotId: vi.fn(),
+}));
+
+vi.mock("@vercel/firewall", () => ({
+  checkRateLimit: vi.fn(),
+}));
+
 vi.mock("@/infrastructure/db/client", () => ({
   prisma: {
     userProfile: {
@@ -35,6 +43,8 @@ vi.mock("@/lib/notifications/dispatcher", () => ({
 }));
 
 import { auth, currentUser } from "@clerk/nextjs/server";
+import { checkBotId } from "botid/server";
+import { checkRateLimit } from "@vercel/firewall";
 import { prisma } from "@/infrastructure/db/client";
 import { createClub } from "@/core/clubs/services/clubs.service";
 import { setClubOperatingHours } from "@/core/clubs/services/operatingHours.service";
@@ -45,6 +55,10 @@ import { POST } from "./route";
 
 const authMock = auth as unknown as ReturnType<typeof vi.fn>;
 const currentUserMock = currentUser as unknown as ReturnType<typeof vi.fn>;
+const checkBotIdMock = checkBotId as unknown as ReturnType<typeof vi.fn>;
+const checkRateLimitMock = checkRateLimit as unknown as ReturnType<
+  typeof vi.fn
+>;
 const findUniqueMock = prisma.userProfile.findUnique as ReturnType<
   typeof vi.fn
 >;
@@ -116,6 +130,8 @@ describe("POST /api/onboarding", () => {
     logAuditMock.mockReset();
     notifyAllAdminsMock.mockReset();
     notifyAllAdminsMock.mockResolvedValue(undefined);
+    checkBotIdMock.mockReset();
+    checkRateLimitMock.mockReset();
 
     authMock.mockResolvedValue({ userId: "user_1" });
     currentUserMock.mockResolvedValue({
@@ -124,6 +140,26 @@ describe("POST /api/onboarding", () => {
       imageUrl: null,
     });
     upsertMock.mockResolvedValue({});
+    checkBotIdMock.mockResolvedValue({ isBot: false });
+    checkRateLimitMock.mockResolvedValue({ rateLimited: false });
+  });
+
+  it("returns 403 when BotID classifies the request as a bot", async () => {
+    checkBotIdMock.mockResolvedValue({ isBot: true });
+
+    const response = await POST(makeRequest(ownerBody()));
+
+    expect(response.status).toBe(403);
+    expect(createClubMock).not.toHaveBeenCalled();
+  });
+
+  it("returns 429 when the shared rate limit is exceeded", async () => {
+    checkRateLimitMock.mockResolvedValue({ rateLimited: true });
+
+    const response = await POST(makeRequest(ownerBody()));
+
+    expect(response.status).toBe(429);
+    expect(createClubMock).not.toHaveBeenCalled();
   });
 
   it("returns 401 when there is no authenticated user", async () => {

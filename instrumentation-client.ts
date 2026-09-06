@@ -4,6 +4,21 @@
 
 import * as Sentry from "@sentry/nextjs";
 import * as amplitude from "@amplitude/unified";
+import { initBotId } from "botid/client/core";
+
+// Registers which routes get a BotID classification challenge attached
+// client-side. Every path here must match a server-side checkBotId() call
+// (lib/security/botGuard.ts's checkBot()) or that check silently can't
+// classify the request — see docs/SECURITY.md. Deliberately excludes
+// GET /api/player/clubs (15s-polling read endpoint, not a form submission —
+// rate limiting alone covers it, see that route's own comment).
+initBotId({
+  protect: [
+    { path: "/api/onboarding", method: "POST" },
+    { path: "/api/player/reservations", method: "POST" },
+    { path: "/api/player/waitlist", method: "POST" },
+  ],
+});
 
 const amplitudeApiKey = process.env.NEXT_PUBLIC_AMPLITUDE_API_KEY;
 if (!amplitudeApiKey) {

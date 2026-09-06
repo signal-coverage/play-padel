@@ -3,6 +3,7 @@ import { listActiveClubs } from "@/core/clubs/services/clubs.service";
 import { getClubsAvailability } from "@/core/courts/services/courts.service";
 import type { ClubBrowseSummary } from "@/app/dashboard/browse/_components/BrowseCourts/types";
 import { requireAuthUser } from "@/lib/auth/requireAuthUser";
+import { enforceRateLimit } from "@/lib/security/rateLimit";
 
 // Player-facing club list: any signed-in user can browse clubs to book a
 // court at (see docs/reservation-flow.md). No role check beyond auth.
@@ -11,6 +12,17 @@ import { requireAuthUser } from "@/lib/auth/requireAuthUser";
 export async function GET(request: NextRequest) {
   const authResult = await requireAuthUser();
   if (!authResult.ok) return authResult.response;
+  const { userId } = authResult;
+
+  // No BotID check here — this is a 15s-polling read endpoint (Browse
+  // Courts), not a form submission; rate limiting alone guards against a
+  // single authenticated session scraping it in a tight loop.
+  const rateLimitCheck = await enforceRateLimit(
+    request,
+    "browse-clubs",
+    userId,
+  );
+  if (rateLimitCheck) return rateLimitCheck;
 
   const dateParam = request.nextUrl.searchParams.get("date");
   const date = dateParam ? parseLocalDate(dateParam) : null;
