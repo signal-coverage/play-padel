@@ -1,11 +1,6 @@
 import { Preference } from "mercadopago";
+import { requireAppUrl } from "@/lib/env";
 import { getClubMercadoPagoClient } from "./clubMercadoPagoClient";
-
-function requireAppUrl(): string {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL;
-  if (!appUrl) throw new Error("NEXT_PUBLIC_APP_URL is not set");
-  return appUrl;
-}
 
 // Creates a Checkout Pro preference for one reservation and returns the
 // hosted redirect URL. Uses the OWNING CLUB's Mercado Pago client (see

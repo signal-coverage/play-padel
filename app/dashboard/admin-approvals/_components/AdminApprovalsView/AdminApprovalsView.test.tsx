@@ -1,0 +1,161 @@
+// @vitest-environment jsdom
+import { describe, it, expect, vi, afterEach } from "vitest";
+import {
+  render,
+  screen,
+  waitFor,
+  cleanup,
+  fireEvent,
+} from "@testing-library/react";
+import "@testing-library/jest-dom/vitest";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { AdminApprovalsView } from "./AdminApprovalsView";
+
+// jsdom doesn't implement ResizeObserver, but DataTable relies on it
+// internally to measure scroll fade state (see AdminSearchView.test.tsx /
+// CourtsTable.test.tsx using the same stub).
+class ResizeObserverStub {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+
+const PENDING_CLUB = {
+  id: "club_1",
+  name: "New Padel Club",
+  email: "owner@newclub.com",
+  createdAt: "2026-09-01T00:00:00.000Z",
+};
+
+function renderView(fetchImpl: (url: string, init?: RequestInit) => unknown) {
+  const fetchMock = vi.fn(fetchImpl);
+  vi.stubGlobal("fetch", fetchMock);
+  vi.stubGlobal("ResizeObserver", ResizeObserverStub);
+
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+
+  render(
+    <QueryClientProvider client={queryClient}>
+      <AdminApprovalsView />
+    </QueryClientProvider>,
+  );
+
+  return fetchMock;
+}
+
+function jsonResponse(body: unknown, ok = true) {
+  return Promise.resolve({ ok, json: async () => body });
+}
+
+describe("AdminApprovalsView", () => {
+  afterEach(() => {
+    // This repo's vitest.config.mts does not enable `test.globals`, so
+    // @testing-library/react's automatic afterEach(cleanup) registration
+    // never fires — clean up the DOM explicitly between tests instead.
+    cleanup();
+    vi.unstubAllGlobals();
+  });
+
+  it("shows an empty state when no clubs are pending", async () => {
+    renderView((url) => {
+      if (url === "/api/admin/clubs/pending")
+        return jsonResponse({ clubs: [] });
+      throw new Error(`unexpected fetch: ${url}`);
+    });
+
+    expect(
+      await screen.findByText("No clubs are waiting for approval."),
+    ).toBeInTheDocument();
+  });
+
+  it("lists a pending club with Approve and Reject actions", async () => {
+    renderView((url) => {
+      if (url === "/api/admin/clubs/pending")
+        return jsonResponse({ clubs: [PENDING_CLUB] });
+      throw new Error(`unexpected fetch: ${url}`);
+    });
+
+    expect(await screen.findByText("New Padel Club")).toBeInTheDocument();
+    expect(screen.getByText("owner@newclub.com")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Approve" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Reject" })).toBeInTheDocument();
+  });
+
+  it("approves a club directly (no confirm step) and removes it from the list on success", async () => {
+    let approved = false;
+    const fetchMock = renderView((url, init) => {
+      if (url === "/api/admin/clubs/pending") {
+        return jsonResponse({ clubs: approved ? [] : [PENDING_CLUB] });
+      }
+      if (
+        url === "/api/admin/clubs/club_1/approve" &&
+        init?.method === "POST"
+      ) {
+        approved = true;
+        return jsonResponse({ ok: true });
+      }
+      throw new Error(`unexpected fetch: ${url}`);
+    });
+
+    await screen.findByText("New Padel Club");
+
+    fireEvent.click(screen.getByRole("button", { name: "Approve" }));
+
+    await waitFor(() =>
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/admin/clubs/club_1/approve",
+        expect.objectContaining({ method: "POST" }),
+      ),
+    );
+
+    await waitFor(() =>
+      expect(
+        screen.getByText("No clubs are waiting for approval."),
+      ).toBeInTheDocument(),
+    );
+  });
+
+  it("requires confirmation before rejecting, and removes the club from the list once confirmed", async () => {
+    let rejected = false;
+    const fetchMock = renderView((url, init) => {
+      if (url === "/api/admin/clubs/pending") {
+        return jsonResponse({ clubs: rejected ? [] : [PENDING_CLUB] });
+      }
+      if (url === "/api/admin/clubs/club_1/reject" && init?.method === "POST") {
+        rejected = true;
+        return jsonResponse({ ok: true });
+      }
+      throw new Error(`unexpected fetch: ${url}`);
+    });
+
+    await screen.findByText("New Padel Club");
+
+    fireEvent.click(screen.getByRole("button", { name: "Reject" }));
+
+    // The confirm dialog blocks the actual mutation until explicitly
+    // confirmed — clicking "Reject" alone must not have called the API yet.
+    const confirmHeading = await screen.findByText("Reject this club?");
+    expect(confirmHeading).toBeInTheDocument();
+    expect(fetchMock).not.toHaveBeenCalledWith(
+      "/api/admin/clubs/club_1/reject",
+      expect.anything(),
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Reject club" }));
+
+    await waitFor(() =>
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/admin/clubs/club_1/reject",
+        expect.objectContaining({ method: "POST" }),
+      ),
+    );
+
+    await waitFor(() =>
+      expect(
+        screen.getByText("No clubs are waiting for approval."),
+      ).toBeInTheDocument(),
+    );
+  });
+});

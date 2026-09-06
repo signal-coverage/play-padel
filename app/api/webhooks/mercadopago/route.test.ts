@@ -1,6 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextRequest } from "next/server";
 
+const { logSystemJobMock } = vi.hoisted(() => ({
+  logSystemJobMock: vi.fn(),
+}));
+
+vi.mock("@/core/systemJobs/services/systemJobs.service", () => ({
+  logSystemJob: logSystemJobMock,
+}));
+
 vi.mock("@/lib/mercadopago/webhookSignature", () => ({
   verifyMercadoPagoSignature: vi.fn(),
 }));
@@ -13,11 +21,20 @@ vi.mock("@/core/reservations/services/reservations.service", () => ({
   findReservationById: vi.fn(),
   confirmReservationPayment: vi.fn(),
   checkCourtClosureConflict: vi.fn(),
+  checkCourtConflict: vi.fn(),
 }));
 
 vi.mock("@/core/billing/services/billing.service", () => ({
   getInvoiceByReservationId: vi.fn(),
   recordPayment: vi.fn(),
+}));
+
+vi.mock("@/core/clubs/services/clubs.service", () => ({
+  getClubOwner: vi.fn(),
+}));
+
+vi.mock("@/lib/notifications/dispatcher", () => ({
+  dispatch: vi.fn(),
 }));
 
 vi.mock("@/lib/mercadopago/membershipWebhookHandlers", () => ({
@@ -31,11 +48,14 @@ import {
   findReservationById,
   confirmReservationPayment,
   checkCourtClosureConflict,
+  checkCourtConflict,
 } from "@/core/reservations/services/reservations.service";
 import {
   getInvoiceByReservationId,
   recordPayment,
 } from "@/core/billing/services/billing.service";
+import { getClubOwner } from "@/core/clubs/services/clubs.service";
+import { dispatch } from "@/lib/notifications/dispatcher";
 import {
   handleSubscriptionPreapprovalTopic,
   handleMembershipPaymentTopic,
@@ -56,10 +76,13 @@ const confirmReservationPaymentMock = confirmReservationPayment as ReturnType<
 const checkCourtClosureConflictMock = checkCourtClosureConflict as ReturnType<
   typeof vi.fn
 >;
+const checkCourtConflictMock = checkCourtConflict as ReturnType<typeof vi.fn>;
 const getInvoiceByReservationIdMock = getInvoiceByReservationId as ReturnType<
   typeof vi.fn
 >;
 const recordPaymentMock = recordPayment as ReturnType<typeof vi.fn>;
+const getClubOwnerMock = getClubOwner as ReturnType<typeof vi.fn>;
+const dispatchMock = dispatch as ReturnType<typeof vi.fn>;
 const handleSubscriptionPreapprovalTopicMock =
   handleSubscriptionPreapprovalTopic as ReturnType<typeof vi.fn>;
 const handleMembershipPaymentTopicMock =
@@ -116,12 +139,22 @@ beforeEach(() => {
   findReservationByIdMock.mockReset();
   confirmReservationPaymentMock.mockReset();
   checkCourtClosureConflictMock.mockReset();
+  checkCourtConflictMock.mockReset();
   getInvoiceByReservationIdMock.mockReset();
   recordPaymentMock.mockReset();
+  getClubOwnerMock.mockReset();
+  dispatchMock.mockReset();
   handleSubscriptionPreapprovalTopicMock.mockReset();
   handleMembershipPaymentTopicMock.mockReset();
+  logSystemJobMock.mockReset();
 
   verifyMercadoPagoSignatureMock.mockReturnValue(true);
+  getClubOwnerMock.mockResolvedValue({
+    id: "owner_1",
+    displayName: "Owner One",
+    photoURL: null,
+    email: "owner@example.com",
+  });
   handleSubscriptionPreapprovalTopicMock.mockResolvedValue(
     NextResponse.json({ ok: true }),
   );
@@ -212,6 +245,7 @@ describe("POST /api/webhooks/mercadopago", () => {
     getInvoiceByReservationIdMock.mockResolvedValue(INVOICE);
     recordPaymentMock.mockResolvedValue({ id: "payment_1" });
     checkCourtClosureConflictMock.mockResolvedValue(null);
+    checkCourtConflictMock.mockResolvedValue(false);
 
     const response = await POST(
       makeRequest({ reservationId: "res_1", dataId: "12345" }),
@@ -227,6 +261,52 @@ describe("POST /api/webhooks/mercadopago", () => {
       }),
     );
     expect(confirmReservationPaymentMock).toHaveBeenCalledWith("res_1");
+    expect(dispatchMock).not.toHaveBeenCalled();
+  });
+
+  it("does NOT confirm the reservation when another reservation now overlaps the same court/time — the payment was still captured and recorded, but the slot must be resolved manually", async () => {
+    findReservationByIdMock.mockResolvedValue(RESERVATION);
+    getMercadoPagoPaymentMock.mockResolvedValue({
+      id: 12345,
+      status: "approved",
+      externalReference: "res_1",
+      transactionAmount: 1000,
+    });
+    getInvoiceByReservationIdMock.mockResolvedValue(INVOICE);
+    recordPaymentMock.mockResolvedValue({ id: "payment_1" });
+    checkCourtClosureConflictMock.mockResolvedValue(null);
+    checkCourtConflictMock.mockResolvedValue(true);
+
+    const response = await POST(
+      makeRequest({ reservationId: "res_1", dataId: "12345" }),
+    );
+
+    // The payment is real money already captured by Mercado Pago — it must
+    // still be recorded — but the reservation itself is left unconfirmed
+    // (SCHEDULED) rather than silently double-booking the slot. The webhook
+    // still acks 200 so Mercado Pago doesn't keep retrying delivery.
+    expect(recordPaymentMock).toHaveBeenCalled();
+    expect(confirmReservationPaymentMock).not.toHaveBeenCalled();
+    expect(response.status).toBe(200);
+
+    expect(checkCourtConflictMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        clubId: "club_1",
+        courtId: "court_1",
+        excludeId: "res_1",
+      }),
+    );
+
+    expect(dispatchMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "RESERVATION_PAYMENT_CONFLICT",
+        clubId: "club_1",
+        recipientId: "owner_1",
+        recipientEmail: "owner@example.com",
+        recipientName: "Owner One",
+        sendEmail: false,
+      }),
+    );
   });
 
   it("does not record a payment for a non-approved status", async () => {
@@ -346,5 +426,65 @@ describe("POST /api/webhooks/mercadopago — type-based dispatch to membership h
     expect(handleMembershipPaymentTopicMock).not.toHaveBeenCalled();
     expect(handleSubscriptionPreapprovalTopicMock).not.toHaveBeenCalled();
     expect(findReservationByIdMock).toHaveBeenCalledWith("res_1");
+  });
+});
+
+// This route's internal branching/business logic is untouched by the
+// instrumentation below — POST is only a thin outer log-and-return/
+// log-and-rethrow shell around the exact same handler (see AGENTS.md-adjacent
+// system-status feature notes). These tests cover ONLY the added logging
+// behavior; every test above already proves the internal logic itself is
+// unchanged.
+describe("POST /api/webhooks/mercadopago — system job logging", () => {
+  it("logs a SUCCESS entry when the response is 2xx", async () => {
+    const response = await POST(makeRequest({ dataId: "12345" }));
+
+    expect(response.status).toBe(200);
+    expect(logSystemJobMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        kind: "WEBHOOK",
+        name: "mercadopago",
+        status: "SUCCESS",
+        startedAt: expect.any(Date),
+        finishedAt: expect.any(Date),
+      }),
+    );
+  });
+
+  it("logs a FAILURE entry (with the response body as the error message) when the response is not 2xx", async () => {
+    verifyMercadoPagoSignatureMock.mockReturnValue(false);
+
+    const response = await POST(
+      makeRequest({ reservationId: "res_1", dataId: "12345" }),
+    );
+
+    expect(response.status).toBe(401);
+    expect(logSystemJobMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        kind: "WEBHOOK",
+        name: "mercadopago",
+        status: "FAILURE",
+        errorMessage: expect.stringContaining("Invalid signature"),
+      }),
+    );
+  });
+
+  it("logs a FAILURE entry and still lets the error propagate when the handler itself throws unexpectedly", async () => {
+    verifyMercadoPagoSignatureMock.mockImplementation(() => {
+      throw new Error("unexpected crash");
+    });
+
+    await expect(
+      POST(makeRequest({ reservationId: "res_1", dataId: "12345" })),
+    ).rejects.toThrow("unexpected crash");
+
+    expect(logSystemJobMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        kind: "WEBHOOK",
+        name: "mercadopago",
+        status: "FAILURE",
+        errorMessage: "unexpected crash",
+      }),
+    );
   });
 });

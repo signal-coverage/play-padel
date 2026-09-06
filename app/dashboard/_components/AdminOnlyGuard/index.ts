@@ -1,0 +1,1 @@
+export { AdminOnlyGuard } from "./AdminOnlyGuard";

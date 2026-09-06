@@ -65,6 +65,7 @@ function baseUser(overrides: Partial<AppUser>): AppUser {
     padelCategory: null,
     preferredSide: null,
     dominantHand: null,
+    isAdmin: false,
     createdAt: null,
     ...overrides,
   };
@@ -152,6 +153,16 @@ describe("DashboardShell — ClubOperationalGate regression vs. DashboardGuard",
           }),
         });
       }
+      // ClubOperationalGate now also calls useMembershipSubscription
+      // unconditionally (FREE-plan hidden-testing bypass check) — a null
+      // subscription keeps this owner off that bypass (never FREE/confirmed)
+      // and is otherwise irrelevant to what this test asserts.
+      if (url === "/api/clubs/membership") {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({ subscription: null }),
+        });
+      }
       if (url === "/api/clubs" && (!init || init.method === undefined)) {
         return Promise.resolve({
           ok: true,
@@ -164,7 +175,6 @@ describe("DashboardShell — ClubOperationalGate regression vs. DashboardGuard",
               currency: "ARS",
               plan: "BASIC",
               status: "ACTIVE",
-              requiresPrepayment: false,
               createdAt: new Date().toISOString(),
               updatedAt: new Date().toISOString(),
               createdBy: "user_1",
@@ -245,6 +255,15 @@ describe("DashboardShell — ClubOperationalGate regression vs. DashboardGuard",
         return Promise.resolve({
           ok: true,
           json: async () => ({ operational: true, cause: null }),
+        });
+      }
+      // ClubOperationalGate now also calls useMembershipSubscription
+      // unconditionally (FREE-plan hidden-testing bypass check) — irrelevant
+      // to what this test asserts since the club is already operational.
+      if (url === "/api/clubs/membership") {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({ subscription: null }),
         });
       }
       if (url === "/api/clubs/bank-transfer-account") {

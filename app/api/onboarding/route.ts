@@ -1,22 +1,23 @@
 import { NextResponse } from "next/server";
-import { auth, currentUser } from "@clerk/nextjs/server";
+import { currentUser } from "@clerk/nextjs/server";
 import { prisma } from "@/infrastructure/db/client";
 import { createClub } from "@/core/clubs/services/clubs.service";
 import { setClubOperatingHours } from "@/core/clubs/services/operatingHours.service";
 import { createPendingMembershipSubscription } from "@/core/billing/services/membership.service";
 import { logAudit } from "@/core/audit/services/audit.service";
+import { notifyAllAdmins } from "@/lib/notifications/dispatcher";
 import type { Plan } from "@/core/clubs/types";
 import { onboardingFormSchema } from "@/app/onboarding/types";
+import { requireAuthUser } from "@/lib/auth/requireAuthUser";
 
 // Completes onboarding for the current Clerk user: player -> UserProfile only
 // (no club), owner -> Club + UserProfile pointing at it. Upserts on the
 // Clerk-provided userId so a retry (e.g. a failed request the user resubmits)
 // is idempotent instead of erroring or creating duplicate rows.
 export async function POST(request: Request) {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const authResult = await requireAuthUser();
+  if (!authResult.ok) return authResult.response;
+  const { userId } = authResult;
 
   const clerkUser = await currentUser();
   const accountEmail =
@@ -159,9 +160,31 @@ export async function POST(request: Request) {
         city: data.city,
         zipCode: data.zipCode,
         plan,
+        // The ONLY call site in the codebase that explicitly sets this — a
+        // brand-new club must not be able to operate (accept real
+        // reservations) until an admin approves it. Every other caller
+        // (including createClub's own default) leaves this to the schema's
+        // @default(APPROVED), so no existing club is ever affected — see
+        // prisma/schema.prisma's Club.approvalStatus and
+        // lib/mercadopago/operationalStatus.ts's PENDING_APPROVAL cause.
+        approvalStatus: "PENDING",
       },
       userId,
     );
+
+    // Broadcast to every admin so the approval queue gets attention —
+    // non-throwing, must never fail onboarding itself.
+    try {
+      await notifyAllAdmins({
+        type: "CLUB_PENDING_APPROVAL",
+        clubId: club.id,
+        subject: "A new club is pending approval",
+        html: `A new club, ${club.name}, is pending approval.`,
+        sendEmail: false,
+      });
+    } catch {
+      // notification failure must not affect onboarding
+    }
 
     // `Club.plan` above is still written directly (needed immediately for
     // court-capacity purposes, see design's Onboarding flow) — this seeds

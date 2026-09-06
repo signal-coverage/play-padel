@@ -1,12 +1,16 @@
+// Fixed to es-AR — not the viewer's browser locale — so the same amount
+// renders identically everywhere it's shown, including the PDF receipt
+// (lib/pdf/ReceiptDocument/utils.ts, generated server-side where there's no
+// real "browser locale" to read from anyway).
 export function formatCurrency(amount: number, currency: string): string {
   try {
-    return new Intl.NumberFormat(undefined, {
+    return new Intl.NumberFormat("es-AR", {
       style: "currency",
       currency,
       minimumFractionDigits: 2,
     }).format(amount);
   } catch {
-    return new Intl.NumberFormat(undefined, {
+    return new Intl.NumberFormat("es-AR", {
       minimumFractionDigits: 2,
     }).format(amount);
   }

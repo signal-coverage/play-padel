@@ -110,6 +110,30 @@ describe("GET /api/clubs/mercadopago/operational-status", () => {
     });
   });
 
+  it("returns operational: false, cause: PENDING_APPROVAL when the club hasn't been approved yet", async () => {
+    requireOwnerClubMock.mockResolvedValue({
+      ok: true,
+      context: { userId: "user_1", clubId: "club_1" },
+    });
+    getClubOperationalStatusMock.mockResolvedValue({
+      operational: false,
+      cause: "PENDING_APPROVAL",
+      email: null,
+      nickname: null,
+    });
+
+    const response = await GET();
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body).toEqual({
+      operational: false,
+      cause: "PENDING_APPROVAL",
+      email: null,
+      nickname: null,
+    });
+  });
+
   it("returns operational: false, cause: MP_NOT_CONNECTED when both conditions fail (precedence)", async () => {
     requireOwnerClubMock.mockResolvedValue({
       ok: true,

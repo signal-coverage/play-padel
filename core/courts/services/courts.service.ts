@@ -33,6 +33,18 @@ export class DuplicateCourtNameError extends Error {
   }
 }
 
+// Detects a violation of the "courts_no_duplicate_active_name" partial
+// unique index (migration 20260906020000) — the DB-level backstop behind
+// assertNoDuplicateCourtName's best-effort, non-race-proof check below.
+// Unlike the reservations EXCLUDE constraint's violation, Prisma recognizes
+// this one natively as its own P2002 code (verified against the real dev
+// database), so no digging through driver-adapter-specific meta is needed.
+function isDuplicateCourtNameViolation(err: unknown): boolean {
+  return (
+    err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002"
+  );
+}
+
 // Case-insensitive, scoped to the club and to live (non-soft-deleted) courts
 // — a deactivated court's old name is free to reuse. `excludeCourtId` lets
 // `updateCourt` keep a court's own current name without tripping over itself.
@@ -113,26 +125,39 @@ export async function createCourt(
 ): Promise<Court> {
   await assertNoDuplicateCourtName(clubId, input.name);
 
-  const row = await prisma.court.create({
-    data: {
-      clubId,
-      name: input.name,
-      surface: input.surface ?? null,
-      indoor: input.indoor ?? false,
-      color: input.color ?? null,
-      wallType: input.wallType ?? null,
-      lighting: input.lighting ?? false,
-      netType: input.netType ?? null,
-      photoUrl: input.photoUrl ?? null,
-      ...(input.slotDurationMinutes !== undefined && {
-        slotDurationMinutes: input.slotDurationMinutes,
-      }),
-      reservationFee: input.reservationFee ?? null,
-      courtPrice: input.courtPrice ?? null,
-      createdBy,
-      updatedBy: createdBy,
-    },
-  });
+  let row;
+  try {
+    row = await prisma.court.create({
+      data: {
+        clubId,
+        name: input.name,
+        surface: input.surface ?? null,
+        indoor: input.indoor ?? false,
+        color: input.color ?? null,
+        wallType: input.wallType ?? null,
+        lighting: input.lighting ?? false,
+        netType: input.netType ?? null,
+        photoUrl: input.photoUrl ?? null,
+        ...(input.slotDurationMinutes !== undefined && {
+          slotDurationMinutes: input.slotDurationMinutes,
+        }),
+        reservationFee: input.reservationFee ?? null,
+        courtPrice: input.courtPrice ?? null,
+        createdBy,
+        updatedBy: createdBy,
+      },
+    });
+  } catch (err) {
+    if (isDuplicateCourtNameViolation(err)) {
+      // assertNoDuplicateCourtName above is a best-effort, non-race-proof
+      // check — two concurrent createCourt calls can both pass it before
+      // either write lands. The DB-level unique index is the real backstop;
+      // this translates its failure into the same error the app-level
+      // check already throws for the common case.
+      throw new DuplicateCourtNameError(input.name);
+    }
+    throw err;
+  }
 
   // A brand-new court always ends up with real CourtAvailability rows the
   // moment it's created — never zero rows. Explicit availability is seeded
@@ -180,32 +205,46 @@ export async function updateCourt(
     await assertNoDuplicateCourtName(clubId, input.name, id);
   }
 
-  const row = await prisma.court.update({
-    where: { id },
-    data: {
-      ...(input.name !== undefined && { name: input.name }),
-      ...(input.surface !== undefined && { surface: input.surface ?? null }),
-      ...(input.indoor !== undefined && { indoor: input.indoor }),
-      ...(input.color !== undefined && { color: input.color ?? null }),
-      ...(input.wallType !== undefined && {
-        wallType: input.wallType ?? null,
-      }),
-      ...(input.lighting !== undefined && { lighting: input.lighting }),
-      ...(input.netType !== undefined && { netType: input.netType ?? null }),
-      ...(input.photoUrl !== undefined && {
-        photoUrl: input.photoUrl ?? null,
-      }),
-      ...(input.slotDurationMinutes !== undefined && {
-        slotDurationMinutes: input.slotDurationMinutes,
-      }),
-      ...(input.reservationFee !== undefined && {
-        reservationFee: input.reservationFee,
-      }),
-      ...(input.courtPrice !== undefined && { courtPrice: input.courtPrice }),
-      ...(input.active !== undefined && { active: input.active }),
-      updatedBy,
-    },
-  });
+  let row;
+  try {
+    row = await prisma.court.update({
+      where: { id },
+      data: {
+        ...(input.name !== undefined && { name: input.name }),
+        ...(input.surface !== undefined && {
+          surface: input.surface ?? null,
+        }),
+        ...(input.indoor !== undefined && { indoor: input.indoor }),
+        ...(input.color !== undefined && { color: input.color ?? null }),
+        ...(input.wallType !== undefined && {
+          wallType: input.wallType ?? null,
+        }),
+        ...(input.lighting !== undefined && { lighting: input.lighting }),
+        ...(input.netType !== undefined && {
+          netType: input.netType ?? null,
+        }),
+        ...(input.photoUrl !== undefined && {
+          photoUrl: input.photoUrl ?? null,
+        }),
+        ...(input.slotDurationMinutes !== undefined && {
+          slotDurationMinutes: input.slotDurationMinutes,
+        }),
+        ...(input.reservationFee !== undefined && {
+          reservationFee: input.reservationFee,
+        }),
+        ...(input.courtPrice !== undefined && {
+          courtPrice: input.courtPrice,
+        }),
+        ...(input.active !== undefined && { active: input.active }),
+        updatedBy,
+      },
+    });
+  } catch (err) {
+    if (input.name !== undefined && isDuplicateCourtNameViolation(err)) {
+      throw new DuplicateCourtNameError(input.name);
+    }
+    throw err;
+  }
 
   const actor = await prisma.userProfile.findUnique({
     where: { id: updatedBy },

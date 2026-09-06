@@ -1,5 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
+const { logSystemJobMock } = vi.hoisted(() => ({
+  logSystemJobMock: vi.fn(),
+}));
+
 vi.mock("@/infrastructure/db/client", () => ({
   prisma: {
     clubMembershipSubscription: {
@@ -17,6 +21,10 @@ vi.mock("@/core/billing/services/membership.service", () => ({
   recordSuccessfulCharge: vi.fn(),
   recordManualPeriodExpiredWithoutRenewal: vi.fn(),
   recordManualLockout: vi.fn(),
+}));
+
+vi.mock("@/core/systemJobs/services/systemJobs.service", () => ({
+  logSystemJob: logSystemJobMock,
 }));
 
 import { prisma } from "@/infrastructure/db/client";
@@ -71,6 +79,7 @@ beforeEach(() => {
   manualActiveSubs = [];
   manualPastDueSubs = [];
 
+  logSystemJobMock.mockReset();
   findManyMock.mockReset();
   findManyMock.mockImplementation(
     async (args: { where: Record<string, unknown> }) => {
@@ -312,9 +321,53 @@ describe("MANUAL mode — primary/authoritative lockout mechanism", () => {
     manualPastDueSubs = [{ clubId: "club_manual_3" }];
     recordManualLockoutMock.mockRejectedValue(new Error("db error"));
 
-    const response = await GET(makeRequest("Bearer test-cron-secret"));
+    const response = await GET(
+      makeRequest(`Bearer ${process.env.CRON_SECRET}`),
+    );
     const body = await response.json();
 
     expect(body.failed).toBe(1);
+  });
+});
+
+function authorizedRequest() {
+  return makeRequest(`Bearer ${process.env.CRON_SECRET}`);
+}
+
+describe("system job logging", () => {
+  it("does not log a job entry for an unauthorized probe", async () => {
+    await GET(makeRequest("Bearer wrong-secret"));
+
+    expect(logSystemJobMock).not.toHaveBeenCalled();
+  });
+
+  it("logs a SUCCESS entry for a successful run (per-item failures caught internally still count as a successful sweep)", async () => {
+    await GET(authorizedRequest());
+
+    expect(logSystemJobMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        kind: "CRON",
+        name: "membership-grace-sweep",
+        status: "SUCCESS",
+        startedAt: expect.any(Date),
+        finishedAt: expect.any(Date),
+      }),
+    );
+  });
+
+  it("logs a FAILURE entry with the error message and still lets the error propagate when the underlying query itself throws", async () => {
+    findManyMock.mockReset();
+    findManyMock.mockRejectedValue(new Error("db unavailable"));
+
+    await expect(GET(authorizedRequest())).rejects.toThrow("db unavailable");
+
+    expect(logSystemJobMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        kind: "CRON",
+        name: "membership-grace-sweep",
+        status: "FAILURE",
+        errorMessage: "db unavailable",
+      }),
+    );
   });
 });

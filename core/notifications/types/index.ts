@@ -2,13 +2,21 @@ export type NotificationType =
   | "RESERVATION_REMINDER"
   | "RESERVATION_CANCELLED"
   | "PAYMENT_CONFIRMED"
-  | "WAITLIST_SLOT_AVAILABLE";
+  | "WAITLIST_SLOT_AVAILABLE"
+  | "CLUB_APPROVED"
+  | "CLUB_REJECTED"
+  | "CLUB_SUSPENDED"
+  | "PAYMENT_RECEIVED"
+  | "MEMBERSHIP_PAST_DUE"
+  | "CLUB_PENDING_APPROVAL"
+  | "SYSTEM_JOB_FAILED"
+  | "RESERVATION_PAYMENT_CONFLICT";
 
-export type NotificationStatus = "PENDING" | "SENT" | "FAILED";
+export type NotificationStatus = "PENDING" | "SENT" | "FAILED" | "SKIPPED";
 
 export interface Notification {
   id: string;
-  clubId: string;
+  clubId: string | null;
   type: NotificationType;
   recipientId: string;
   recipientEmail: string;
@@ -17,15 +25,19 @@ export interface Notification {
   status: NotificationStatus;
   failureReason?: string;
   sentAt?: Date;
+  readAt?: Date;
   createdAt: Date;
 }
 
 export interface DispatchParams {
   type: NotificationType;
-  clubId: string;
+  clubId: string | null;
   recipientId: string;
   recipientEmail: string | null | undefined;
   recipientName: string;
   subject: string;
   html: string;
+  // Default true. When false, dispatch() skips Resend entirely and marks the
+  // row SKIPPED instead of attempting delivery (in-app-only notification).
+  sendEmail?: boolean;
 }

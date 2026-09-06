@@ -2,7 +2,7 @@
 
 Internal reference only — not published anywhere in the app. Not legal advice; before acting on any draft clause below, have it reviewed by an Argentine attorney familiar with _derecho del consumidor_ and Ley 25.326.
 
-**Scope confirmed (2026-08-15):** legal entity and users both in Argentina, pre-launch (no real users yet), payments via Mercado Pago Checkout Pro (hosted redirect — card data never touches this app's servers, see `lib/mercadopago/preferences.ts`), web-only distribution (no App Store/Play Store), target 18+ signup gate.
+**Scope confirmed (2026-08-15, corrected 2026-09-04):** legal entity and users likely both in Argentina (inferred from ARS pricing and Mercado Pago as the sole payment processor — not independently confirmed as a business fact), payments via Mercado Pago (both one-off Checkout Pro at booking time and, since this session, recurring preapproval-based club membership billing — hosted/tokenized flows, card data never touches this app's servers, see `lib/mercadopago/preferences.ts`), web-only distribution (no App Store/Play Store), 18+ signup gate. **This is no longer pre-launch** — the app has real, active users and real money moving through Mercado Pago today, which raises the urgency of every gap below from "before launch" to "current live exposure."
 
 ## Data map (confirmed from code)
 
@@ -22,7 +22,7 @@ No AI/ML usage, no file uploads, no Google Analytics/Meta Pixel/ad SDKs, no App 
 - **No Privacy Policy at all.** Footer links to `/privacy` and `/terms` (`app/_components/LandingFooter/LandingFooter.tsx`) both 404 — no matching routes exist.
 - **No AAIP database registration.** Ley 25.326 art. 21 requires any privately-held personal-data database to be registered with the Registro Nacional de Bases de Datos Personales (AAIP). Not done.
 - **No cross-border-transfer consent language.** Clerk, Resend, Neon, and Vercel are foreign-headquartered providers (mostly US) — verify each account's actual data-residency setting. Under Ley 25.326 this requires informed consent since the US isn't on Argentina's adequate-country list.
-- **No 18+ enforcement.** No DOB field, no age gate anywhere in signup/onboarding, despite that being the intended policy.
+- ~~**No 18+ enforcement.**~~ Corrected (2026-09-04): a self-certification checkbox (`confirmedAge`) is required at submit time in the onboarding Terms step (`app/onboarding/_components/OnboardingWizard/components/steps/TermsStep/TermsStep.tsx`), combined into the same checkbox as terms acceptance rather than a separate control. This is self-certification, not a verified DOB/age-gate — still worth knowing if a stricter standard is ever required.
 - **No club-content representation/takedown clause.** Club-logo field (`app/dashboard/settings/club/_components/ClubSettingsView/ClubSettingsView.tsx`) accepts an arbitrary pasted URL rendered as `<img src>` — no warranty that the submitter owns the image, no takedown contact.
 - **No DPAs confirmed** with Clerk/Resend/Neon/Vercel.
 
@@ -32,12 +32,12 @@ Mandatory binding arbitration + class-action waiver — the default in most US S
 
 ## Priority list
 
-🔴 **Critical — before launch**
+🔴 **Critical — this app has real users today, not "before launch"**
 
 - Real Terms of Service (accurate payment description, Argentina-appropriate dispute clause — see draft below)
 - Real Privacy Policy (processor table above + cross-border transfer consent — see draft below)
 - Wire up `/terms` and `/privacy` routes so the footer links resolve
-- 18+ signup gate
+- ~~18+ signup gate~~ — done (self-certification checkbox, see above; not a verified DOB check).
 
 🟠 **High — before growth**
 

@@ -94,11 +94,80 @@ beforeEach(() => {
   getClubByIdMock.mockResolvedValue(CLUB);
 });
 
+describe("POST /api/player/reservations — input validation", () => {
+  it("rejects a garbage (non-parseable) scheduledStart with 400, without ever calling createReservation", async () => {
+    const response = await POST(
+      makeRequest({
+        courtId: "court_1",
+        scheduledStart: "not-a-date",
+        scheduledEnd: "2026-09-01T11:00:00Z",
+      }),
+    );
+
+    expect(response.status).toBe(400);
+    expect(createReservationMock).not.toHaveBeenCalled();
+    expect(getCourtByIdMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects a garbage (non-parseable) scheduledEnd with 400, without ever calling createReservation", async () => {
+    const response = await POST(
+      makeRequest({
+        courtId: "court_1",
+        scheduledStart: "2026-09-01T10:00:00Z",
+        scheduledEnd: "also-not-a-date",
+      }),
+    );
+
+    expect(response.status).toBe(400);
+    expect(createReservationMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects scheduledEnd at or before scheduledStart with 400", async () => {
+    const response = await POST(
+      makeRequest({
+        courtId: "court_1",
+        scheduledStart: "2026-09-01T11:00:00Z",
+        scheduledEnd: "2026-09-01T10:00:00Z",
+      }),
+    );
+
+    expect(response.status).toBe(400);
+    expect(createReservationMock).not.toHaveBeenCalled();
+  });
+});
+
 describe("POST /api/player/reservations — booking-time operational gate", () => {
   it("blocks a paid booking with 422 club_payment_unavailable when the club's MP connection is not operational, before creating any reservation hold", async () => {
     getClubOperationalStatusMock.mockResolvedValue({
       operational: false,
       cause: "MP_NOT_CONNECTED",
+    });
+
+    const response = await POST(
+      makeRequest({
+        courtId: "court_1",
+        scheduledStart: "2026-09-01T10:00:00Z",
+        scheduledEnd: "2026-09-01T11:00:00Z",
+      }),
+    );
+
+    expect(response.status).toBe(422);
+    expect(await response.json()).toEqual({
+      error: "club_payment_unavailable",
+    });
+    expect(createReservationMock).not.toHaveBeenCalled();
+    expect(createCheckoutPreferenceMock).not.toHaveBeenCalled();
+  });
+
+  // Admin approval queue gate (see lib/mercadopago/operationalStatus.ts's
+  // PENDING_APPROVAL cause) — this route never branches on the specific
+  // cause value, so a PENDING/REJECTED club's booking attempt is already
+  // covered by the exact same generic non-operational handling as
+  // MP_NOT_CONNECTED, with zero route changes required.
+  it("blocks a paid booking with 422 club_payment_unavailable when the club is still pending admin approval", async () => {
+    getClubOperationalStatusMock.mockResolvedValue({
+      operational: false,
+      cause: "PENDING_APPROVAL",
     });
 
     const response = await POST(

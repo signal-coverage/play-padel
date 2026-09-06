@@ -5,24 +5,15 @@ import {
   ClubNotFoundError,
   RealSubscriptionExistsError,
 } from "@/core/billing/services/membership.service";
+import { requireAdmin } from "@/lib/auth/admin";
 
-// Minimal-scope admin surface: a static-secret bearer guard, not a new
-// admin role — same convention as app/api/admin/club-status and
-// app/api/admin/membership-trial-config (each admin route keeps its own
-// copy of this check rather than sharing one). Activates the hidden,
-// admin-only "FREE" plan tier (see core/clubs/types's Plan comment and
-// PLAN_ORDER in components/PlanSelectionModal/consts.ts) so an app owner can
-// unblock a specific club's dashboard for internal testing without a real
-// Mercado Pago subscription.
-function isAuthorized(request: Request): boolean {
-  const authHeader = request.headers.get("authorization");
-  return authHeader === `Bearer ${process.env.MEMBERSHIP_ADMIN_SECRET}`;
-}
-
+// Activates the hidden, admin-only "FREE" plan tier (see core/clubs/types's
+// Plan comment and PLAN_ORDER in components/PlanSelectionModal/consts.ts) so
+// an app owner can unblock a specific club's dashboard for internal testing
+// without a real Mercado Pago subscription.
 export async function POST(request: Request) {
-  if (!isAuthorized(request)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const unauthorized = await requireAdmin();
+  if (unauthorized) return unauthorized;
 
   const body = await request.json().catch(() => null);
   const parsed = activateFreePlanSchema.safeParse(body);

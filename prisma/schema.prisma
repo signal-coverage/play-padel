@@ -8,7 +8,7 @@ datasource db {
 }
 
 model Club {
-  id                 String     @id @default(cuid())
+  id                 String             @id @default(cuid())
   name               String
   legalName          String?
   taxId              String?
@@ -22,11 +22,24 @@ model Club {
   logoUrl            String?
   timezone           String
   currency           String
-  plan               Plan       @default(BASIC)
-  status             ClubStatus @default(ACTIVE)
-  requiresPrepayment Boolean    @default(false)
-  createdAt          DateTime   @default(now())
-  updatedAt          DateTime   @updatedAt
+  plan               Plan               @default(BASIC)
+  status             ClubStatus         @default(ACTIVE)
+  // Admin approval queue gate (see lib/auth/adminProfile.ts's isAdmin and
+  // lib/mercadopago/operationalStatus.ts's PENDING_APPROVAL cause). Defaults
+  // to APPROVED — NOT PENDING — so this migration is a no-op for every
+  // club that already exists today (dev AND prod, whenever it eventually
+  // runs there): the ALTER TABLE's own column default grandfathers every
+  // pre-existing row as already-approved. Only the onboarding club-creation
+  // path (app/api/onboarding/route.ts -> createClub) explicitly overrides
+  // this default to PENDING for a brand-new club. The only other writer that
+  // sets APPROVED explicitly is activateFreePlan's hidden FREE-plan testing
+  // bypass (core/billing/services/membership.service.ts) — everything else
+  // (including admin approve/reject actions) reads/writes this field without
+  // ever touching the schema default.
+  approvalStatus     ClubApprovalStatus @default(APPROVED)
+  requiresPrepayment Boolean            @default(false)
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
   createdBy          String
   updatedBy          String
 
@@ -62,6 +75,12 @@ enum ClubStatus {
   INACTIVE
   SUSPENDED
   DISABLED
+}
+
+enum ClubApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }
 
 enum SystemRole {
@@ -258,6 +277,15 @@ enum DominantHand {
 model UserProfile {
   id              String         @id
   role            SystemRole     @default(player)
+  // Additive, independent of `role` — a player can be `isAdmin: true` and
+  // keep every normal player capability (booking, browsing courts, etc.)
+  // unchanged. Deliberately NOT a third SystemRole value (see
+  // core/users/types's SystemRole comment): this gates a separate set of
+  // admin-only surfaces inside /dashboard, unrelated to the pre-existing
+  // Clerk `publicMetadata.isAdmin`-based internal testing tool at
+  // /admin/club-status (see lib/auth/admin.ts's isAdminUser — that
+  // mechanism is untouched by this field).
+  isAdmin         Boolean        @default(false)
   clubId          String?
   club            Club?          @relation(fields: [clubId], references: [id])
   displayName     String
@@ -295,6 +323,13 @@ model UserProfile {
   @@map("user_profiles")
 }
 
+// NOT modeled here (Prisma has no schema syntax for a case-insensitive,
+// partial-WHERE unique index): a Postgres unique index
+// (`courts_no_duplicate_active_name`, migration 20260906020000) prevents two
+// live (non-soft-deleted) courts in the same club from sharing a name,
+// case-insensitively — the race-proof backstop behind
+// assertNoDuplicateCourtName's application-level (best-effort) check. See
+// that migration file for the full reasoning before changing this table.
 model Court {
   id                  String    @id @default(cuid())
   clubId              String
@@ -405,6 +440,12 @@ enum ReservationStatus {
   NO_SHOW
 }
 
+// NOT modeled here (Prisma has no schema syntax for it): a Postgres EXCLUDE
+// constraint (`reservations_no_overlapping_confirmed`, migration
+// 20260905200000) prevents two overlapping CONFIRMED reservations for the
+// same courtId at the DB level — the race-proof backstop behind
+// checkCourtConflict's application-level (best-effort) check. See that
+// migration file for the full reasoning before changing this table.
 model Reservation {
   id               String            @id @default(cuid())
   clubId           String
@@ -541,17 +582,33 @@ enum NotificationType {
   RESERVATION_CANCELLED
   PAYMENT_CONFIRMED
   WAITLIST_SLOT_AVAILABLE
+  CLUB_APPROVED
+  CLUB_REJECTED
+  CLUB_SUSPENDED
+  PAYMENT_RECEIVED
+  MEMBERSHIP_PAST_DUE
+  CLUB_PENDING_APPROVAL
+  SYSTEM_JOB_FAILED
+  RESERVATION_PAYMENT_CONFLICT
 }
 
 enum NotificationStatus {
   PENDING
   SENT
   FAILED
+  // In-app-only notifications (sendEmail: false in dispatch()) skip Resend
+  // entirely and land here instead of a real FAILED — distinct from a
+  // genuine delivery failure so admin-facing email diagnostics elsewhere
+  // aren't polluted with rows that were never supposed to be emailed.
+  SKIPPED
 }
 
 model Notification {
   id             String             @id @default(cuid())
-  clubId         String
+  // Nullable: SYSTEM_JOB_FAILED is a platform-wide event, not scoped to any
+  // one club. Not a real Prisma relation (plain string column), so relaxing
+  // this is a safe, non-breaking migration for existing rows.
+  clubId         String?
   type           NotificationType
   recipientId    String
   recipientEmail String
@@ -560,11 +617,46 @@ model Notification {
   status         NotificationStatus @default(PENDING)
   failureReason  String?
   sentAt         DateTime?
+  // Bell read/unread state — null means unread. Set in bulk via
+  // "mark all as read", not per-notification (see notifications feature).
+  readAt         DateTime?
   createdAt      DateTime           @default(now())
 
   @@index([clubId, status])
   @@index([clubId, type, recipientId])
+  @@index([recipientId, readAt])
   @@map("notifications")
+}
+
+enum SystemJobKind {
+  CRON
+  WEBHOOK
+}
+
+enum SystemJobStatus {
+  SUCCESS
+  FAILURE
+}
+
+// Minimal shared observability log for the app's cron jobs and webhook
+// receivers (see core/systemJobs/services/systemJobs.service.ts) — before
+// this there was zero infrastructure tracking whether any of them actually
+// ran/succeeded. `name` is one of the small set of hardcoded job names in
+// core/systemJobs/consts.ts (e.g. "notifications" for CRON,
+// "mercadopago" for WEBHOOK) rather than a relation, since these jobs are
+// not domain entities.
+model SystemJobLog {
+  id           String          @id @default(cuid())
+  kind         SystemJobKind
+  name         String
+  status       SystemJobStatus
+  startedAt    DateTime
+  finishedAt   DateTime
+  errorMessage String?
+  createdAt    DateTime        @default(now())
+
+  @@index([kind, name, createdAt])
+  @@map("system_job_logs")
 }
 
 model AuditLog {

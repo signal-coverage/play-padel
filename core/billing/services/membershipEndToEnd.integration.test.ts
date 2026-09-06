@@ -164,6 +164,13 @@ vi.mock("@/infrastructure/db/client", () => ({
         return data;
       }),
     },
+    // Array-form `$transaction`: each operation above is a `vi.fn(async ...)`
+    // that already ran (and mutated the in-memory store) by the time it's
+    // passed in here as an argument, exactly like real Prisma's client
+    // promises — so awaiting them together via `Promise.all` is a faithful
+    // enough fake for `membership.service.ts`'s atomic two-write functions
+    // (recordSuccessfulCharge/recordAutoCancellation/recordManualLockout).
+    $transaction: vi.fn(async (ops: Promise<unknown>[]) => Promise.all(ops)),
   },
 }));
 

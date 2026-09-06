@@ -125,6 +125,73 @@ describe("getClubMercadoPagoClient", () => {
     );
   });
 
+  it("de-duplicates concurrent refreshes for the same club: two simultaneous calls trigger only one refreshClubAccessToken call and both resolve", async () => {
+    findUniqueMock.mockResolvedValue(
+      makeAccountRow({
+        tokenExpiresAt: new Date(Date.now() + 60 * 60 * 1000), // inside refresh window
+      }),
+    );
+    let resolveRefresh!: (value: {
+      access_token: string;
+      refresh_token: string;
+      expires_in: number;
+    }) => void;
+    refreshClubAccessTokenMock.mockReturnValue(
+      new Promise((resolve) => {
+        resolveRefresh = resolve;
+      }),
+    );
+    updateMock.mockResolvedValue(undefined);
+
+    const call1 = getClubMercadoPagoClient("club_1");
+    const call2 = getClubMercadoPagoClient("club_1");
+
+    // Let both calls reach the point where they'd decide whether to start
+    // a refresh, before resolving the (single, shared) in-flight refresh.
+    await Promise.resolve();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    resolveRefresh({
+      access_token: "plaintext-new-access",
+      refresh_token: "plaintext-new-refresh",
+      expires_in: 15552000,
+    });
+
+    const [client1, client2] = await Promise.all([call1, call2]);
+
+    expect(refreshClubAccessTokenMock).toHaveBeenCalledTimes(1);
+    expect(client1.accessToken).toBe("plaintext-new-access");
+    expect(client2.accessToken).toBe("plaintext-new-access");
+  });
+
+  it("does not permanently cache a refresh: a later, independent call after the first refresh settled triggers its own new refresh", async () => {
+    findUniqueMock.mockResolvedValue(
+      makeAccountRow({
+        tokenExpiresAt: new Date(Date.now() + 60 * 60 * 1000),
+      }),
+    );
+    refreshClubAccessTokenMock
+      .mockResolvedValueOnce({
+        access_token: "plaintext-new-access-1",
+        refresh_token: "plaintext-new-refresh-1",
+        expires_in: 15552000,
+      })
+      .mockResolvedValueOnce({
+        access_token: "plaintext-new-access-2",
+        refresh_token: "plaintext-new-refresh-2",
+        expires_in: 15552000,
+      });
+    updateMock.mockResolvedValue(undefined);
+
+    const client1 = await getClubMercadoPagoClient("club_1");
+    const client2 = await getClubMercadoPagoClient("club_1");
+
+    expect(refreshClubAccessTokenMock).toHaveBeenCalledTimes(2);
+    expect(client1.accessToken).toBe("plaintext-new-access-1");
+    expect(client2.accessToken).toBe("plaintext-new-access-2");
+  });
+
   it("marks the club NOT_CONNECTED and throws when lazy refresh fails (e.g. revoked authorization)", async () => {
     findUniqueMock.mockResolvedValue(
       makeAccountRow({

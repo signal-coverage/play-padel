@@ -22,10 +22,16 @@ vi.mock("@/lib/mercadopago/clubMercadoPagoClient", () => ({
   refreshAndPersist: vi.fn(),
 }));
 
+vi.mock("@/lib/auth/admin", () => ({
+  requireAdmin: vi.fn(),
+}));
+
+import { NextResponse } from "next/server";
 import { prisma } from "@/infrastructure/db/client";
 import { decryptToken } from "@/lib/mercadopago/tokenCrypto";
 import { fetchMercadoPagoUserProfile } from "@/lib/mercadopago/oauth";
 import { refreshAndPersist } from "@/lib/mercadopago/clubMercadoPagoClient";
+import { requireAdmin } from "@/lib/auth/admin";
 import { POST } from "./route";
 
 const findManyMock = prisma.clubMercadoPagoAccount.findMany as ReturnType<
@@ -39,46 +45,45 @@ const fetchProfileMock = fetchMercadoPagoUserProfile as ReturnType<
   typeof vi.fn
 >;
 const refreshAndPersistMock = refreshAndPersist as ReturnType<typeof vi.fn>;
-
-const ADMIN_SECRET = "admin-secret-value";
-
-function makeRequest(authHeader?: string) {
-  return new Request(
-    "https://app.example.com/api/admin/mercadopago-backfill-identity",
-    {
-      method: "POST",
-      headers: authHeader ? { authorization: authHeader } : {},
-    },
-  );
-}
+const requireAdminMock = requireAdmin as ReturnType<typeof vi.fn>;
 
 beforeEach(() => {
-  vi.stubEnv("MEMBERSHIP_ADMIN_SECRET", ADMIN_SECRET);
   findManyMock.mockReset();
   updateMock.mockReset();
   decryptTokenMock.mockReset();
   fetchProfileMock.mockReset();
   refreshAndPersistMock.mockReset();
+  requireAdminMock.mockReset();
+  requireAdminMock.mockResolvedValue(null);
 });
 
 describe("POST /api/admin/mercadopago-backfill-identity", () => {
-  it("rejects requests without the correct static-secret bearer token", async () => {
-    const response = await POST(makeRequest("Bearer wrong-secret"));
+  it("returns 401 when there is no signed-in Clerk user", async () => {
+    requireAdminMock.mockResolvedValue(
+      NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
+    );
+
+    const response = await POST();
 
     expect(response.status).toBe(401);
     expect(findManyMock).not.toHaveBeenCalled();
   });
 
-  it("rejects requests with no authorization header at all", async () => {
-    const response = await POST(makeRequest());
+  it("returns 403 when signed in but not an admin", async () => {
+    requireAdminMock.mockResolvedValue(
+      NextResponse.json({ error: "Forbidden" }, { status: 403 }),
+    );
 
-    expect(response.status).toBe(401);
+    const response = await POST();
+
+    expect(response.status).toBe(403);
+    expect(findManyMock).not.toHaveBeenCalled();
   });
 
   it("returns an empty result set when there is nothing to backfill", async () => {
     findManyMock.mockResolvedValue([]);
 
-    const response = await POST(makeRequest(`Bearer ${ADMIN_SECRET}`));
+    const response = await POST();
     const body = await response.json();
 
     expect(response.status).toBe(200);
@@ -104,7 +109,7 @@ describe("POST /api/admin/mercadopago-backfill-identity", () => {
     });
     updateMock.mockResolvedValue({});
 
-    const response = await POST(makeRequest(`Bearer ${ADMIN_SECRET}`));
+    const response = await POST();
     const body = await response.json();
 
     expect(decryptTokenMock).toHaveBeenCalledWith("enc-access");
@@ -146,7 +151,7 @@ describe("POST /api/admin/mercadopago-backfill-identity", () => {
     });
     updateMock.mockResolvedValue({});
 
-    const response = await POST(makeRequest(`Bearer ${ADMIN_SECRET}`));
+    const response = await POST();
     const body = await response.json();
 
     expect(refreshAndPersistMock).toHaveBeenCalledWith(
@@ -197,7 +202,7 @@ describe("POST /api/admin/mercadopago-backfill-identity", () => {
       .mockResolvedValueOnce({ email: "ok@example.com", nickname: "ok-nick" });
     updateMock.mockResolvedValue({});
 
-    const response = await POST(makeRequest(`Bearer ${ADMIN_SECRET}`));
+    const response = await POST();
     const body = await response.json();
 
     expect(response.status).toBe(200);

@@ -78,6 +78,7 @@ function DashboardShellContent({ children }: { children: React.ReactNode }) {
             </main>
             <MobileBottomNav
               role={user.role ?? "player"}
+              isAdmin={user.isAdmin}
               className="min-[809px]:hidden"
             />
           </div>

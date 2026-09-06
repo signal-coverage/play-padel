@@ -10,7 +10,11 @@ vi.mock("next/navigation", () => ({
   usePathname: () => "/dashboard",
 }));
 
-function renderNavLinks(role: SystemRole, fetchMock: ReturnType<typeof vi.fn>) {
+function renderNavLinks(
+  role: SystemRole,
+  fetchMock: ReturnType<typeof vi.fn>,
+  isAdmin = false,
+) {
   vi.stubGlobal("fetch", fetchMock);
 
   const queryClient = new QueryClient({
@@ -19,7 +23,7 @@ function renderNavLinks(role: SystemRole, fetchMock: ReturnType<typeof vi.fn>) {
 
   render(
     <QueryClientProvider client={queryClient}>
-      <NavLinks role={role} />
+      <NavLinks role={role} isAdmin={isAdmin} />
     </QueryClientProvider>,
   );
 }
@@ -45,7 +49,8 @@ describe("NavLinks", () => {
     expect(screen.getByText("Courts")).toBeInTheDocument();
     expect(screen.getByText("Reservations")).toBeInTheDocument();
     expect(screen.getByText("Club Settings")).toBeInTheDocument();
-    expect(screen.getByText("Audit Log")).toBeInTheDocument();
+    // Audit Log is admin-only now — a plain (non-admin) owner never sees it.
+    expect(screen.queryByText("Audit Log")).not.toBeInTheDocument();
   });
 
   it("shows the full owner nav when the club is operational", async () => {
@@ -65,6 +70,38 @@ describe("NavLinks", () => {
     expect(screen.getByText("Courts")).toBeInTheDocument();
     expect(screen.getByText("Reservations")).toBeInTheDocument();
     expect(screen.getByText("Club Settings")).toBeInTheDocument();
+    expect(screen.queryByText("Audit Log")).not.toBeInTheDocument();
+  });
+
+  it("hides Audit Log for a non-admin owner even when explicitly passed isAdmin={false}", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ operational: true }),
+    });
+    renderNavLinks("owner", fetchMock, false);
+
+    await waitFor(() =>
+      expect(screen.getByText("Dashboard")).toBeInTheDocument(),
+    );
+    expect(screen.queryByText("Audit Log")).not.toBeInTheDocument();
+  });
+
+  it("shows Audit Log for an admin owner", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ operational: true }),
+    });
+    renderNavLinks("owner", fetchMock, true);
+
+    await waitFor(() =>
+      expect(screen.getByText("Audit Log")).toBeInTheDocument(),
+    );
+  });
+
+  it("shows Audit Log for an admin whose role is player", () => {
+    const fetchMock = vi.fn();
+    renderNavLinks("player", fetchMock, true);
+
     expect(screen.getByText("Audit Log")).toBeInTheDocument();
   });
 

@@ -7,6 +7,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { SearchInput } from "@/components/SearchInput";
 import { UpgradeMembershipButton } from "@/components/UpgradeMembershipButton";
 import { tennisBall, tennisCourt } from "@/assets/icons";
+import { AdminDashboardHome } from "./components/AdminDashboardHome";
 import { SearchableCardsGrid } from "./components/SearchableCardsGrid";
 import { PlayerOverviewCard } from "./components/PlayerOverview/PlayerOverviewCard";
 import { PlayerOverviewBanner } from "./components/PlayerOverview/PlayerOverviewBanner";
@@ -19,6 +20,15 @@ export function DashboardHome() {
   const [query, setQuery] = useState("");
 
   if (loading || !user || !user.role) return <DashboardLoader />;
+
+  // Additive, checked BEFORE the owner/player branches below: an admin sees
+  // the platform-wide admin view regardless of their own role (role === "player"
+  // AND isAdmin === true both hold at once — see prisma/schema.prisma's
+  // UserProfile.isAdmin comment). Every role branch below is otherwise
+  // completely untouched, still reachable by anyone with isAdmin: false.
+  if (user.isAdmin) {
+    return <AdminDashboardHome />;
+  }
 
   const name = user.displayName ?? user.email ?? "";
   const role = user.role;

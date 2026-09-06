@@ -48,10 +48,10 @@ const CLUB = {
   updatedAt: "2026-01-01T00:00:00.000Z",
 };
 
-function fillLookupInputs(secret = "s3cr3t", clubId = "club_1") {
-  fireEvent.change(screen.getByLabelText(/admin secret/i), {
-    target: { value: secret },
-  });
+// No admin-secret field anymore — the page is only reachable at all once
+// app/admin/layout.tsx has already confirmed a real Clerk admin session, and
+// every fetch here rides the same-origin session cookie automatically.
+function fillLookupInputs(clubId = "club_1") {
   fireEvent.change(screen.getByLabelText(/club id/i), {
     target: { value: clubId },
   });
@@ -69,13 +69,20 @@ afterEach(() => {
 });
 
 describe("ClubStatusAdminPage", () => {
-  it("looks up a club with the correct auth header and query, and renders its status", async () => {
+  it("has no admin-secret input at all", () => {
+    stubFetch(async () => ({ ok: true, json: async () => ({ club: CLUB }) }));
+
+    render(<ClubStatusAdminPage />);
+
+    expect(screen.queryByLabelText(/admin secret/i)).not.toBeInTheDocument();
+  });
+
+  it("looks up a club with no Authorization header, and renders its status", async () => {
     const fetchMock = stubFetch(async (url, init) => {
-      if (
-        url === "/api/admin/club-status?clubId=club_1" &&
-        (init?.headers as Record<string, string>)?.Authorization ===
-          "Bearer s3cr3t"
-      ) {
+      if (url === "/api/admin/club-status?clubId=club_1") {
+        expect(
+          (init?.headers as Record<string, string> | undefined)?.Authorization,
+        ).toBeUndefined();
         return { ok: true, json: async () => ({ club: CLUB }) };
       }
       throw new Error(`unexpected fetch: ${url}`);
@@ -90,23 +97,6 @@ describe("ClubStatusAdminPage", () => {
     });
     expect(screen.getByText(/ACTIVE/)).toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledTimes(1);
-  });
-
-  it('shows "Invalid admin secret" on a 401 lookup response and renders no club', async () => {
-    stubFetch(async () => ({
-      ok: false,
-      status: 401,
-      json: async () => ({ error: "Unauthorized" }),
-    }));
-
-    render(<ClubStatusAdminPage />);
-    fillLookupInputs("wrong-secret");
-    fireEvent.click(screen.getByRole("button", { name: /look up/i }));
-
-    await waitFor(() => {
-      expect(screen.getByText("Invalid admin secret")).toBeInTheDocument();
-    });
-    expect(screen.queryByText("Test Padel Club")).not.toBeInTheDocument();
   });
 
   it('shows "Club not found" on a 404 lookup response', async () => {
@@ -125,7 +115,7 @@ describe("ClubStatusAdminPage", () => {
     });
   });
 
-  it("saves a new status with the correct body and auth header, and shows a success toast", async () => {
+  it("saves a new status with the correct body and no Authorization header, and shows a success toast", async () => {
     const fetchMock = stubFetch(async (url, init) => {
       if (init?.method === "PATCH" && url === "/api/admin/club-status") {
         const body = JSON.parse(init.body as string);
@@ -134,9 +124,9 @@ describe("ClubStatusAdminPage", () => {
           status: "SUSPENDED",
           updatedBy: "admin@example.com",
         });
-        expect((init.headers as Record<string, string>).Authorization).toBe(
-          "Bearer s3cr3t",
-        );
+        expect(
+          (init.headers as Record<string, string> | undefined)?.Authorization,
+        ).toBeUndefined();
         return {
           ok: true,
           json: async () => ({
@@ -177,7 +167,7 @@ describe("ClubStatusAdminPage", () => {
     expect(patchCalls).toHaveLength(1);
   });
 
-  it("activates the free plan with the correct body and auth header after confirmation, and shows a success toast", async () => {
+  it("activates the free plan with the correct body and no Authorization header after confirmation, and shows a success toast", async () => {
     const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true);
     const fetchMock = stubFetch(async (url, init) => {
       if (
@@ -186,9 +176,9 @@ describe("ClubStatusAdminPage", () => {
       ) {
         const body = JSON.parse(init.body as string);
         expect(body).toEqual({ clubId: "club_1" });
-        expect((init.headers as Record<string, string>).Authorization).toBe(
-          "Bearer s3cr3t",
-        );
+        expect(
+          (init.headers as Record<string, string> | undefined)?.Authorization,
+        ).toBeUndefined();
         return {
           ok: true,
           json: async () => ({

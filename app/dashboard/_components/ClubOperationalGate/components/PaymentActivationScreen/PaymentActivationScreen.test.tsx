@@ -30,6 +30,7 @@ vi.mock("@/hooks/use-auth", () => ({
   useAuth: () => ({ user: { email: "owner@club.com" } }),
 }));
 
+import { MEMBERSHIP_SUBSCRIPTION_QUERY_KEY } from "@/components/PlanSelectionModal/consts";
 import { PaymentActivationScreen } from "./PaymentActivationScreen";
 
 const PENDING_SUBSCRIPTION = {
@@ -159,6 +160,73 @@ describe("PaymentActivationScreen", () => {
         screen.getByRole("link", { name: "Connect Mercado Pago" }),
       ).toBeInTheDocument();
     });
+  });
+
+  // Bug fix: an out-of-band membership change (e.g. an admin activating a
+  // club's FREE plan, or simply switching browser tabs) can leave this
+  // screen's TanStack Query cache holding an older, non-confirmed snapshot
+  // while a background refetch is already in flight. `isLoading` alone is
+  // only true when there's no cached data at all — it stays false here since
+  // stale data already exists — so without also checking `isFetching`, the
+  // stale PENDING snapshot briefly renders as step 0 ("Pay Membership")
+  // before correcting itself once the fresh ACTIVE data arrives.
+  it("never flashes step-0 Pay Membership when the cache holds a stale non-confirmed snapshot while a confirmed refetch is in flight", async () => {
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    queryClient.setQueryData(MEMBERSHIP_SUBSCRIPTION_QUERY_KEY, {
+      ...PENDING_SUBSCRIPTION,
+      status: "PENDING",
+    });
+
+    const fetchMock = vi.fn((url: string, init?: RequestInit) => {
+      if (url === "/api/clubs/membership") {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            subscription: { ...PENDING_SUBSCRIPTION, status: "ACTIVE" },
+          }),
+        });
+      }
+      if (url === "/api/clubs/mercadopago/operational-status") {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({ operational: false, cause: "MP_NOT_CONNECTED" }),
+        });
+      }
+      if (
+        url === "/api/clubs/bank-transfer-account" &&
+        (!init || !init.method)
+      ) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({ account: null }),
+        });
+      }
+      throw new Error(`unexpected fetch: ${url}`);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <PaymentActivationScreen />
+      </QueryClientProvider>,
+    );
+
+    // Right after the initial synchronous render, the stale PENDING
+    // snapshot must never surface as step 0 — only the skeleton while the
+    // confirmed refetch is in flight.
+    expect(
+      screen.queryByRole("button", { name: "Pay Membership" }),
+    ).not.toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(screen.getByText("Bank Transfer")).toBeInTheDocument();
+    });
+
+    expect(
+      screen.queryByRole("button", { name: "Pay Membership" }),
+    ).not.toBeInTheDocument();
   });
 
   it("shows a retry state instead of stuck skeletons when the fetch fails, and recovers on retry", async () => {

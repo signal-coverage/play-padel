@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 import { MercadoPagoConfig, OAuth, User } from "mercadopago";
+import { requireEnv, requireAppUrl } from "@/lib/env";
 
 // CSRF-protection state param for the OAuth authorization-code flow (see
 // app/api/clubs/mercadopago/connect + callback routes). The state carries
@@ -27,18 +28,6 @@ export type MpOAuthTokenResponse = {
   live_mode?: boolean;
   scope?: string;
 };
-
-function requireEnv(name: string): string {
-  const value = process.env[name];
-  if (!value) {
-    throw new Error(`${name} is not set`);
-  }
-  return value;
-}
-
-function requireAppUrl(): string {
-  return requireEnv("NEXT_PUBLIC_APP_URL");
-}
 
 function getStateSecret(): string {
   return requireEnv("MERCADOPAGO_OAUTH_STATE_SECRET");

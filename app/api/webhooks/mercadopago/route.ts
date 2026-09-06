@@ -5,11 +5,14 @@ import {
   findReservationById,
   confirmReservationPayment,
   checkCourtClosureConflict,
+  checkCourtConflict,
 } from "@/core/reservations/services/reservations.service";
 import {
   getInvoiceByReservationId,
   recordPayment,
 } from "@/core/billing/services/billing.service";
+import { getClubOwner } from "@/core/clubs/services/clubs.service";
+import { dispatch } from "@/lib/notifications/dispatcher";
 import {
   MEMBERSHIP_WEBHOOK_TOPIC,
   MEMBERSHIP_PAYMENT_WEBHOOK_TOPIC,
@@ -18,6 +21,7 @@ import {
   handleSubscriptionPreapprovalTopic,
   handleMembershipPaymentTopic,
 } from "@/lib/mercadopago/membershipWebhookHandlers";
+import { logSystemJob } from "@/core/systemJobs/services/systemJobs.service";
 
 const SYSTEM_ACTOR = "system:mercadopago-webhook";
 
@@ -45,7 +49,45 @@ const SYSTEM_ACTOR = "system:mercadopago-webhook";
 // `"payment"` type but resolve via a `clubId` query param instead (see
 // lib/mercadopago/platformPreferences.ts) — `reservationId` presence is what
 // disambiguates between the two "payment"-type flows below.
-export async function POST(request: NextRequest) {
+//
+// `POST` itself is only a thin outer instrumentation shell (start/success/
+// failure system job logging, see core/systemJobs) around `handlePost`
+// directly below, which holds the actual dispatch logic described above and
+// is otherwise byte-for-byte unchanged from this route's original exported
+// `POST`.
+export async function POST(request: NextRequest): Promise<NextResponse> {
+  const startedAt = new Date();
+  let response: NextResponse;
+  try {
+    response = await handlePost(request);
+  } catch (err) {
+    await logSystemJob({
+      kind: "WEBHOOK",
+      name: "mercadopago",
+      status: "FAILURE",
+      startedAt,
+      finishedAt: new Date(),
+      errorMessage: err instanceof Error ? err.message : String(err),
+    });
+    throw err;
+  }
+
+  const status =
+    response.status >= 200 && response.status < 300 ? "SUCCESS" : "FAILURE";
+  await logSystemJob({
+    kind: "WEBHOOK",
+    name: "mercadopago",
+    status,
+    startedAt,
+    finishedAt: new Date(),
+    errorMessage:
+      status === "FAILURE" ? await response.clone().text() : undefined,
+  });
+
+  return response;
+}
+
+async function handlePost(request: NextRequest) {
   const xSignature = request.headers.get("x-signature");
   const xRequestId = request.headers.get("x-request-id");
 
@@ -171,6 +213,25 @@ async function handleReservationPaymentTopic(
         scheduledEnd: reservation.scheduledEnd,
       });
 
+      // Same "payment captured, but the slot can't be silently confirmed"
+      // gap as the closure check above, for a different cause: this
+      // reservation's own hold can lapse while awaiting the webhook, letting
+      // another player book the exact same slot in the meantime. Re-check
+      // right before confirming (excludeId so this reservation's own row
+      // never counts as its own conflict) rather than trusting the
+      // conflict-freedom already proven back when the hold was first
+      // created — that state can go stale by the time a delayed webhook
+      // arrives.
+      const overlapsAnotherReservation = closureReason
+        ? false
+        : await checkCourtConflict({
+            clubId: reservation.clubId,
+            courtId: reservation.courtId,
+            scheduledStart: reservation.scheduledStart,
+            scheduledEnd: reservation.scheduledEnd,
+            excludeId: reservation.id,
+          });
+
       if (closureReason) {
         // The payment was genuinely captured by Mercado Pago, so it must
         // still be recorded (above) — but the court has since been closed,
@@ -182,6 +243,34 @@ async function handleReservationPaymentTopic(
         console.error(
           `[mercadopago webhook] Payment recorded for reservation ${reservation.id} but its court is now closed ("${closureReason}") — needs manual refund/reschedule via the owner Reservations page.`,
         );
+      } else if (overlapsAnotherReservation) {
+        // Same "leave it SCHEDULED, don't auto-confirm" treatment as the
+        // closure case — plus an active in-app notification to the owner
+        // (not just a server log) since resolving a real double-booking is
+        // urgent, not something to stumble across later.
+        console.error(
+          `[mercadopago webhook] Payment recorded for reservation ${reservation.id} but its slot now overlaps another reservation — needs manual resolution via the owner Reservations page.`,
+        );
+        try {
+          const owner = await getClubOwner(reservation.clubId);
+          if (owner) {
+            await dispatch({
+              type: "RESERVATION_PAYMENT_CONFLICT",
+              clubId: reservation.clubId,
+              recipientId: owner.id,
+              recipientEmail: owner.email,
+              recipientName: owner.displayName,
+              subject: "A paid reservation could not be confirmed",
+              html: "A player's payment was received, but their slot now overlaps another reservation. Please resolve this manually.",
+              sendEmail: false,
+            });
+          }
+        } catch (notifyErr) {
+          console.error(
+            "[mercadopago webhook] Failed to notify owner of reservation payment conflict:",
+            notifyErr,
+          );
+        }
       } else {
         await confirmReservationPayment(reservation.id);
       }

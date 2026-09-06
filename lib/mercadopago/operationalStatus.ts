@@ -1,7 +1,8 @@
 import { Prisma } from "@/lib/generated/prisma/client";
 import { prisma } from "@/infrastructure/db/client";
 
-export type ClubOperationalCause = "MP_NOT_CONNECTED" | "CLUB_INACTIVE";
+export type ClubOperationalCause =
+  "MP_NOT_CONNECTED" | "CLUB_INACTIVE" | "PENDING_APPROVAL";
 
 /**
  * Query-level Prisma `where` fragment expressing "this club is operational":
@@ -24,13 +25,20 @@ export const CLUB_OPERATIONAL_WHERE: Prisma.ClubWhereInput = {
  * Single-club operational check with cause attribution, for the mutation
  * gate (`requireClubOperational`) and the owner-facing status endpoint.
  *
- * Precedence when both causes apply: MP_NOT_CONNECTED wins, since it's the
+ * Precedence, highest first: PENDING_APPROVAL (see prisma/schema.prisma's
+ * `Club.approvalStatus` — an admin-unapproved club must never accept real
+ * reservations no matter what else is configured), then MP_NOT_CONNECTED,
+ * then CLUB_INACTIVE. MP_NOT_CONNECTED outranks CLUB_INACTIVE since it's the
  * one with a functional CTA (connect flow) in this change — see design.md's
  * "Priority When Both Causes Apply" requirement. A club that cannot be found
  * at all is treated the same as MP_NOT_CONNECTED (fails both checks). Note
  * the cause is still literally named MP_NOT_CONNECTED even though it now
  * also covers "no bank transfer account either" — it fires whenever the club
  * has NO payout method at all, Mercado Pago or bank transfer.
+ *
+ * A REJECTED club currently hits the exact same PENDING_APPROVAL cause as a
+ * still-PENDING one — the owner-facing UI can't yet tell the two apart
+ * (intentionally out of scope for now).
  */
 export async function getClubOperationalStatus(clubId: string): Promise<{
   operational: boolean;
@@ -42,12 +50,22 @@ export async function getClubOperationalStatus(clubId: string): Promise<{
     where: { id: clubId },
     select: {
       status: true,
+      approvalStatus: true,
       mercadoPagoAccount: {
         select: { status: true, mpEmail: true, mpNickname: true },
       },
       bankTransferAccount: { select: { id: true } },
     },
   });
+
+  if (club && club.approvalStatus !== "APPROVED") {
+    return {
+      operational: false,
+      cause: "PENDING_APPROVAL",
+      email: null,
+      nickname: null,
+    };
+  }
 
   const email = club?.mercadoPagoAccount?.mpEmail ?? null;
   const nickname = club?.mercadoPagoAccount?.mpNickname ?? null;

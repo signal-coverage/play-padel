@@ -24,8 +24,11 @@ export function useAuditLogs(filters: AuditLogFiltersState) {
   return useQuery({
     queryKey: ["audit-logs", filters.entity, filters.action, filters.page],
     queryFn: () =>
+      // Global admin endpoint — the audit-logs page is admin-only now (see
+      // page.tsx's AdminOnlyGuard), so this always requests the cross-club
+      // view rather than the owner-scoped app/api/clubs/audit-logs route.
       fetchJson<{ logs: RawAuditLogRecord[]; total: number }>(
-        `/api/clubs/audit-logs?${params.toString()}`,
+        `/api/admin/audit-logs?${params.toString()}`,
       ).then((data) => ({
         logs: data.logs.map(toAuditLogRecord),
         total: data.total,

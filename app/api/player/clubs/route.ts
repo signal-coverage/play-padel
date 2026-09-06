@@ -1,18 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
 import { listActiveClubs } from "@/core/clubs/services/clubs.service";
 import { getClubsAvailability } from "@/core/courts/services/courts.service";
 import type { ClubBrowseSummary } from "@/app/dashboard/browse/_components/BrowseCourts/types";
+import { requireAuthUser } from "@/lib/auth/requireAuthUser";
 
 // Player-facing club list: any signed-in user can browse clubs to book a
 // court at (see docs/reservation-flow.md). No role check beyond auth.
 // Requires ?date= so each club can report whether it has any bookable slot
 // that day — the Browse Courts club panel grays out clubs with none.
 export async function GET(request: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const authResult = await requireAuthUser();
+  if (!authResult.ok) return authResult.response;
 
   const dateParam = request.nextUrl.searchParams.get("date");
   const date = dateParam ? parseLocalDate(dateParam) : null;

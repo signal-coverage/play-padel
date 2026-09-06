@@ -2,6 +2,7 @@ import { getResendClient } from "@/lib/email/resend";
 import {
   createNotification,
   updateNotificationStatus,
+  listAdminRecipients,
 } from "@/core/notifications/services/notifications.service";
 import type { DispatchParams } from "@/core/notifications/types";
 
@@ -20,6 +21,7 @@ const FROM_ADDRESS = "noreply@playpadel.app";
  * NEVER throws — all errors are swallowed and recorded on the row.
  */
 export async function dispatch(params: DispatchParams): Promise<void> {
+  const sendEmail = params.sendEmail ?? true;
   let notificationId: string | null = null;
 
   try {
@@ -34,6 +36,13 @@ export async function dispatch(params: DispatchParams): Promise<void> {
       message: params.html,
     });
     notificationId = notification.id;
+
+    // In-app-only notification: skip Resend entirely, never touch the
+    // recipientEmail/API-key guards below.
+    if (!sendEmail) {
+      await updateNotificationStatus(notificationId, "SKIPPED");
+      return;
+    }
 
     // Step 2: guard — no email
     if (!params.recipientEmail) {
@@ -86,4 +95,32 @@ export async function dispatch(params: DispatchParams): Promise<void> {
 
     console.error("[dispatcher] Error dispatching notification:", reason);
   }
+}
+
+/**
+ * Notifies every admin UserProfile with the same DispatchParams (minus the
+ * per-recipient fields, which are filled in from each admin row). Lives in
+ * this module — not notifications.service.ts — so it can call the local
+ * dispatch() directly without a circular import (notifications.service.ts
+ * already exports createNotification/updateNotificationStatus/
+ * listAdminRecipients, which this file imports from it).
+ */
+export async function notifyAllAdmins(
+  params: Omit<
+    DispatchParams,
+    "recipientId" | "recipientEmail" | "recipientName"
+  >,
+): Promise<void> {
+  const admins = await listAdminRecipients();
+
+  await Promise.all(
+    admins.map((admin) =>
+      dispatch({
+        ...params,
+        recipientId: admin.id,
+        recipientEmail: admin.email,
+        recipientName: admin.displayName,
+      }),
+    ),
+  );
 }

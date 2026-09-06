@@ -8,6 +8,7 @@
     "start": "next start --turbopack",
     "lint": "eslint",
     "format": "prettier --write . && prettier --check .",
+    "postinstall": "patch-package",
     "prepare": "husky",
     "test": "vitest run",
     "test:watch": "vitest"
@@ -80,10 +81,12 @@
     "eslint-config-next": "16.2.9",
     "husky": "^9.1.7",
     "jsdom": "^30.0.1",
+    "patch-package": "^8.0.1",
     "prettier": "3.9.0",
     "prisma": "^7.9.1",
     "tailwindcss": "^4",
     "typescript": "^5",
-    "vitest": "^4.1.10"
+    "vitest": "^4.1.10",
+    "vitest-mock-extended": "^5.1.1"
   }
 }

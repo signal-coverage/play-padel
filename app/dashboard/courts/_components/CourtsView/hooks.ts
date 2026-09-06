@@ -104,15 +104,30 @@ export function useUploadCourtPhoto() {
 export function useDeleteCourt() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (courtId: string) =>
+    mutationFn: ({
+      courtId,
+    }: {
+      courtId: string;
+      // Set by CourtsView's handleFormSubmit when it rolls back a
+      // just-created court after its chained photo upload fails — that
+      // rollback already surfaces its own error toast for the real failure
+      // (the photo upload), so this internal cleanup delete must stay quiet
+      // instead of also firing "Court deactivated" (misleading — nothing
+      // was ever really "deactivated" from the owner's perspective) or a
+      // second, redundant error toast if the rollback itself fails. Same
+      // shape as useUpdateCourt's own `silent` flag above.
+      silent?: boolean;
+    }) =>
       fetchJson<{ ok: true }>(`/api/clubs/courts/${courtId}`, {
         method: "DELETE",
       }),
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: COURTS_QUERY_KEY });
-      toast.success("Court deactivated");
+      if (!variables.silent) toast.success("Court deactivated");
     },
-    onError: (error: Error) => toast.error(error.message),
+    onError: (error: Error, variables) => {
+      if (!variables.silent) toast.error(error.message);
+    },
   });
 }
 

@@ -3,13 +3,12 @@ import { z } from "zod";
 // Mirrors `MembershipTrialConfig` (prisma/schema.prisma) — the admin-facing
 // override for a plan tier's free-trial length. See spec's "Admin-
 // Configurable Trial Length Per Plan" and design.md's "Admin trial-length
-// override" decision (static-secret-guarded route, no dedicated admin role).
+// override" decision. `updatedBy` is deliberately NOT part of this input:
+// the route now has a real Clerk-based admin gate and derives the actor
+// from the authenticated session, not from the request body.
 export const updateMembershipTrialConfigSchema = z.object({
   plan: z.enum(["BASIC", "PRO", "PLUS", "MAX"]),
   trialDays: z.number().int().min(0, "trialDays must be zero or greater"),
-  // No admin-role auth exists yet (explicitly out of scope for this slice —
-  // see design.md) — the caller must self-identify here for auditing.
-  updatedBy: z.string().min(1, "updatedBy is required"),
 });
 
 export type UpdateMembershipTrialConfigInput = z.infer<

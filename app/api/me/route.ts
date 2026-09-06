@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { z } from "zod";
 import { prisma } from "@/infrastructure/db/client";
+import { requireAuthUser } from "@/lib/auth/requireAuthUser";
 
 // Thin "who am I" lookup: the current Clerk user's own UserProfile.role,
 // clubId, padelCategory, preferredSide, dominantHand, createdAt. Queries Prisma
@@ -24,6 +25,7 @@ export async function GET() {
       padelCategory: true,
       preferredSide: true,
       dominantHand: true,
+      isAdmin: true,
       createdAt: true,
     },
   });
@@ -40,10 +42,9 @@ const updatePlayerStyleSchema = z.object({
 // signed in may call this on their own profile — there is no owner/admin
 // path to edit someone else's profile through this route.
 export async function PATCH(request: Request) {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const authResult = await requireAuthUser();
+  if (!authResult.ok) return authResult.response;
+  const { userId } = authResult;
 
   const body = await request.json().catch(() => null);
   const parsed = updatePlayerStyleSchema.safeParse(body);

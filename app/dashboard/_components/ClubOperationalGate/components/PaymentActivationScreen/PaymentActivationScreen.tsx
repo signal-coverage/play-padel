@@ -40,6 +40,7 @@ export function PaymentActivationScreen() {
   const {
     data: subscription,
     isLoading,
+    isFetching,
     isError,
     refetch,
   } = useMembershipSubscription();
@@ -67,11 +68,23 @@ export function PaymentActivationScreen() {
             </Button>
           </StatusBox>
         </div>
-      ) : isLoading || !subscription ? (
+      ) : (isLoading || isFetching || !subscription) && !isConfirmed ? (
+        // Stale-cache flash fix: `isLoading` alone is only true when there's
+        // no cached data at all, not while a background refetch of existing
+        // (possibly stale) data is in flight — e.g. right after an admin
+        // activates a club's FREE plan out-of-band, or simply switching
+        // browser tabs. Also gating on `isFetching` keeps the skeleton
+        // showing for exactly as long as needed instead of flashing a stale
+        // step-0 "Pay Membership" before the fresh data corrects it. Once
+        // truly CONFIRMED, a background refetch is low-stakes, so
+        // `!isConfirmed` stops gating on `isFetching` from that point on.
+        // `!subscription` preserves the original safety net for a
+        // genuinely-null subscription (e.g. a 404) — never falling through
+        // to code that reads subscription.plan/status on a null value.
         <div className="px-2 py-4">
           <Skeleton className="h-24 w-full" />
         </div>
-      ) : currentStep === 0 ? (
+      ) : currentStep === 0 && subscription ? (
         <div className="flex flex-col gap-4 px-2 py-4">
           <div className="flex items-center justify-between gap-4 rounded-md border p-4">
             <div>

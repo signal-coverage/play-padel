@@ -5,7 +5,7 @@ import { Prisma } from "@/lib/generated/prisma/client";
 import { dispatch } from "@/lib/notifications/dispatcher";
 import { PaymentConfirmed } from "@/lib/email/templates/PaymentConfirmed";
 import { logAudit } from "@/core/audit/services/audit.service";
-import { refundMercadoPagoPayment } from "@/lib/mercadopago/refunds";
+import { getClubOwner } from "@/core/clubs/services/clubs.service";
 import type {
   Invoice,
   InvoiceItem,
@@ -25,6 +25,10 @@ type InvoiceRow = NonNullable<
 type PaymentRow = NonNullable<
   Awaited<ReturnType<typeof prisma.payment.findUnique>>
 >;
+
+function roundCurrency(amount: number): number {
+  return Math.round(amount * 100) / 100;
+}
 
 function toInvoiceItem(raw: unknown): InvoiceItem {
   const r = raw as Record<string, unknown>;
@@ -94,16 +98,15 @@ export async function createInvoice(
 
   const itemsWithTotals = input.items.map((item) => ({
     ...item,
-    total: Math.round(item.quantity * item.unitPrice * 100) / 100,
+    total: roundCurrency(item.quantity * item.unitPrice),
   }));
 
-  const subtotal =
-    Math.round(
-      itemsWithTotals.reduce((acc, item) => acc + item.total, 0) * 100,
-    ) / 100;
-  const tax = Math.round((input.tax ?? 0) * 100) / 100;
-  const discount = Math.round((input.discount ?? 0) * 100) / 100;
-  const total = Math.round((subtotal + tax - discount) * 100) / 100;
+  const subtotal = roundCurrency(
+    itemsWithTotals.reduce((acc, item) => acc + item.total, 0),
+  );
+  const tax = roundCurrency(input.tax ?? 0);
+  const discount = roundCurrency(input.discount ?? 0);
+  const total = roundCurrency(subtotal + tax - discount);
 
   const invoiceData = {
     clubId,
@@ -190,8 +193,8 @@ export async function recordPayment(
     throw new Error("Only ISSUED invoices can receive payments");
   }
 
-  const roundedAmount = Math.round(input.amount * 100) / 100;
-  const roundedTotal = Math.round(invoice.total * 100) / 100;
+  const roundedAmount = roundCurrency(input.amount);
+  const roundedTotal = roundCurrency(invoice.total);
   if (roundedAmount !== roundedTotal) {
     throw new Error(
       `Payment amount (${roundedAmount}) must equal invoice total (${roundedTotal})`,
@@ -261,6 +264,25 @@ export async function recordPayment(
       subject: `Payment received for invoice #${invoice.number}`,
       html,
     });
+  } catch {
+    // notification failure must not affect payment recording
+  }
+
+  // Notify the club owner as well — non-throwing, does not affect return value
+  try {
+    const owner = await getClubOwner(clubId);
+    if (owner) {
+      await dispatch({
+        type: "PAYMENT_RECEIVED",
+        clubId,
+        recipientId: owner.id,
+        recipientEmail: owner.email,
+        recipientName: owner.displayName,
+        subject: "Payment received",
+        html: `A payment of ${input.currency} ${roundedAmount} was received.`,
+        sendEmail: false,
+      });
+    }
   } catch {
     // notification failure must not affect payment recording
   }
@@ -358,54 +380,4 @@ export async function getReceiptData(
       reference: p.reference ?? undefined,
     })),
   };
-}
-
-// Refunds the invoice's COMPLETED payment via Mercado Pago, then marks it
-// REFUNDED. Invoice.status is intentionally left as PAID — Payment.status is
-// the source of truth for "this specific payment was later refunded"; there
-// is no separate InvoiceStatus for "paid then refunded".
-export async function refundPayment(
-  clubId: string,
-  invoiceId: string,
-  refundedBy: string,
-): Promise<Payment> {
-  const invoice = await prisma.invoice.findFirst({
-    where: { id: invoiceId, clubId },
-    include: { payments: true },
-  });
-  if (!invoice) throw new Error("Invoice not found");
-
-  const completedPayment = invoice.payments.find(
-    (p) => p.status === "COMPLETED",
-  );
-  if (!completedPayment) {
-    throw new Error("No completed payment to refund for this invoice");
-  }
-  if (!completedPayment.reference) {
-    throw new Error("Payment has no Mercado Pago reference to refund");
-  }
-
-  await refundMercadoPagoPayment(completedPayment.reference, clubId);
-
-  const row = await prisma.payment.update({
-    where: { id: completedPayment.id },
-    data: { status: "REFUNDED" },
-  });
-
-  const actor = await prisma.userProfile.findUnique({
-    where: { id: refundedBy },
-    select: { displayName: true },
-  });
-
-  logAudit({
-    clubId,
-    userId: refundedBy,
-    userDisplayName: actor?.displayName ?? refundedBy,
-    action: "payment.refunded",
-    entity: "Payment",
-    entityId: row.id,
-    metadata: { invoiceId, amount: row.amount },
-  });
-
-  return toPayment(row);
 }

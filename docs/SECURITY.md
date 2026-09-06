@@ -14,6 +14,7 @@
 - **No CSRF-specific review** has been done (Next.js Server Actions/route handlers have some built-in protections, but nothing custom has been audited or added).
 - **No API throttling** on any route.
 - **No CAPTCHA/bot protection** on public forms (signup, onboarding).
-- **Terms acceptance is validated but not persisted** — see [DATABASE.md](DATABASE.md).
 
-None of these gaps are unique to this app at its current stage, but they should be addressed before any public/production launch beyond trusted users.
+Corrected (2026-09-04): terms acceptance IS persisted — `UserProfile.acceptedTermsAt` is stamped by `app/api/onboarding/route.ts`; see [PROJECT_STATUS.md](PROJECT_STATUS.md) and [DATABASE.md](DATABASE.md). This doc previously listed that as an open gap; it was already fixed as of 2026-08-15 per [BACKLOG.md](BACKLOG.md).
+
+This app has real, active users and live Mercado Pago payments moving through it today — these gaps are not a future/pre-launch concern, they are current exposure on a live system. See the prioritized (P0-first) list in [BACKLOG.md](BACKLOG.md) for how these rank against the app's other open items.

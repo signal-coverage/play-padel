@@ -1,16 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/infrastructure/db/client";
 import { joinWaitlist } from "@/core/waitlist/services/waitlist.service";
+import { requireAuthUser } from "@/lib/auth/requireAuthUser";
 
 // Never trust client-supplied courtName/clubId — look the court up
 // server-side, same principle as every other write endpoint in this
 // codebase.
 export async function POST(request: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const authResult = await requireAuthUser();
+  if (!authResult.ok) return authResult.response;
+  const { userId } = authResult;
 
   const body = await request.json().catch(() => null);
   const courtId = body?.courtId;

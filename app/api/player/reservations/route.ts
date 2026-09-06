@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
 import {
   listReservationsByUser,
   createReservation,
   cancelReservation,
   canSelfCancel,
 } from "@/core/reservations/services/reservations.service";
+import { requireAuthUser } from "@/lib/auth/requireAuthUser";
 import { getCourtById } from "@/core/courts/services/courts.service";
 import { getClubById } from "@/core/clubs/services/clubs.service";
 import {
@@ -21,10 +21,9 @@ import { getClubOperationalStatus } from "@/lib/mercadopago/operationalStatus";
 // allowed until 2h before scheduledStart) so the client never has to
 // reimplement that cutoff rule — it just reads the flag.
 export async function GET(request: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const authResult = await requireAuthUser();
+  if (!authResult.ok) return authResult.response;
+  const { userId } = authResult;
 
   const includePast =
     request.nextUrl.searchParams.get("includePast") === "true";
@@ -49,10 +48,9 @@ export async function GET(request: NextRequest) {
 // internally, so this route does not duplicate that logic — it only forwards
 // the caller's own Clerk userId rather than trusting one from the request body.
 export async function POST(request: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const authResult = await requireAuthUser();
+  if (!authResult.ok) return authResult.response;
+  const { userId } = authResult;
 
   const body = await request.json().catch(() => null);
   const courtId = body?.courtId;
@@ -66,6 +64,24 @@ export async function POST(request: NextRequest) {
     typeof scheduledEnd !== "string"
   ) {
     return NextResponse.json({ error: "Invalid input" }, { status: 400 });
+  }
+
+  // Reject a non-parseable date string here, before it ever reaches
+  // createReservation/Prisma — otherwise an "Invalid Date" flows through to
+  // a raw DB-layer error that the catch block below would return as a 409
+  // (conflict) with a leaked internal error message, instead of the 400
+  // (bad input) this actually is.
+  const parsedStart = new Date(scheduledStart);
+  const parsedEnd = new Date(scheduledEnd);
+  if (
+    Number.isNaN(parsedStart.getTime()) ||
+    Number.isNaN(parsedEnd.getTime()) ||
+    parsedEnd <= parsedStart
+  ) {
+    return NextResponse.json(
+      { error: "scheduledStart/scheduledEnd must be valid ISO dates" },
+      { status: 400 },
+    );
   }
 
   const court = await getCourtById(courtId);

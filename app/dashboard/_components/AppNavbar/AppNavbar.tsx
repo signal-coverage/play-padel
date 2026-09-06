@@ -2,18 +2,18 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Bell } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useAuth } from "@/hooks/use-auth";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { Button } from "@/components/ui/button";
 import { NavLinks } from "./components/NavLinks";
+import { NotificationsBell } from "./components/NotificationsBell";
 import { UserMenu } from "./components/UserMenu";
 import { CommandPalette } from "../CommandPalette";
 
 export function AppNavbar() {
   const { user } = useAuth();
   const role = user?.role ?? "player";
+  const isAdmin = user?.isAdmin ?? false;
   const { resolvedTheme } = useTheme();
   const logoSrc =
     resolvedTheme === "dark" ? "/dark/logo.png" : "/light/logo.svg";
@@ -31,21 +31,16 @@ export function AppNavbar() {
           <span className="hidden sm:inline">Play Padel</span>
         </Link>
 
-        <NavLinks role={role} className="hidden min-w-0 min-[809px]:flex" />
+        <NavLinks
+          role={role}
+          isAdmin={isAdmin}
+          className="hidden min-w-0 min-[809px]:flex"
+        />
       </div>
 
       <div className="flex shrink-0 items-center gap-3">
         <ThemeToggle />
-        <Button
-          variant="outline"
-          size="icon-lg"
-          disabled
-          title="Notifications — coming soon"
-          className="hidden rounded-full sm:inline-flex"
-        >
-          <Bell className="h-4 w-4" />
-          <span className="sr-only">Notifications</span>
-        </Button>
+        <NotificationsBell />
         <UserMenu />
       </div>
     </header>

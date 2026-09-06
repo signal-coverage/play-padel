@@ -22,6 +22,34 @@ function isNearExpiry(tokenExpiresAt: Date | null): boolean {
   return tokenExpiresAt.getTime() - Date.now() <= LAZY_REFRESH_WINDOW_MS;
 }
 
+// Per-club in-flight refresh de-duplication. Mercado Pago's refresh tokens
+// are single-use/rotating, so two concurrent callers that both observe
+// `isNearExpiry === true` for the same club must not each start their own
+// `refreshAndPersist` — the loser would replay an already-rotated refresh
+// token, fail, and incorrectly mark a healthy, still-connected club
+// NOT_CONNECTED because of a benign request race. Instead, the second caller
+// awaits the SAME in-flight promise as the first. The entry is removed once
+// the refresh settles (success or failure) so a later, genuinely new refresh
+// cycle isn't permanently blocked by a stale map entry.
+const inFlightRefreshes = new Map<string, Promise<string>>();
+
+function getOrStartRefresh(
+  clubId: string,
+  refreshTokenEncrypted: string,
+): Promise<string> {
+  const existing = inFlightRefreshes.get(clubId);
+  if (existing) return existing;
+
+  const refreshPromise = refreshAndPersist(
+    clubId,
+    refreshTokenEncrypted,
+  ).finally(() => {
+    inFlightRefreshes.delete(clubId);
+  });
+  inFlightRefreshes.set(clubId, refreshPromise);
+  return refreshPromise;
+}
+
 /**
  * Refreshes a club's Mercado Pago access token and persists the result:
  * on success, stores the new encrypted access/refresh tokens + expiry; on
@@ -115,7 +143,7 @@ export async function getClubMercadoPagoClient(
 
   let accessToken: string;
   if (isNearExpiry(account.tokenExpiresAt)) {
-    accessToken = await refreshAndPersist(
+    accessToken = await getOrStartRefresh(
       clubId,
       account.refreshTokenEncrypted,
     );

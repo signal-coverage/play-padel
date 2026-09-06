@@ -6,6 +6,21 @@
 // the internal app/admin/club-status page.
 export type Plan = "BASIC" | "PRO" | "PLUS" | "MAX" | "FREE";
 export type ClubStatus = "ACTIVE" | "INACTIVE" | "SUSPENDED" | "DISABLED";
+// Mirrors prisma/schema.prisma's ClubApprovalStatus enum. Schema default is
+// APPROVED (not PENDING) so every pre-existing club is grandfathered in —
+// see that enum's own doc comment. Only the onboarding club-creation path
+// (app/api/onboarding/route.ts) ever passes "PENDING" explicitly.
+export type ClubApprovalStatus = "PENDING" | "APPROVED" | "REJECTED";
+
+// Summary shape for the admin approval queue (GET /api/admin/clubs/pending)
+// — deliberately narrow (not the full `Club` shape) since the queue only
+// ever needs enough to let an admin decide whether to approve/reject.
+export interface PendingClubSummary {
+  id: string;
+  name: string;
+  email: string;
+  createdAt: Date;
+}
 
 export interface Club {
   id: string;
@@ -19,12 +34,16 @@ export interface Club {
   province?: string;
   city?: string;
   zipCode?: string;
-  logoUrl?: string;
+  // A club never has its own independently-editable logo/photo — everywhere
+  // a "club photo" is shown, it's always the club owner's own Clerk-synced
+  // profile photo (see core/users/services/users.service.ts's
+  // syncUserProfileFromClerk). Populated by listActiveClubs/getClubOwner via
+  // a batched UserProfile lookup, never written directly on Club.
+  ownerPhotoUrl?: string | null;
   timezone: string;
   currency: string;
   plan: Plan;
   status: ClubStatus;
-  requiresPrepayment: boolean;
   createdAt: Date;
   updatedAt: Date;
   createdBy: string;
@@ -44,8 +63,11 @@ export interface CreateClubInput {
   province?: string;
   city?: string;
   zipCode?: string;
-  logoUrl?: string;
   plan?: Plan;
+  // Optional override of the schema's own @default(APPROVED) — passed only
+  // by the onboarding club-creation call site (with "PENDING"). Every other
+  // caller omits this so the column default applies unchanged.
+  approvalStatus?: ClubApprovalStatus;
 }
 
 export interface UpdateClubInput {
@@ -59,10 +81,8 @@ export interface UpdateClubInput {
   province?: string;
   city?: string;
   zipCode?: string;
-  logoUrl?: string;
   timezone?: string;
   currency?: string;
   plan?: Plan;
   status?: ClubStatus;
-  requiresPrepayment?: boolean;
 }

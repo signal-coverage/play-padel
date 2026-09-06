@@ -6,13 +6,7 @@ import {
   LAZY_REFRESH_WINDOW_MS,
   refreshAndPersist,
 } from "@/lib/mercadopago/clubMercadoPagoClient";
-
-// Same static-secret bearer guard as app/api/admin/club-status — reused
-// on purpose, not a new admin credential.
-function isAuthorized(request: Request): boolean {
-  const authHeader = request.headers.get("authorization");
-  return authHeader === `Bearer ${process.env.MEMBERSHIP_ADMIN_SECRET}`;
-}
+import { requireAdmin } from "@/lib/auth/admin";
 
 type BackfillResult =
   | {
@@ -28,10 +22,9 @@ type BackfillResult =
 // time (see app/api/clubs/mercadopago/callback/route.ts). Also a reusable
 // maintenance endpoint: the same gap can reappear any time a club's
 // identity fetch failed silently at connect time.
-export async function POST(request: Request) {
-  if (!isAuthorized(request)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+export async function POST() {
+  const unauthorized = await requireAdmin();
+  if (unauthorized) return unauthorized;
 
   const accounts = await prisma.clubMercadoPagoAccount.findMany({
     where: {

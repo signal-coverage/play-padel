@@ -1,6 +1,6 @@
 "use client";
 
-import { Download } from "lucide-react";
+import { Download, Eye } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ReservationStatusBadge } from "@/components/ReservationStatusBadge";
@@ -22,6 +22,31 @@ export function ReservationRow({ reservation, onCancel }: ReservationRowProps) {
         </div>
         <div className="flex items-center gap-3">
           <ReservationStatusBadge status={reservation.status} />
+          {reservation.status === "CONFIRMED" && (
+            <>
+              <Button variant="outline" size="sm" asChild>
+                <a
+                  href={`/api/player/reservations/${reservation.id}/ticket?preview=1`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={`Preview ticket for ${reservation.courtName}`}
+                >
+                  <Eye size={14} strokeWidth={2.25} />
+                  Preview ticket
+                </a>
+              </Button>
+              <Button variant="outline" size="sm" asChild>
+                <a
+                  href={`/api/player/reservations/${reservation.id}/ticket`}
+                  download
+                  aria-label={`Download ticket for ${reservation.courtName}`}
+                >
+                  <Download size={14} strokeWidth={2.25} />
+                  Download ticket
+                </a>
+              </Button>
+            </>
+          )}
           {reservation.hasReceipt && (
             <Button variant="outline" size="sm" asChild>
               <a

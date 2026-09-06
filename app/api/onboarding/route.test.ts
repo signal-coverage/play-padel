@@ -30,12 +30,17 @@ vi.mock("@/core/audit/services/audit.service", () => ({
   logAudit: vi.fn(),
 }));
 
+vi.mock("@/lib/notifications/dispatcher", () => ({
+  notifyAllAdmins: vi.fn(),
+}));
+
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { prisma } from "@/infrastructure/db/client";
 import { createClub } from "@/core/clubs/services/clubs.service";
 import { setClubOperatingHours } from "@/core/clubs/services/operatingHours.service";
 import { createPendingMembershipSubscription } from "@/core/billing/services/membership.service";
 import { logAudit } from "@/core/audit/services/audit.service";
+import { notifyAllAdmins } from "@/lib/notifications/dispatcher";
 import { POST } from "./route";
 
 const authMock = auth as unknown as ReturnType<typeof vi.fn>;
@@ -51,6 +56,7 @@ const setClubOperatingHoursMock = setClubOperatingHours as ReturnType<
 const createPendingMembershipSubscriptionMock =
   createPendingMembershipSubscription as ReturnType<typeof vi.fn>;
 const logAuditMock = logAudit as ReturnType<typeof vi.fn>;
+const notifyAllAdminsMock = notifyAllAdmins as ReturnType<typeof vi.fn>;
 
 const DEFAULT_OWNER_OPERATING_HOURS = [
   { dayOfWeek: 1, active: true, startTime: "09:00", endTime: "21:00" },
@@ -108,6 +114,8 @@ describe("POST /api/onboarding", () => {
     setClubOperatingHoursMock.mockReset();
     createPendingMembershipSubscriptionMock.mockReset();
     logAuditMock.mockReset();
+    notifyAllAdminsMock.mockReset();
+    notifyAllAdminsMock.mockResolvedValue(undefined);
 
     authMock.mockResolvedValue({ userId: "user_1" });
     currentUserMock.mockResolvedValue({
@@ -155,6 +163,27 @@ describe("POST /api/onboarding", () => {
       plan: "BASIC",
       currency: "ARS",
     });
+  });
+
+  // Admin approval queue gate (see prisma/schema.prisma's
+  // Club.approvalStatus and lib/mercadopago/operationalStatus.ts's
+  // PENDING_APPROVAL cause). This onboarding call site is the ONLY place in
+  // the codebase that ever overrides the schema's own @default(APPROVED) —
+  // every other club-touching call site (including the FREE-plan testing
+  // bypass and admin approve/reject actions) omits it or sets APPROVED.
+  it("owner path: creates the new club with approvalStatus: PENDING, overriding the schema's own @default(APPROVED)", async () => {
+    createClubMock.mockResolvedValue({
+      id: "club_1",
+      name: "Test Club",
+      plan: "BASIC",
+    });
+
+    await POST(makeRequest(ownerBody()));
+
+    expect(createClubMock).toHaveBeenCalledWith(
+      expect.objectContaining({ approvalStatus: "PENDING" }),
+      "user_1",
+    );
   });
 
   it("owner path: seeds the club's operating hours from the filtered/mapped active days", async () => {
@@ -233,6 +262,24 @@ describe("POST /api/onboarding", () => {
     expect(response.status).toBe(400);
     expect(createClubMock).not.toHaveBeenCalled();
     expect(setClubOperatingHoursMock).not.toHaveBeenCalled();
+  });
+
+  it("owner path: broadcasts CLUB_PENDING_APPROVAL to all admins after creating the PENDING club", async () => {
+    createClubMock.mockResolvedValue({
+      id: "club_1",
+      name: "Test Club",
+      plan: "BASIC",
+    });
+
+    await POST(makeRequest(ownerBody()));
+
+    expect(notifyAllAdminsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "CLUB_PENDING_APPROVAL",
+        clubId: "club_1",
+        sendEmail: false,
+      }),
+    );
   });
 
   it("player path: does not touch the membership subscription service at all", async () => {

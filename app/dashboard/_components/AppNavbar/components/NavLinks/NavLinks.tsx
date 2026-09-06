@@ -2,21 +2,17 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils/utils";
-import { useIsClubOperational } from "../../hooks";
-import { getVisibleNavItems } from "../../utils";
+import { useVisibleNavLinks } from "../../hooks";
 import type { NavLinksProps } from "./types";
 
-export function NavLinks({ role, className }: NavLinksProps) {
-  const pathname = usePathname();
-  const isOperational = useIsClubOperational(role);
-  const visibleItems = getVisibleNavItems(role, isOperational);
+export function NavLinks({ role, isAdmin = false, className }: NavLinksProps) {
+  const visibleItems = useVisibleNavLinks(role, isAdmin);
 
   return (
     <nav className={cn("items-center gap-1", className)}>
       {visibleItems.map((item) => {
-        const active = pathname === item.href;
+        const { active } = item;
         return (
           <Link
             key={item.href}

@@ -25,12 +25,29 @@ vi.mock("@/core/clubs/services/operatingHours.service", () => ({
 }));
 
 import { prisma } from "@/infrastructure/db/client";
+import { Prisma } from "@/lib/generated/prisma/client";
 import { resolveDefaultCourtAvailability } from "@/core/clubs/services/operatingHours.service";
 import {
   createCourt,
   updateCourt,
   DuplicateCourtNameError,
 } from "./courts.service";
+
+// Real shape verified against the actual dev database (Postgres 23505
+// unique_violation via the "courts_no_duplicate_active_name" partial unique
+// index, Prisma 7.9.1 + @prisma/adapter-neon) — not guessed. Unlike the
+// reservations EXCLUDE constraint, Prisma recognizes this one natively as
+// its own P2002 code.
+function makeDuplicateNameViolationError() {
+  return new Prisma.PrismaClientKnownRequestError(
+    "Unique constraint failed on the constraint: `courts_no_duplicate_active_name`",
+    {
+      code: "P2002",
+      clientVersion: "7.9.1",
+      meta: { modelName: "Court" },
+    },
+  );
+}
 
 const findFirstMock = prisma.court.findFirst as ReturnType<typeof vi.fn>;
 const createMock = prisma.court.create as ReturnType<typeof vi.fn>;
@@ -133,6 +150,29 @@ describe("createCourt — duplicate name guard", () => {
         where: expect.objectContaining({ clubId: "club_2" }),
       }),
     );
+  });
+
+  it("translates a real DB-level unique-constraint violation into DuplicateCourtNameError, even when the pre-check found no conflict (race window)", async () => {
+    // Two concurrent createCourt calls for the same club/name can both pass
+    // assertNoDuplicateCourtName's own findFirst check before either write
+    // lands — the DB-level unique index (migration 20260906020000) is the
+    // real backstop.
+    findFirstMock.mockResolvedValue(null);
+    createMock.mockRejectedValue(makeDuplicateNameViolationError());
+
+    await expect(
+      createCourt("club_1", { name: "Court 1" }, "user_1"),
+    ).rejects.toThrow(DuplicateCourtNameError);
+  });
+
+  it("rethrows an unrelated database error unchanged (not misclassified as a duplicate name)", async () => {
+    findFirstMock.mockResolvedValue(null);
+    const unrelatedError = new Error("connection terminated unexpectedly");
+    createMock.mockRejectedValue(unrelatedError);
+
+    await expect(
+      createCourt("club_1", { name: "Court 1" }, "user_1"),
+    ).rejects.toThrow("connection terminated unexpectedly");
   });
 });
 
@@ -333,6 +373,25 @@ describe("updateCourt — duplicate name guard", () => {
       updateCourt("club_1", "court_1", { name: "Court 1" }, "user_1"),
     ).resolves.toBeTruthy();
     expect(updateMock).toHaveBeenCalled();
+  });
+
+  it("translates a real DB-level unique-constraint violation into DuplicateCourtNameError, even when the pre-check found no conflict (race window)", async () => {
+    findFirstMock.mockResolvedValue(null);
+    updateMock.mockRejectedValue(makeDuplicateNameViolationError());
+
+    await expect(
+      updateCourt("club_1", "court_1", { name: "Court 2" }, "user_1"),
+    ).rejects.toThrow(DuplicateCourtNameError);
+  });
+
+  it("rethrows an unrelated database error unchanged (not misclassified as a duplicate name)", async () => {
+    findFirstMock.mockResolvedValue(null);
+    const unrelatedError = new Error("connection terminated unexpectedly");
+    updateMock.mockRejectedValue(unrelatedError);
+
+    await expect(
+      updateCourt("club_1", "court_1", { name: "Court 2" }, "user_1"),
+    ).rejects.toThrow("connection terminated unexpectedly");
   });
 
   it("skips the duplicate check entirely when name isn't part of the update", async () => {

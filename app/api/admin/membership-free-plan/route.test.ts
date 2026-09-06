@@ -1,5 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
+// vi.importActual below executes the real membership.service module (only
+// activateFreePlan is overridden), which transitively imports the real
+// infrastructure/db/client.ts — mock it so that module-load-time
+// DATABASE_URL validation never runs against this test's (unset) env.
+vi.mock("@/infrastructure/db/client", () => ({
+  prisma: {},
+}));
+
 vi.mock("@/core/billing/services/membership.service", async () => {
   const actual = await vi.importActual<
     typeof import("@/core/billing/services/membership.service")
@@ -10,53 +18,61 @@ vi.mock("@/core/billing/services/membership.service", async () => {
   };
 });
 
+vi.mock("@/lib/auth/admin", () => ({
+  requireAdmin: vi.fn(),
+}));
+
+import { NextResponse } from "next/server";
 import {
   activateFreePlan,
   ClubNotFoundError,
   RealSubscriptionExistsError,
 } from "@/core/billing/services/membership.service";
+import { requireAdmin } from "@/lib/auth/admin";
 import { POST } from "./route";
 
 const activateFreePlanMock = activateFreePlan as ReturnType<typeof vi.fn>;
+const requireAdminMock = requireAdmin as ReturnType<typeof vi.fn>;
 
-const ADMIN_SECRET = "fixture-admin-secret";
-
-function makePostRequest(authHeader: string | undefined, body: unknown) {
+function makePostRequest(body: unknown) {
   return new Request("https://app.example.com/api/admin/membership-free-plan", {
     method: "POST",
-    headers: {
-      ...(authHeader ? { authorization: authHeader } : {}),
-      "content-type": "application/json",
-    },
+    headers: { "content-type": "application/json" },
     body: JSON.stringify(body),
   });
 }
 
 beforeEach(() => {
-  vi.stubEnv("MEMBERSHIP_ADMIN_SECRET", ADMIN_SECRET);
   activateFreePlanMock.mockReset();
+  requireAdminMock.mockReset();
+  requireAdminMock.mockResolvedValue(null);
 });
 
 describe("POST /api/admin/membership-free-plan", () => {
-  it("rejects requests without the correct static-secret bearer token", async () => {
-    const response = await POST(
-      makePostRequest("Bearer wrong-secret", { clubId: "club-1" }),
+  it("returns 401 when there is no signed-in Clerk user", async () => {
+    requireAdminMock.mockResolvedValue(
+      NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
     );
+
+    const response = await POST(makePostRequest({ clubId: "club-1" }));
 
     expect(response.status).toBe(401);
     expect(activateFreePlanMock).not.toHaveBeenCalled();
   });
 
-  it("rejects requests with no authorization header at all", async () => {
-    const response = await POST(
-      makePostRequest(undefined, { clubId: "club-1" }),
+  it("returns 403 when signed in but not an admin", async () => {
+    requireAdminMock.mockResolvedValue(
+      NextResponse.json({ error: "Forbidden" }, { status: 403 }),
     );
 
-    expect(response.status).toBe(401);
+    const response = await POST(makePostRequest({ clubId: "club-1" }));
+
+    expect(response.status).toBe(403);
+    expect(activateFreePlanMock).not.toHaveBeenCalled();
   });
 
   it("rejects a missing clubId with 400", async () => {
-    const response = await POST(makePostRequest(`Bearer ${ADMIN_SECRET}`, {}));
+    const response = await POST(makePostRequest({}));
 
     expect(response.status).toBe(400);
     expect(activateFreePlanMock).not.toHaveBeenCalled();
@@ -67,10 +83,7 @@ describe("POST /api/admin/membership-free-plan", () => {
       "https://app.example.com/api/admin/membership-free-plan",
       {
         method: "POST",
-        headers: {
-          authorization: `Bearer ${ADMIN_SECRET}`,
-          "content-type": "application/json",
-        },
+        headers: { "content-type": "application/json" },
         body: "not json",
       },
     );
@@ -83,9 +96,7 @@ describe("POST /api/admin/membership-free-plan", () => {
   it("returns 404 when the club doesn't exist", async () => {
     activateFreePlanMock.mockRejectedValue(new ClubNotFoundError("club-404"));
 
-    const response = await POST(
-      makePostRequest(`Bearer ${ADMIN_SECRET}`, { clubId: "club-404" }),
-    );
+    const response = await POST(makePostRequest({ clubId: "club-404" }));
     const body = await response.json();
 
     expect(response.status).toBe(404);
@@ -95,9 +106,7 @@ describe("POST /api/admin/membership-free-plan", () => {
   it("returns 409 when the club already has a real Mercado Pago subscription and force was not passed", async () => {
     activateFreePlanMock.mockRejectedValue(new RealSubscriptionExistsError());
 
-    const response = await POST(
-      makePostRequest(`Bearer ${ADMIN_SECRET}`, { clubId: "club-1" }),
-    );
+    const response = await POST(makePostRequest({ clubId: "club-1" }));
     const body = await response.json();
 
     expect(response.status).toBe(409);
@@ -113,9 +122,7 @@ describe("POST /api/admin/membership-free-plan", () => {
     };
     activateFreePlanMock.mockResolvedValue(subscription);
 
-    const response = await POST(
-      makePostRequest(`Bearer ${ADMIN_SECRET}`, { clubId: "club-1" }),
-    );
+    const response = await POST(makePostRequest({ clubId: "club-1" }));
     const body = await response.json();
 
     expect(activateFreePlanMock).toHaveBeenCalledWith({
@@ -129,12 +136,7 @@ describe("POST /api/admin/membership-free-plan", () => {
   it("passes force through to activateFreePlan when provided", async () => {
     activateFreePlanMock.mockResolvedValue({ id: "sub_1" });
 
-    await POST(
-      makePostRequest(`Bearer ${ADMIN_SECRET}`, {
-        clubId: "club-1",
-        force: true,
-      }),
-    );
+    await POST(makePostRequest({ clubId: "club-1", force: true }));
 
     expect(activateFreePlanMock).toHaveBeenCalledWith({
       clubId: "club-1",

@@ -1,17 +1,10 @@
 "use client";
 
-// Minimal, no-role internal admin tool — same convention as
-// app/api/admin/club-status/route.ts and app/api/admin/membership-trial-config/
-// route.ts: there is no admin role in this app yet, so this page has no Clerk
-// auth gate of its own (see proxy.ts's isPublicRoute entry for "/admin/(.*)").
-// Every mutating call this page makes still requires the same
-// MEMBERSHIP_ADMIN_SECRET bearer secret the API route already enforces.
-//
-// The secret is kept in plain `useState` only — never written to
-// localStorage/sessionStorage/cookies. That's deliberate: it's a superuser
-// credential, not a user preference, so it should not outlive the page
-// (cleared on reload) and should never be readable by anything that can
-// read browser storage.
+// Real admin tool, now gated by app/admin/layout.tsx's Clerk-based admin
+// check (see lib/auth/admin.ts) instead of a hand-typed static secret. Every
+// mutating call this page makes rides the caller's own same-origin Clerk
+// session cookie automatically — this page has no auth state of its own to
+// manage.
 
 import { useState } from "react";
 import { toast } from "sonner";
@@ -48,17 +41,14 @@ const GENERIC_ERROR = "Something went wrong. Please try again.";
 
 // Mirrors the body?.error ?? fallback extraction convention already used by
 // CourtsView/hooks.ts's fetchJson helper, kept as a small standalone helper
-// (rather than that exact generic fetchJson) since lookup/save both need to
-// special-case a 401 into a friendlier "Invalid admin secret" message
-// instead of the API's raw "Unauthorized" body.
+// (rather than that exact generic fetchJson) per this repo's SRP-per-folder
+// convention.
 async function extractErrorMessage(res: Response): Promise<string> {
-  if (res.status === 401) return "Invalid admin secret";
   const body = await res.json().catch(() => null);
   return body?.error ?? GENERIC_ERROR;
 }
 
 export default function ClubStatusAdminPage() {
-  const [secret, setSecret] = useState("");
   const [clubId, setClubId] = useState("");
   const [club, setClub] = useState<Club | null>(null);
   const [selectedStatus, setSelectedStatus] = useState<ClubStatus | "">("");
@@ -75,7 +65,6 @@ export default function ClubStatusAdminPage() {
     try {
       const res = await fetch(
         `/api/admin/club-status?clubId=${encodeURIComponent(clubId)}`,
-        { headers: { Authorization: `Bearer ${secret}` } },
       );
       if (!res.ok) {
         throw new Error(await extractErrorMessage(res));
@@ -97,10 +86,7 @@ export default function ClubStatusAdminPage() {
     try {
       const res = await fetch("/api/admin/club-status", {
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${secret}`,
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           clubId: club.id,
           status: selectedStatus,
@@ -144,10 +130,7 @@ export default function ClubStatusAdminPage() {
     try {
       const res = await fetch("/api/admin/membership-free-plan", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${secret}`,
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ clubId: club.id }),
       });
       if (!res.ok) {
@@ -169,17 +152,6 @@ export default function ClubStatusAdminPage() {
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
           <div className="flex flex-col gap-1">
-            <Label htmlFor="admin-secret">Admin secret</Label>
-            <Input
-              id="admin-secret"
-              type="password"
-              value={secret}
-              onChange={(e) => setSecret(e.target.value)}
-              autoComplete="off"
-            />
-          </div>
-
-          <div className="flex flex-col gap-1">
             <Label htmlFor="club-id">Club ID</Label>
             <Input
               id="club-id"
@@ -189,10 +161,7 @@ export default function ClubStatusAdminPage() {
           </div>
 
           <div>
-            <Button
-              onClick={handleLookup}
-              disabled={lookupPending || !secret || !clubId}
-            >
+            <Button onClick={handleLookup} disabled={lookupPending || !clubId}>
               {lookupPending ? "Looking up…" : "Look up"}
             </Button>
           </div>

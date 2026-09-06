@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
 import * as React from "react";
 import { renderToBuffer } from "@react-pdf/renderer";
 import type { DocumentProps } from "@react-pdf/renderer";
 import { listReservationsByUser } from "@/core/reservations/services/reservations.service";
 import { getReceiptData } from "@/core/billing/services/billing.service";
 import { ReceiptDocument } from "@/lib/pdf/ReceiptDocument";
+import { requireAuthUser } from "@/lib/auth/requireAuthUser";
 
 // Player-scoped receipt download, following the same ownership pattern as
 // the [id]/cancel route: there's no club-agnostic lookup by reservation id,
@@ -15,10 +15,9 @@ export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const authResult = await requireAuthUser();
+  if (!authResult.ok) return authResult.response;
+  const { userId } = authResult;
 
   const { id } = await params;
 

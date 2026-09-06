@@ -1,0 +1,1 @@
+export { AdminSearchView } from "./AdminSearchView";
