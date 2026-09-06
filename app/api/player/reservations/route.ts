@@ -15,6 +15,8 @@ import {
 } from "@/core/billing/services/billing.service";
 import { createCheckoutPreference } from "@/lib/mercadopago/preferences";
 import { getClubOperationalStatus } from "@/lib/mercadopago/operationalStatus";
+import { checkBot } from "@/lib/security/botGuard";
+import { enforceRateLimit } from "@/lib/security/rateLimit";
 
 // Player's "my reservations" list, across all clubs. Each row also carries a
 // server-computed canSelfCancel flag (docs/reservation-flow.md: self-cancel
@@ -51,6 +53,15 @@ export async function POST(request: NextRequest) {
   const authResult = await requireAuthUser();
   if (!authResult.ok) return authResult.response;
   const { userId } = authResult;
+
+  const botCheck = await checkBot();
+  if (botCheck) return botCheck;
+  const rateLimitCheck = await enforceRateLimit(
+    request,
+    "reservations",
+    userId,
+  );
+  if (rateLimitCheck) return rateLimitCheck;
 
   const body = await request.json().catch(() => null);
   const courtId = body?.courtId;

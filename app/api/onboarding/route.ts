@@ -9,6 +9,8 @@ import { notifyAllAdmins } from "@/lib/notifications/dispatcher";
 import type { Plan } from "@/core/clubs/types";
 import { onboardingFormSchema } from "@/app/onboarding/types";
 import { requireAuthUser } from "@/lib/auth/requireAuthUser";
+import { checkBot } from "@/lib/security/botGuard";
+import { enforceRateLimit } from "@/lib/security/rateLimit";
 
 // Completes onboarding for the current Clerk user: player -> UserProfile only
 // (no club), owner -> Club + UserProfile pointing at it. Upserts on the
@@ -18,6 +20,11 @@ export async function POST(request: Request) {
   const authResult = await requireAuthUser();
   if (!authResult.ok) return authResult.response;
   const { userId } = authResult;
+
+  const botCheck = await checkBot();
+  if (botCheck) return botCheck;
+  const rateLimitCheck = await enforceRateLimit(request, "onboarding", userId);
+  if (rateLimitCheck) return rateLimitCheck;
 
   const clerkUser = await currentUser();
   const accountEmail =

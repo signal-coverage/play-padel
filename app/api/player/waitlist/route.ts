@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/infrastructure/db/client";
 import { joinWaitlist } from "@/core/waitlist/services/waitlist.service";
 import { requireAuthUser } from "@/lib/auth/requireAuthUser";
+import { checkBot } from "@/lib/security/botGuard";
+import { enforceRateLimit } from "@/lib/security/rateLimit";
 
 // Never trust client-supplied courtName/clubId — look the court up
 // server-side, same principle as every other write endpoint in this
@@ -10,6 +12,11 @@ export async function POST(request: NextRequest) {
   const authResult = await requireAuthUser();
   if (!authResult.ok) return authResult.response;
   const { userId } = authResult;
+
+  const botCheck = await checkBot();
+  if (botCheck) return botCheck;
+  const rateLimitCheck = await enforceRateLimit(request, "waitlist", userId);
+  if (rateLimitCheck) return rateLimitCheck;
 
   const body = await request.json().catch(() => null);
   const courtId = body?.courtId;
