@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { currentUser } from "@clerk/nextjs/server";
+import { Prisma } from "@/lib/generated/prisma/client";
 import { prisma } from "@/infrastructure/db/client";
 import { createClub } from "@/core/clubs/services/clubs.service";
 import { setClubOperatingHours } from "@/core/clubs/services/operatingHours.service";
@@ -253,6 +254,20 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ role: "owner", clubId: club.id });
   } catch (error) {
+    // UserProfile.email is @unique (migration
+    // 20260906110000_add_user_profile_email_unique) — a different Clerk
+    // account onboarding with an email already tied to another UserProfile
+    // row hits this, not the generic 500 below.
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2002"
+    ) {
+      return NextResponse.json(
+        { error: "A user with this email is already registered." },
+        { status: 409 },
+      );
+    }
+
     console.error("POST /api/onboarding failed:", error);
     return NextResponse.json(
       {
