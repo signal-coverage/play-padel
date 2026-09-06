@@ -45,6 +45,7 @@ vi.mock("@/lib/notifications/dispatcher", () => ({
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { checkBotId } from "botid/server";
 import { checkRateLimit } from "@vercel/firewall";
+import { Prisma } from "@/lib/generated/prisma/client";
 import { prisma } from "@/infrastructure/db/client";
 import { createClub } from "@/core/clubs/services/clubs.service";
 import { setClubOperatingHours } from "@/core/clubs/services/operatingHours.service";
@@ -325,6 +326,29 @@ describe("POST /api/onboarding", () => {
     expect(createClubMock).not.toHaveBeenCalled();
     expect(createPendingMembershipSubscriptionMock).not.toHaveBeenCalled();
     expect(setClubOperatingHoursMock).not.toHaveBeenCalled();
+  });
+
+  // Real shape verified against the actual dev database (Postgres unique
+  // violation on "user_profiles_email_key", migration
+  // 20260906110000_add_user_profile_email_unique), same convention as
+  // core/courts/services/courts.service.test.ts's own P2002 fixture.
+  it("returns 409 with a friendly message when the email is already registered under a different account", async () => {
+    upsertMock.mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError(
+        "Unique constraint failed on the constraint: `user_profiles_email_key`",
+        {
+          code: "P2002",
+          clientVersion: "7.9.1",
+          meta: { modelName: "UserProfile" },
+        },
+      ),
+    );
+
+    const response = await POST(makeRequest(playerBody()));
+
+    expect(response.status).toBe(409);
+    const body = await response.json();
+    expect(body.error).toBe("A user with this email is already registered.");
   });
 
   it("returns 500 without upserting the profile when seeding the membership subscription fails", async () => {

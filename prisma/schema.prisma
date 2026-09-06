@@ -291,7 +291,12 @@ model UserProfile {
   displayName     String
   firstName       String?
   lastName        String?
-  email           String
+  // Unique (2026-09-06): more than one person must never register with the
+  // same email — see docs/ADMIN_BOOTSTRAP.md's own warning about duplicate
+  // rows this app used to allow. app/api/onboarding/route.ts catches the
+  // resulting P2002 and returns a friendly "already registered" error
+  // instead of a raw 500.
+  email           String         @unique
   photoURL        String?
   phone           String?
   address         String?
