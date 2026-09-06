@@ -5,6 +5,7 @@ import {
   syncUserProfileFromClerk,
 } from "@/core/users/services/users.service";
 import { logAudit } from "@/core/audit/services/audit.service";
+import { logSystemJob } from "@/core/systemJobs/services/systemJobs.service";
 
 const SYSTEM_ACTOR = "system:clerk-webhook";
 
@@ -21,13 +22,48 @@ const SYSTEM_ACTOR = "system:clerk-webhook";
 // package version, so verification is delegated to it rather than hand-rolled
 // with the `svix` package directly.
 //
+// `POST` itself is only a thin outer instrumentation shell (start/success/
+// failure system job logging, see core/systemJobs) around `handlePost`
+// directly below — no business logic here.
+export async function POST(request: NextRequest): Promise<NextResponse> {
+  const startedAt = new Date();
+  let response: NextResponse;
+  try {
+    response = await handlePost(request);
+  } catch (err) {
+    await logSystemJob({
+      kind: "WEBHOOK",
+      name: "clerk",
+      status: "FAILURE",
+      startedAt,
+      finishedAt: new Date(),
+      errorMessage: err instanceof Error ? err.message : String(err),
+    });
+    throw err;
+  }
+
+  const status =
+    response.status >= 200 && response.status < 300 ? "SUCCESS" : "FAILURE";
+  await logSystemJob({
+    kind: "WEBHOOK",
+    name: "clerk",
+    status,
+    startedAt,
+    finishedAt: new Date(),
+    errorMessage:
+      status === "FAILURE" ? await response.clone().text() : undefined,
+  });
+
+  return response;
+}
+
 // Always ack with 2xx once the signature is verified, even on a
 // business-logic no-op (e.g. an event type we don't act on, or a
 // user.updated for a Clerk user who hasn't completed onboarding yet) —
 // same reasoning as the Mercado Pago webhook: Clerk retries on any
 // non-2xx response, and there's nothing to retry once verification passed
 // and the payload was a legitimate no-op.
-export async function POST(request: NextRequest) {
+async function handlePost(request: NextRequest) {
   let evt: Awaited<ReturnType<typeof verifyWebhook>>;
   try {
     evt = await verifyWebhook(request);

@@ -9,9 +9,12 @@ export function clubToFormValues(
     taxId: club?.taxId ?? "",
     email: club?.email ?? "",
     phone: club?.phone ?? "",
-    logoUrl: club?.logoUrl ?? "",
+    address: club?.address ?? "",
+    country: club?.country ?? "",
+    province: club?.province ?? "",
+    city: club?.city ?? "",
+    zipCode: club?.zipCode ?? "",
     timezone: club?.timezone ?? "",
     currency: club?.currency ?? "",
-    requiresPrepayment: club?.requiresPrepayment ?? false,
   };
 }

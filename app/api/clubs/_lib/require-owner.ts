@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/infrastructure/db/client";
+import { requireAuthUser } from "@/lib/auth/requireAuthUser";
 
 export type OwnerContext = {
   userId: string;
@@ -17,13 +17,9 @@ export type RequireOwnerResult =
  * app/api/clubs/** only ever acts on the caller's own club.
  */
 export async function requireOwnerClub(): Promise<RequireOwnerResult> {
-  const { userId } = await auth();
-  if (!userId) {
-    return {
-      ok: false,
-      response: NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
-    };
-  }
+  const authResult = await requireAuthUser();
+  if (!authResult.ok) return authResult;
+  const { userId } = authResult;
 
   const profile = await prisma.userProfile.findUnique({
     where: { id: userId },

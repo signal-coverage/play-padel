@@ -1,8 +1,11 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { usePathname } from "next/navigation";
 import type { SystemRole } from "@/providers/auth-provider";
 import { CLUB_OPERATIONAL_STATUS_QUERY_KEY } from "./consts";
+import type { NavItem } from "./consts";
+import { getVisibleNavItems } from "./utils";
 import type { ClubOperationalStatusResponse } from "./types";
 
 async function fetchClubOperationalStatus(): Promise<ClubOperationalStatusResponse> {
@@ -35,4 +38,30 @@ export function useIsClubOperational(role: SystemRole): boolean | undefined {
   });
 
   return data?.operational;
+}
+
+// A nav item plus whether it matches the current route — the one bit of
+// per-item state that's genuinely shared between NavLinks and
+// MobileBottomNav (each render list only differs in JSX/animation shell).
+export type VisibleNavLink = NavItem & { active: boolean };
+
+/**
+ * Shared, non-presentational logic behind both nav renderers
+ * (NavLinks/MobileBottomNav): which items are visible for this
+ * role/admin/operational-status combination (see getVisibleNavItems), plus
+ * whether each one matches the current pathname. Callers only need to map
+ * over the result and render their own link/pill/tab shell.
+ */
+export function useVisibleNavLinks(
+  role: SystemRole,
+  isAdmin: boolean = false,
+): VisibleNavLink[] {
+  const pathname = usePathname();
+  const isOperational = useIsClubOperational(role);
+  const visibleItems = getVisibleNavItems(role, isOperational, isAdmin);
+
+  return visibleItems.map((item) => ({
+    ...item,
+    active: pathname === item.href,
+  }));
 }

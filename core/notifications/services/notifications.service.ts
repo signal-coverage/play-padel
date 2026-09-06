@@ -1,9 +1,19 @@
+import { toZonedTime, fromZonedTime } from "date-fns-tz";
 import { prisma } from "@/infrastructure/db/client";
 import type {
   Notification,
   NotificationType,
   NotificationStatus,
 } from "@/core/notifications/types";
+
+// Every club on this platform operates in Argentina (see e.g.
+// lib/utils/currency.ts's es-AR default) — fixed rather than per-club, since
+// nothing else in this codebase resolves a specific club's own `timezone`
+// field for date math either. Computing "today" from the server's own
+// ambient timezone instead (typically UTC in production) would shift this
+// boundary by a few hours around midnight relative to what's actually
+// "today" for an Argentina-based club.
+const CLUB_TIMEZONE = "America/Argentina/Buenos_Aires";
 
 type NotificationRow = NonNullable<
   Awaited<ReturnType<typeof prisma.notification.findUnique>>
@@ -21,12 +31,13 @@ function toNotification(row: NotificationRow): Notification {
     status: row.status as NotificationStatus,
     failureReason: row.failureReason ?? undefined,
     sentAt: row.sentAt ?? undefined,
+    readAt: row.readAt ?? undefined,
     createdAt: row.createdAt,
   };
 }
 
 export interface CreateNotificationData {
-  clubId: string;
+  clubId: string | null;
   type: NotificationType;
   recipientId: string;
   recipientEmail: string;
@@ -116,21 +127,37 @@ export async function getPendingReservationReminders(
 
   if (reservations.length === 0) return [];
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  // Start of "today" in Argentina time, derived from the injected `now`
+  // (not a fresh `new Date()`, which previously ignored `now` entirely and
+  // also used the server's ambient local timezone rather than a fixed one).
+  const zonedNow = toZonedTime(now, CLUB_TIMEZONE);
+  zonedNow.setHours(0, 0, 0, 0);
+  const today = fromZonedTime(zonedNow, CLUB_TIMEZONE);
+
+  // Batched dedup check — a SINGLE findMany covering every candidate
+  // recipient, instead of a per-reservation findFirst in a loop (that exact
+  // N+1 shape was previously found and fixed for listActiveClubs, see
+  // core/clubs/services/clubs.service.ts). Reservations can span different
+  // clubs, so this is scoped by type/status/createdAt/recipientId only; the
+  // clubId part of the original per-reservation dedup key is applied
+  // in-memory below via the Set.
+  const userIds = reservations.map((r) => r.userId);
+  const existingReminders = await prisma.notification.findMany({
+    where: {
+      type: "RESERVATION_REMINDER",
+      status: "SENT",
+      createdAt: { gte: today },
+      recipientId: { in: userIds },
+    },
+    select: { recipientId: true, clubId: true },
+  });
+  const alreadyNotified = new Set(
+    existingReminders.map((n) => `${n.recipientId}:${n.clubId}`),
+  );
 
   const results = [];
   for (const r of reservations) {
-    const existing = await prisma.notification.findFirst({
-      where: {
-        clubId: r.clubId,
-        type: "RESERVATION_REMINDER",
-        recipientId: r.userId,
-        status: "SENT",
-        createdAt: { gte: today },
-      },
-    });
-    if (existing) continue;
+    if (alreadyNotified.has(`${r.userId}:${r.clubId}`)) continue;
 
     results.push({
       reservationId: r.id,
@@ -198,4 +225,45 @@ export async function listNotifications(
     page,
     pageSize,
   };
+}
+
+export async function listRecipientNotifications(
+  recipientId: string,
+  limit = 20,
+): Promise<Notification[]> {
+  const rows = await prisma.notification.findMany({
+    where: { recipientId },
+    orderBy: { createdAt: "desc" },
+    take: limit,
+  });
+  return rows.map(toNotification);
+}
+
+export async function countUnreadNotifications(
+  recipientId: string,
+): Promise<number> {
+  return prisma.notification.count({
+    where: { recipientId, readAt: null },
+  });
+}
+
+export async function markAllAsRead(recipientId: string): Promise<void> {
+  await prisma.notification.updateMany({
+    where: { recipientId, readAt: null },
+    data: { readAt: new Date() },
+  });
+}
+
+// Pure data query — orchestration (dispatching a notification to every
+// admin) lives in lib/notifications/dispatcher.ts's notifyAllAdmins, which
+// imports this function. Importing dispatch() back into this file would
+// create a circular import between the two modules, since dispatcher.ts
+// already imports createNotification/updateNotificationStatus from here.
+export async function listAdminRecipients(): Promise<
+  Array<{ id: string; email: string; displayName: string }>
+> {
+  return prisma.userProfile.findMany({
+    where: { isAdmin: true },
+    select: { id: true, email: true, displayName: true },
+  });
 }

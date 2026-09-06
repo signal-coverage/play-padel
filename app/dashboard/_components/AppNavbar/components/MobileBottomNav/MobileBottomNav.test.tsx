@@ -13,6 +13,7 @@ vi.mock("next/navigation", () => ({
 function renderMobileBottomNav(
   role: SystemRole,
   fetchMock: ReturnType<typeof vi.fn>,
+  isAdmin = false,
 ) {
   vi.stubGlobal("fetch", fetchMock);
 
@@ -22,7 +23,7 @@ function renderMobileBottomNav(
 
   render(
     <QueryClientProvider client={queryClient}>
-      <MobileBottomNav role={role} />
+      <MobileBottomNav role={role} isAdmin={isAdmin} />
     </QueryClientProvider>,
   );
 }
@@ -63,5 +64,30 @@ describe("MobileBottomNav", () => {
 
     await Promise.resolve();
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("hides Audit Log for a non-admin owner", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ operational: true }),
+    });
+    renderMobileBottomNav("owner", fetchMock, false);
+
+    await waitFor(() =>
+      expect(screen.getByText("Dashboard")).toBeInTheDocument(),
+    );
+    expect(screen.queryByText("Audit Log")).not.toBeInTheDocument();
+  });
+
+  it("shows Audit Log for an admin owner", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ operational: true }),
+    });
+    renderMobileBottomNav("owner", fetchMock, true);
+
+    await waitFor(() =>
+      expect(screen.getByText("Audit Log")).toBeInTheDocument(),
+    );
   });
 });

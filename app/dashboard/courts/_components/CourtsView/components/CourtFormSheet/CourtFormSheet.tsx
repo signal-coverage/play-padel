@@ -22,8 +22,10 @@ import {
   FieldLegend,
 } from "@/components/ui/field";
 import { Switch } from "@/components/ui/switch";
+import { Separator } from "@/components/ui/separator";
 import { GlobalLoadingOverlay } from "@/components/GlobalLoadingOverlay";
 import { formatPricePerHour } from "@/lib/utils/currency";
+import { MAX_COURT_PHOTO_SIZE_BYTES } from "@/core/courts/validation";
 import {
   availabilityRowsToEntries,
   buildAvailabilityRows,
@@ -43,6 +45,10 @@ import { CourtFormStepIndicator } from "./components/CourtFormStepIndicator";
 import { CurrencyAmountField } from "@/components/CurrencyAmountField";
 import type { AvailabilityDayRow, CourtFormValues } from "../../types";
 import type { CourtFormSheetProps } from "./types";
+
+// Derived (never hardcoded) so the upfront hint in the Photo field's legend
+// can never drift from the actual server/client-enforced limit.
+const MAX_COURT_PHOTO_MB = MAX_COURT_PHOTO_SIZE_BYTES / (1024 * 1024);
 
 export function CourtFormSheet({
   open,
@@ -187,11 +193,21 @@ export function CourtFormSheet({
   );
 
   async function submit(values: CourtFormValues) {
-    await onSubmit(
-      values,
-      pendingPhotoFile,
-      availabilityRowsToEntries(availabilityRows),
-    );
+    try {
+      await onSubmit(
+        values,
+        pendingPhotoFile,
+        availabilityRowsToEntries(availabilityRows),
+      );
+    } catch {
+      // onSubmit (handleFormSubmit) already surfaced its own error toast —
+      // just keep the Sheet open with the same entered values and staged
+      // photo so the owner can retry. Nothing here re-throws further: this
+      // is called from a plain onClick (handleSubmit(submit)), so nothing
+      // else is left to catch a re-thrown rejection — that would only leak
+      // as an unhandled promise rejection in the console.
+      return;
+    }
     setPendingPhotoFile(null);
     handleOpenChange(false);
   }
@@ -208,7 +224,15 @@ export function CourtFormSheet({
   return (
     <>
       <Sheet open={open} onOpenChange={handleOpenChange}>
-        <SheetContent onPointerDownOutside={(e) => e.preventDefault()}>
+        <SheetContent
+          onPointerDownOutside={(e) => e.preventDefault()}
+          // Widened only for the Details step: its ~10 field groups made a
+          // single default-width (~sm:max-w-sm) column unreasonably tall.
+          // Per AGENTS.md's "Forms inside Drawers" convention — see the
+          // two-column split below. The Availability step (step 1) keeps
+          // the default width; its own content doesn't need the extra room.
+          className={step === 0 ? "sm:max-w-2xl" : undefined}
+        >
           <SheetHeader>
             <SheetTitle>{isEditMode ? "Edit court" : "New court"}</SheetTitle>
             <SheetDescription>
@@ -223,184 +247,214 @@ export function CourtFormSheet({
           {step === 0 ? (
             <form
               onSubmit={handleSubmit(submit)}
-              className="flex flex-1 flex-col gap-4 overflow-y-auto px-4"
+              className="flex flex-1 flex-col overflow-y-auto px-4"
             >
-              <Field>
-                <FieldLabel htmlFor="court-name">Name *</FieldLabel>
-                <Input
-                  id="court-name"
-                  placeholder="Court 1"
-                  {...register("name")}
-                  aria-invalid={
-                    (touchedFields.name || isSubmitted) && !!errors.name
-                  }
-                />
-                <FieldError errors={shownError("name")} />
-              </Field>
+              {/*
+                Two-column layout per AGENTS.md's "Forms inside Drawers"
+                exception for wide drawers with many fields: each column
+                stays single-field-per-line internally, grouped by logical
+                relatedness (physical/descriptive attributes vs. commercial/
+                scheduling attributes) rather than an arbitrary alternating
+                split.
+              */}
+              <div className="flex flex-1 gap-4">
+                <div className="flex flex-1 flex-col gap-4">
+                  {/* Plain heading, not FieldLegend — a <legend> is only
+                      valid inside a <fieldset>, and this is a column
+                      heading spanning several fieldsets, not one. */}
+                  <h3 className="text-sm font-semibold text-foreground">
+                    Court details
+                  </h3>
 
-              <FieldSet>
-                <FieldLegend variant="label">Surface *</FieldLegend>
-                <SurfaceField
-                  name="court-surface"
-                  value={surface}
-                  onChange={(value) =>
-                    setValue("surface", value, {
-                      shouldValidate: true,
-                      shouldTouch: true,
-                    })
-                  }
-                />
-                <FieldError errors={shownError("surface")} />
-              </FieldSet>
+                  <Field>
+                    <FieldLabel htmlFor="court-name">Name *</FieldLabel>
+                    <Input
+                      id="court-name"
+                      placeholder="Court 1"
+                      {...register("name")}
+                      aria-invalid={
+                        (touchedFields.name || isSubmitted) && !!errors.name
+                      }
+                    />
+                    <FieldError errors={shownError("name")} />
+                  </Field>
 
-              <FieldSet>
-                <FieldLegend variant="label">Photo</FieldLegend>
-                <PhotoField
-                  courtId={court?.id}
-                  value={photoUrl}
-                  onChange={(value) =>
-                    setValue("photoUrl", value, { shouldTouch: true })
-                  }
-                  onFileStaged={setPendingPhotoFile}
-                />
-              </FieldSet>
+                  <FieldSet>
+                    <FieldLegend variant="label">Surface *</FieldLegend>
+                    <SurfaceField
+                      name="court-surface"
+                      value={surface}
+                      onChange={(value) =>
+                        setValue("surface", value, {
+                          shouldValidate: true,
+                          shouldTouch: true,
+                        })
+                      }
+                    />
+                    <FieldError errors={shownError("surface")} />
+                  </FieldSet>
 
-              <div className="flex gap-4">
-                <FieldSet className="flex-1">
-                  <FieldLegend variant="label">Court type</FieldLegend>
-                  <CourtTypeField
-                    name="court-type"
-                    indoor={indoor}
-                    onChange={(value) =>
-                      setValue("indoor", value, { shouldTouch: true })
-                    }
-                  />
-                </FieldSet>
+                  <FieldSet>
+                    <FieldLegend variant="label">
+                      Photo (max {MAX_COURT_PHOTO_MB}MB)
+                    </FieldLegend>
+                    <PhotoField
+                      courtId={court?.id}
+                      value={photoUrl}
+                      onChange={(value) =>
+                        setValue("photoUrl", value, { shouldTouch: true })
+                      }
+                      onFileStaged={setPendingPhotoFile}
+                    />
+                  </FieldSet>
 
-                <FieldSet className="flex-1">
-                  <FieldLegend variant="label">Color</FieldLegend>
-                  <ColorField
-                    name="court-color"
-                    value={color}
-                    onChange={(value) =>
-                      setValue("color", value, {
-                        shouldValidate: true,
-                        shouldTouch: true,
-                      })
-                    }
-                  />
-                </FieldSet>
+                  <FieldSet>
+                    <FieldLegend variant="label">Court type</FieldLegend>
+                    <CourtTypeField
+                      name="court-type"
+                      indoor={indoor}
+                      onChange={(value) =>
+                        setValue("indoor", value, { shouldTouch: true })
+                      }
+                    />
+                  </FieldSet>
+
+                  <FieldSet>
+                    <FieldLegend variant="label">Color</FieldLegend>
+                    <ColorField
+                      name="court-color"
+                      value={color}
+                      onChange={(value) =>
+                        setValue("color", value, {
+                          shouldValidate: true,
+                          shouldTouch: true,
+                        })
+                      }
+                    />
+                  </FieldSet>
+
+                  <FieldSet>
+                    <FieldLegend variant="label">Wall type</FieldLegend>
+                    <WallTypeField
+                      name="court-wall-type"
+                      value={wallType ?? ""}
+                      onChange={(value) =>
+                        setValue("wallType", value, { shouldTouch: true })
+                      }
+                    />
+                  </FieldSet>
+
+                  <FieldSet>
+                    <FieldLegend variant="label">Net type</FieldLegend>
+                    <NetTypeField
+                      name="court-net-type"
+                      value={netType ?? ""}
+                      onChange={(value) =>
+                        setValue("netType", value, { shouldTouch: true })
+                      }
+                    />
+                  </FieldSet>
+
+                  <Field orientation="horizontal">
+                    <FieldLabel htmlFor="court-lighting">
+                      Has lighting
+                    </FieldLabel>
+                    <Switch
+                      id="court-lighting"
+                      checked={lighting}
+                      onCheckedChange={(checked) =>
+                        setValue("lighting", checked, { shouldTouch: true })
+                      }
+                    />
+                  </Field>
+                </div>
+
+                <Separator orientation="vertical" />
+
+                <div className="flex flex-1 flex-col gap-4">
+                  <h3 className="text-sm font-semibold text-foreground">
+                    Booking &amp; pricing
+                  </h3>
+
+                  <Field>
+                    <FieldLabel htmlFor="court-slot-duration">
+                      Minimum shift *
+                    </FieldLabel>
+                    <SlotDurationField
+                      id="court-slot-duration"
+                      value={slotDurationMinutes}
+                      onChange={(value) =>
+                        setValue("slotDurationMinutes", value, {
+                          shouldValidate: true,
+                          shouldTouch: true,
+                        })
+                      }
+                      ariaInvalid={
+                        (touchedFields.slotDurationMinutes || isSubmitted) &&
+                        !!errors.slotDurationMinutes
+                      }
+                    />
+                    <FieldDescription>
+                      The shortest amount of time a player can book this court
+                      for.
+                    </FieldDescription>
+                    <FieldError errors={shownError("slotDurationMinutes")} />
+                  </Field>
+
+                  <Field>
+                    <FieldLabel htmlFor="court-reservation-fee">
+                      Reservation fee *
+                    </FieldLabel>
+                    <CurrencyAmountField
+                      id="court-reservation-fee"
+                      value={reservationFee}
+                      // Cast past the required `number`: the field can sit
+                      // briefly empty while typing, which is exactly what
+                      // makes it invalid (and Create disabled) until the
+                      // user fills it in.
+                      onChange={(value) =>
+                        setValue("reservationFee", value as number, {
+                          shouldValidate: true,
+                          shouldTouch: true,
+                        })
+                      }
+                      ariaInvalid={
+                        (touchedFields.reservationFee || isSubmitted) &&
+                        !!errors.reservationFee
+                      }
+                    />
+                    <FieldError errors={shownError("reservationFee")} />
+                  </Field>
+
+                  <Field>
+                    <FieldLabel htmlFor="court-price">Court price</FieldLabel>
+                    <CurrencyAmountField
+                      id="court-price"
+                      value={courtPrice}
+                      onChange={(value) =>
+                        setValue("courtPrice", value, { shouldTouch: true })
+                      }
+                    />
+                    <FieldDescription>
+                      $/hour:{" "}
+                      {formatPricePerHour(courtPrice, slotDurationMinutes)}
+                    </FieldDescription>
+                  </Field>
+
+                  {isEditMode && (
+                    <Field orientation="horizontal">
+                      <FieldLabel htmlFor="court-active">Active</FieldLabel>
+                      <Switch
+                        id="court-active"
+                        checked={active}
+                        onCheckedChange={(checked) =>
+                          setValue("active", checked)
+                        }
+                      />
+                    </Field>
+                  )}
+                </div>
               </div>
-
-              <FieldSet>
-                <FieldLegend variant="label">Wall type</FieldLegend>
-                <WallTypeField
-                  name="court-wall-type"
-                  value={wallType ?? ""}
-                  onChange={(value) =>
-                    setValue("wallType", value, { shouldTouch: true })
-                  }
-                />
-              </FieldSet>
-
-              <FieldSet>
-                <FieldLegend variant="label">Net type</FieldLegend>
-                <NetTypeField
-                  name="court-net-type"
-                  value={netType ?? ""}
-                  onChange={(value) =>
-                    setValue("netType", value, { shouldTouch: true })
-                  }
-                />
-              </FieldSet>
-
-              <Field orientation="horizontal">
-                <FieldLabel htmlFor="court-lighting">Has lighting</FieldLabel>
-                <Switch
-                  id="court-lighting"
-                  checked={lighting}
-                  onCheckedChange={(checked) =>
-                    setValue("lighting", checked, { shouldTouch: true })
-                  }
-                />
-              </Field>
-
-              <div className="flex gap-4">
-                <Field className="flex-1">
-                  <FieldLabel htmlFor="court-slot-duration">
-                    Minimum shift *
-                  </FieldLabel>
-                  <SlotDurationField
-                    id="court-slot-duration"
-                    value={slotDurationMinutes}
-                    onChange={(value) =>
-                      setValue("slotDurationMinutes", value, {
-                        shouldValidate: true,
-                        shouldTouch: true,
-                      })
-                    }
-                    ariaInvalid={
-                      (touchedFields.slotDurationMinutes || isSubmitted) &&
-                      !!errors.slotDurationMinutes
-                    }
-                  />
-                  <FieldDescription>
-                    The shortest amount of time a player can book this court
-                    for.
-                  </FieldDescription>
-                  <FieldError errors={shownError("slotDurationMinutes")} />
-                </Field>
-
-                <Field className="flex-1">
-                  <FieldLabel htmlFor="court-reservation-fee">
-                    Reservation fee *
-                  </FieldLabel>
-                  <CurrencyAmountField
-                    id="court-reservation-fee"
-                    value={reservationFee}
-                    // Cast past the required `number`: the field can sit
-                    // briefly empty while typing, which is exactly what
-                    // makes it invalid (and Create disabled) until the user
-                    // fills it in.
-                    onChange={(value) =>
-                      setValue("reservationFee", value as number, {
-                        shouldValidate: true,
-                        shouldTouch: true,
-                      })
-                    }
-                    ariaInvalid={
-                      (touchedFields.reservationFee || isSubmitted) &&
-                      !!errors.reservationFee
-                    }
-                  />
-                  <FieldError errors={shownError("reservationFee")} />
-                </Field>
-              </div>
-
-              <Field>
-                <FieldLabel htmlFor="court-price">Court price</FieldLabel>
-                <CurrencyAmountField
-                  id="court-price"
-                  value={courtPrice}
-                  onChange={(value) =>
-                    setValue("courtPrice", value, { shouldTouch: true })
-                  }
-                />
-                <FieldDescription>
-                  $/hour: {formatPricePerHour(courtPrice, slotDurationMinutes)}
-                </FieldDescription>
-              </Field>
-
-              {isEditMode && (
-                <Field orientation="horizontal">
-                  <FieldLabel htmlFor="court-active">Active</FieldLabel>
-                  <Switch
-                    id="court-active"
-                    checked={active}
-                    onCheckedChange={(checked) => setValue("active", checked)}
-                  />
-                </Field>
-              )}
             </form>
           ) : (
             <div className="flex flex-1 flex-col overflow-y-auto px-4">

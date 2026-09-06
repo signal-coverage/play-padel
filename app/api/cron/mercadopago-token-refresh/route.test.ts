@@ -1,5 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
+const { logSystemJobMock } = vi.hoisted(() => ({
+  logSystemJobMock: vi.fn(),
+}));
+
 vi.mock("@/infrastructure/db/client", () => ({
   prisma: {
     clubMercadoPagoAccount: {
@@ -11,6 +15,10 @@ vi.mock("@/infrastructure/db/client", () => ({
 vi.mock("@/lib/mercadopago/clubMercadoPagoClient", () => ({
   refreshAndPersist: vi.fn(),
   ClubMercadoPagoConnectionError: class ClubMercadoPagoConnectionError extends Error {},
+}));
+
+vi.mock("@/core/systemJobs/services/systemJobs.service", () => ({
+  logSystemJob: logSystemJobMock,
 }));
 
 import { prisma } from "@/infrastructure/db/client";
@@ -38,7 +46,12 @@ beforeEach(() => {
   vi.stubEnv("CRON_SECRET", "test-cron-secret");
   findManyMock.mockReset();
   refreshAndPersistMock.mockReset();
+  logSystemJobMock.mockReset();
 });
+
+function authorizedRequest() {
+  return makeRequest(`Bearer ${process.env.CRON_SECRET}`);
+}
 
 describe("GET /api/cron/mercadopago-token-refresh", () => {
   it("rejects requests without the correct CRON_SECRET bearer token", async () => {
@@ -53,6 +66,23 @@ describe("GET /api/cron/mercadopago-token-refresh", () => {
 
     expect(response.status).toBe(401);
     expect(findManyMock).not.toHaveBeenCalled();
+  });
+
+  it("returns 500 (not a silent 401) and logs a FAILURE system job when CRON_SECRET itself is not configured", async () => {
+    vi.stubEnv("CRON_SECRET", "");
+
+    const response = await GET(makeRequest("Bearer anything"));
+
+    expect(response.status).toBe(500);
+    expect(findManyMock).not.toHaveBeenCalled();
+    expect(logSystemJobMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        kind: "CRON",
+        name: "mercadopago-token-refresh",
+        status: "FAILURE",
+        errorMessage: expect.stringContaining("CRON_SECRET"),
+      }),
+    );
   });
 
   it("queries only CONNECTED accounts nearing expiry within the refresh window", async () => {
@@ -135,5 +165,44 @@ describe("GET /api/cron/mercadopago-token-refresh", () => {
 
   it("exports a refresh window wider than the lazy-refresh window (backstop for dormant clubs)", () => {
     expect(CRON_REFRESH_WINDOW_MS).toBeGreaterThan(3 * 24 * 60 * 60 * 1000);
+  });
+});
+
+describe("system job logging", () => {
+  it("does not log a job entry for an unauthorized probe", async () => {
+    await GET(makeRequest("Bearer wrong-secret"));
+
+    expect(logSystemJobMock).not.toHaveBeenCalled();
+  });
+
+  it("logs a SUCCESS entry for a successful run (per-club failures caught internally still count as a successful batch)", async () => {
+    findManyMock.mockResolvedValue([]);
+
+    await GET(authorizedRequest());
+
+    expect(logSystemJobMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        kind: "CRON",
+        name: "mercadopago-token-refresh",
+        status: "SUCCESS",
+        startedAt: expect.any(Date),
+        finishedAt: expect.any(Date),
+      }),
+    );
+  });
+
+  it("logs a FAILURE entry with the error message and still lets the error propagate when the underlying query itself throws", async () => {
+    findManyMock.mockRejectedValue(new Error("db unavailable"));
+
+    await expect(GET(authorizedRequest())).rejects.toThrow("db unavailable");
+
+    expect(logSystemJobMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        kind: "CRON",
+        name: "mercadopago-token-refresh",
+        status: "FAILURE",
+        errorMessage: "db unavailable",
+      }),
+    );
   });
 });

@@ -196,6 +196,70 @@ describe("CourtsView", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("rolls back (silently deletes) the just-created court and surfaces an error toast when the chained photo upload fails, without showing the success toast/celebration", async () => {
+    const fetchMock = renderCourtsView(async (url, init) => {
+      if (url === "/api/clubs/courts?includeInactive=true") {
+        return { ok: true, json: async () => ({ courts: [] }) };
+      }
+      if (url === "/api/clubs/operating-hours") {
+        return { ok: true, json: async () => NO_OPERATING_HOURS };
+      }
+      if (url === "/api/clubs/courts" && init?.method === "POST") {
+        return { ok: true, json: async () => ({ court: CREATED_COURT }) };
+      }
+      if (url === `/api/clubs/courts/${CREATED_COURT.id}/photo`) {
+        return {
+          ok: false,
+          json: async () => ({ error: "Image must be 5MB or smaller." }),
+        };
+      }
+      if (
+        url === `/api/clubs/courts/${CREATED_COURT.id}` &&
+        init?.method === "DELETE"
+      ) {
+        return { ok: true, json: async () => ({ ok: true }) };
+      }
+      throw new Error(`unexpected fetch: ${url} ${init?.method ?? "GET"}`);
+    });
+
+    await openFormAndFillMinimumFields();
+
+    const file = new File(["photo"], "court.jpg", { type: "image/jpeg" });
+    fireEvent.change(screen.getByLabelText("Upload picture"), {
+      target: { files: [file] },
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /create court/i }));
+
+    await waitFor(() => {
+      expect(toastMock.error).toHaveBeenCalledWith(
+        "Image must be 5MB or smaller.",
+      );
+    });
+
+    // The just-created court gets rolled back via a silent delete — no
+    // "Court deactivated" toast, since that toast is reserved for an
+    // owner-initiated deactivation, not this internal cleanup.
+    await waitFor(() => {
+      const deleteCall = fetchMock.mock.calls.find(
+        ([url, init]) =>
+          url === `/api/clubs/courts/${CREATED_COURT.id}` &&
+          init?.method === "DELETE",
+      );
+      expect(deleteCall).toBeDefined();
+    });
+    expect(toastMock.success).not.toHaveBeenCalledWith("Court deactivated");
+
+    // No "Court created" success signal fires for this failed operation.
+    expect(toastMock.success).not.toHaveBeenCalledWith("Court created");
+    expect(fireSuccessCelebrationMock).not.toHaveBeenCalled();
+
+    // The Sheet stays open so the owner can retry.
+    expect(
+      screen.getByRole("heading", { name: "New court" }),
+    ).toBeInTheDocument();
+  });
+
   it("still shows the success toast right after create when no photo is attached (no regression)", async () => {
     renderCourtsView(async (url, init) => {
       if (url === "/api/clubs/courts?includeInactive=true") {

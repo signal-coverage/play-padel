@@ -1,0 +1,1 @@
+export { AdminClubSettingsView } from "./AdminClubSettingsView";

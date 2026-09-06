@@ -1,23 +1,13 @@
 import { NextResponse } from "next/server";
+import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/infrastructure/db/client";
 import { updateMembershipTrialConfigSchema } from "@/core/billing/schemas/membershipTrialConfig.schema";
 import { updateMembershipPreapprovalPlan } from "@/lib/mercadopago/preapprovalPlans";
+import { requireAdmin } from "@/lib/auth/admin";
 
-// Minimal-scope admin surface: a static-secret bearer guard, not a new
-// admin role — see spec's "Admin-Configurable Trial Length Per Plan" and
-// design.md's "Admin trial-length override" decision. Same
-// `Authorization: Bearer <secret>` convention already used by the cron
-// routes (see app/api/cron/notifications/route.ts), just with a distinct
-// secret since this is a human-triggered admin action, not Vercel Cron.
-function isAuthorized(request: Request): boolean {
-  const authHeader = request.headers.get("authorization");
-  return authHeader === `Bearer ${process.env.MEMBERSHIP_ADMIN_SECRET}`;
-}
-
-export async function GET(request: Request) {
-  if (!isAuthorized(request)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+export async function GET() {
+  const unauthorized = await requireAdmin();
+  if (unauthorized) return unauthorized;
 
   const configs = await prisma.membershipTrialConfig.findMany({
     orderBy: { plan: "asc" },
@@ -47,9 +37,13 @@ export async function GET(request: Request) {
  * succeeded.
  */
 export async function PATCH(request: Request) {
-  if (!isAuthorized(request)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const unauthorized = await requireAdmin();
+  if (unauthorized) return unauthorized;
+
+  // requireAdmin() already confirmed this resolves to a signed-in admin —
+  // re-read here only to get the userId itself for the audit trail below.
+  const { userId } = await auth();
+  const updatedBy = userId!;
 
   const body = await request.json().catch(() => null);
   const parsed = updateMembershipTrialConfigSchema.safeParse(body);
@@ -60,7 +54,7 @@ export async function PATCH(request: Request) {
     );
   }
 
-  const { plan, trialDays, updatedBy } = parsed.data;
+  const { plan, trialDays } = parsed.data;
 
   const config = await prisma.membershipTrialConfig.upsert({
     where: { plan },

@@ -10,9 +10,15 @@ export type AuditAction =
   | "court.closure_cancelled"
   | "club.created"
   | "club.updated"
+  | "club.approved"
+  | "club.rejected"
   | "user.created"
   | "user.updated"
   | "user.anonymized"
+  | "user.impersonated"
+  // Reserved for a future "promote player to admin" feature — no caller
+  // uses this yet (see UserProfile.isAdmin in prisma/schema.prisma).
+  | "user.role_changed"
   | "payment.confirmed"
   | "payment.refunded"
   | "waitlist.notified";

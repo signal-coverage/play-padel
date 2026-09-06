@@ -7,6 +7,7 @@ import {
   recordManualPeriodExpiredWithoutRenewal,
   recordManualLockout,
 } from "@/core/billing/services/membership.service";
+import { logSystemJob } from "@/core/systemJobs/services/systemJobs.service";
 
 // AUTO mode fully relies on Mercado Pago's own recycling/dunning timeline
 // (~10 days, up to 4 retries) as its grace period — no independent app-side
@@ -36,6 +37,25 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  // Started only after the auth check passes — an unauthorized probe should
+  // never pollute the system job history (see core/systemJobs).
+  const startedAt = new Date();
+  try {
+    return await runGraceSweep(startedAt);
+  } catch (err) {
+    await logSystemJob({
+      kind: "CRON",
+      name: "membership-grace-sweep",
+      status: "FAILURE",
+      startedAt,
+      finishedAt: new Date(),
+      errorMessage: err instanceof Error ? err.message : String(err),
+    });
+    throw err;
+  }
+}
+
+async function runGraceSweep(startedAt: Date): Promise<NextResponse> {
   const now = new Date();
   const autoBackstopCutoff = new Date(
     now.getTime() - AUTO_BACKSTOP_WINDOW_DAYS * 24 * 60 * 60 * 1000,
@@ -165,6 +185,14 @@ export async function GET(request: Request) {
       failed++;
     }
   }
+
+  await logSystemJob({
+    kind: "CRON",
+    name: "membership-grace-sweep",
+    status: "SUCCESS",
+    startedAt,
+    finishedAt: new Date(),
+  });
 
   return NextResponse.json({
     autoReconciled,

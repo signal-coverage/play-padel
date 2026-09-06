@@ -24,13 +24,20 @@ export async function logAudit(params: {
     .catch(() => null);
 }
 
-export async function listAuditLogs(clubId: string, filters: AuditFilters) {
+// `clubId` is optional — omit it (or pass null/undefined) for a global,
+// cross-club view (the admin's Audit Log page). Every existing caller that
+// passes a real clubId (the owner-scoped app/api/clubs/audit-logs route)
+// keeps its exact prior club-scoped behavior unchanged.
+export async function listAuditLogs(
+  clubId: string | null | undefined,
+  filters: AuditFilters,
+) {
   const page = filters.page ?? 1;
   const pageSize = filters.pageSize ?? 20;
   const skip = (page - 1) * pageSize;
 
   const where = {
-    clubId,
+    ...(clubId && { clubId }),
     ...(filters.entity && { entity: filters.entity }),
     ...(filters.action && { action: filters.action }),
   };

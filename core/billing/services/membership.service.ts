@@ -1,6 +1,33 @@
 import { prisma } from "@/infrastructure/db/client";
 import type { Plan } from "@/core/clubs/types";
 import { resolveFreeTrialConfig } from "@/lib/mercadopago/preapprovalPlans";
+import { dispatch } from "@/lib/notifications/dispatcher";
+import { getClubOwner } from "@/core/clubs/services/clubs.service";
+
+/**
+ * Notification failure must never affect a billing state transition — the
+ * same swallowing discipline as core/billing/services/billing.service.ts's
+ * recordPayment.
+ */
+async function notifyMembershipPastDue(clubId: string): Promise<void> {
+  try {
+    const owner = await getClubOwner(clubId);
+    if (owner) {
+      await dispatch({
+        type: "MEMBERSHIP_PAST_DUE",
+        clubId,
+        recipientId: owner.id,
+        recipientEmail: owner.email,
+        recipientName: owner.displayName,
+        subject: "Your membership payment is past due",
+        html: "Your club's membership payment failed and is now past due. Please update your payment method.",
+        sendEmail: false,
+      });
+    }
+  } catch {
+    // notification failure must not affect billing state transitions
+  }
+}
 
 // Local unions mirroring `prisma/schema.prisma`'s enums, kept decoupled from
 // the generated Prisma client — same convention already established by
@@ -400,31 +427,40 @@ export async function recordSuccessfulCharge(
     effectiveCycle as MembershipCycleValue,
   );
 
-  const row = await prisma.clubMembershipSubscription.update({
-    where: { clubId: input.clubId },
-    data: {
-      status: "ACTIVE",
-      plan: effectivePlan,
-      cycle: effectiveCycle,
-      pendingPlan: null,
-      pendingCycle: null,
-      currentPeriodStart: input.chargedAt,
-      currentPeriodEnd,
-      pastDueSince: null,
-      pastDueUntil: null,
-      lastWebhookEventId: input.webhookEventId ?? current.lastWebhookEventId,
-    },
-  });
-
-  // Same reasoning as startTrial's own Club.status reset: a real charge
-  // confirms the membership, so any earlier `Club.status = "INACTIVE"`
-  // (recordAutoCancellation/recordManualLockout, the only other writers of
-  // this field) must be undone here — otherwise a reactivated club stays
-  // locked out of ClubOperationalGate even after successfully paying.
-  await prisma.club.update({
-    where: { id: input.clubId },
-    data: { status: "ACTIVE" },
-  });
+  // Both writes are wrapped in a single $transaction (same convention as
+  // `billing.service.ts`'s `recordPayment`): the subscription-status write
+  // and the Club.status sync below must both land or neither does. Without
+  // this, a transient failure between the two writes would leave
+  // `Club.status` permanently stale — and this function's own
+  // `webhookEventId` idempotency guard above (designed to make retries
+  // safe) would then permanently short-circuit before the missing second
+  // write could ever be retried.
+  const [row] = await prisma.$transaction([
+    prisma.clubMembershipSubscription.update({
+      where: { clubId: input.clubId },
+      data: {
+        status: "ACTIVE",
+        plan: effectivePlan,
+        cycle: effectiveCycle,
+        pendingPlan: null,
+        pendingCycle: null,
+        currentPeriodStart: input.chargedAt,
+        currentPeriodEnd,
+        pastDueSince: null,
+        pastDueUntil: null,
+        lastWebhookEventId: input.webhookEventId ?? current.lastWebhookEventId,
+      },
+    }),
+    // Same reasoning as startTrial's own Club.status reset: a real charge
+    // confirms the membership, so any earlier `Club.status = "INACTIVE"`
+    // (recordAutoCancellation/recordManualLockout, the only other writers of
+    // this field) must be undone here — otherwise a reactivated club stays
+    // locked out of ClubOperationalGate even after successfully paying.
+    prisma.club.update({
+      where: { id: input.clubId },
+      data: { status: "ACTIVE" },
+    }),
+  ]);
 
   return toSnapshot(row);
 }
@@ -468,6 +504,13 @@ export async function recordFailedCharge(
     },
   });
 
+  // Only notify on a genuine first-time transition — MP's own dunning
+  // retries re-call this while already PAST_DUE, and those must not
+  // re-notify the owner.
+  if (currentStatus !== "PAST_DUE") {
+    await notifyMembershipPastDue(input.clubId);
+  }
+
   return toSnapshot(row);
 }
 
@@ -502,18 +545,24 @@ export async function recordAutoCancellation(
 
   assertMembershipTransition(currentStatus, "CANCELLED");
 
-  const row = await prisma.clubMembershipSubscription.update({
-    where: { clubId: input.clubId },
-    data: {
-      status: "CANCELLED",
-      lastWebhookEventId: input.webhookEventId ?? current.lastWebhookEventId,
-    },
-  });
-
-  await prisma.club.update({
-    where: { id: input.clubId },
-    data: { status: "INACTIVE" },
-  });
+  // Wrapped in a single $transaction — same reasoning as
+  // `recordSuccessfulCharge` above: the subscription-status write and the
+  // `Club.status` sync must both land or neither does, so a failure
+  // between them can never leave `Club.status` permanently stale behind
+  // this function's own idempotency guard.
+  const [row] = await prisma.$transaction([
+    prisma.clubMembershipSubscription.update({
+      where: { clubId: input.clubId },
+      data: {
+        status: "CANCELLED",
+        lastWebhookEventId: input.webhookEventId ?? current.lastWebhookEventId,
+      },
+    }),
+    prisma.club.update({
+      where: { id: input.clubId },
+      data: { status: "INACTIVE" },
+    }),
+  ]);
 
   return toSnapshot(row);
 }
@@ -561,6 +610,10 @@ export async function recordManualPeriodExpiredWithoutRenewal(
     },
   });
 
+  // The early return above guarantees this is a genuine first-time
+  // transition by the time we reach here.
+  await notifyMembershipPastDue(input.clubId);
+
   return toSnapshot(row);
 }
 
@@ -600,15 +653,18 @@ export async function recordManualLockout(
     );
   }
 
-  const row = await prisma.clubMembershipSubscription.update({
-    where: { clubId: input.clubId },
-    data: { status: "CANCELLED" },
-  });
-
-  await prisma.club.update({
-    where: { id: input.clubId },
-    data: { status: "INACTIVE" },
-  });
+  // Wrapped in a single $transaction — same reasoning as
+  // `recordSuccessfulCharge`/`recordAutoCancellation` above.
+  const [row] = await prisma.$transaction([
+    prisma.clubMembershipSubscription.update({
+      where: { clubId: input.clubId },
+      data: { status: "CANCELLED" },
+    }),
+    prisma.club.update({
+      where: { id: input.clubId },
+      data: { status: "INACTIVE" },
+    }),
+  ]);
 
   return toSnapshot(row);
 }
@@ -735,10 +791,17 @@ export async function activateFreePlan(
   // Same reasoning as startTrial's/recordSuccessfulCharge's own Club.status
   // reset: reverses any prior lockout (recordAutoCancellation/
   // recordManualLockout are the only other writers of this field) so the
-  // club is immediately operational for testing.
+  // club is immediately operational for testing. Also forces
+  // approvalStatus to APPROVED — a FREE plan can never itself go through
+  // the admin approval queue (see prisma/schema.prisma's
+  // Club.approvalStatus and lib/mercadopago/operationalStatus.ts's
+  // PENDING_APPROVAL cause), so without this a FREE-plan test club would
+  // stay stuck behind the new approval gate despite its subscription being
+  // fully confirmed. This is the only other place besides an admin's own
+  // approve action that ever sets approvalStatus to APPROVED.
   await prisma.club.update({
     where: { id: input.clubId },
-    data: { status: "ACTIVE" },
+    data: { status: "ACTIVE", approvalStatus: "APPROVED" },
   });
 
   return toSnapshot(row);

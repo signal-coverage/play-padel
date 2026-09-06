@@ -73,7 +73,9 @@ export function ClubListPanel({
             )}
           >
             <Avatar>
-              {club.logoUrl && <AvatarImage src={club.logoUrl} alt="" />}
+              {club.ownerPhotoUrl && (
+                <AvatarImage src={club.ownerPhotoUrl} alt="" />
+              )}
               <AvatarFallback>{getInitials(club.name)}</AvatarFallback>
             </Avatar>
             <div className="min-w-0">

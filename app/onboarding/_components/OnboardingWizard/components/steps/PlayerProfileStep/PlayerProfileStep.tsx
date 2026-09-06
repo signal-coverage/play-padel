@@ -4,8 +4,8 @@ import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { SelectField } from "@/components/SelectField";
 import { GENDER_OPTIONS } from "@/app/onboarding/types";
-import { useCountryProvinceCityFields } from "../../shared/CountryProvinceCityFields";
-import { PhoneField } from "../../shared/PhoneField";
+import { useCountryProvinceCityFields } from "@/components/CountryProvinceCityFields";
+import { PhoneField } from "@/components/PhoneField";
 import type { PlayerProfileStepProps } from "./types";
 
 export function PlayerProfileStep({

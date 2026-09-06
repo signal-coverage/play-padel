@@ -13,9 +13,6 @@ export const createClubSchema = z.object({
   province: z.string().optional(),
   city: z.string().optional(),
   zipCode: z.string().optional(),
-  logoUrl: z
-    .union([z.literal(""), z.string().url("Must be a valid URL")])
-    .optional(),
   plan: z.enum(["BASIC", "PRO", "PLUS", "MAX"]).optional(),
 });
 
@@ -30,14 +27,10 @@ export const updateClubSchema = z.object({
   province: z.string().optional(),
   city: z.string().optional(),
   zipCode: z.string().optional(),
-  logoUrl: z
-    .union([z.literal(""), z.string().url("Must be a valid URL")])
-    .optional(),
   timezone: z.string().optional(),
   currency: z.string().optional(),
   plan: z.enum(["BASIC", "PRO", "PLUS", "MAX"]).optional(),
   status: z.enum(["ACTIVE", "INACTIVE", "SUSPENDED", "DISABLED"]).optional(),
-  requiresPrepayment: z.boolean().optional(),
 });
 
 export type CreateClubSchemaInput = z.infer<typeof createClubSchema>;

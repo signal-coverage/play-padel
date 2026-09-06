@@ -1,18 +1,11 @@
 import { NextResponse } from "next/server";
+import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/infrastructure/db/client";
 import { Prisma } from "@/lib/generated/prisma/client";
 import { updateClubStatusSchema } from "@/core/clubs/schemas/clubStatus.schema";
-
-// Minimal-scope admin surface: a static-secret bearer guard, not a new
-// admin role — same convention as app/api/admin/membership-trial-config.
-// `ACTIVE`/`INACTIVE` are otherwise fully owned by the billing state
-// machine in core/billing/services/membership.service.ts; this route lets
-// an admin override any status, including the manual `SUSPENDED`/
-// `DISABLED` lockouts that machine never sets on its own.
-function isAuthorized(request: Request): boolean {
-  const authHeader = request.headers.get("authorization");
-  return authHeader === `Bearer ${process.env.MEMBERSHIP_ADMIN_SECRET}`;
-}
+import { requireAdmin } from "@/lib/auth/admin";
+import { getClubOwner } from "@/core/clubs/services/clubs.service";
+import { dispatch } from "@/lib/notifications/dispatcher";
 
 const clubSelect = {
   id: true,
@@ -23,9 +16,8 @@ const clubSelect = {
 } as const;
 
 export async function GET(request: Request) {
-  if (!isAuthorized(request)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const unauthorized = await requireAdmin();
+  if (unauthorized) return unauthorized;
 
   const clubId = new URL(request.url).searchParams.get("clubId");
   if (!clubId) {
@@ -45,9 +37,13 @@ export async function GET(request: Request) {
 }
 
 export async function PATCH(request: Request) {
-  if (!isAuthorized(request)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const unauthorized = await requireAdmin();
+  if (unauthorized) return unauthorized;
+
+  // requireAdmin() already confirmed this resolves to a signed-in admin —
+  // re-read here only to get the userId itself for the audit trail below.
+  const { userId } = await auth();
+  const updatedBy = userId!;
 
   const body = await request.json().catch(() => null);
   const parsed = updateClubStatusSchema.safeParse(body);
@@ -58,14 +54,40 @@ export async function PATCH(request: Request) {
     );
   }
 
-  const { clubId, status, updatedBy } = parsed.data;
+  const { clubId, status } = parsed.data;
 
   try {
+    const existing = await prisma.club.findUnique({
+      where: { id: clubId },
+      select: { status: true },
+    });
+    const previousStatus = existing?.status;
+
     const club = await prisma.club.update({
       where: { id: clubId },
       data: { status, updatedBy },
       select: clubSelect,
     });
+
+    if (previousStatus !== "SUSPENDED" && status === "SUSPENDED") {
+      try {
+        const owner = await getClubOwner(clubId);
+        if (owner) {
+          await dispatch({
+            type: "CLUB_SUSPENDED",
+            clubId,
+            recipientId: owner.id,
+            recipientEmail: owner.email,
+            recipientName: owner.displayName,
+            subject: "Your club has been suspended",
+            html: "Your club has been suspended. Contact support for details.",
+            sendEmail: false,
+          });
+        }
+      } catch {
+        // notification failure must not affect the status update response
+      }
+    }
 
     return NextResponse.json({ club });
   } catch (err) {

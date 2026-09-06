@@ -12,7 +12,6 @@ function makeClub(overrides: Partial<ClubBrowseSummary>): ClubBrowseSummary {
     currency: "ARS",
     plan: "BASIC",
     status: "ACTIVE",
-    requiresPrepayment: false,
     createdAt: new Date(),
     updatedAt: new Date(),
     createdBy: "owner-1",

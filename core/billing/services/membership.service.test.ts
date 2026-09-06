@@ -12,10 +12,21 @@ vi.mock("@/infrastructure/db/client", () => ({
       update: vi.fn(),
       findUnique: vi.fn(),
     },
+    $transaction: vi.fn(),
   },
 }));
 
+vi.mock("@/lib/notifications/dispatcher", () => ({
+  dispatch: vi.fn(),
+}));
+
+vi.mock("@/core/clubs/services/clubs.service", () => ({
+  getClubOwner: vi.fn(),
+}));
+
 import { prisma } from "@/infrastructure/db/client";
+import { dispatch } from "@/lib/notifications/dispatcher";
+import { getClubOwner } from "@/core/clubs/services/clubs.service";
 import {
   ALLOWED_MEMBERSHIP_TRANSITIONS,
   InvalidMembershipTransitionError,
@@ -56,6 +67,9 @@ const updateMock = prisma.clubMembershipSubscription.update as ReturnType<
 >;
 const clubUpdateMock = prisma.club.update as ReturnType<typeof vi.fn>;
 const clubFindUniqueMock = prisma.club.findUnique as ReturnType<typeof vi.fn>;
+const transactionMock = prisma.$transaction as ReturnType<typeof vi.fn>;
+const dispatchMock = dispatch as ReturnType<typeof vi.fn>;
+const getClubOwnerMock = getClubOwner as ReturnType<typeof vi.fn>;
 
 function row(overrides: Record<string, unknown> = {}) {
   return {
@@ -91,6 +105,21 @@ beforeEach(() => {
   updateMock.mockReset();
   clubUpdateMock.mockReset();
   clubFindUniqueMock.mockReset();
+  transactionMock.mockReset();
+  dispatchMock.mockReset();
+  getClubOwnerMock.mockReset();
+  // Mirrors billing.service.test.ts's own `$transaction` mock convention:
+  // the array form is just `Promise.all` over already-invoked mocked calls.
+  transactionMock.mockImplementation((ops: Promise<unknown>[]) =>
+    Promise.all(ops),
+  );
+  dispatchMock.mockResolvedValue(undefined);
+  getClubOwnerMock.mockResolvedValue({
+    id: "user_owner",
+    displayName: "Owner Person",
+    photoURL: null,
+    email: "owner@example.com",
+  });
 });
 
 describe("ALLOWED_MEMBERSHIP_TRANSITIONS / assertMembershipTransition (pure)", () => {
@@ -510,6 +539,32 @@ describe("recordSuccessfulCharge", () => {
 
     expect(clubUpdateMock).not.toHaveBeenCalled();
   });
+
+  // Regression for the atomicity bug: previously these were two separate,
+  // unwrapped writes — if the subscription update committed and the
+  // Club.status update then threw, this function's own webhookEventId
+  // idempotency guard above would permanently short-circuit any retry
+  // before the missing Club.status write could ever be re-attempted,
+  // leaving Club.status stuck stale forever. Wrapping both in one
+  // $transaction guarantees they land together or not at all.
+  it("wraps the subscription update and the Club.status sync in a single $transaction", async () => {
+    findUniqueMock.mockResolvedValue(row({ status: "PENDING" }));
+    updateMock.mockResolvedValue(row({ status: "ACTIVE" }));
+    clubUpdateMock.mockResolvedValue({ id: "club_1", status: "ACTIVE" });
+
+    await recordSuccessfulCharge({
+      clubId: "club_1",
+      chargedAt: new Date("2026-01-01T00:00:00Z"),
+    });
+
+    expect(transactionMock).toHaveBeenCalledTimes(1);
+    expect(transactionMock.mock.calls[0][0]).toHaveLength(2);
+    // Both mocked calls must have been invoked to build the transaction's
+    // operations array, and the update must have happened BEFORE
+    // $transaction resolved (i.e. it isn't run separately afterwards).
+    expect(updateMock).toHaveBeenCalledTimes(1);
+    expect(clubUpdateMock).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe("recordFailedCharge (AUTO recycling signal)", () => {
@@ -578,6 +633,47 @@ describe("recordFailedCharge (AUTO recycling signal)", () => {
       recordFailedCharge({ clubId: "club_1", failedAt: new Date() }),
     ).rejects.toThrow(InvalidMembershipTransitionError);
   });
+
+  it("dispatches a MEMBERSHIP_PAST_DUE notification to the owner on the first ACTIVE -> PAST_DUE transition", async () => {
+    findUniqueMock.mockResolvedValue(row({ status: "ACTIVE" }));
+    updateMock.mockResolvedValue(row({ status: "PAST_DUE" }));
+
+    await recordFailedCharge({
+      clubId: "club_1",
+      failedAt: new Date("2026-01-05T00:00:00Z"),
+      webhookEventId: "evt_fail_1",
+    });
+
+    expect(dispatchMock).toHaveBeenCalledTimes(1);
+    expect(dispatchMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "MEMBERSHIP_PAST_DUE",
+        clubId: "club_1",
+        recipientId: "user_owner",
+        recipientEmail: "owner@example.com",
+        recipientName: "Owner Person",
+        sendEmail: false,
+      }),
+    );
+  });
+
+  it("does not dispatch again on a second recycling retry while already PAST_DUE (idempotent)", async () => {
+    findUniqueMock.mockResolvedValue(
+      row({
+        status: "PAST_DUE",
+        pastDueSince: new Date("2026-01-05T00:00:00Z"),
+      }),
+    );
+    updateMock.mockResolvedValue(row({ status: "PAST_DUE" }));
+
+    await recordFailedCharge({
+      clubId: "club_1",
+      failedAt: new Date("2026-01-08T00:00:00Z"),
+      webhookEventId: "evt_fail_2",
+    });
+
+    expect(dispatchMock).not.toHaveBeenCalled();
+  });
 });
 
 describe("recordAutoCancellation (AUTO: MP auto-cancelled after 3 rejections)", () => {
@@ -628,6 +724,26 @@ describe("recordAutoCancellation (AUTO: MP auto-cancelled after 3 rejections)", 
     expect(updateMock).not.toHaveBeenCalled();
     expect(clubUpdateMock).not.toHaveBeenCalled();
   });
+
+  // Same atomicity regression as recordSuccessfulCharge above: without a
+  // shared $transaction, a failure between the two writes would leave
+  // Club.status permanently stale behind this function's own
+  // webhookEventId idempotency guard.
+  it("wraps the subscription update and the Club.status sync in a single $transaction", async () => {
+    findUniqueMock.mockResolvedValue(row({ status: "PAST_DUE" }));
+    updateMock.mockResolvedValue(row({ status: "CANCELLED" }));
+    clubUpdateMock.mockResolvedValue({ id: "club_1", status: "INACTIVE" });
+
+    await recordAutoCancellation({
+      clubId: "club_1",
+      cancelledAt: new Date("2026-01-20T00:00:00Z"),
+    });
+
+    expect(transactionMock).toHaveBeenCalledTimes(1);
+    expect(transactionMock.mock.calls[0][0]).toHaveLength(2);
+    expect(updateMock).toHaveBeenCalledTimes(1);
+    expect(clubUpdateMock).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe("recordManualPeriodExpiredWithoutRenewal (MANUAL grace-period entry, cron-driven)", () => {
@@ -653,6 +769,31 @@ describe("recordManualPeriodExpiredWithoutRenewal (MANUAL grace-period entry, cr
     });
   });
 
+  it("dispatches a MEMBERSHIP_PAST_DUE notification to the owner on the transition", async () => {
+    findUniqueMock.mockResolvedValue(
+      row({ status: "ACTIVE", renewalMode: "MANUAL" }),
+    );
+    updateMock.mockResolvedValue(row({ status: "PAST_DUE" }));
+
+    await recordManualPeriodExpiredWithoutRenewal({
+      clubId: "club_1",
+      now: new Date("2026-01-10T00:00:00Z"),
+      graceWindowDays: 7,
+    });
+
+    expect(dispatchMock).toHaveBeenCalledTimes(1);
+    expect(dispatchMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "MEMBERSHIP_PAST_DUE",
+        clubId: "club_1",
+        recipientId: "user_owner",
+        recipientEmail: "owner@example.com",
+        recipientName: "Owner Person",
+        sendEmail: false,
+      }),
+    );
+  });
+
   it("is idempotent — an already-PAST_DUE MANUAL subscription is left unchanged", async () => {
     findUniqueMock.mockResolvedValue(
       row({ status: "PAST_DUE", renewalMode: "MANUAL" }),
@@ -665,6 +806,7 @@ describe("recordManualPeriodExpiredWithoutRenewal (MANUAL grace-period entry, cr
     });
 
     expect(updateMock).not.toHaveBeenCalled();
+    expect(dispatchMock).not.toHaveBeenCalled();
   });
 
   it("rejects AUTO-mode subscriptions — AUTO has no app-side grace-window clock", async () => {
@@ -748,6 +890,30 @@ describe("recordManualLockout (MANUAL's sole/authoritative lockout trigger, cron
 
     expect(updateMock).not.toHaveBeenCalled();
     expect(clubUpdateMock).not.toHaveBeenCalled();
+  });
+
+  // Same atomicity regression as recordSuccessfulCharge/
+  // recordAutoCancellation above.
+  it("wraps the subscription update and the Club.status sync in a single $transaction", async () => {
+    findUniqueMock.mockResolvedValue(
+      row({
+        status: "PAST_DUE",
+        renewalMode: "MANUAL",
+        pastDueUntil: new Date("2026-01-17T00:00:00Z"),
+      }),
+    );
+    updateMock.mockResolvedValue(row({ status: "CANCELLED" }));
+    clubUpdateMock.mockResolvedValue({ id: "club_1", status: "INACTIVE" });
+
+    await recordManualLockout({
+      clubId: "club_1",
+      now: new Date("2026-01-18T00:00:00Z"),
+    });
+
+    expect(transactionMock).toHaveBeenCalledTimes(1);
+    expect(transactionMock.mock.calls[0][0]).toHaveLength(2);
+    expect(updateMock).toHaveBeenCalledTimes(1);
+    expect(clubUpdateMock).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -1381,17 +1547,26 @@ describe("activateFreePlan (admin-only override — unblocks ClubOperationalGate
     expect(result.plan).toBe("FREE");
   });
 
-  it("sets Club.status = ACTIVE as a side effect", async () => {
+  it("sets Club.status = ACTIVE and Club.approvalStatus = APPROVED as a side effect", async () => {
     clubFindUniqueMock.mockResolvedValue({ currency: "ARS" });
     findUniqueMock.mockResolvedValue(null);
     createMock.mockResolvedValue(row({ plan: "FREE", status: "ACTIVE" }));
-    clubUpdateMock.mockResolvedValue({ id: "club_1", status: "ACTIVE" });
+    clubUpdateMock.mockResolvedValue({
+      id: "club_1",
+      status: "ACTIVE",
+      approvalStatus: "APPROVED",
+    });
 
     await activateFreePlan({ clubId: "club_1" });
 
+    // Otherwise this hidden FREE-plan testing bypass would silently break
+    // once the admin approval gate ships: a FREE-plan test club would still
+    // get stuck on the new PENDING_APPROVAL screen (see
+    // lib/mercadopago/operationalStatus.ts) despite its subscription being
+    // fully confirmed.
     expect(clubUpdateMock).toHaveBeenCalledWith({
       where: { id: "club_1" },
-      data: { status: "ACTIVE" },
+      data: { status: "ACTIVE", approvalStatus: "APPROVED" },
     });
   });
 });

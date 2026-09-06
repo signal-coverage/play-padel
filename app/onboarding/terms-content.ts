@@ -8,7 +8,7 @@ Play Padel connects players with padel clubs, letting players browse courts and 
 You are responsible for the accuracy of the information provided during registration and for maintaining the confidentiality of your account credentials. Club owners are responsible for keeping their courts' opening hours and reservation records up to date.
 
 4. Bookings and Cancellations
-Reservations are confirmed instantly at the time of booking. Players can self-cancel up to 2 hours before a reservation's start time; cancellations inside that window go through the club directly.
+Reservations are confirmed instantly at the time of booking. Players can self-cancel up to 2 hours before a reservation's start time; cancellations inside that window go through the club directly. Reservations are non-refundable: Play Padel does not process refunds for any reservation, regardless of who cancels it or the reason. Any dispute, incident, or issue related to a cancelled or unfulfilled reservation must be resolved directly with the club. By booking a reservation, you accept full responsibility for any inconvenience arising from its cancellation.
 
 5. Payments
 Some clubs require online prepayment to confirm a reservation; in that case, payment is processed through Mercado Pago at the time of booking. For clubs that do not require prepayment, payment is handled in person at the club.

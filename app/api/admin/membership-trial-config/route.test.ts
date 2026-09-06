@@ -16,8 +16,19 @@ vi.mock("@/lib/mercadopago/preapprovalPlans", () => ({
   updateMembershipPreapprovalPlan: vi.fn(),
 }));
 
+vi.mock("@clerk/nextjs/server", () => ({
+  auth: vi.fn(),
+}));
+
+vi.mock("@/lib/auth/admin", () => ({
+  requireAdmin: vi.fn(),
+}));
+
+import { NextResponse } from "next/server";
 import { prisma } from "@/infrastructure/db/client";
 import { updateMembershipPreapprovalPlan } from "@/lib/mercadopago/preapprovalPlans";
+import { auth } from "@clerk/nextjs/server";
+import { requireAdmin } from "@/lib/auth/admin";
 import { GET, PATCH } from "./route";
 
 const findManyMock = prisma.membershipTrialConfig.findMany as ReturnType<
@@ -30,55 +41,59 @@ const cacheFindManyMock = prisma.membershipPreapprovalPlanCache
   .findMany as ReturnType<typeof vi.fn>;
 const updateMembershipPreapprovalPlanMock =
   updateMembershipPreapprovalPlan as ReturnType<typeof vi.fn>;
+const authMock = auth as unknown as ReturnType<typeof vi.fn>;
+const requireAdminMock = requireAdmin as ReturnType<typeof vi.fn>;
 
-function makeGetRequest(authHeader?: string) {
-  return new Request(
-    "https://app.example.com/api/admin/membership-trial-config",
-    { headers: authHeader ? { authorization: authHeader } : {} },
-  );
-}
-
-function makePatchRequest(authHeader: string | undefined, body: unknown) {
+function makePatchRequest(body: unknown) {
   return new Request(
     "https://app.example.com/api/admin/membership-trial-config",
     {
       method: "PATCH",
-      headers: {
-        ...(authHeader ? { authorization: authHeader } : {}),
-        "content-type": "application/json",
-      },
+      headers: { "content-type": "application/json" },
       body: JSON.stringify(body),
     },
   );
 }
 
 beforeEach(() => {
-  vi.stubEnv("MEMBERSHIP_ADMIN_SECRET", "test-admin-secret");
   findManyMock.mockReset();
   upsertMock.mockReset();
   cacheFindManyMock.mockReset();
   cacheFindManyMock.mockResolvedValue([]);
   updateMembershipPreapprovalPlanMock.mockReset();
+  authMock.mockReset();
+  requireAdminMock.mockReset();
+  authMock.mockResolvedValue({ userId: "user_admin" });
+  requireAdminMock.mockResolvedValue(null);
 });
 
 describe("GET /api/admin/membership-trial-config", () => {
-  it("rejects requests without the correct static-secret bearer token", async () => {
-    const response = await GET(makeGetRequest("Bearer wrong-secret"));
+  it("returns 401 when there is no signed-in Clerk user", async () => {
+    requireAdminMock.mockResolvedValue(
+      NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
+    );
+
+    const response = await GET();
 
     expect(response.status).toBe(401);
     expect(findManyMock).not.toHaveBeenCalled();
   });
 
-  it("rejects requests with no authorization header at all", async () => {
-    const response = await GET(makeGetRequest());
+  it("returns 403 when signed in but not an admin", async () => {
+    requireAdminMock.mockResolvedValue(
+      NextResponse.json({ error: "Forbidden" }, { status: 403 }),
+    );
 
-    expect(response.status).toBe(401);
+    const response = await GET();
+
+    expect(response.status).toBe(403);
+    expect(findManyMock).not.toHaveBeenCalled();
   });
 
-  it("returns all configured trial overrides when authorized", async () => {
+  it("returns all configured trial overrides when authorized as admin", async () => {
     findManyMock.mockResolvedValue([{ plan: "BASIC", trialDays: 30 }]);
 
-    const response = await GET(makeGetRequest("Bearer test-admin-secret"));
+    const response = await GET();
     const body = await response.json();
 
     expect(response.status).toBe(200);
@@ -87,12 +102,15 @@ describe("GET /api/admin/membership-trial-config", () => {
 });
 
 describe("PATCH /api/admin/membership-trial-config", () => {
-  it("rejects requests without the correct static-secret bearer token", async () => {
+  it("returns 401 when there is no signed-in Clerk user", async () => {
+    requireAdminMock.mockResolvedValue(
+      NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
+    );
+
     const response = await PATCH(
-      makePatchRequest("Bearer wrong-secret", {
+      makePatchRequest({
         plan: "BASIC",
         trialDays: 30,
-        updatedBy: "admin@example.com",
       }),
     );
 
@@ -100,25 +118,60 @@ describe("PATCH /api/admin/membership-trial-config", () => {
     expect(upsertMock).not.toHaveBeenCalled();
   });
 
+  it("returns 403 when signed in but not an admin", async () => {
+    requireAdminMock.mockResolvedValue(
+      NextResponse.json({ error: "Forbidden" }, { status: 403 }),
+    );
+
+    const response = await PATCH(
+      makePatchRequest({
+        plan: "BASIC",
+        trialDays: 30,
+      }),
+    );
+
+    expect(response.status).toBe(403);
+    expect(upsertMock).not.toHaveBeenCalled();
+  });
+
   it("upserts MembershipTrialConfig.trialDays for the given plan", async () => {
     upsertMock.mockResolvedValue({ plan: "PRO", trialDays: 14 });
 
     const response = await PATCH(
-      makePatchRequest("Bearer test-admin-secret", {
+      makePatchRequest({
         plan: "PRO",
         trialDays: 14,
-        updatedBy: "admin@example.com",
       }),
     );
     const body = await response.json();
 
     expect(upsertMock).toHaveBeenCalledWith({
       where: { plan: "PRO" },
-      create: { plan: "PRO", trialDays: 14, updatedBy: "admin@example.com" },
-      update: { trialDays: 14, updatedBy: "admin@example.com" },
+      create: { plan: "PRO", trialDays: 14, updatedBy: "user_admin" },
+      update: { trialDays: 14, updatedBy: "user_admin" },
     });
     expect(response.status).toBe(200);
     expect(body.config).toEqual({ plan: "PRO", trialDays: 14 });
+  });
+
+  it("derives updatedBy from the authenticated admin's own userId, ignoring any updatedBy the client sends in the body", async () => {
+    upsertMock.mockResolvedValue({ plan: "PRO", trialDays: 14 });
+
+    await PATCH(
+      makePatchRequest({
+        plan: "PRO",
+        trialDays: 14,
+        // A malicious/careless client trying to spoof a different actor —
+        // must be ignored entirely in favor of the real session's userId.
+        updatedBy: "someone_else",
+      }),
+    );
+
+    expect(upsertMock).toHaveBeenCalledWith({
+      where: { plan: "PRO" },
+      create: { plan: "PRO", trialDays: 14, updatedBy: "user_admin" },
+      update: { trialDays: 14, updatedBy: "user_admin" },
+    });
   });
 
   it("propagates the new trialDays to every cached preapproval_plan for that tier via updateMembershipPreapprovalPlan", async () => {
@@ -132,10 +185,9 @@ describe("PATCH /api/admin/membership-trial-config", () => {
     });
 
     const response = await PATCH(
-      makePatchRequest("Bearer test-admin-secret", {
+      makePatchRequest({
         plan: "PRO",
         trialDays: 21,
-        updatedBy: "admin@example.com",
       }),
     );
 
@@ -161,10 +213,9 @@ describe("PATCH /api/admin/membership-trial-config", () => {
     cacheFindManyMock.mockResolvedValue([]);
 
     const response = await PATCH(
-      makePatchRequest("Bearer test-admin-secret", {
+      makePatchRequest({
         plan: "BASIC",
         trialDays: 7,
-        updatedBy: "admin@example.com",
       }),
     );
 
@@ -186,10 +237,9 @@ describe("PATCH /api/admin/membership-trial-config", () => {
     );
 
     const response = await PATCH(
-      makePatchRequest("Bearer test-admin-secret", {
+      makePatchRequest({
         plan: "PRO",
         trialDays: 10,
-        updatedBy: "admin@example.com",
       }),
     );
 
@@ -199,10 +249,9 @@ describe("PATCH /api/admin/membership-trial-config", () => {
 
   it("rejects an invalid plan tier with 400", async () => {
     const response = await PATCH(
-      makePatchRequest("Bearer test-admin-secret", {
+      makePatchRequest({
         plan: "ENTERPRISE",
         trialDays: 14,
-        updatedBy: "admin@example.com",
       }),
     );
 
@@ -212,22 +261,9 @@ describe("PATCH /api/admin/membership-trial-config", () => {
 
   it("rejects a negative trialDays with 400", async () => {
     const response = await PATCH(
-      makePatchRequest("Bearer test-admin-secret", {
+      makePatchRequest({
         plan: "BASIC",
         trialDays: -5,
-        updatedBy: "admin@example.com",
-      }),
-    );
-
-    expect(response.status).toBe(400);
-    expect(upsertMock).not.toHaveBeenCalled();
-  });
-
-  it("rejects a missing updatedBy with 400 — no admin-role auth exists to derive it from", async () => {
-    const response = await PATCH(
-      makePatchRequest("Bearer test-admin-secret", {
-        plan: "BASIC",
-        trialDays: 14,
       }),
     );
 
@@ -241,7 +277,6 @@ describe("PATCH /api/admin/membership-trial-config", () => {
       {
         method: "PATCH",
         headers: {
-          authorization: "Bearer test-admin-secret",
           "content-type": "application/json",
         },
         body: "not json",

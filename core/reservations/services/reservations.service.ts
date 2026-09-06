@@ -7,6 +7,7 @@ import type {
   Reservation,
   ReservationFilters,
   ReservationStatus,
+  TicketData,
 } from "@/core/reservations/types";
 import type {
   CreateReservationInput,
@@ -198,6 +199,20 @@ export async function listReservationsByUser(
   return rows.map(toReservation);
 }
 
+// Detects a violation of the "reservations_no_overlapping_confirmed"
+// Postgres EXCLUDE constraint (migration 20260905200000) — the real
+// SQLSTATE, `23P01` (exclusion_violation), arrives nested inside the Neon
+// driver adapter's own error wrapping rather than as one of Prisma's
+// standard P-codes; this exact shape was verified against the real dev
+// database (Prisma 7.9.1 + @prisma/adapter-neon), not guessed.
+function isConfirmedOverlapViolation(err: unknown): boolean {
+  if (!(err instanceof Prisma.PrismaClientKnownRequestError)) return false;
+  const cause = (
+    err.meta as { driverAdapterError?: { cause?: { code?: string } } }
+  )?.driverAdapterError?.cause;
+  return cause?.code === "23P01";
+}
+
 /**
  * Court-level conflict check: is this club's court already locked by an
  * active reservation overlapping the given time range?
@@ -362,24 +377,38 @@ export async function createReservation(
   // MVP rule: instant confirmation, no owner-approval step (docs/reservation-flow.md).
   // Exception: a club that requires prepayment gets a SCHEDULED hold instead,
   // confirmed later by the Mercado Pago webhook (see Payments spec).
-  const row = await prisma.reservation.create({
-    data: {
-      clubId: court.clubId,
-      userId: input.userId,
-      userName: user.displayName,
-      courtId: court.id,
-      courtName: court.name,
-      status: pendingPayment ? "SCHEDULED" : "CONFIRMED",
-      scheduledStart,
-      scheduledEnd,
-      notes: input.notes ?? null,
-      paymentExpiresAt: pendingPayment
-        ? new Date(Date.now() + PAYMENT_HOLD_MINUTES * 60_000)
-        : null,
-      createdBy,
-      updatedBy: createdBy,
-    },
-  });
+  let row;
+  try {
+    row = await prisma.reservation.create({
+      data: {
+        clubId: court.clubId,
+        userId: input.userId,
+        userName: user.displayName,
+        courtId: court.id,
+        courtName: court.name,
+        status: pendingPayment ? "SCHEDULED" : "CONFIRMED",
+        scheduledStart,
+        scheduledEnd,
+        notes: input.notes ?? null,
+        paymentExpiresAt: pendingPayment
+          ? new Date(Date.now() + PAYMENT_HOLD_MINUTES * 60_000)
+          : null,
+        createdBy,
+        updatedBy: createdBy,
+      },
+    });
+  } catch (err) {
+    if (isConfirmedOverlapViolation(err)) {
+      // checkCourtConflict above is a best-effort, non-race-proof check — two
+      // concurrent createReservation calls can both pass it before either
+      // write lands. The DB-level exclusion constraint on CONFIRMED
+      // reservations (migration 20260905200000) is the real backstop; this
+      // translates its failure into the same friendly message the
+      // application-level check already gives for the common case.
+      throw new Error("This slot is no longer available. Pick another time.");
+    }
+    throw err;
+  }
 
   logAudit({
     clubId: row.clubId,
@@ -622,6 +651,33 @@ export async function noShowReservation(
   });
 
   return toReservation(row);
+}
+
+/**
+ * Booking-confirmation ticket data for the player-facing "My Reservations"
+ * ticket PDF — proof of the BOOKING, not of payment, so it's available for
+ * any CONFIRMED reservation regardless of whether it was ever paid (unlike
+ * core/billing's getReceiptData, which requires a COMPLETED payment). Returns
+ * null for any other status or an unknown id.
+ */
+export async function getTicketData(
+  reservationId: string,
+): Promise<TicketData | null> {
+  const row = await prisma.reservation.findUnique({
+    where: { id: reservationId },
+    include: { club: true },
+  });
+  if (!row || row.status !== "CONFIRMED") return null;
+
+  return {
+    id: row.id,
+    clubName: row.club.name,
+    courtName: row.courtName,
+    scheduledStart: row.scheduledStart,
+    scheduledEnd: row.scheduledEnd,
+    userName: row.userName,
+    status: row.status as ReservationStatus,
+  };
 }
 
 /**

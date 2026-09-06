@@ -8,9 +8,14 @@ neonConfig.webSocketConstructor = ws;
 const globalForPrisma = globalThis as unknown as { prisma: PrismaClient };
 
 function createClient() {
-  const adapter = new PrismaNeon({
-    connectionString: process.env.DATABASE_URL!,
-  });
+  const connectionString = process.env.DATABASE_URL;
+  if (!connectionString) {
+    // Fails fast with a clear message at module load instead of letting the
+    // Neon adapter fail deep inside its own connection logic with a much
+    // less obvious error.
+    throw new Error("DATABASE_URL is not set");
+  }
+  const adapter = new PrismaNeon({ connectionString });
   return new PrismaClient({ adapter });
 }
 

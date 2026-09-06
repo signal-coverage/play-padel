@@ -31,7 +31,16 @@ const PENDING_SUBSCRIPTION = {
   currentPeriodEnd: null,
 };
 
-function renderGate(response: ClubOperationalStatusResponse) {
+function renderGate(
+  response: ClubOperationalStatusResponse,
+  // ClubOperationalGate now also calls useMembershipSubscription
+  // unconditionally (for the FREE-plan hidden-testing bypass), on top of
+  // PaymentActivationScreen's own identical call once mounted — both share
+  // the same TanStack Query key/URL, so one branch here serves both.
+  // Defaults to the same PENDING/BASIC snapshot every pre-existing test in
+  // this file already expects.
+  subscription: object = PENDING_SUBSCRIPTION,
+) {
   // Once PaymentActivationScreen also calls fetch("/api/clubs/membership")
   // from inside the same test, a single undiscriminating mock would hand it
   // the operational-status shape instead of { subscription }, breaking the
@@ -44,7 +53,7 @@ function renderGate(response: ClubOperationalStatusResponse) {
     if (url === "/api/clubs/membership") {
       return Promise.resolve({
         ok: true,
-        json: async () => ({ subscription: PENDING_SUBSCRIPTION }),
+        json: async () => ({ subscription }),
       });
     }
     throw new Error(`unexpected fetch: ${url}`);
@@ -180,5 +189,57 @@ describe("ClubOperationalGate", () => {
     await screen.findByRole("heading", { name: "Payment activation" });
 
     expect(screen.queryByText("Renew your membership")).not.toBeInTheDocument();
+  });
+
+  it("does not mount children at all when PENDING_APPROVAL, and renders the informational pending-approval screen instead", async () => {
+    renderGate({ operational: false, cause: "PENDING_APPROVAL" });
+
+    const heading = await screen.findByRole("heading", {
+      name: "Your club is under review",
+    });
+    expect(heading).toBeInTheDocument();
+
+    expect(screen.queryByText("Create court")).not.toBeInTheDocument();
+    expect(document.querySelector(".blur-sm")).not.toBeInTheDocument();
+
+    // Purely informational — no action button, unlike the other two causes.
+    expect(screen.queryByRole("button")).not.toBeInTheDocument();
+
+    expect(screen.queryByText("Payment activation")).not.toBeInTheDocument();
+    expect(screen.queryByText("Renew your membership")).not.toBeInTheDocument();
+  });
+
+  // FREE-plan hidden-testing bypass: an admin-activated FREE plan (see
+  // core/billing/services/membership.service.ts's activateFreePlan) fully
+  // unblocks the dashboard even though no real payout method (Mercado
+  // Pago/bank transfer) is connected — the owner would otherwise still be
+  // stuck on PaymentActivationScreen's step 2 forever, since a FREE plan can
+  // never itself connect a real Mercado Pago account.
+  it("renders children directly, never PaymentActivationScreen, for a confirmed FREE-plan club with MP_NOT_CONNECTED", async () => {
+    renderGate(
+      { operational: false, cause: "MP_NOT_CONNECTED" },
+      { ...PENDING_SUBSCRIPTION, plan: "FREE", status: "ACTIVE" },
+    );
+
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: "Create court" }),
+      ).toBeInTheDocument(),
+    );
+
+    expect(screen.queryByText("Payment activation")).not.toBeInTheDocument();
+  });
+
+  it("still shows PaymentActivationScreen for a FREE-plan club whose subscription is not yet confirmed", async () => {
+    renderGate(
+      { operational: false, cause: "MP_NOT_CONNECTED" },
+      { ...PENDING_SUBSCRIPTION, plan: "FREE", status: "PENDING" },
+    );
+
+    const heading = await screen.findByRole("heading", {
+      name: "Payment activation",
+    });
+    expect(heading).toBeInTheDocument();
+    expect(screen.queryByText("Create court")).not.toBeInTheDocument();
   });
 });

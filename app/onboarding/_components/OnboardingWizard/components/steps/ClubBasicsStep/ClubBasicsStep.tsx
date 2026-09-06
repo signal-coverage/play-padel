@@ -2,8 +2,8 @@ import { useEffect, useRef } from "react";
 import { Building2, Mail } from "lucide-react";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { useCountryProvinceCityFields } from "../../shared/CountryProvinceCityFields";
-import { PhoneField } from "../../shared/PhoneField";
+import { useCountryProvinceCityFields } from "@/components/CountryProvinceCityFields";
+import { PhoneField } from "@/components/PhoneField";
 import type { ClubBasicsStepProps } from "./types";
 
 export function ClubBasicsStep({

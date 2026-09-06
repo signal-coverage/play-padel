@@ -9,6 +9,14 @@ vi.mock("../_lib/require-club-operational", () => ({
   requireClubOperational: vi.fn(),
 }));
 
+// vi.importActual below executes the real courts.service module, which
+// transitively imports the real infrastructure/db/client.ts — mock it so
+// module-load-time DATABASE_URL validation never runs against this test's
+// (unset) env.
+vi.mock("@/infrastructure/db/client", () => ({
+  prisma: {},
+}));
+
 vi.mock("@/core/courts/services/courts.service", async () => {
   const actual = await vi.importActual<
     typeof import("@/core/courts/services/courts.service")

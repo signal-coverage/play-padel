@@ -20,6 +20,10 @@ interface UserProfileSummary {
   padelCategory: number | null;
   preferredSide: PreferredSide | null;
   dominantHand: DominantHand | null;
+  // Additive admin flag (see prisma/schema.prisma's UserProfile.isAdmin) —
+  // optional here since older cached responses / test fixtures may omit it;
+  // AppUser below always normalizes it to a real boolean.
+  isAdmin?: boolean;
   // Raw ISO string as returned by JSON — parsed into a Date on AppUser.
   createdAt: string;
 }
@@ -43,6 +47,12 @@ export interface AppUser {
   // Always null for owners and for players who haven't set them yet.
   preferredSide: PreferredSide | null;
   dominantHand: DominantHand | null;
+  // Additive, independent of `role` (see prisma/schema.prisma's
+  // UserProfile.isAdmin) — a "player" can also be an admin. Gates new
+  // admin-only /dashboard surfaces; unrelated to lib/auth/admin.ts's
+  // separate Clerk-metadata-based isAdminUser() check. Defaults to false
+  // until the profile lookup resolves.
+  isAdmin: boolean;
   // When this UserProfile row was created — null until the profile lookup
   // resolves, same as every other profile-derived field here.
   createdAt: Date | null;
@@ -163,6 +173,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             padelCategory: profile?.padelCategory ?? null,
             preferredSide: profile?.preferredSide ?? null,
             dominantHand: profile?.dominantHand ?? null,
+            isAdmin: profile?.isAdmin ?? false,
             createdAt: profile?.createdAt ? new Date(profile.createdAt) : null,
           }
         : null,

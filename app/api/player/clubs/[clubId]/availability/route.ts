@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
 import {
   listCourtsByClub,
   getCourtSlots,
 } from "@/core/courts/services/courts.service";
 import { hasActiveWaitlistEntry } from "@/core/waitlist/services/waitlist.service";
+import { requireAuthUser } from "@/lib/auth/requireAuthUser";
 
 // Player-facing composed view: a club's active courts plus each court's
 // computed slots for one calendar day, shaped directly for
@@ -15,10 +15,9 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ clubId: string }> },
 ) {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const authResult = await requireAuthUser();
+  if (!authResult.ok) return authResult.response;
+  const { userId } = authResult;
 
   const { clubId } = await params;
   const dateParam = request.nextUrl.searchParams.get("date");

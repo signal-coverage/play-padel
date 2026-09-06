@@ -1,12 +1,7 @@
 import { Preference, Payment } from "mercadopago";
 import type { Plan } from "@/core/clubs/types";
+import { requireAppUrl } from "@/lib/env";
 import { getPlatformMercadoPagoClient } from "./platformClient";
-
-function requireAppUrl(): string {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL;
-  if (!appUrl) throw new Error("NEXT_PUBLIC_APP_URL is not set");
-  return appUrl;
-}
 
 export interface CreateMembershipPreferenceParams {
   clubId: string;

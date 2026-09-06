@@ -30,7 +30,12 @@ const CLERK_USER = {
 function Probe() {
   const { user, profileLoading } = useAuth();
   if (profileLoading) return <div>loading</div>;
-  return <div>role: {user?.role ?? "none"}</div>;
+  return (
+    <div>
+      <div>role: {user?.role ?? "none"}</div>
+      <div>isAdmin: {String(user?.isAdmin ?? false)}</div>
+    </div>
+  );
 }
 
 function renderProbe() {
@@ -115,5 +120,57 @@ describe("AuthProvider", () => {
     });
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  // New, additive field alongside role/clubId (see prisma/schema.prisma's
+  // UserProfile.isAdmin) — must flow through the exact same /api/me ->
+  // AppUser path those already do.
+  it("threads isAdmin through from the /api/me profile response", async () => {
+    const fetchMock = vi.fn(async () => ({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        profile: {
+          role: "player",
+          clubId: null,
+          padelCategory: null,
+          preferredSide: null,
+          dominantHand: null,
+          isAdmin: true,
+          createdAt: "2026-01-01T00:00:00.000Z",
+        },
+      }),
+    }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderProbe();
+
+    await waitFor(() => {
+      expect(screen.getByText("isAdmin: true")).toBeInTheDocument();
+    });
+  });
+
+  it("defaults isAdmin to false when the profile response omits it", async () => {
+    const fetchMock = vi.fn(async () => ({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        profile: {
+          role: "player",
+          clubId: null,
+          padelCategory: null,
+          preferredSide: null,
+          dominantHand: null,
+          createdAt: "2026-01-01T00:00:00.000Z",
+        },
+      }),
+    }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderProbe();
+
+    await waitFor(() => {
+      expect(screen.getByText("isAdmin: false")).toBeInTheDocument();
+    });
   });
 });

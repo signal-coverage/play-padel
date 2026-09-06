@@ -120,10 +120,31 @@ export function CourtsView() {
         availability,
       });
       if (photoFile) {
-        await uploadCourtPhoto.mutateAsync({
-          courtId: court.id,
-          file: photoFile,
-        });
+        try {
+          await uploadCourtPhoto.mutateAsync({
+            courtId: court.id,
+            file: photoFile,
+          });
+        } catch (uploadError) {
+          // The court was already created, but its photo never made it —
+          // per the "only create the court when everything is OK"
+          // requirement, roll that back instead of leaving a photo-less
+          // orphan behind. Best-effort and silent: a rollback failure here
+          // must not mask the real (upload) error, same swallowing pattern
+          // as the reservation-rollback-on-checkout-failure code in
+          // app/api/player/reservations/route.ts.
+          try {
+            await deleteCourt.mutateAsync({ courtId: court.id, silent: true });
+          } catch {
+            // Best-effort rollback; the upload error below still applies.
+          }
+          toast.error(
+            uploadError instanceof Error
+              ? uploadError.message
+              : "Could not upload the court photo. Please try again.",
+          );
+          throw uploadError;
+        }
       }
       // Fired here, after the whole create-or-create+photo operation
       // resolves, rather than from useCreateCourt's own onSuccess — that
@@ -141,7 +162,7 @@ export function CourtsView() {
   async function confirmDelete() {
     if (!courtPendingDeletion) return;
     try {
-      await deleteCourt.mutateAsync(courtPendingDeletion.id);
+      await deleteCourt.mutateAsync({ courtId: courtPendingDeletion.id });
       setCourtPendingDeletion(null);
     } catch {
       // useDeleteCourt's onError already surfaces a toast; keep the dialog
@@ -199,7 +220,9 @@ export function CourtsView() {
         onEditClosures={openClosures}
         onDelete={setCourtPendingDeletion}
         deletingCourtId={
-          deleteCourt.isPending ? (deleteCourt.variables ?? null) : null
+          deleteCourt.isPending
+            ? (deleteCourt.variables?.courtId ?? null)
+            : null
         }
         selectedIds={selectedIds}
         onToggleSelect={toggleSelect}

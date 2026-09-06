@@ -2,16 +2,16 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils/utils";
-import { useIsClubOperational } from "../../hooks";
-import { getVisibleNavItems } from "../../utils";
+import { useVisibleNavLinks } from "../../hooks";
 import type { NavLinksProps } from "../NavLinks/types";
 
-export function MobileBottomNav({ role, className }: NavLinksProps) {
-  const pathname = usePathname();
-  const isOperational = useIsClubOperational(role);
-  const visibleItems = getVisibleNavItems(role, isOperational);
+export function MobileBottomNav({
+  role,
+  isAdmin = false,
+  className,
+}: NavLinksProps) {
+  const visibleItems = useVisibleNavLinks(role, isAdmin);
 
   return (
     <nav
@@ -21,7 +21,7 @@ export function MobileBottomNav({ role, className }: NavLinksProps) {
       )}
     >
       {visibleItems.map((item) => {
-        const active = pathname === item.href;
+        const { active } = item;
         return (
           <Link
             key={item.href}
