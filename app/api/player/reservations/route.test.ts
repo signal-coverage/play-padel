@@ -33,7 +33,17 @@ vi.mock("@/lib/mercadopago/operationalStatus", () => ({
   getClubOperationalStatus: vi.fn(),
 }));
 
+vi.mock("botid/server", () => ({
+  checkBotId: vi.fn(),
+}));
+
+vi.mock("@vercel/firewall", () => ({
+  checkRateLimit: vi.fn(),
+}));
+
 import { auth } from "@clerk/nextjs/server";
+import { checkBotId } from "botid/server";
+import { checkRateLimit } from "@vercel/firewall";
 import {
   createReservation,
   cancelReservation,
@@ -59,6 +69,10 @@ const createCheckoutPreferenceMock = createCheckoutPreference as ReturnType<
   typeof vi.fn
 >;
 const getClubOperationalStatusMock = getClubOperationalStatus as ReturnType<
+  typeof vi.fn
+>;
+const checkBotIdMock = checkBotId as unknown as ReturnType<typeof vi.fn>;
+const checkRateLimitMock = checkRateLimit as unknown as ReturnType<
   typeof vi.fn
 >;
 
@@ -88,10 +102,46 @@ beforeEach(() => {
   issueInvoiceMock.mockReset();
   createCheckoutPreferenceMock.mockReset();
   getClubOperationalStatusMock.mockReset();
+  checkBotIdMock.mockReset();
+  checkRateLimitMock.mockReset();
 
   authMock.mockResolvedValue({ userId: "user_1" });
   getCourtByIdMock.mockResolvedValue(COURT);
   getClubByIdMock.mockResolvedValue(CLUB);
+  checkBotIdMock.mockResolvedValue({ isBot: false });
+  checkRateLimitMock.mockResolvedValue({ rateLimited: false });
+});
+
+describe("POST /api/player/reservations — security guards", () => {
+  it("returns 403 when BotID classifies the request as a bot", async () => {
+    checkBotIdMock.mockResolvedValue({ isBot: true });
+
+    const response = await POST(
+      makeRequest({
+        courtId: COURT.id,
+        scheduledStart: "2026-08-20T10:00:00.000Z",
+        scheduledEnd: "2026-08-20T11:00:00.000Z",
+      }),
+    );
+
+    expect(response.status).toBe(403);
+    expect(createReservationMock).not.toHaveBeenCalled();
+  });
+
+  it("returns 429 when the shared rate limit is exceeded", async () => {
+    checkRateLimitMock.mockResolvedValue({ rateLimited: true });
+
+    const response = await POST(
+      makeRequest({
+        courtId: COURT.id,
+        scheduledStart: "2026-08-20T10:00:00.000Z",
+        scheduledEnd: "2026-08-20T11:00:00.000Z",
+      }),
+    );
+
+    expect(response.status).toBe(429);
+    expect(createReservationMock).not.toHaveBeenCalled();
+  });
 });
 
 describe("POST /api/player/reservations — input validation", () => {

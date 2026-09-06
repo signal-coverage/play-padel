@@ -13,7 +13,12 @@ vi.mock("@/core/courts/services/courts.service", () => ({
   getClubsAvailability: vi.fn(),
 }));
 
+vi.mock("@vercel/firewall", () => ({
+  checkRateLimit: vi.fn(),
+}));
+
 import { auth } from "@clerk/nextjs/server";
+import { checkRateLimit } from "@vercel/firewall";
 import { listActiveClubs } from "@/core/clubs/services/clubs.service";
 import { getClubsAvailability } from "@/core/courts/services/courts.service";
 import { GET } from "./route";
@@ -21,6 +26,9 @@ import { GET } from "./route";
 const authMock = auth as unknown as ReturnType<typeof vi.fn>;
 const listActiveClubsMock = listActiveClubs as ReturnType<typeof vi.fn>;
 const getClubsAvailabilityMock = getClubsAvailability as ReturnType<
+  typeof vi.fn
+>;
+const checkRateLimitMock = checkRateLimit as unknown as ReturnType<
   typeof vi.fn
 >;
 
@@ -33,7 +41,18 @@ describe("GET /api/player/clubs", () => {
     authMock.mockReset();
     listActiveClubsMock.mockReset();
     getClubsAvailabilityMock.mockReset();
+    checkRateLimitMock.mockReset();
     authMock.mockResolvedValue({ userId: "user_1" });
+    checkRateLimitMock.mockResolvedValue({ rateLimited: false });
+  });
+
+  it("returns 429 when the shared rate limit is exceeded", async () => {
+    checkRateLimitMock.mockResolvedValue({ rateLimited: true });
+
+    const response = await GET(makeRequest());
+
+    expect(response.status).toBe(429);
+    expect(listActiveClubsMock).not.toHaveBeenCalled();
   });
 
   it("returns only the clubs listActiveClubs resolves — the route performs no separate operational re-check, relying entirely on listActiveClubs' query-level CLUB_OPERATIONAL_WHERE filter", async () => {
