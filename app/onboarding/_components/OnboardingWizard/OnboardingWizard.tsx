@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { track } from "@vercel/analytics";
 import { track as trackAmplitude } from "@amplitude/unified";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
 import { Card } from "@/components/ui/card";
 import { LogoBadge } from "@/components/LogoBadge";
@@ -23,8 +24,6 @@ import {
 import { StepIndicator } from "./components/StepIndicator";
 import { ClubBasicsStep } from "./components/steps/ClubBasicsStep";
 import { LegalBillingStep } from "./components/steps/LegalBillingStep";
-import { OperatingHoursStep } from "./components/steps/OperatingHoursStep";
-import { DEFAULT_OPERATING_HOURS_ROWS } from "./components/steps/OperatingHoursStep/consts";
 import { PadelProfileStep } from "./components/steps/PadelProfileStep";
 import { PlayerProfileStep } from "./components/steps/PlayerProfileStep";
 import { ProfileStep } from "./components/steps/ProfileStep";
@@ -33,7 +32,8 @@ import { UserTypeStep } from "./components/steps/UserTypeStep";
 import { stepVariants } from "./styles";
 
 export function OnboardingWizard() {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
+  const router = useRouter();
   const [stepIndex, setStepIndex] = useState(0);
   const [direction, setDirection] = useState(1);
   const shouldReduce = useReducedMotion();
@@ -63,7 +63,6 @@ export function OnboardingWizard() {
       taxId: "",
       timezone: TIMEZONES[0].value,
       currency: "ARS",
-      operatingHours: DEFAULT_OPERATING_HOURS_ROWS,
       displayName: "",
       firstName: user?.firstName ?? "",
       lastName: user?.lastName ?? "",
@@ -197,6 +196,19 @@ export function OnboardingWizard() {
     setStepIndex((s) => s - 1);
   }
 
+  // The very first step has nowhere to go "back" to — Back sat disabled
+  // there with no other way out, leaving Cancel as the only escape from an
+  // account that's mid-signup. Signs out (not just a plain navigate): "/"
+  // itself redirects a still-signed-in, not-yet-onboarded user straight back
+  // here (see app/page.tsx's own hasCompletedOnboarding redirect), so
+  // landing on the real marketing page requires actually ending the session
+  // first — same signOut()-then-push("/") sequence UserMenu.tsx's own Sign
+  // out item already uses.
+  async function handleCancel() {
+    await signOut();
+    router.push("/");
+  }
+
   async function onSubmit(data: OnboardingFormValues) {
     if (!user) return;
 
@@ -308,26 +320,6 @@ export function OnboardingWizard() {
                   </motion.div>
                 )}
 
-                {currentKey === "operatingHours" && (
-                  <motion.div
-                    key="operatingHours"
-                    className="space-y-4"
-                    custom={direction}
-                    variants={stepVariants}
-                    initial={shouldReduce ? false : "enter"}
-                    animate="center"
-                    exit={shouldReduce ? "center" : "exit"}
-                    transition={stepTransition}
-                  >
-                    <OperatingHoursStep
-                      control={control}
-                      errors={errors}
-                      setValue={setValue}
-                      shouldFocusHeading={shouldFocusHeading}
-                    />
-                  </motion.div>
-                )}
-
                 {currentKey === "profile" && (
                   <motion.div
                     key="profile"
@@ -421,10 +413,9 @@ export function OnboardingWizard() {
               <Button
                 type="button"
                 variant="ghost"
-                onClick={handleBack}
-                disabled={stepIndex === 0}
+                onClick={stepIndex === 0 ? handleCancel : handleBack}
               >
-                Back
+                {stepIndex === 0 ? "Cancel" : "Back"}
               </Button>
 
               {!isLastStep ? (

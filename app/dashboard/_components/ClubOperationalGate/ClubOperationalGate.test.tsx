@@ -33,12 +33,10 @@ const PENDING_SUBSCRIPTION = {
 
 function renderGate(
   response: ClubOperationalStatusResponse,
-  // ClubOperationalGate now also calls useMembershipSubscription
-  // unconditionally (for the FREE-plan hidden-testing bypass), on top of
-  // PaymentActivationScreen's own identical call once mounted — both share
-  // the same TanStack Query key/URL, so one branch here serves both.
-  // Defaults to the same PENDING/BASIC snapshot every pre-existing test in
-  // this file already expects.
+  // PaymentActivationScreen calls useMembershipSubscription itself once
+  // mounted (ClubOperationalGate no longer does) — defaults to the same
+  // PENDING/BASIC snapshot every pre-existing test in this file already
+  // expects.
   subscription: object = PENDING_SUBSCRIPTION,
 ) {
   // Once PaymentActivationScreen also calls fetch("/api/clubs/membership")
@@ -209,31 +207,14 @@ describe("ClubOperationalGate", () => {
     expect(screen.queryByText("Renew your membership")).not.toBeInTheDocument();
   });
 
-  // FREE-plan hidden-testing bypass: an admin-activated FREE plan (see
-  // core/billing/services/membership.service.ts's activateFreePlan) fully
-  // unblocks the dashboard even though no real payout method (Mercado
-  // Pago/bank transfer) is connected — the owner would otherwise still be
-  // stuck on PaymentActivationScreen's step 2 forever, since a FREE plan can
-  // never itself connect a real Mercado Pago account.
-  it("renders children directly, never PaymentActivationScreen, for a confirmed FREE-plan club with MP_NOT_CONNECTED", async () => {
+  // No FREE-plan bypass (deliberately removed): connecting a real payout
+  // method is a required step for every owner regardless of plan, so even a
+  // confirmed FREE-plan club with MP_NOT_CONNECTED still sees
+  // PaymentActivationScreen instead of the real dashboard.
+  it("still shows PaymentActivationScreen for a confirmed FREE-plan club with MP_NOT_CONNECTED", async () => {
     renderGate(
       { operational: false, cause: "MP_NOT_CONNECTED" },
       { ...PENDING_SUBSCRIPTION, plan: "FREE", status: "ACTIVE" },
-    );
-
-    await waitFor(() =>
-      expect(
-        screen.getByRole("button", { name: "Create court" }),
-      ).toBeInTheDocument(),
-    );
-
-    expect(screen.queryByText("Payment activation")).not.toBeInTheDocument();
-  });
-
-  it("still shows PaymentActivationScreen for a FREE-plan club whose subscription is not yet confirmed", async () => {
-    renderGate(
-      { operational: false, cause: "MP_NOT_CONNECTED" },
-      { ...PENDING_SUBSCRIPTION, plan: "FREE", status: "PENDING" },
     );
 
     const heading = await screen.findByRole("heading", {

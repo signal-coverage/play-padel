@@ -7,6 +7,7 @@ import {
 } from "@/core/users/services/users.service";
 import { logAudit } from "@/core/audit/services/audit.service";
 import { adminUpdatePlayerSchema } from "@/core/users/schemas/adminPlayerUpdate.schema";
+import { dispatch } from "@/lib/notifications/dispatcher";
 
 type RouteParams = { params: Promise<{ userId: string }> };
 
@@ -72,6 +73,24 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     metadata: parsed.data,
   });
 
+  // Notification failure must not affect the profile update response —
+  // the player affected has zero other live signal that an admin changed
+  // their data otherwise.
+  try {
+    await dispatch({
+      type: "PROFILE_UPDATED_BY_ADMIN",
+      clubId: null,
+      recipientId: targetUserId,
+      recipientEmail: target.email,
+      recipientName: target.displayName,
+      subject: "Your profile was updated",
+      html: "An administrator updated your profile.",
+      sendEmail: false,
+    });
+  } catch {
+    // notification failure must not affect the profile update
+  }
+
   return NextResponse.json({
     player: toPlayerResponse({ ...target, ...parsed.data }),
   });
@@ -106,6 +125,26 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
     entityId: targetUserId,
     metadata: { targetDisplayName: target.displayName },
   });
+
+  // Uses `target.email`/`target.displayName` — the PRE-anonymization values
+  // captured above, before anonymizeUserProfile overwrote the row's own
+  // email to its deleted-*@play-padel.invalid placeholder. Emailed (not
+  // just in-app) since the account is gone — an in-app notification the
+  // player can never sign back in to read would be pointless.
+  try {
+    await dispatch({
+      type: "PROFILE_UPDATED_BY_ADMIN",
+      clubId: null,
+      recipientId: targetUserId,
+      recipientEmail: target.email,
+      recipientName: target.displayName,
+      subject: "Your account was deleted",
+      html: "An administrator deleted your account. If you believe this is a mistake, contact support.",
+      sendEmail: true,
+    });
+  } catch {
+    // notification failure must not affect the account deletion
+  }
 
   return NextResponse.json({ ok: true });
 }

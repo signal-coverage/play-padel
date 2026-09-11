@@ -1,6 +1,6 @@
 "use client";
 
-import { addDays } from "date-fns";
+import { addDays, isBefore, startOfDay } from "date-fns";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,16 @@ import { Button } from "@/components/ui/button";
 import { formatGridHeaderDate } from "../../utils";
 import type { DayNavigatorProps } from "./types";
 
-export function DayNavigator({ date, onDateChange }: DayNavigatorProps) {
+export function DayNavigator({
+  date,
+  onDateChange,
+  minDate,
+}: DayNavigatorProps) {
+  // Compared by calendar day, not exact time — a `date`/`minDate` pair that
+  // fall on the same day must still disable "Previous day" even if one of
+  // them carries a non-midnight time-of-day.
+  const canGoBack = !minDate || isBefore(startOfDay(minDate), startOfDay(date));
+
   return (
     <div className="flex items-center justify-between gap-2">
       <Button
@@ -16,7 +25,7 @@ export function DayNavigator({ date, onDateChange }: DayNavigatorProps) {
         variant="outline"
         size="icon"
         aria-label="Previous day"
-        disabled={!onDateChange}
+        disabled={!onDateChange || !canGoBack}
         onClick={() => onDateChange?.(addDays(date, -1))}
       >
         <ChevronLeft />

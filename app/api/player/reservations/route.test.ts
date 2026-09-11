@@ -303,3 +303,92 @@ describe("POST /api/player/reservations — booking-time operational gate", () =
     expect(getClubOperationalStatusMock).not.toHaveBeenCalled();
   });
 });
+
+describe("POST /api/player/reservations — optional partner tagging", () => {
+  it("passes partnerIds through to createReservation on a free-court booking", async () => {
+    getCourtByIdMock.mockResolvedValue({ ...COURT, reservationFee: 0 });
+    createReservationMock.mockResolvedValue({ id: "res_free" });
+
+    const response = await POST(
+      makeRequest({
+        courtId: "court_1",
+        scheduledStart: "2026-09-01T10:00:00Z",
+        scheduledEnd: "2026-09-01T11:00:00Z",
+        partnerIds: ["partner_1", "partner_2"],
+      }),
+    );
+
+    expect(response.status).toBe(201);
+    expect(createReservationMock).toHaveBeenCalledWith(
+      "user_1",
+      expect.objectContaining({ partnerIds: ["partner_1", "partner_2"] }),
+    );
+  });
+
+  it("passes partnerIds through to createReservation on a paid-court booking", async () => {
+    getClubOperationalStatusMock.mockResolvedValue({
+      operational: true,
+      cause: null,
+    });
+    createReservationMock.mockResolvedValue({ id: "res_1", clubId: "club_1" });
+    createInvoiceMock.mockResolvedValue({ id: "invoice_1" });
+    issueInvoiceMock.mockResolvedValue({ id: "invoice_1" });
+    createCheckoutPreferenceMock.mockResolvedValue({
+      checkoutUrl: "https://mp.example.com/checkout/abc",
+    });
+
+    const response = await POST(
+      makeRequest({
+        courtId: "court_1",
+        scheduledStart: "2026-09-01T10:00:00Z",
+        scheduledEnd: "2026-09-01T11:00:00Z",
+        partnerIds: ["partner_1"],
+      }),
+    );
+
+    expect(response.status).toBe(201);
+    expect(createReservationMock).toHaveBeenCalledWith(
+      "user_1",
+      expect.objectContaining({ partnerIds: ["partner_1"] }),
+      { pendingPayment: true },
+    );
+  });
+
+  it("passes undefined partnerIds through when the field is omitted (no behavior change)", async () => {
+    getCourtByIdMock.mockResolvedValue({ ...COURT, reservationFee: 0 });
+    createReservationMock.mockResolvedValue({ id: "res_free" });
+
+    await POST(
+      makeRequest({
+        courtId: "court_1",
+        scheduledStart: "2026-09-01T10:00:00Z",
+        scheduledEnd: "2026-09-01T11:00:00Z",
+      }),
+    );
+
+    expect(createReservationMock).toHaveBeenCalledWith(
+      "user_1",
+      expect.objectContaining({ partnerIds: undefined }),
+    );
+  });
+
+  it("ignores a non-array partnerIds value instead of throwing", async () => {
+    getCourtByIdMock.mockResolvedValue({ ...COURT, reservationFee: 0 });
+    createReservationMock.mockResolvedValue({ id: "res_free" });
+
+    const response = await POST(
+      makeRequest({
+        courtId: "court_1",
+        scheduledStart: "2026-09-01T10:00:00Z",
+        scheduledEnd: "2026-09-01T11:00:00Z",
+        partnerIds: "not-an-array",
+      }),
+    );
+
+    expect(response.status).toBe(201);
+    expect(createReservationMock).toHaveBeenCalledWith(
+      "user_1",
+      expect.objectContaining({ partnerIds: undefined }),
+    );
+  });
+});

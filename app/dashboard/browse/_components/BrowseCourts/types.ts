@@ -10,6 +10,11 @@ export type BookSlotInput = {
   courtId: string;
   scheduledStart: string;
   scheduledEnd: string;
+  // Optional co-player tagging (see prisma/schema.prisma's
+  // ReservationPartner) — omitted entirely (not just empty) when no
+  // partners are selected, so a booking made with zero tags is byte-for-byte
+  // identical to the pre-existing request shape.
+  partnerIds?: string[];
 };
 
 export type SelectedSlot = {

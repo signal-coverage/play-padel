@@ -9,11 +9,16 @@ vi.mock("@/core/clubs/services/bankTransferAccount.service", () => ({
   setClubBankTransferAccount: vi.fn(),
 }));
 
+vi.mock("@/core/clubs/services/clubs.service", () => ({
+  notifyClubOperationalIfNeeded: vi.fn(),
+}));
+
 import { requireOwnerClub } from "../_lib/require-owner";
 import {
   getClubBankTransferAccount,
   setClubBankTransferAccount,
 } from "@/core/clubs/services/bankTransferAccount.service";
+import { notifyClubOperationalIfNeeded } from "@/core/clubs/services/clubs.service";
 import { GET, PUT } from "./route";
 
 const requireOwnerClubMock = requireOwnerClub as ReturnType<typeof vi.fn>;
@@ -23,6 +28,8 @@ const getClubBankTransferAccountMock = getClubBankTransferAccount as ReturnType<
 const setClubBankTransferAccountMock = setClubBankTransferAccount as ReturnType<
   typeof vi.fn
 >;
+const notifyClubOperationalIfNeededMock =
+  notifyClubOperationalIfNeeded as ReturnType<typeof vi.fn>;
 
 function putRequest(body: unknown) {
   return new Request("http://localhost/api/clubs/bank-transfer-account", {
@@ -35,6 +42,8 @@ beforeEach(() => {
   requireOwnerClubMock.mockReset();
   getClubBankTransferAccountMock.mockReset();
   setClubBankTransferAccountMock.mockReset();
+  notifyClubOperationalIfNeededMock.mockReset();
+  notifyClubOperationalIfNeededMock.mockResolvedValue(undefined);
 });
 
 describe("GET /api/clubs/bank-transfer-account", () => {
@@ -189,5 +198,17 @@ describe("PUT /api/clubs/bank-transfer-account", () => {
     );
     expect(response.status).toBe(200);
     expect(body).toEqual({ account });
+    expect(notifyClubOperationalIfNeededMock).toHaveBeenCalledWith("club_1");
+  });
+
+  it("does not notify when the request is rejected before setting the account (400)", async () => {
+    requireOwnerClubMock.mockResolvedValue({
+      ok: true,
+      context: { userId: "user_1", clubId: "club_1" },
+    });
+
+    await PUT(putRequest({ bankName: "Banco Nación", cbu: "123" }));
+
+    expect(notifyClubOperationalIfNeededMock).not.toHaveBeenCalled();
   });
 });

@@ -1,6 +1,7 @@
 "use client";
 
-import { Download, TriangleAlert } from "lucide-react";
+import { Download } from "lucide-react";
+import { BouncingBall } from "@/components/BouncingBall";
 import { DataTable } from "@/components/DataTable";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -38,10 +39,11 @@ export function AdminClubList({
               <Badge variant="outline">{club.plan}</Badge>
               {healthWarning && (
                 <span title={healthWarning}>
-                  <TriangleAlert
-                    className="text-destructive"
+                  <BouncingBall
                     size={14}
-                    strokeWidth={2.25}
+                    amplitude={4}
+                    fill="var(--destructive)"
+                    stroke="color-mix(in oklch, var(--destructive) 70%, black)"
                   />
                 </span>
               )}
@@ -60,7 +62,12 @@ export function AdminClubList({
       <div className="flex items-center justify-between gap-2">
         {clubsNeedingAttention > 0 ? (
           <p className="flex items-center gap-1 text-xs text-destructive">
-            <TriangleAlert size={14} strokeWidth={2.25} />
+            <BouncingBall
+              size={14}
+              amplitude={4}
+              fill="var(--destructive)"
+              stroke="color-mix(in oklch, var(--destructive) 70%, black)"
+            />
             {clubsNeedingAttention === 1
               ? "1 club needs attention"
               : `${clubsNeedingAttention} clubs need attention`}
@@ -77,7 +84,15 @@ export function AdminClubList({
       </div>
 
       <DataTable
-        className="min-h-0 flex-1"
+        // Same fix as PlayersDirectory's table
+        // (app/dashboard/players/_components/PlayersDirectory/PlayersDirectory.tsx)
+        // — see its own comments for the full explanation. <main>
+        // (DashboardShell.tsx) is overflow-y-auto (whole-page scroll) below
+        // md, not md:overflow-hidden, so the h-full/flex-1 chain this table
+        // normally stretches against collapses there; min-h-[60svh] doesn't
+        // depend on that chain, md:min-h-0 restores the exact previous
+        // desktop sizing.
+        className="min-h-[60svh] flex-1 md:min-h-0"
         columns={columns}
         rows={clubs}
         rowKey={(club) => club.id}
@@ -87,6 +102,11 @@ export function AdminClubList({
         onRowClick={(club) => onSelectClub(club.id)}
         isRowSelected={(club) => club.id === selectedClubId}
       />
+
+      {/* Real spacer box (height, not margin/padding), mobile only — see
+          PlayersDirectory.tsx's identical spacer for the full explanation
+          of why margin/padding on the table itself doesn't work here. */}
+      <div className="h-8 shrink-0 md:hidden" aria-hidden="true" />
     </div>
   );
 }

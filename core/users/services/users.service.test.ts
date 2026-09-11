@@ -4,9 +4,10 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 // load time (same reason hasAnyFreeSlot.test.ts / getClubsAvailability.test.ts
 // need this) — mock it so importing the module for these pure-ish service
 // functions doesn't require a real DATABASE_URL.
-const { findUniqueMock, updateMock } = vi.hoisted(() => ({
+const { findUniqueMock, updateMock, updateManyMock } = vi.hoisted(() => ({
   findUniqueMock: vi.fn(),
   updateMock: vi.fn(),
+  updateManyMock: vi.fn(),
 }));
 
 vi.mock("@/infrastructure/db/client", () => ({
@@ -14,6 +15,7 @@ vi.mock("@/infrastructure/db/client", () => ({
     userProfile: {
       findUnique: findUniqueMock,
       update: updateMock,
+      updateMany: updateManyMock,
     },
   },
 }));
@@ -58,15 +60,15 @@ describe("anonymizeUserProfile", () => {
   beforeEach(() => {
     findUniqueMock.mockReset();
     updateMock.mockReset();
+    updateManyMock.mockReset();
+    updateManyMock.mockResolvedValue({ count: 1 });
   });
 
   it("scrubs all PII fields and sets status to DELETED", async () => {
-    updateMock.mockResolvedValue(makeRow());
-
     await anonymizeUserProfile("user_123", "system:clerk-webhook");
 
-    expect(updateMock).toHaveBeenCalledTimes(1);
-    const call = updateMock.mock.calls[0][0];
+    expect(updateManyMock).toHaveBeenCalledTimes(1);
+    const call = updateManyMock.mock.calls[0][0];
     expect(call.where).toEqual({ id: "user_123" });
     expect(call.data).toMatchObject({
       displayName: "Deleted User",
@@ -86,26 +88,49 @@ describe("anonymizeUserProfile", () => {
   });
 
   it("sets a distinct placeholder email embedding the uid", async () => {
-    updateMock.mockResolvedValue(makeRow());
-
     await anonymizeUserProfile("user_456", "system:clerk-webhook");
 
-    const call = updateMock.mock.calls[0][0];
+    const call = updateManyMock.mock.calls[0][0];
     expect(call.data.email).toBe("deleted-user_456@play-padel.invalid");
   });
 
   it("does not touch id, role, clubId, createdAt, or createdBy", async () => {
-    updateMock.mockResolvedValue(makeRow());
-
     await anonymizeUserProfile("user_123", "system:clerk-webhook");
 
-    const call = updateMock.mock.calls[0][0];
+    const call = updateManyMock.mock.calls[0][0];
     expect(call.data).not.toHaveProperty("id");
     expect(call.data).not.toHaveProperty("role");
     expect(call.data).not.toHaveProperty("clubId");
     expect(call.data).not.toHaveProperty("createdAt");
     expect(call.data).not.toHaveProperty("createdBy");
     expect(call.data).not.toHaveProperty("reservations");
+  });
+
+  it("returns true when a matching UserProfile row was actually anonymized", async () => {
+    updateManyMock.mockResolvedValue({ count: 1 });
+
+    const result = await anonymizeUserProfile(
+      "user_123",
+      "system:clerk-webhook",
+    );
+
+    expect(result).toBe(true);
+  });
+
+  // Uses updateMany (never throwing on a zero-row match, unlike update)
+  // specifically so a Clerk user.deleted webhook for a Clerk user who never
+  // completed onboarding — no UserProfile row was ever created for them,
+  // see app/api/onboarding/route.ts — no-ops instead of crashing the
+  // webhook handler with Prisma's "No record was found for an update".
+  it("returns false and does not throw when no UserProfile row exists for the uid", async () => {
+    updateManyMock.mockResolvedValue({ count: 0 });
+
+    const result = await anonymizeUserProfile(
+      "user_ghost",
+      "system:clerk-webhook",
+    );
+
+    expect(result).toBe(false);
   });
 });
 

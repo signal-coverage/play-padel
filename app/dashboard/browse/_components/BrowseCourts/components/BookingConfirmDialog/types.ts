@@ -10,6 +10,15 @@ export type BookingConfirmDialogProps = {
   currency: string;
   isSubmitting: boolean;
   onConfirm: () => void;
+  // Optional co-player tagging (see prisma/schema.prisma's
+  // ReservationPartner) — state lives in the parent (BrowseCourts) so it
+  // survives the desktop/mobile variant swap and resets alongside
+  // `selected` when the dialog closes.
+  partnerIds: string[];
+  onPartnerIdsChange: (ids: string[]) => void;
+  // The signed-in booker's own id, threaded down to PartnerPicker so they
+  // can never tag themselves.
+  currentUserId?: string;
 };
 
 /**

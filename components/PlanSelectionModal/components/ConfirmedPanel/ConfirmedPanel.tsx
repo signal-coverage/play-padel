@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircle2 } from "lucide-react";
+import { BouncingBall } from "@/components/BouncingBall";
 import { Button } from "@/components/ui/button";
 import { StatusBox } from "@/components/StatusBox";
 import type { ConfirmedPanelProps } from "./types";
@@ -28,7 +28,7 @@ export function ConfirmedPanel({
 }: ConfirmedPanelProps) {
   return (
     <StatusBox className="flex flex-col items-center gap-3 py-12">
-      <CheckCircle2 className="size-8 text-success" aria-hidden="true" />
+      <BouncingBall size={32} amplitude={12} />
       <p className="text-base font-semibold text-foreground">
         {isTrialing ? "Free Trial Active" : "Membership Active"}
       </p>

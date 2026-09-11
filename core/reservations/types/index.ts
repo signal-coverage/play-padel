@@ -1,3 +1,5 @@
+import type { DominantHand, PreferredSide } from "@/core/users/types";
+
 export type ReservationStatus =
   "SCHEDULED" | "CONFIRMED" | "CANCELLED" | "COMPLETED" | "NO_SHOW";
 
@@ -27,6 +29,12 @@ export interface CreateReservationInput {
   scheduledStart: string;
   scheduledEnd: string;
   notes?: string;
+  // Optional, additive (see prisma/schema.prisma's ReservationPartner):
+  // other registered players (UserProfile ids) the booker is tagging as
+  // co-players. Max 3, no self-tagging — validated server-side by
+  // reservationPartners.service.ts's validatePartnerIds before the
+  // reservation is created.
+  partnerIds?: string[];
 }
 
 export interface UpdateReservationInput {
@@ -57,4 +65,23 @@ export interface TicketData {
   scheduledEnd: Date;
   userName: string;
   status: ReservationStatus;
+}
+
+// Derived "Latest Partner" data for a given player (see reservationPartners
+// .service.ts's getLatestPartnerForPlayer and docs: Latest Partner spec).
+// Field names are shaped to drop straight into PlayerOverview's
+// PartnerSummary UI type with no remapping. `name` mirrors that UI type's
+// existing field name rather than this codebase's usual `displayName`,
+// deliberately — this type only exists to feed that one card.
+export interface LatestPartnerSummary {
+  id: string;
+  name: string;
+  avatarUrl: string | null;
+  padelCategory: number | null;
+  preferredSide: PreferredSide | null;
+  dominantHand: DominantHand | null;
+  email: string;
+  phone: string | null;
+  timesPlayedTogether: number;
+  lastPlayedLabel: string;
 }

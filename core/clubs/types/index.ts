@@ -20,6 +20,14 @@ export interface PendingClubSummary {
   name: string;
   email: string;
   createdAt: Date;
+  // True when another club (any approval/operational status, address text
+  // compared case/whitespace-insensitively) shares this club's email or
+  // address — see listPendingClubs in core/clubs/services/clubs.service.ts.
+  // A warning surfaced for the admin to judge during review, never an
+  // automatic rejection: address text isn't normalized/geocoded, so this
+  // can't distinguish a real duplicate from two different addresses that
+  // happen to be typed the same way.
+  possibleDuplicate: boolean;
 }
 
 export interface Club {

@@ -7,6 +7,7 @@ import {
 import { updateClubSchema } from "@/core/clubs/schemas/club.schema";
 import { requestPlanChange } from "@/core/billing/services/membership.service";
 import { requireAdminProfile } from "@/lib/auth/adminProfile";
+import { dispatch } from "@/lib/notifications/dispatcher";
 
 type RouteParams = { params: Promise<{ clubId: string }> };
 
@@ -75,6 +76,31 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 
   try {
     const club = await updateClub(clubId, rest, authResult.context.userId);
+
+    // The owner has zero other live signal that an admin touched their club
+    // on their behalf — only this route's own caller (the admin) sees the
+    // result. Deliberately NOT inside updateClub() itself, which is also
+    // called by the owner-only PATCH /api/clubs route — putting it there
+    // would notify an owner "an admin updated your club" every time they
+    // update it themselves.
+    try {
+      const owner = await getClubOwner(clubId);
+      if (owner) {
+        await dispatch({
+          type: "CLUB_UPDATED_BY_ADMIN",
+          clubId,
+          recipientId: owner.id,
+          recipientEmail: owner.email,
+          recipientName: owner.displayName,
+          subject: "Your club settings were updated",
+          html: "An administrator updated your club's settings.",
+          sendEmail: false,
+        });
+      }
+    } catch {
+      // notification failure must not affect the update response
+    }
+
     return NextResponse.json({ club });
   } catch {
     return NextResponse.json(

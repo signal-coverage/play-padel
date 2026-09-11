@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { BookingConfirmActions } from "../BookingConfirmActions";
 import { BookingConfirmSummary } from "../BookingConfirmSummary";
+import { PartnerPicker } from "../PartnerPicker";
 import type { BookingConfirmDialogProps } from "../../types";
 import { getBookingConfirmMessage, getBookingPaymentState } from "../../utils";
 
@@ -23,6 +24,9 @@ export function BookingConfirmDesktopDialog({
   currency,
   isSubmitting,
   onConfirm,
+  partnerIds,
+  onPartnerIdsChange,
+  currentUserId,
 }: BookingConfirmDialogProps) {
   const paymentState = getBookingPaymentState(price);
 
@@ -46,6 +50,13 @@ export function BookingConfirmDesktopDialog({
         <p className="text-xs text-muted-foreground">
           {getBookingConfirmMessage(paymentState, currency)}
         </p>
+
+        <PartnerPicker
+          selectedIds={partnerIds}
+          onChange={onPartnerIdsChange}
+          excludeUserId={currentUserId}
+        />
+
         <DialogFooter>
           <BookingConfirmActions
             paymentState={paymentState}

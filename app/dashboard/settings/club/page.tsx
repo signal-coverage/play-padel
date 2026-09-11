@@ -5,13 +5,15 @@ import { OwnerOnlyGuard } from "@/app/dashboard/_components/OwnerOnlyGuard";
 import { ClubSettingsTabs } from "./_components/ClubSettingsTabs";
 import { AdminClubSettingsView } from "./_components/AdminClubSettingsView";
 
-// Additive, checked BEFORE OwnerOnlyGuard below — same idiom as
-// DashboardHome.tsx's `if (user.isAdmin) return <AdminDashboardHome />`: an
-// admin sees the platform-wide club picker regardless of their own role
-// (role === "player" AND isAdmin === true both hold at once — see
-// prisma/schema.prisma's UserProfile.isAdmin comment). The
-// OwnerOnlyGuard/ClubSettingsTabs branch below is completely untouched,
-// still reachable exactly as before by anyone with isAdmin: false.
+// Additive, checked BEFORE OwnerOnlyGuard below: an admin sees the
+// platform-wide club picker regardless of their own role (role === "player"
+// AND isAdmin === true both hold at once — see prisma/schema.prisma's
+// UserProfile.isAdmin comment). Unlike DashboardHome.tsx's own dashboard
+// (which no longer branches on isAdmin at all — see its own comment), this
+// page's content genuinely differs per-admin (a picker across every club),
+// so branching here still makes sense. The OwnerOnlyGuard/ClubSettingsTabs
+// branch below is completely untouched, still reachable exactly as before
+// by anyone with isAdmin: false.
 export default function ClubSettingsPage() {
   const { user, profileLoading } = useAuth();
 

@@ -13,7 +13,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { HelpCircle, LogOut, Settings, User } from "lucide-react";
+import { useMembershipSubscription } from "@/components/PlanSelectionModal/hooks";
+import { isMembershipConfirmed } from "@/components/PlanSelectionModal/utils";
 import { getInitials } from "../../utils";
+import { useClubOperationalCause } from "../../hooks";
 
 export function UserMenu() {
   const { user, signOut } = useAuth();
@@ -23,6 +26,29 @@ export function UserMenu() {
   const initials = getInitials(user?.email ?? null);
   const imageUrl = user?.imageUrl ?? null;
   const isOwner = user?.role === "owner";
+
+  // Club Settings is only reachable once the club has actually cleared BOTH
+  // gates the rest of the dashboard is gated behind (see
+  // ClubOperationalGate.tsx) — an owner whose club is still pending admin
+  // approval, or whose Play Padel membership never got confirmed, would
+  // otherwise see this link in the dropdown even though the page itself
+  // (and everything else in the dashboard) is unreachable for them.
+  // `undefined` (still loading) fails CLOSED here — same "don't flash an
+  // item that immediately disappears" reasoning as useIsClubOperational's
+  // own doc comment — rather than briefly showing it before the real
+  // answer lands.
+  const clubOperationalCause = useClubOperationalCause(
+    isOwner ? "owner" : "player",
+  );
+  const { data: membershipSubscription } = useMembershipSubscription({
+    enabled: isOwner,
+  });
+  const canManageClubSettings =
+    isOwner &&
+    clubOperationalCause !== undefined &&
+    clubOperationalCause !== "PENDING_APPROVAL" &&
+    !!membershipSubscription &&
+    isMembershipConfirmed(membershipSubscription.status);
 
   async function handleSignOut() {
     await signOut();
@@ -60,7 +86,7 @@ export function UserMenu() {
           <User className="h-4 w-4 text-muted-foreground" strokeWidth={1.5} />
           Account Settings
         </DropdownMenuItem>
-        {isOwner && (
+        {canManageClubSettings && (
           <DropdownMenuItem asChild className="cursor-pointer py-2 rounded-sm">
             <Link href="/dashboard/settings/club">
               <Settings

@@ -75,7 +75,14 @@ describe("GET /api/admin/metrics", () => {
   });
 
   it("returns unscoped counts for clubs, courts, players, and booked reservations when authorized", async () => {
-    clubCountMock.mockResolvedValue(5);
+    // 12 clubs total; 1 pending approval, 8 genuinely active (approved +
+    // status ACTIVE) — the remaining 3 (rejected, suspended, deactivated,
+    // whatever) fall out of the inactiveClubs subtraction below without
+    // needing their own query.
+    clubCountMock
+      .mockResolvedValueOnce(12) // unfiltered total
+      .mockResolvedValueOnce(1) // approvalStatus: PENDING
+      .mockResolvedValueOnce(8); // approvalStatus: APPROVED, status: ACTIVE
     courtCountMock.mockResolvedValue(42);
     userProfileCountMock.mockResolvedValue(120);
     reservationCountMock.mockResolvedValue(730);
@@ -84,7 +91,19 @@ describe("GET /api/admin/metrics", () => {
     const body = await response.json();
 
     expect(response.status).toBe(200);
-    expect(clubCountMock).toHaveBeenCalledWith();
+    // Unfiltered — activeClubs/inactiveClubs/pendingApprovalClubs are a
+    // mutually exclusive partition of this same total, not a separately
+    // (possibly smaller) filtered count. See PENDING/ACTIVE below for why a
+    // club deactivated after its owner's account was deleted (see
+    // app/api/webhooks/clerk/route.ts) or rejected during approval must not
+    // silently keep counting as active.
+    expect(clubCountMock).toHaveBeenNthCalledWith(1);
+    expect(clubCountMock).toHaveBeenNthCalledWith(2, {
+      where: { approvalStatus: "PENDING" },
+    });
+    expect(clubCountMock).toHaveBeenNthCalledWith(3, {
+      where: { approvalStatus: "APPROVED", status: "ACTIVE" },
+    });
     expect(courtCountMock).toHaveBeenCalledWith();
     expect(userProfileCountMock).toHaveBeenCalledWith({
       where: { role: "player" },
@@ -94,7 +113,11 @@ describe("GET /api/admin/metrics", () => {
     });
     expect(body).toEqual({
       metrics: {
-        totalClubs: 5,
+        totalClubs: 12,
+        activeClubs: 8,
+        // Derived: 12 - 1 (pending) - 8 (active) = 3, not a 4th query.
+        inactiveClubs: 3,
+        pendingApprovalClubs: 1,
         totalCourts: 42,
         totalPlayers: 120,
         totalReservations: 730,

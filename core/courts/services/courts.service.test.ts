@@ -298,6 +298,41 @@ describe("createCourt — physical characteristics", () => {
       }),
     );
   });
+
+  it("passes courtNumber through to the created row", async () => {
+    findFirstMock.mockResolvedValue(null);
+    createMock.mockResolvedValue({ ...COURT_ROW, courtNumber: 3 });
+    createAvailabilityManyMock.mockResolvedValue({ count: 0 });
+    resolveDefaultCourtAvailabilityMock.mockResolvedValue([]);
+
+    const court = await createCourt(
+      "club_1",
+      { name: "Court 1", courtNumber: 3 },
+      "user_1",
+    );
+
+    expect(createMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ courtNumber: 3 }),
+      }),
+    );
+    expect(court.courtNumber).toBe(3);
+  });
+
+  it("defaults courtNumber to null when omitted", async () => {
+    findFirstMock.mockResolvedValue(null);
+    createMock.mockResolvedValue(COURT_ROW);
+    createAvailabilityManyMock.mockResolvedValue({ count: 0 });
+    resolveDefaultCourtAvailabilityMock.mockResolvedValue([]);
+
+    await createCourt("club_1", { name: "Court 1" }, "user_1");
+
+    expect(createMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ courtNumber: null }),
+      }),
+    );
+  });
 });
 
 describe("updateCourt — physical characteristics", () => {
@@ -339,6 +374,33 @@ describe("updateCourt — physical characteristics", () => {
     expect(dataArg).not.toHaveProperty("wallType");
     expect(dataArg).not.toHaveProperty("lighting");
     expect(dataArg).not.toHaveProperty("netType");
+  });
+
+  it("threads courtNumber into the update payload", async () => {
+    updateMock.mockResolvedValue({ ...COURT_ROW, courtNumber: 5 });
+
+    const court = await updateCourt(
+      "club_1",
+      "court_1",
+      { courtNumber: 5 },
+      "user_1",
+    );
+
+    expect(updateMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ courtNumber: 5 }),
+      }),
+    );
+    expect(court.courtNumber).toBe(5);
+  });
+
+  it("omits courtNumber from the update payload when not provided", async () => {
+    updateMock.mockResolvedValue(COURT_ROW);
+
+    await updateCourt("club_1", "court_1", { name: "Court 1" }, "user_1");
+
+    const dataArg = updateMock.mock.calls[0][0].data;
+    expect(dataArg).not.toHaveProperty("courtNumber");
   });
 });
 

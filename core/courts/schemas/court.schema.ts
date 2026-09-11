@@ -25,6 +25,7 @@ export const weeklyAvailabilityTemplateSchema = z.array(
 
 export const createCourtSchema = z.object({
   name: z.string().min(1, "Name is required"),
+  courtNumber: z.number().int().positive().optional(),
   surface: z.string().optional(),
   indoor: z.boolean().optional(),
   color: z.string().optional(),
@@ -43,6 +44,7 @@ export const createCourtSchema = z.object({
 
 export const updateCourtSchema = z.object({
   name: z.string().min(1, "Name is required").optional(),
+  courtNumber: z.number().int().positive().optional(),
   surface: z.string().optional(),
   indoor: z.boolean().optional(),
   color: z.string().optional(),

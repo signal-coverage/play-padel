@@ -34,9 +34,10 @@ export function CourtsView() {
 
   const [formOpen, setFormOpen] = useState(false);
   const [editingCourt, setEditingCourt] = useState<CourtRecord | null>(null);
-  // Which step the merged sheet opens on: the table's pencil icon opens it
-  // on Details (0), the clock icon opens the SAME sheet on Availability (1).
-  const [formStep, setFormStep] = useState<0 | 1>(0);
+  // Which step the merged modal opens on: the table's pencil icon opens it
+  // on Details (0), the clock icon opens the SAME modal on Availability (3,
+  // the last of its four steps).
+  const [formStep, setFormStep] = useState<0 | 1 | 2 | 3>(0);
 
   const [closuresOpen, setClosuresOpen] = useState(false);
   const [closuresCourt, setClosuresCourt] = useState<CourtRecord | null>(null);
@@ -82,7 +83,7 @@ export function CourtsView() {
 
   function openAvailability(court: CourtRecord) {
     setEditingCourt(court);
-    setFormStep(1);
+    setFormStep(3);
     setFormOpen(true);
   }
 
@@ -212,7 +213,15 @@ export function CourtsView() {
       )}
 
       <CourtsTable
-        className="min-h-0 flex-1"
+        // Same fix as PlayersDirectory's table
+        // (app/dashboard/players/_components/PlayersDirectory/PlayersDirectory.tsx)
+        // — see its own comments for the full explanation. <main>
+        // (DashboardShell.tsx) is overflow-y-auto (whole-page scroll) below
+        // md, not md:overflow-hidden, so the h-full/flex-1 chain this table
+        // normally stretches against collapses there; min-h-[60svh] doesn't
+        // depend on that chain, md:min-h-0 restores the exact previous
+        // desktop sizing.
+        className="min-h-[60svh] flex-1 md:min-h-0"
         courts={courts}
         isLoading={isLoading}
         onEdit={openEditForm}
@@ -228,6 +237,13 @@ export function CourtsView() {
         onToggleSelect={toggleSelect}
         onToggleSelectAll={toggleSelectAll}
       />
+
+      {/* Real spacer box (height, not margin/padding), mobile only — see
+          PlayersDirectory.tsx's identical spacer for the full explanation
+          of why margin/padding on the table itself doesn't work here. The
+          Sheets/Dialogs below render into a portal, so they don't affect
+          this column's normal layout flow. */}
+      <div className="h-8 shrink-0 md:hidden" aria-hidden="true" />
 
       <CourtFormSheet
         open={formOpen}

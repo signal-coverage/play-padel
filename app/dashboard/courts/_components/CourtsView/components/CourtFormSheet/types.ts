@@ -19,8 +19,8 @@ export type CourtFormSheetProps = {
     availability: AvailabilityEntry[],
   ) => Promise<void>;
   isSubmitting: boolean;
-  /** Which step the sheet opens on: 0 = Details (default), 1 = Availability.
-   * Both the table's pencil and clock icons open this same sheet, just
-   * starting on a different step. */
-  initialStep?: 0 | 1;
+  /** Which step the modal opens on: 0 = Details (default), 1 = Attributes,
+   * 2 = Pricing, 3 = Availability. Both the table's pencil and clock icons
+   * open this same modal, just starting on a different step. */
+  initialStep?: 0 | 1 | 2 | 3;
 };

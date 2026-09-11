@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { PaymentReturnState, ReturnReservation } from "./types";
 
 async function fetchJson<T>(url: string): Promise<T> {
@@ -23,6 +23,40 @@ function useNow(intervalMs: number): number {
 }
 
 const POLL_INTERVAL_MS = 3_000;
+
+// Opens GET /api/player/reservations/stream (Server-Sent Events), scoped to
+// this one reservation, and invalidates the query below the instant the
+// server notices its status/paymentExpiresAt actually changed — instead of
+// waiting out the 3s poll below. That poll stays in place regardless (see
+// usePaymentReturnStatus's own refetchInterval) as a fallback baseline, same
+// "SSE is additive, never a replacement" precedent as
+// NotificationsBell/hooks.ts's useNotificationStream. Native EventSource
+// reconnects automatically on any connection close, so no manual reconnect
+// logic is needed here.
+function usePaymentReturnStream(reservationId: string | null) {
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (!reservationId) return;
+
+    const source = new EventSource(
+      `/api/player/reservations/stream?reservationId=${reservationId}`,
+    );
+
+    function handleChanged() {
+      queryClient.invalidateQueries({
+        queryKey: ["payment-return", reservationId],
+      });
+    }
+
+    source.addEventListener("changed", handleChanged);
+
+    return () => {
+      source.removeEventListener("changed", handleChanged);
+      source.close();
+    };
+  }, [reservationId, queryClient]);
+}
 
 // Polls the player's own reservation list (no new endpoint needed) until the
 // webhook (the actual source of truth) has settled this reservation one way
@@ -46,6 +80,8 @@ export function usePaymentReturnStatus(reservationId: string | null) {
       return stillPending ? POLL_INTERVAL_MS : false;
     },
   });
+
+  usePaymentReturnStream(reservationId);
 
   const reservation = query.data ?? null;
 

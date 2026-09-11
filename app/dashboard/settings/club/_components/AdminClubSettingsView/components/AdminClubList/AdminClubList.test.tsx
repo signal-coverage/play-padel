@@ -139,3 +139,29 @@ describe("AdminClubList health summary", () => {
     expect(screen.getByText("2 clubs need attention")).toBeInTheDocument();
   });
 });
+
+describe("AdminClubList mobile height", () => {
+  it("gives the table extra minimum height on mobile with a trailing spacer, while leaving desktop sizing untouched", () => {
+    vi.stubGlobal("ResizeObserver", ResizeObserverStub);
+    render(
+      <AdminClubList
+        clubs={[CLUB_A]}
+        isLoading={false}
+        onSelectClub={() => {}}
+      />,
+    );
+
+    // Same fix as PlayersDirectory's table (see its own comments for the
+    // full explanation).
+    const table = screen.getByRole("table");
+    const wrapper = table.closest(".rounded-sm.border");
+    expect(wrapper?.className).toContain("min-h-[60svh]");
+    expect(wrapper?.className).toMatch(/\bmd:min-h-0\b/);
+
+    const spacer = wrapper?.nextElementSibling as HTMLElement | null;
+    expect(spacer).not.toBeNull();
+    expect(spacer?.getAttribute("aria-hidden")).toBe("true");
+    expect(spacer?.className).toMatch(/\bh-8\b/);
+    expect(spacer?.className).toMatch(/\bmd:hidden\b/);
+  });
+});

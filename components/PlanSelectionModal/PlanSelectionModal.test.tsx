@@ -95,11 +95,24 @@ const PENDING_SUBSCRIPTION = {
   currentPeriodEnd: null,
 };
 
+// jsdom doesn't implement EventSource. useMembershipSubscription (this
+// modal's own useMembershipSubscription call, while awaiting confirmation)
+// opens one — deliberately thin, just enough to let it construct/tear down
+// without throwing. None of this file's tests assert on real-time push
+// behavior itself (see hooks.test.tsx for that); this only keeps the
+// existing polling-based tests below from crashing on mount.
+class MockEventSource {
+  addEventListener() {}
+  removeEventListener() {}
+  close() {}
+}
+
 function renderModal(
   fetchImpl: (url: string, init?: RequestInit) => Promise<unknown>,
 ) {
   const fetchMock = vi.fn(fetchImpl);
   vi.stubGlobal("fetch", fetchMock);
+  vi.stubGlobal("EventSource", MockEventSource);
 
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },

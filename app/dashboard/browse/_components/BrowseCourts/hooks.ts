@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import type { CourtColumn } from "@/components/CourtAvailabilityGrid";
@@ -41,6 +42,40 @@ export function useActiveClubs(date: Date) {
 // sync with the owner-side interval in the reservations feature.
 const LIVE_REFETCH_INTERVAL_MS = 15_000;
 
+// Opens GET /api/player/clubs/[clubId]/availability/stream (Server-Sent
+// Events), scoped to this one club/date, and refetches the grid the instant
+// the server notices another player just booked or cancelled a slot —
+// instead of waiting out LIVE_REFETCH_INTERVAL_MS. Same "SSE is additive,
+// the poll stays as a fallback baseline" precedent as
+// NotificationsBell/hooks.ts's useNotificationStream.
+function useClubAvailabilityStream(clubId: string | null, dateKey: string) {
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (!clubId) return;
+    // Re-bound to a fresh const so TS's narrowing survives into the nested
+    // handleChanged closure below.
+    const resolvedClubId: string = clubId;
+
+    const source = new EventSource(
+      `/api/player/clubs/${resolvedClubId}/availability/stream?date=${dateKey}`,
+    );
+
+    function handleChanged() {
+      queryClient.invalidateQueries({
+        queryKey: playerClubAvailabilityQueryKey(resolvedClubId, dateKey),
+      });
+    }
+
+    source.addEventListener("changed", handleChanged);
+
+    return () => {
+      source.removeEventListener("changed", handleChanged);
+      source.close();
+    };
+  }, [clubId, dateKey, queryClient]);
+}
+
 export function useClubAvailability(
   clubId: string | null,
   date: Date,
@@ -60,6 +95,8 @@ export function useClubAvailability(
   rowCount: number | undefined;
 } {
   const dateKey = toDateKey(date);
+  useClubAvailabilityStream(clubId, dateKey);
+
   const { data, isLoading, isError, isPlaceholderData } = useQuery({
     queryKey: clubId
       ? playerClubAvailabilityQueryKey(clubId, dateKey)

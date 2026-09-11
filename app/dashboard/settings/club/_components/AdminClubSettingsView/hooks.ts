@@ -1,6 +1,6 @@
 "use client";
 
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import type { AdminClubListItem, ClubOwner } from "./types";
 
@@ -40,6 +40,36 @@ export function useClubOwner(clubId?: string) {
       return data.owner ?? null;
     },
     enabled: Boolean(clubId),
+  });
+}
+
+// Activates the hidden, admin-only FREE membership tier for a club — see
+// app/api/admin/membership-free-plan/route.ts and
+// core/billing/services/membership.service.ts's activateFreePlan. Same
+// action scripts/make-free-plan.ts performs from a terminal. Invalidates the
+// clubs list so the picker's plan badge picks up the change immediately.
+export function useActivateFreePlan() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (clubId: string) => {
+      const res = await fetch("/api/admin/membership-free-plan", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ clubId }),
+      });
+      const body = await res.json().catch(() => null);
+      if (!res.ok) {
+        throw new Error(
+          body?.error ?? "Something went wrong. Please try again.",
+        );
+      }
+      return body;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ADMIN_CLUBS_QUERY_KEY });
+      toast.success("Club activated on the FREE plan");
+    },
+    onError: (error: Error) => toast.error(error.message),
   });
 }
 

@@ -44,6 +44,12 @@ export function AdminStatusView() {
               entries={data?.recent ?? []}
               isLoading={isLoading}
             />
+
+            {/* Real spacer box (height, not margin/padding), mobile only —
+                see PlayersDirectory.tsx's identical spacer for the full
+                explanation of why margin/padding on the table itself
+                doesn't work here. */}
+            <div className="h-8 shrink-0 md:hidden" aria-hidden="true" />
           </div>
         </>
       )}

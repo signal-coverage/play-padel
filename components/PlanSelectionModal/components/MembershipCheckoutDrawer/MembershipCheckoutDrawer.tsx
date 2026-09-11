@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { CircleAlert, Lock } from "lucide-react";
+import { Lock } from "lucide-react";
+import { BouncingBall } from "@/components/BouncingBall";
 import {
   Sheet,
   SheetContent,
@@ -171,10 +172,14 @@ export function MembershipCheckoutDrawer({
                         role="alert"
                         className="flex items-center gap-1.5 border-b border-destructive/20 bg-destructive/5 px-3 py-2 text-sm text-destructive"
                       >
-                        <CircleAlert
-                          className="size-3.5 shrink-0"
-                          aria-hidden="true"
-                        />
+                        <span className="shrink-0">
+                          <BouncingBall
+                            size={14}
+                            amplitude={4}
+                            fill="var(--destructive)"
+                            stroke="color-mix(in oklch, var(--destructive) 70%, black)"
+                          />
+                        </span>
                         <span>{checkoutError}</span>
                       </div>
                     )}

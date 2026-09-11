@@ -153,10 +153,9 @@ describe("DashboardShell — ClubOperationalGate regression vs. DashboardGuard",
           }),
         });
       }
-      // ClubOperationalGate now also calls useMembershipSubscription
-      // unconditionally (FREE-plan hidden-testing bypass check) — a null
-      // subscription keeps this owner off that bypass (never FREE/confirmed)
-      // and is otherwise irrelevant to what this test asserts.
+      // PaymentActivationScreen (rendered by the gate for this cause) calls
+      // useMembershipSubscription itself once mounted — its actual value is
+      // otherwise irrelevant to what this test asserts.
       if (url === "/api/clubs/membership") {
         return Promise.resolve({
           ok: true,
@@ -257,9 +256,9 @@ describe("DashboardShell — ClubOperationalGate regression vs. DashboardGuard",
           json: async () => ({ operational: true, cause: null }),
         });
       }
-      // ClubOperationalGate now also calls useMembershipSubscription
-      // unconditionally (FREE-plan hidden-testing bypass check) — irrelevant
-      // to what this test asserts since the club is already operational.
+      // Defensive only: nothing actually calls this while the club is
+      // already operational (PaymentActivationScreen, the only consumer of
+      // this endpoint, never mounts in that case).
       if (url === "/api/clubs/membership") {
         return Promise.resolve({
           ok: true,

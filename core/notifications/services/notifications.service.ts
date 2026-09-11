@@ -254,6 +254,21 @@ export async function markAllAsRead(recipientId: string): Promise<void> {
   });
 }
 
+// Scoped to recipientId (not a bare findUnique+update by id) so a signed-in
+// user can never mark someone else's notification as read by guessing/
+// reusing an id — mirrors markAllAsRead's own recipient scoping.
+// updateMany (not update) so marking an already-read or someone-else's
+// notification is a harmless no-op rather than a P2025 throw.
+export async function markAsRead(
+  recipientId: string,
+  notificationId: string,
+): Promise<void> {
+  await prisma.notification.updateMany({
+    where: { id: notificationId, recipientId, readAt: null },
+    data: { readAt: new Date() },
+  });
+}
+
 // Pure data query — orchestration (dispatching a notification to every
 // admin) lives in lib/notifications/dispatcher.ts's notifyAllAdmins, which
 // imports this function. Importing dispatch() back into this file would

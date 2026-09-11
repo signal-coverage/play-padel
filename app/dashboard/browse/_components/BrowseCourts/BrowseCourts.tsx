@@ -17,6 +17,7 @@ import { DayNavigator } from "@/components/CourtAvailabilityGrid/components/DayN
 import type { Slot } from "@/components/CourtAvailabilityGrid";
 import { useGuardedDialogClose } from "@/hooks/use-guarded-dialog-close";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useAuth } from "@/hooks/use-auth";
 import { fireSuccessCelebration } from "@/lib/utils/celebration";
 import { ClubListPanel } from "./components/ClubListPanel";
 import { ClubCourtsPanel } from "./components/ClubCourtsPanel";
@@ -44,8 +45,10 @@ export function BrowseCourts() {
     parseAsLocalDate.withDefault(defaultDate),
   );
   const [selected, setSelected] = useState<SelectedSlot | null>(null);
+  const [partnerIds, setPartnerIds] = useState<string[]>([]);
   const shouldReduceMotion = useReducedMotion();
   const isMobile = useIsMobile();
+  const { user } = useAuth();
 
   const {
     data: clubs,
@@ -61,9 +64,10 @@ export function BrowseCourts() {
   } = useClubAvailability(clubId, date);
   const bookSlot = useBookSlot();
   const joinWaitlist = useJoinWaitlist();
-  const handleDialogClose = useGuardedDialogClose(bookSlot.isPending, () =>
-    setSelected(null),
-  );
+  const handleDialogClose = useGuardedDialogClose(bookSlot.isPending, () => {
+    setSelected(null);
+    setPartnerIds([]);
+  });
 
   const currentClub = clubs?.find((c) => c.id === clubId);
   const selectedCourt = (courts ?? []).find((c) => c.id === courtId) ?? null;
@@ -101,6 +105,7 @@ export function BrowseCourts() {
     }
     const court = courts?.find((c) => c.id === courtId);
     if (!court) return;
+    setPartnerIds([]);
     setSelected({
       courtId,
       courtName: court.name,
@@ -124,6 +129,7 @@ export function BrowseCourts() {
         courtId: selected.courtId,
         scheduledStart: selected.slot.start.toISOString(),
         scheduledEnd: selected.slot.end.toISOString(),
+        ...(partnerIds.length > 0 && { partnerIds }),
       })) as { checkoutUrl?: string };
 
       if (result.checkoutUrl) {
@@ -138,6 +144,7 @@ export function BrowseCourts() {
         fireSuccessCelebration();
       }
       setSelected(null);
+      setPartnerIds([]);
     } catch (err) {
       toast.error(
         err instanceof Error ? err.message : "Could not book this slot.",
@@ -191,7 +198,11 @@ export function BrowseCourts() {
       </div>
 
       <div className="w-full max-w-56 shrink-0">
-        <DayNavigator date={date} onDateChange={setDate} />
+        <DayNavigator
+          date={date}
+          onDateChange={setDate}
+          minDate={defaultDate}
+        />
       </div>
 
       {isMobile ? (
@@ -243,6 +254,9 @@ export function BrowseCourts() {
         currency={currentClub?.currency ?? "USD"}
         isSubmitting={bookSlot.isPending}
         onConfirm={handleConfirm}
+        partnerIds={partnerIds}
+        onPartnerIdsChange={setPartnerIds}
+        currentUserId={user?.id}
       />
     </div>
   );

@@ -5,7 +5,6 @@ import Link from "next/link";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { track } from "@vercel/analytics";
 import { track as trackAmplitude } from "@amplitude/unified";
-import { CheckCircle2, XCircle } from "lucide-react";
 import { BouncingBall } from "@/components/BouncingBall";
 import { Button } from "@/components/ui/button";
 import { fireSuccessCelebration } from "@/lib/utils/celebration";
@@ -50,7 +49,12 @@ export function PaymentReturnView({
     contentKey = "missing";
     content = (
       <>
-        <XCircle className="h-10 w-10 text-destructive" />
+        <BouncingBall
+          size={40}
+          amplitude={14}
+          fill="var(--destructive)"
+          stroke="color-mix(in oklch, var(--destructive) 70%, black)"
+        />
         <p className="text-sm text-muted-foreground">
           Missing reservation reference.
         </p>
@@ -83,7 +87,12 @@ export function PaymentReturnView({
     contentKey = "error";
     content = (
       <>
-        <XCircle className="h-10 w-10 text-destructive" />
+        <BouncingBall
+          size={40}
+          amplitude={14}
+          fill="var(--destructive)"
+          stroke="color-mix(in oklch, var(--destructive) 70%, black)"
+        />
         <div>
           <p className="font-medium">We couldn&apos;t check your payment</p>
           <p className="text-sm text-muted-foreground">
@@ -99,7 +108,7 @@ export function PaymentReturnView({
     contentKey = "success";
     content = (
       <>
-        <CheckCircle2 className="h-10 w-10 text-success" />
+        <BouncingBall size={40} amplitude={14} />
         <div>
           <p className="font-medium">Payment confirmed!</p>
           <p className="text-sm text-muted-foreground">
@@ -115,7 +124,12 @@ export function PaymentReturnView({
     contentKey = "failed";
     content = (
       <>
-        <XCircle className="h-10 w-10 text-destructive" />
+        <BouncingBall
+          size={40}
+          amplitude={14}
+          fill="var(--destructive)"
+          stroke="color-mix(in oklch, var(--destructive) 70%, black)"
+        />
         <div>
           <p className="font-medium">Payment didn&apos;t complete</p>
           <p className="text-sm text-muted-foreground">

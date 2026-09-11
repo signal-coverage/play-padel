@@ -3,7 +3,6 @@ import { currentUser } from "@clerk/nextjs/server";
 import { Prisma } from "@/lib/generated/prisma/client";
 import { prisma } from "@/infrastructure/db/client";
 import { createClub } from "@/core/clubs/services/clubs.service";
-import { setClubOperatingHours } from "@/core/clubs/services/operatingHours.service";
 import { createPendingMembershipSubscription } from "@/core/billing/services/membership.service";
 import { logAudit } from "@/core/audit/services/audit.service";
 import { notifyAllAdmins } from "@/lib/notifications/dispatcher";
@@ -12,6 +11,11 @@ import { onboardingFormSchema } from "@/app/onboarding/types";
 import { requireAuthUser } from "@/lib/auth/requireAuthUser";
 import { checkBot } from "@/lib/security/botGuard";
 import { enforceRateLimit } from "@/lib/security/rateLimit";
+
+// Same address app/error.tsx and app/global-error.tsx already show as the
+// site-wide support contact — kept as a local const per this repo's
+// SRP-per-folder convention rather than a shared cross-folder import.
+const SUPPORT_EMAIL = "hello@playpadel.com";
 
 // Completes onboarding for the current Clerk user: player -> UserProfile only
 // (no club), owner -> Club + UserProfile pointing at it. Upserts on the
@@ -153,32 +157,56 @@ export async function POST(request: Request) {
     // Club.plan's own @default(BASIC) in prisma/schema.prisma).
     const plan: Plan = "BASIC";
 
-    const club = await createClub(
-      {
-        name: data.name!,
-        email: data.email!,
-        timezone: data.timezone!,
-        currency: data.currency!,
-        legalName: data.legalName,
-        taxId: data.taxId,
-        phone: data.phone,
-        address: data.address,
-        country: data.country,
-        province: data.province,
-        city: data.city,
-        zipCode: data.zipCode,
-        plan,
-        // The ONLY call site in the codebase that explicitly sets this — a
-        // brand-new club must not be able to operate (accept real
-        // reservations) until an admin approves it. Every other caller
-        // (including createClub's own default) leaves this to the schema's
-        // @default(APPROVED), so no existing club is ever affected — see
-        // prisma/schema.prisma's Club.approvalStatus and
-        // lib/mercadopago/operationalStatus.ts's PENDING_APPROVAL cause.
-        approvalStatus: "PENDING",
-      },
-      userId,
-    );
+    let club;
+    try {
+      club = await createClub(
+        {
+          name: data.name!,
+          email: data.email!,
+          timezone: data.timezone!,
+          currency: data.currency!,
+          legalName: data.legalName,
+          taxId: data.taxId,
+          phone: data.phone,
+          address: data.address,
+          country: data.country,
+          province: data.province,
+          city: data.city,
+          zipCode: data.zipCode,
+          plan,
+          // The ONLY call site in the codebase that explicitly sets this — a
+          // brand-new club must not be able to operate (accept real
+          // reservations) until an admin approves it. Every other caller
+          // (including createClub's own default) leaves this to the
+          // schema's @default(APPROVED), so no existing club is ever
+          // affected — see prisma/schema.prisma's Club.approvalStatus and
+          // lib/mercadopago/operationalStatus.ts's PENDING_APPROVAL cause.
+          approvalStatus: "PENDING",
+        },
+        userId,
+      );
+    } catch (error) {
+      // Club.email is @unique — onboarding is the ONLY way a Club row is
+      // ever created, always right after Terms acceptance, so this should
+      // never happen in the normal flow; when it does (e.g. a stale/
+      // orphaned club still holding this email, see
+      // app/api/webhooks/clerk/route.ts's deactivation-on-owner-deletion),
+      // there's no self-serve fix to offer — the email is the real business
+      // contact the owner needs, not a throwaway value to swap out — so this
+      // routes them to a human instead of a generic validation error.
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2002"
+      ) {
+        return NextResponse.json(
+          {
+            error: `This club's email is already registered. Please contact ${SUPPORT_EMAIL} to resolve this.`,
+          },
+          { status: 409 },
+        );
+      }
+      throw error;
+    }
 
     // Broadcast to every admin so the approval queue gets attention —
     // non-throwing, must never fail onboarding itself.
@@ -205,22 +233,11 @@ export async function POST(request: Request) {
       currency: data.currency!,
     });
 
-    // The operating-hours step's superRefine requires at least one active
-    // day for a real owner submission, so this should always have entries —
-    // but skip the write entirely rather than calling
-    // setClubOperatingHours with an empty set for a defensive request that
-    // somehow reaches here without it.
-    const operatingHoursEntries = (data.operatingHours ?? [])
-      .filter((entry) => entry.active)
-      .map((entry) => ({
-        dayOfWeek: entry.dayOfWeek,
-        startTime: entry.startTime,
-        endTime: entry.endTime,
-      }));
-    if (operatingHoursEntries.length > 0) {
-      await setClubOperatingHours(club.id, operatingHoursEntries);
-    }
-
+    // Operating hours are no longer configured during onboarding — the owner
+    // sets them later in the dashboard's Settings page, once the club is
+    // actually operational. Leaving zero ClubOperatingHours rows is fine:
+    // resolveDefaultCourtAvailability (core/clubs/services/operatingHours.service.ts)
+    // falls back to a full-week 00:00-23:59 default for a club with none.
     await prisma.userProfile.upsert({
       where: { id: userId },
       create: {

@@ -1,5 +1,4 @@
-import { CircleAlert } from "lucide-react";
-
+import { BouncingBall } from "@/components/BouncingBall";
 import {
   Empty,
   EmptyDescription,
@@ -13,7 +12,12 @@ export function GridErrorState() {
     <Empty>
       <EmptyHeader>
         <EmptyMedia variant="icon">
-          <CircleAlert />
+          <BouncingBall
+            size={24}
+            amplitude={8}
+            fill="var(--destructive)"
+            stroke="color-mix(in oklch, var(--destructive) 70%, black)"
+          />
         </EmptyMedia>
         <EmptyTitle>Couldn&apos;t load court availability</EmptyTitle>
         <EmptyDescription>

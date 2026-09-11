@@ -60,6 +60,10 @@ function makeClubDetail(overrides: Record<string, unknown> = {}) {
 function renderView(
   overrides: {
     onImpersonate?: (url: string, init?: RequestInit) => Promise<unknown>;
+    onActivateFreePlan?: (
+      url: string,
+      init?: RequestInit,
+    ) => Promise<{ ok: boolean; json: () => Promise<unknown> }>;
   } = {},
 ) {
   const fetchMock = vi.fn((url: string, init?: RequestInit) => {
@@ -103,6 +107,12 @@ function renderView(
         json: async () => body,
       }));
     }
+    if (
+      url === "/api/admin/membership-free-plan" &&
+      overrides.onActivateFreePlan
+    ) {
+      return overrides.onActivateFreePlan(url, init);
+    }
     throw new Error(`unexpected fetch: ${url}`);
   });
   vi.stubGlobal("fetch", fetchMock);
@@ -133,6 +143,38 @@ describe("AdminClubSettingsView", () => {
     vi.unstubAllGlobals();
     toastMock.success.mockReset();
     toastMock.error.mockReset();
+  });
+
+  it("stacks the club list above the settings panel on mobile instead of squeezing them side by side", async () => {
+    renderView();
+
+    await waitFor(() => expect(screen.getByText("Club A")).toBeInTheDocument());
+
+    // flex-col by default (mobile) stacks the list full-width above the
+    // settings panel; md:flex-row restores the side-by-side master-detail
+    // layout once there's enough width for it — same breakpoint the two
+    // columns' own width classes switch at below.
+    const root = screen.getByTestId("admin-club-settings-root");
+    expect(root.className).toMatch(/\bflex-col\b/);
+    expect(root.className).toMatch(/\bmd:flex-row\b/);
+
+    // The list column must not be capped to a narrow desktop-picker width
+    // while stacked (that's what previously squeezed the settings panel
+    // into a sliver next to it on mobile) — the max-w-xs/shrink-0/basis
+    // constraints only apply once flex-row kicks in at md.
+    const listColumn = screen.getByTestId("admin-club-settings-list-column");
+    expect(listColumn.className).toMatch(/\bw-full\b/);
+    expect(listColumn.className).not.toMatch(/(?<!md:)\bmax-w-xs\b/);
+    expect(listColumn.className).toMatch(/\bmd:max-w-xs\b/);
+    expect(listColumn.className).toMatch(/\bmd:shrink-0\b/);
+
+    // Same reasoning for the settings column's flex-1 — only meaningful
+    // once the columns sit side by side.
+    const detailColumn = screen.getByTestId(
+      "admin-club-settings-detail-column",
+    );
+    expect(detailColumn.className).not.toMatch(/(?<!md:)\bflex-1\b/);
+    expect(detailColumn.className).toMatch(/\bmd:flex-1\b/);
   });
 
   it("renders the club list from GET /api/admin/clubs", async () => {
@@ -303,6 +345,100 @@ describe("AdminClubSettingsView", () => {
           }),
         );
       });
+    });
+  });
+
+  describe("activate free plan", () => {
+    it("shows an Activate free plan button for a club not already on FREE", async () => {
+      renderView();
+
+      await waitFor(() =>
+        expect(screen.getByText("Club A")).toBeInTheDocument(),
+      );
+      screen.getByText("Club A").click();
+
+      expect(
+        await screen.findByRole("button", { name: /activate free plan/i }),
+      ).toBeInTheDocument();
+    });
+
+    it("does nothing if the confirm dialog is dismissed", async () => {
+      vi.stubGlobal("confirm", vi.fn().mockReturnValue(false));
+      const { fetchMock } = renderView();
+
+      await waitFor(() =>
+        expect(screen.getByText("Club A")).toBeInTheDocument(),
+      );
+      screen.getByText("Club A").click();
+      const button = await screen.findByRole("button", {
+        name: /activate free plan/i,
+      });
+      button.click();
+
+      expect(fetchMock).not.toHaveBeenCalledWith(
+        "/api/admin/membership-free-plan",
+        expect.anything(),
+      );
+    });
+
+    it("calls the membership-free-plan route with the selected club's id once confirmed, and shows a success toast", async () => {
+      vi.stubGlobal("confirm", vi.fn().mockReturnValue(true));
+      const { fetchMock } = renderView({
+        onActivateFreePlan: async () =>
+          ({ ok: true, json: async () => ({ subscription: {} }) }) as {
+            ok: boolean;
+            json: () => Promise<unknown>;
+          },
+      });
+
+      await waitFor(() =>
+        expect(screen.getByText("Club A")).toBeInTheDocument(),
+      );
+      screen.getByText("Club A").click();
+      const button = await screen.findByRole("button", {
+        name: /activate free plan/i,
+      });
+      button.click();
+
+      await waitFor(() =>
+        expect(fetchMock).toHaveBeenCalledWith(
+          "/api/admin/membership-free-plan",
+          expect.objectContaining({
+            method: "POST",
+            body: JSON.stringify({ clubId: "club_1" }),
+          }),
+        ),
+      );
+      await waitFor(() => expect(toastMock.success).toHaveBeenCalled());
+    });
+
+    it("shows an error toast when the request fails (e.g. a real subscription already exists)", async () => {
+      vi.stubGlobal("confirm", vi.fn().mockReturnValue(true));
+      renderView({
+        onActivateFreePlan: async () =>
+          ({
+            ok: false,
+            json: async () => ({
+              error:
+                "Club already has a real Mercado Pago subscription — pass force to override",
+            }),
+          }) as { ok: boolean; json: () => Promise<unknown> },
+      });
+
+      await waitFor(() =>
+        expect(screen.getByText("Club A")).toBeInTheDocument(),
+      );
+      screen.getByText("Club A").click();
+      const button = await screen.findByRole("button", {
+        name: /activate free plan/i,
+      });
+      button.click();
+
+      await waitFor(() =>
+        expect(toastMock.error).toHaveBeenCalledWith(
+          "Club already has a real Mercado Pago subscription — pass force to override",
+        ),
+      );
     });
   });
 });

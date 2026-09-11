@@ -45,21 +45,6 @@ export const onboardingFormSchema = z
     taxId: z.string().optional(),
     timezone: z.string().optional(),
     currency: z.string().optional(),
-    // Step 4 (owner only) — weekly operating hours: club-level "normally
-    // open" days/hours, distinct from per-court CourtAvailability. Always
-    // exactly 7 entries in practice (one per day of week, active: false for
-    // closed days) — enforced by the superRefine branch below, not the shape
-    // itself, since players never populate this field at all.
-    operatingHours: z
-      .array(
-        z.object({
-          dayOfWeek: z.number().int().min(0).max(6),
-          active: z.boolean(),
-          startTime: z.string(),
-          endTime: z.string(),
-        }),
-      )
-      .optional(),
     // Profile — owner: just a display name.
     displayName: z.string().optional(),
     // Profile — player only
@@ -113,26 +98,6 @@ export const onboardingFormSchema = z
           path: ["email"],
         });
       }
-
-      const operatingHours = data.operatingHours ?? [];
-      const hasActiveDay = operatingHours.some((entry) => entry.active);
-      if (!hasActiveDay) {
-        ctx.addIssue({
-          code: "custom",
-          message: "Select at least one day your club is open",
-          path: ["operatingHours"],
-        });
-      } else {
-        operatingHours.forEach((entry, index) => {
-          if (entry.active && entry.startTime === entry.endTime) {
-            ctx.addIssue({
-              code: "custom",
-              message: "Start and end time cannot be the same",
-              path: ["operatingHours", index, "endTime"],
-            });
-          }
-        });
-      }
     }
 
     if (data.userType === "player") {
@@ -175,7 +140,6 @@ export const OWNER_FLOW = [
   "userType",
   "clubBasics",
   "legalBilling",
-  "operatingHours",
   "profile",
   "terms",
 ] as const;
@@ -199,7 +163,6 @@ export const STEP_FIELDS: Record<
     "zipCode",
   ],
   legalBilling: ["legalName", "taxId"],
-  operatingHours: ["operatingHours"],
   profile: ["displayName"],
   playerProfile: [
     "firstName",

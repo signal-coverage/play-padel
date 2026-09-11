@@ -68,6 +68,16 @@ export async function POST(request: NextRequest) {
   const scheduledStart = body?.scheduledStart;
   const scheduledEnd = body?.scheduledEnd;
   const notes = typeof body?.notes === "string" ? body.notes : undefined;
+  // Optional, additive co-player tagging (see prisma/schema.prisma's
+  // ReservationPartner) — applies identically to both booking paths below
+  // (free instant-CONFIRMED and paid SCHEDULED-hold). Real validation (max
+  // 3, no self-tag, must be real players) happens inside createReservation;
+  // this only narrows the request body to a string array or undefined.
+  const partnerIds = Array.isArray(body?.partnerIds)
+    ? body.partnerIds.filter(
+        (id: unknown): id is string => typeof id === "string",
+      )
+    : undefined;
 
   if (
     typeof courtId !== "string" ||
@@ -119,6 +129,7 @@ export async function POST(request: NextRequest) {
         scheduledStart,
         scheduledEnd,
         notes,
+        partnerIds,
       });
       return NextResponse.json({ reservation }, { status: 201 });
     } catch (err) {
@@ -157,7 +168,7 @@ export async function POST(request: NextRequest) {
   try {
     reservation = await createReservation(
       userId,
-      { userId, courtId, scheduledStart, scheduledEnd, notes },
+      { userId, courtId, scheduledStart, scheduledEnd, notes, partnerIds },
       { pendingPayment: true },
     );
 

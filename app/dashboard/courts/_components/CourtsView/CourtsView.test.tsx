@@ -103,27 +103,50 @@ function renderCourtsView(
   return fetchMock;
 }
 
+// The modal is now a four-step flow (Details -> Attributes -> Pricing ->
+// Availability, see CourtFormSheet.tsx) — Create court only ever shows on
+// the last step, reached via "Next" (there is no click-to-jump on the step
+// indicator, only Back/Next). Next is itself gated on the current step's
+// own required fields (see CourtFormSheet.tsx's requiredFieldsForStep),
+// and that validation resolves asynchronously — always wait for it to be
+// enabled before clicking, rather than firing right after the field change.
+async function clickNextWhenReady() {
+  await waitFor(() =>
+    expect(screen.getByRole("button", { name: /^next$/i })).not.toBeDisabled(),
+  );
+  fireEvent.click(screen.getByRole("button", { name: /^next$/i }));
+}
+
 async function openFormAndFillMinimumFields() {
   fireEvent.click(await screen.findByRole("button", { name: /new court/i }));
 
+  // Step 0 — Details: name.
   fireEvent.change(screen.getByLabelText(/^name/i), {
     target: { value: "Court 1" },
   });
-  // Scoped to the Surface fieldset: the new Wall type field also offers a
-  // "Concrete" radio option, so an unscoped query would now match both.
+  await clickNextWhenReady();
+
+  // Step 1 — Attributes: surface. Scoped to the Surface fieldset: the Wall
+  // type field also offers a "Concrete" radio option, so an unscoped query
+  // would now match both.
   fireEvent.click(
     within(screen.getByRole("group", { name: /^surface/i })).getByRole(
       "radio",
       { name: "Concrete" },
     ),
   );
+  await clickNextWhenReady();
+
+  // Step 2 — Pricing: reservation fee.
   fireEvent.change(screen.getByLabelText(/reservation fee/i), {
     target: { value: "5000" },
   });
+  await clickNextWhenReady();
 
-  // react-hook-form's zodResolver validation (mode: "onChange") resolves
-  // asynchronously, so the submit button stays disabled for a tick after
-  // the last field change above.
+  // Step 3 — Availability (last step): Create court now shows instead of
+  // Next. react-hook-form's zodResolver validation (mode: "onChange")
+  // resolves asynchronously, so it stays disabled for a tick after the
+  // last field change above.
   await waitFor(() => {
     expect(
       screen.getByRole("button", { name: /create court/i }),
@@ -313,9 +336,9 @@ describe("CourtsView", () => {
       document.body.querySelector('[data-step="Details"]'),
     ).not.toHaveAttribute("aria-current");
 
-    // Same merged sheet, not a separate one — the heading still reads
+    // Same merged modal, not a separate one — the heading still reads
     // "Edit court" (CourtFormSheet's edit-mode title), not a standalone
-    // "Weekly availability" sheet title.
+    // "Weekly availability" title.
     expect(
       screen.getByRole("heading", { name: "Edit court" }),
     ).toBeInTheDocument();
@@ -354,9 +377,7 @@ describe("CourtsView", () => {
     );
 
     // Apply the Quick setup panel's default window to all 7 days.
-    fireEvent.click(
-      await screen.findByRole("button", { name: /apply to all/i }),
-    );
+    fireEvent.click(await screen.findByRole("button", { name: "Apply" }));
 
     fireEvent.click(screen.getByRole("button", { name: /save changes/i }));
 
@@ -404,10 +425,14 @@ describe("CourtsView", () => {
 
     await openFormAndFillMinimumFields();
 
-    // Switch to the Availability step and wait for the club-default query
-    // to resolve and seed Monday's row before submitting, without ever
-    // touching it — the default should flow through untouched.
-    fireEvent.click(screen.getByText("Availability"));
+    // openFormAndFillMinimumFields already lands on the Availability step
+    // (the last of the four). Its day list is now an accordion (see
+    // AvailabilityRowsEditor's "split" layout) — only the currently
+    // expanded day's start/end inputs are actually in the DOM, so Monday's
+    // row must be expanded before its club-default-derived value can be
+    // observed, without ever touching it — the default should flow through
+    // untouched.
+    fireEvent.click(screen.getByText("Monday"));
     await screen.findByDisplayValue("08:00");
 
     fireEvent.click(screen.getByRole("button", { name: /create court/i }));
@@ -485,5 +510,33 @@ describe("CourtsView", () => {
         await screen.findByRole("heading", { name: "Bulk edit courts" }),
       ).toBeInTheDocument();
     });
+  });
+
+  it("gives the courts table extra minimum height on mobile with a trailing spacer, while leaving desktop sizing untouched", async () => {
+    renderCourtsView(async (url) => {
+      if (url === "/api/clubs/courts?includeInactive=true") {
+        return { ok: true, json: async () => ({ courts: [EXISTING_COURT] }) };
+      }
+      throw new Error(`unexpected fetch: ${url}`);
+    });
+
+    await screen.findByText(EXISTING_COURT.name);
+
+    // Same fix as PlayersDirectory's table (see its own comments for the
+    // full explanation): min-h-[60svh] gives the table real height on
+    // mobile, where <main>'s page-level scroll leaves the usual h-full/
+    // flex-1 chain collapsed; md:min-h-0 keeps desktop's sizing untouched;
+    // the trailing spacer (real height, not margin) is what actually
+    // extends <main>'s scrollable area past the table.
+    const table = screen.getByRole("table");
+    const wrapper = table.closest(".rounded-sm.border");
+    expect(wrapper?.className).toContain("min-h-[60svh]");
+    expect(wrapper?.className).toMatch(/\bmd:min-h-0\b/);
+
+    const spacer = wrapper?.nextElementSibling as HTMLElement | null;
+    expect(spacer).not.toBeNull();
+    expect(spacer?.getAttribute("aria-hidden")).toBe("true");
+    expect(spacer?.className).toMatch(/\bh-8\b/);
+    expect(spacer?.className).toMatch(/\bmd:hidden\b/);
   });
 });

@@ -72,6 +72,7 @@ function toCourt(row: CourtRow): Court {
     id: row.id,
     clubId: row.clubId,
     name: row.name,
+    courtNumber: row.courtNumber ?? undefined,
     surface: row.surface ?? undefined,
     indoor: row.indoor,
     color: row.color ?? undefined,
@@ -131,6 +132,7 @@ export async function createCourt(
       data: {
         clubId,
         name: input.name,
+        courtNumber: input.courtNumber ?? null,
         surface: input.surface ?? null,
         indoor: input.indoor ?? false,
         color: input.color ?? null,
@@ -211,6 +213,9 @@ export async function updateCourt(
       where: { id },
       data: {
         ...(input.name !== undefined && { name: input.name }),
+        ...(input.courtNumber !== undefined && {
+          courtNumber: input.courtNumber ?? null,
+        }),
         ...(input.surface !== undefined && {
           surface: input.surface ?? null,
         }),

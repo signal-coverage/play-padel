@@ -111,6 +111,61 @@ describe("dispatch — sendEmail: false (in-app-only notification)", () => {
 
     process.env.RESEND_API_KEY = previousApiKey;
   });
+
+  it("sends from the default noreply@playpadel.app address when RESEND_FROM_ADDRESS isn't set", async () => {
+    const previousApiKey = process.env.RESEND_API_KEY;
+    const previousFromAddress = process.env.RESEND_FROM_ADDRESS;
+    process.env.RESEND_API_KEY = "test_key";
+    delete process.env.RESEND_FROM_ADDRESS;
+    sendMock.mockResolvedValue({ data: { id: "email_1" }, error: null });
+
+    await dispatch({
+      type: "PAYMENT_CONFIRMED",
+      clubId: "club_1",
+      recipientId: "user_1",
+      recipientEmail: "user@example.com",
+      recipientName: "User",
+      subject: "subj",
+      html: "<p>html</p>",
+    });
+
+    expect(sendMock).toHaveBeenCalledWith(
+      expect.objectContaining({ from: "noreply@playpadel.app" }),
+    );
+
+    process.env.RESEND_API_KEY = previousApiKey;
+    process.env.RESEND_FROM_ADDRESS = previousFromAddress;
+  });
+
+  // Read live from process.env on every dispatch (not cached at module load,
+  // same convention this file already uses for RESEND_API_KEY) so a
+  // per-environment override — e.g. Resend's onboarding@resend.dev for
+  // local/dev testing, until playpadel.app's domain is verified on Resend —
+  // takes effect without a code change or redeploy.
+  it("sends from RESEND_FROM_ADDRESS when it's set", async () => {
+    const previousApiKey = process.env.RESEND_API_KEY;
+    const previousFromAddress = process.env.RESEND_FROM_ADDRESS;
+    process.env.RESEND_API_KEY = "test_key";
+    process.env.RESEND_FROM_ADDRESS = "onboarding@resend.dev";
+    sendMock.mockResolvedValue({ data: { id: "email_1" }, error: null });
+
+    await dispatch({
+      type: "PAYMENT_CONFIRMED",
+      clubId: "club_1",
+      recipientId: "user_1",
+      recipientEmail: "user@example.com",
+      recipientName: "User",
+      subject: "subj",
+      html: "<p>html</p>",
+    });
+
+    expect(sendMock).toHaveBeenCalledWith(
+      expect.objectContaining({ from: "onboarding@resend.dev" }),
+    );
+
+    process.env.RESEND_API_KEY = previousApiKey;
+    process.env.RESEND_FROM_ADDRESS = previousFromAddress;
+  });
 });
 
 describe("notifyAllAdmins", () => {
