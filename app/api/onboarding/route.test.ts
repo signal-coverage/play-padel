@@ -71,6 +71,7 @@ function ownerBody(overrides: Record<string, unknown> = {}) {
     name: "Test Club",
     email: "owner@example.com",
     phone: "+541122223333",
+    whatsappNumber: "+541122224444",
     legalName: "Test Club S.A.",
     taxId: "30-12345678-9",
     timezone: "America/Argentina/Buenos_Aires",
@@ -173,7 +174,10 @@ describe("POST /api/onboarding", () => {
     // Plan/membership tier selection now happens later, in the dashboard's
     // payment-activation gate — every new club is created on BASIC.
     expect(createClubMock).toHaveBeenCalledWith(
-      expect.objectContaining({ plan: "BASIC" }),
+      expect.objectContaining({
+        plan: "BASIC",
+        whatsappNumber: "+541122224444",
+      }),
       "user_1",
     );
 
@@ -223,6 +227,14 @@ describe("POST /api/onboarding", () => {
         sendEmail: false,
       }),
     );
+  });
+
+  it("rejects an owner submission missing whatsappNumber", async () => {
+    const body = ownerBody({ whatsappNumber: undefined });
+    const response = await POST(makeRequest(body));
+
+    expect(response.status).toBe(400);
+    expect(createClubMock).not.toHaveBeenCalled();
   });
 
   it("player path: does not touch the membership subscription service at all", async () => {

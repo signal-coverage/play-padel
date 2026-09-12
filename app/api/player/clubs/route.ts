@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { listActiveClubs } from "@/core/clubs/services/clubs.service";
 import { getClubsAvailability } from "@/core/courts/services/courts.service";
 import type { ClubBrowseSummary } from "@/app/dashboard/browse/_components/BrowseCourts/types";
+import { getAvailablePaymentMethodsForClubs } from "@/lib/mercadopago/operationalStatus";
+import { getClubBankTransferAccount } from "@/core/clubs/services/bankTransferAccount.service";
 import { requireAuthUser } from "@/lib/auth/requireAuthUser";
 import { enforceRateLimit } from "@/lib/security/rateLimit";
 
@@ -39,17 +41,38 @@ export async function GET(request: NextRequest) {
       activeClubs.map((club) => club.id),
       date,
     );
-    const clubs: ClubBrowseSummary[] = activeClubs.map((club) => {
-      const info = availability.get(club.id) ?? {
-        courtCount: 0,
-        hasAvailabilityToday: false,
-      };
-      return {
-        ...club,
-        courtCount: info.courtCount,
-        hasAvailabilityToday: info.hasAvailabilityToday,
-      };
-    });
+    const paymentMethodsByClub = await getAvailablePaymentMethodsForClubs(
+      activeClubs.map((club) => club.id),
+    );
+    const clubs: ClubBrowseSummary[] = await Promise.all(
+      activeClubs.map(async (club) => {
+        const info = availability.get(club.id) ?? {
+          courtCount: 0,
+          hasAvailabilityToday: false,
+        };
+        const availablePaymentMethods = paymentMethodsByClub.get(club.id) ?? [];
+        // Per-club lookup only for clubs that actually offer transfer —
+        // acceptable since it only fires for a subset of clubs, unlike the
+        // always-run getAvailablePaymentMethodsForClubs batch above it.
+        const bankTransferAccount = availablePaymentMethods.includes("TRANSFER")
+          ? await getClubBankTransferAccount(club.id)
+          : null;
+        return {
+          ...club,
+          courtCount: info.courtCount,
+          hasAvailabilityToday: info.hasAvailabilityToday,
+          availablePaymentMethods,
+          bankTransferInfo: bankTransferAccount
+            ? {
+                bankName: bankTransferAccount.bankName,
+                cbu: bankTransferAccount.cbu,
+                alias: bankTransferAccount.alias ?? undefined,
+                whatsappNumber: club.whatsappNumber ?? "",
+              }
+            : null,
+        };
+      }),
+    );
 
     return NextResponse.json({ clubs });
   } catch {

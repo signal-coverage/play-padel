@@ -3,6 +3,12 @@ import type { DominantHand, PreferredSide } from "@/core/users/types";
 export type ReservationStatus =
   "SCHEDULED" | "CONFIRMED" | "CANCELLED" | "COMPLETED" | "NO_SHOW";
 
+// The two checkout paths a player can pick when a court requires payment.
+// Distinct from core/billing's PaymentMethod ("CASH" | "CARD" | "TRANSFER" |
+// "DIGITAL"), which models how an invoice was actually settled (including
+// walk-in cash/card) — this one models the player's checkout CHOICE.
+export type ReservationPaymentMethod = "MERCADOPAGO" | "TRANSFER";
+
 export interface Reservation {
   id: string;
   clubId: string;
@@ -15,6 +21,7 @@ export interface Reservation {
   scheduledEnd: Date;
   notes?: string;
   paymentExpiresAt?: Date;
+  paymentMethod?: ReservationPaymentMethod;
   cancelledAt?: Date;
   cancelledBy?: string;
   createdAt: Date;

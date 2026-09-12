@@ -59,6 +59,8 @@ export function OnboardingWizard() {
       name: user?.displayName ? `${user.displayName} Club` : "",
       email: user?.email ?? "",
       phone: "",
+      whatsappNumber: "",
+      whatsappCountry: "",
       legalName: "",
       taxId: "",
       timezone: TIMEZONES[0].value,

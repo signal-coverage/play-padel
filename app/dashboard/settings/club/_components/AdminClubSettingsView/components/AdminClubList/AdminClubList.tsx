@@ -1,10 +1,8 @@
 "use client";
 
-import { Download } from "lucide-react";
 import { BouncingBall } from "@/components/BouncingBall";
 import { DataTable } from "@/components/DataTable";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatusBox } from "@/components/StatusBox";
 import { CLUB_STATUS_BADGE_VARIANT } from "./consts";
@@ -37,6 +35,14 @@ export function AdminClubList({
                 {club.status}
               </Badge>
               <Badge variant="outline">{club.plan}</Badge>
+              {club.isFreePlan && (
+                <Badge
+                  variant="outline"
+                  className="border-warning text-warning"
+                >
+                  Free
+                </Badge>
+              )}
               {healthWarning && (
                 <span title={healthWarning}>
                   <BouncingBall
@@ -59,29 +65,19 @@ export function AdminClubList({
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-2">
-      <div className="flex items-center justify-between gap-2">
-        {clubsNeedingAttention > 0 ? (
-          <p className="flex items-center gap-1 text-xs text-destructive">
-            <BouncingBall
-              size={14}
-              amplitude={4}
-              fill="var(--destructive)"
-              stroke="color-mix(in oklch, var(--destructive) 70%, black)"
-            />
-            {clubsNeedingAttention === 1
-              ? "1 club needs attention"
-              : `${clubsNeedingAttention} clubs need attention`}
-          </p>
-        ) : (
-          <span />
-        )}
-        <Button variant="outline" size="sm" asChild>
-          <a href="/api/admin/export/clubs" download>
-            <Download size={14} strokeWidth={2.25} />
-            Export CSV
-          </a>
-        </Button>
-      </div>
+      {clubsNeedingAttention > 0 && (
+        <p className="flex items-center gap-1 text-xs text-destructive">
+          <BouncingBall
+            size={14}
+            amplitude={4}
+            fill="var(--destructive)"
+            stroke="color-mix(in oklch, var(--destructive) 70%, black)"
+          />
+          {clubsNeedingAttention === 1
+            ? "1 club needs attention"
+            : `${clubsNeedingAttention} clubs need attention`}
+        </p>
+      )}
 
       <DataTable
         // Same fix as PlayersDirectory's table

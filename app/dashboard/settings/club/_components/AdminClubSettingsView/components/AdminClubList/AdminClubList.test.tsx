@@ -16,30 +16,16 @@ const CLUB_A: AdminClubListItem = {
   name: "Club Padel Norte",
   status: "ACTIVE",
   plan: "PRO",
+  courtLimit: null,
   mpTokenIssue: false,
   membershipPastDue: false,
   noOperatingHours: false,
+  isFreePlan: false,
 };
 
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
-});
-
-describe("AdminClubList export", () => {
-  it("renders an Export CSV link pointing at the clubs export route", () => {
-    vi.stubGlobal("ResizeObserver", ResizeObserverStub);
-    render(
-      <AdminClubList
-        clubs={[CLUB_A]}
-        isLoading={false}
-        onSelectClub={() => {}}
-      />,
-    );
-
-    const exportLink = screen.getByRole("link", { name: /export csv/i });
-    expect(exportLink).toHaveAttribute("href", "/api/admin/export/clubs");
-  });
 });
 
 describe("AdminClubList health indicator", () => {
@@ -137,6 +123,46 @@ describe("AdminClubList health summary", () => {
     );
 
     expect(screen.getByText("2 clubs need attention")).toBeInTheDocument();
+  });
+});
+
+describe("AdminClubList free-plan badge", () => {
+  it("does not render a Free badge for a club whose membership subscription isn't FREE", () => {
+    vi.stubGlobal("ResizeObserver", ResizeObserverStub);
+    render(
+      <AdminClubList
+        clubs={[CLUB_A]}
+        isLoading={false}
+        onSelectClub={() => {}}
+      />,
+    );
+
+    expect(screen.queryByText("Free")).not.toBeInTheDocument();
+  });
+
+  // plan is deliberately left as "BASIC" (not "FREE") here: isFreePlan
+  // reflects the membership subscription's plan, which activateFreePlan
+  // sets independently of Club.plan (the court-capacity tier, which never
+  // changes when a club is comped to free) — this proves the badge no
+  // longer depends on `plan` at all.
+  it("renders a Free badge alongside the status and plan badges when isFreePlan is true, regardless of the club.plan value", () => {
+    vi.stubGlobal("ResizeObserver", ResizeObserverStub);
+    const freeClub: AdminClubListItem = {
+      ...CLUB_A,
+      plan: "BASIC",
+      isFreePlan: true,
+    };
+    render(
+      <AdminClubList
+        clubs={[freeClub]}
+        isLoading={false}
+        onSelectClub={() => {}}
+      />,
+    );
+
+    expect(screen.getByText("ACTIVE")).toBeInTheDocument();
+    expect(screen.getByText("BASIC")).toBeInTheDocument();
+    expect(screen.getByText("Free")).toBeInTheDocument();
   });
 });
 

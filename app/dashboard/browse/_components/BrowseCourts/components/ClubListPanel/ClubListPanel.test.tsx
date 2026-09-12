@@ -64,6 +64,8 @@ function makeClub(
     updatedBy: "owner-1",
     courtCount: 3,
     hasAvailabilityToday: true,
+    availablePaymentMethods: [],
+    bankTransferInfo: null,
     ...overrides,
   };
 }

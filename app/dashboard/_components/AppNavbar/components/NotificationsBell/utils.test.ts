@@ -9,6 +9,7 @@ describe("getNotificationHref", () => {
       "RESERVATION_CANCELLED",
       "PAYMENT_CONFIRMED",
       "RESERVATION_UPDATED",
+      "RESERVATION_PAYMENT_HOLD_EXPIRED",
     ];
     for (const type of types) {
       expect(getNotificationHref(type, null)).toBe(
@@ -116,6 +117,7 @@ describe("getNotificationToastVariant", () => {
       "RESERVATION_PAYMENT_CONFLICT",
       "SYSTEM_JOB_FAILED",
       "MEMBERSHIP_CANCELLED",
+      "RESERVATION_PAYMENT_HOLD_EXPIRED",
     ];
     for (const type of types) {
       expect(getNotificationToastVariant(type)).toBe("error");

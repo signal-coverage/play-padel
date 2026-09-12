@@ -8,11 +8,15 @@ import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { useGuardedDialogClose } from "@/hooks/use-guarded-dialog-close";
 import { fireSuccessCelebration } from "@/lib/utils/celebration";
+import { cn } from "@/lib/utils/utils";
+import { PLAN_COURT_LIMITS } from "@/lib/consts/planPricing";
 import { CourtsTable } from "./components/CourtsTable";
 import { CourtFormSheet } from "./components/CourtFormSheet";
 import { ClosuresSheet } from "./components/ClosuresSheet";
 import { BulkEditCourtsSheet } from "./components/BulkEditCourtsSheet";
+import { CourtLimitReachedDialog } from "./components/CourtLimitReachedDialog";
 import {
+  useClubPlanInfo,
   useCreateCourt,
   useDeleteCourt,
   useManagedCourts,
@@ -25,12 +29,30 @@ import type { CourtFormValues, CourtRecord } from "./types";
 
 export function CourtsView() {
   const { data: courts = [], isLoading } = useManagedCourts();
+  const { data: clubPlanInfo } = useClubPlanInfo();
   const createCourt = useCreateCourt();
   const updateCourt = useUpdateCourt();
   const deleteCourt = useDeleteCourt();
   const uploadCourtPhoto = useUploadCourtPhoto();
   const setCourtAvailability = useSetCourtAvailability();
   const shouldReduceMotion = useReducedMotion();
+
+  // Mirrors core/courts/services/courts.service.ts's createCourt exactly: a
+  // per-club courtLimit override wins when set, otherwise the plan's own
+  // default (PLAN_COURT_LIMITS) applies; FREE-membership clubs bypass the
+  // check entirely. `null` (rather than `undefined`) means "genuinely
+  // unlimited" (MAX with no override, or the query hasn't resolved yet) so
+  // this never falsely gates the button while clubPlanInfo is still loading.
+  const courtLimit = clubPlanInfo
+    ? (clubPlanInfo.courtLimit ?? PLAN_COURT_LIMITS[clubPlanInfo.plan] ?? null)
+    : null;
+  const atCourtLimit =
+    Boolean(clubPlanInfo) &&
+    !clubPlanInfo?.isFreePlan &&
+    courtLimit != null &&
+    courts.length >= courtLimit;
+
+  const [limitDialogOpen, setLimitDialogOpen] = useState(false);
 
   const [formOpen, setFormOpen] = useState(false);
   const [editingCourt, setEditingCourt] = useState<CourtRecord | null>(null);
@@ -73,6 +95,17 @@ export function CourtsView() {
     setEditingCourt(null);
     setFormStep(0);
     setFormOpen(true);
+  }
+
+  // The button itself is never HTML-`disabled` at the limit — only styled to
+  // look it (see its className below) — so this click handler is the real
+  // gate: it opens the explanatory dialog instead of the create form.
+  function handleNewCourtClick() {
+    if (atCourtLimit) {
+      setLimitDialogOpen(true);
+      return;
+    }
+    openCreateForm();
   }
 
   function openEditForm(court: CourtRecord) {
@@ -182,7 +215,11 @@ export function CourtsView() {
             Manage your club&apos;s courts and weekly availability.
           </p>
         </div>
-        <Button type="button" onClick={openCreateForm}>
+        <Button
+          type="button"
+          onClick={handleNewCourtClick}
+          className={cn(atCourtLimit && "cursor-not-allowed opacity-50")}
+        >
           <Plus className="h-4 w-4" />
           New court
         </Button>
@@ -302,6 +339,15 @@ export function CourtsView() {
         onConfirm={confirmDelete}
         variant="default"
       />
+
+      {clubPlanInfo && courtLimit != null && (
+        <CourtLimitReachedDialog
+          open={limitDialogOpen}
+          onOpenChange={setLimitDialogOpen}
+          plan={clubPlanInfo.plan}
+          limit={courtLimit}
+        />
+      )}
     </div>
   );
 }

@@ -73,6 +73,38 @@ export function useActivateFreePlan() {
   });
 }
 
+// Sets (or clears, with `null`) a MAX-plan club's negotiated court-limit
+// override — see prisma/schema.prisma's Club.courtLimit doc comment and
+// core/courts/services/courts.service.ts's createCourt, the only place that
+// actually enforces it. Routes through the same admin-only PATCH
+// /api/admin/clubs/[clubId] endpoint ClubSettingsView's own useUpdateClub
+// uses for every other field — no dedicated endpoint needed since
+// updateClubSchema/updateClub already carry courtLimit end to end.
+export function useSetCourtLimit(clubId: string | undefined) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (courtLimit: number | null) => {
+      const res = await fetch(`/api/admin/clubs/${clubId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ courtLimit }),
+      });
+      const body = await res.json().catch(() => null);
+      if (!res.ok) {
+        throw new Error(
+          body?.error ?? "Something went wrong. Please try again.",
+        );
+      }
+      return body;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ADMIN_CLUBS_QUERY_KEY });
+      toast.success("Court limit updated");
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+}
+
 // Admin-only impersonation — see app/api/admin/impersonate/route.ts. Same
 // behavior as PlayersDirectory's useImpersonatePlayer: opens the returned
 // Clerk sign-in url in a new tab, keeping the admin's own session intact.

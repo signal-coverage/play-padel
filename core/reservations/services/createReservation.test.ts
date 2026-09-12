@@ -67,6 +67,32 @@ beforeEach(() => {
   userFindUniqueMock.mockResolvedValue({ displayName: "Player One" });
   reservationFindFirstMock.mockResolvedValue(null);
   courtClosureFindFirstMock.mockResolvedValue(null);
+  // Default create mock: echoes back whatever `data` createReservation built
+  // (status, paymentExpiresAt, paymentMethod, etc.) on top of base row
+  // fields — mirrors real Prisma behavior so tests can assert on computed
+  // fields instead of a hand-typed literal. Individual tests below still
+  // override this with their own mockResolvedValue/mockRejectedValue when
+  // they need to assert on a fixed row shape or simulate a DB error.
+  reservationCreateMock.mockImplementation(
+    async ({ data }: { data: Record<string, unknown> }) => ({
+      id: "res_1",
+      clubId: "club_1",
+      userId: "user_1",
+      userName: "Player One",
+      courtId: "court_1",
+      courtName: "Court 1",
+      notes: null,
+      paymentExpiresAt: null,
+      paymentMethod: null,
+      cancelledAt: null,
+      cancelledBy: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      createdBy: "user_1",
+      updatedBy: "user_1",
+      ...data,
+    }),
+  );
 });
 
 const INPUT = {
@@ -117,5 +143,32 @@ describe("createReservation — DB-level double-booking backstop", () => {
 
     const result = await createReservation("user_1", INPUT);
     expect(result.id).toBe("res_1");
+  });
+
+  it("uses a custom holdMinutes for the pending-payment expiry instead of PAYMENT_HOLD_MINUTES", async () => {
+    const before = Date.now();
+    const reservation = await createReservation(
+      "user-1",
+      { ...INPUT },
+      { pendingPayment: true, holdMinutes: 60 },
+    );
+    const expiresAt = reservation.paymentExpiresAt!.getTime();
+    // 60 minutes, not the default 15 — allow a small window for test execution time.
+    expect(expiresAt).toBeGreaterThanOrEqual(before + 59 * 60_000);
+    expect(expiresAt).toBeLessThanOrEqual(before + 61 * 60_000);
+  });
+
+  it("stamps paymentMethod on the reservation when provided alongside pendingPayment", async () => {
+    const reservation = await createReservation(
+      "user-1",
+      { ...INPUT },
+      { pendingPayment: true, holdMinutes: 60, paymentMethod: "TRANSFER" },
+    );
+    expect(reservation.paymentMethod).toBe("TRANSFER");
+  });
+
+  it("leaves paymentMethod undefined for an instant (non-pending) reservation", async () => {
+    const reservation = await createReservation("user-1", { ...INPUT });
+    expect(reservation.paymentMethod).toBeUndefined();
   });
 });

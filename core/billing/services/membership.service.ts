@@ -1184,6 +1184,24 @@ export async function getMembershipSubscription(
 }
 
 /**
+ * True when this club's ClubMembershipSubscription.plan is "FREE" — the
+ * hidden admin-only testing tier activated via `activateFreePlan`, which
+ * only ever touches this field, never `Club.plan` (the court-capacity
+ * tier). Deliberately NOT `Club.plan === "FREE"` — see
+ * core/clubs/services/clubs.service.ts's `listAllClubs`/`isFreePlan`, the
+ * original derivation this mirrors for non-admin call sites (the owner's
+ * own GET /api/clubs, and the court-limit check in
+ * core/courts/services/courts.service.ts's `createCourt`).
+ */
+export async function isClubOnFreePlan(clubId: string): Promise<boolean> {
+  const subscription = await prisma.clubMembershipSubscription.findUnique({
+    where: { clubId },
+    select: { plan: true },
+  });
+  return subscription?.plan === "FREE";
+}
+
+/**
  * Persists the cardholder identification (type/number, e.g. `{ type: "CUIT",
  * number: "30-12345678-9" }`) the owner actually confirmed while entering a
  * card via the Mercado Pago Card Payment Brick — only ever called when the

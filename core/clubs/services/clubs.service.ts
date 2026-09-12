@@ -24,6 +24,7 @@ function toClub(row: ClubRow): Club {
     taxId: row.taxId ?? undefined,
     email: row.email,
     phone: row.phone ?? undefined,
+    whatsappNumber: row.whatsappNumber ?? undefined,
     address: row.address ?? undefined,
     country: row.country ?? undefined,
     province: row.province ?? undefined,
@@ -32,6 +33,7 @@ function toClub(row: ClubRow): Club {
     timezone: row.timezone,
     currency: row.currency,
     plan: row.plan as Club["plan"],
+    courtLimit: row.courtLimit ?? undefined,
     status: row.status as Club["status"],
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
@@ -51,6 +53,7 @@ export async function createClub(
       taxId: input.taxId ?? null,
       email: input.email,
       phone: input.phone ?? null,
+      whatsappNumber: input.whatsappNumber ?? null,
       address: input.address ?? null,
       country: input.country ?? null,
       province: input.province ?? null,
@@ -366,7 +369,7 @@ export async function listActiveClubs(): Promise<Club[]> {
 
 export type AdminClubListItem = Pick<
   Club,
-  "id" | "name" | "status" | "plan"
+  "id" | "name" | "status" | "plan" | "courtLimit"
 > & {
   /**
    * True when the club has no Mercado Pago account at all, the account
@@ -379,6 +382,17 @@ export type AdminClubListItem = Pick<
   membershipPastDue: boolean;
   /** True when the club has zero configured ClubOperatingHours rows. */
   noOperatingHours: boolean;
+  /**
+   * True when the club's ClubMembershipSubscription.plan is "FREE" —
+   * deliberately NOT Club.plan (the court-capacity tier). Club.plan is set
+   * once at club creation and is essentially never changed afterward;
+   * activateFreePlan (core/billing/services/membership.service.ts) only
+   * ever sets the membership subscription's plan to "FREE" when an admin
+   * comps a club, and explicitly never touches Club.plan. Reading Club.plan
+   * here would make this flag permanently false for any club comped through
+   * the real flow.
+   */
+  isFreePlan: boolean;
 };
 
 /**
@@ -407,8 +421,9 @@ export async function listAllClubs(): Promise<AdminClubListItem[]> {
       name: true,
       status: true,
       plan: true,
+      courtLimit: true,
       mercadoPagoAccount: { select: { status: true, tokenExpiresAt: true } },
-      membershipSubscription: { select: { status: true } },
+      membershipSubscription: { select: { status: true, plan: true } },
       _count: { select: { operatingHours: true } },
     },
   });
@@ -431,9 +446,11 @@ export async function listAllClubs(): Promise<AdminClubListItem[]> {
       name: row.name,
       status: row.status as ClubStatus,
       plan: row.plan as Plan,
+      courtLimit: row.courtLimit,
       mpTokenIssue,
       membershipPastDue: row.membershipSubscription?.status === "PAST_DUE",
       noOperatingHours: row._count.operatingHours === 0,
+      isFreePlan: row.membershipSubscription?.plan === "FREE",
     };
   });
 }

@@ -539,4 +539,107 @@ describe("CourtsView", () => {
     expect(spacer?.className).toMatch(/\bh-8\b/);
     expect(spacer?.className).toMatch(/\bmd:hidden\b/);
   });
+
+  describe("New court button — plan court limit gating", () => {
+    function renderAtCourtCount(
+      courtCount: number,
+      clubPlanInfo: {
+        plan: string;
+        courtLimit: number | null;
+        isFreePlan: boolean;
+      },
+    ) {
+      const courts = Array.from({ length: courtCount }, (_, i) => ({
+        ...EXISTING_COURT,
+        id: `court_${i}`,
+        name: `Court ${i}`,
+      }));
+      return renderCourtsView(async (url) => {
+        if (url === "/api/clubs/courts?includeInactive=true") {
+          return { ok: true, json: async () => ({ courts }) };
+        }
+        if (url === "/api/clubs") {
+          return {
+            ok: true,
+            json: async () => ({
+              club: {
+                plan: clubPlanInfo.plan,
+                courtLimit: clubPlanInfo.courtLimit,
+              },
+              isFreePlan: clubPlanInfo.isFreePlan,
+            }),
+          };
+        }
+        throw new Error(`unexpected fetch: ${url}`);
+      });
+    }
+
+    it("keeps New court fully enabled-looking when under the plan's limit", async () => {
+      renderAtCourtCount(1, {
+        plan: "BASIC",
+        courtLimit: null,
+        isFreePlan: false,
+      });
+
+      const button = await screen.findByRole("button", { name: /new court/i });
+      await waitFor(() =>
+        expect(button.className).not.toMatch(/\bcursor-not-allowed\b/),
+      );
+    });
+
+    it("dims New court (CSS only) once the club is at its plan's limit, but clicking it still opens the limit-reached dialog instead of the create form", async () => {
+      renderAtCourtCount(2, {
+        plan: "BASIC",
+        courtLimit: null,
+        isFreePlan: false,
+      });
+
+      const button = await screen.findByRole("button", { name: /new court/i });
+      await waitFor(() =>
+        expect(button.className).toMatch(/\bcursor-not-allowed\b/),
+      );
+      // Still clickable — not the real `disabled` attribute.
+      expect(button).not.toBeDisabled();
+
+      fireEvent.click(button);
+
+      expect(
+        await screen.findByText(/court limit reached/i),
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByRole("heading", { name: "New court" }),
+      ).not.toBeInTheDocument();
+    });
+
+    it("uses the club's courtLimit override instead of the plan default when deciding whether the limit is reached", async () => {
+      // PLUS's own default is 7, but this club was explicitly capped at 1.
+      renderAtCourtCount(1, {
+        plan: "PLUS",
+        courtLimit: 1,
+        isFreePlan: false,
+      });
+
+      const button = await screen.findByRole("button", { name: /new court/i });
+      await waitFor(() =>
+        expect(button.className).toMatch(/\bcursor-not-allowed\b/),
+      );
+    });
+
+    it("never gates the button for a club on the FREE membership plan, regardless of Club.plan or current court count", async () => {
+      renderAtCourtCount(50, {
+        plan: "BASIC",
+        courtLimit: null,
+        isFreePlan: true,
+      });
+
+      const button = await screen.findByRole("button", { name: /new court/i });
+      await screen.findByText("Court 0");
+      expect(button.className).not.toMatch(/\bcursor-not-allowed\b/);
+
+      fireEvent.click(button);
+      expect(
+        await screen.findByRole("heading", { name: "New court" }),
+      ).toBeInTheDocument();
+    });
+  });
 });

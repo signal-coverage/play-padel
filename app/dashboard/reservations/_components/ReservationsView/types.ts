@@ -1,4 +1,7 @@
-import type { ReservationStatus } from "@/core/reservations/types";
+import type {
+  ReservationPaymentMethod,
+  ReservationStatus,
+} from "@/core/reservations/types";
 
 export type CourtSummary = {
   id: string;
@@ -14,9 +17,12 @@ export type ReservationRecord = {
   scheduledStart: Date;
   scheduledEnd: Date;
   notes?: string;
+  paymentMethod?: ReservationPaymentMethod;
+  paymentExpiresAt?: Date;
 };
 
-export type ReservationActionKind = "cancel" | "complete" | "noShow";
+export type ReservationActionKind =
+  "cancel" | "complete" | "noShow" | "confirmTransfer";
 
 export type ReservationActionInput = {
   reservationId: string;
@@ -42,4 +48,6 @@ export type RawReservation = {
   scheduledStart: string;
   scheduledEnd: string;
   notes?: string;
+  paymentMethod?: ReservationPaymentMethod;
+  paymentExpiresAt?: string;
 };

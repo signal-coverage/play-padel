@@ -9,6 +9,18 @@ export const clubSettingsFormSchema = z.object({
   taxId: z.string(),
   email: z.string().min(1, "Email is required").email("Invalid email address"),
   phone: z.string(),
+  // Optional field: an empty string is always allowed, but a non-empty value
+  // must contain a realistic amount of actual digits — a PhoneField can
+  // otherwise produce e.g. "+54" (country code, zero real digits), which is
+  // truthy but not a usable WhatsApp number.
+  whatsappNumber: z
+    .string()
+    .refine(
+      (value) => value === "" || value.replace(/\D/g, "").length >= 8,
+      "Enter a valid WhatsApp number",
+    ),
+  // Form-only field, not persisted server-side — see ClubSettingsFormValues.
+  whatsappCountry: z.string(),
   address: z.string(),
   country: z.string(),
   province: z.string(),

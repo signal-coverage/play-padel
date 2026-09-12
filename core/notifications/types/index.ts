@@ -17,7 +17,8 @@ export type NotificationType =
   | "MEMBERSHIP_CANCELLED"
   | "RESERVATION_UPDATED"
   | "PROFILE_UPDATED_BY_ADMIN"
-  | "CLUB_UPDATED_BY_ADMIN";
+  | "CLUB_UPDATED_BY_ADMIN"
+  | "RESERVATION_PAYMENT_HOLD_EXPIRED";
 
 export type NotificationStatus = "PENDING" | "SENT" | "FAILED" | "SKIPPED";
 

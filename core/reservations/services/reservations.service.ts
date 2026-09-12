@@ -6,6 +6,7 @@ import * as React from "react";
 import type {
   Reservation,
   ReservationFilters,
+  ReservationPaymentMethod,
   ReservationStatus,
   TicketData,
 } from "@/core/reservations/types";
@@ -44,6 +45,8 @@ function toReservation(row: ReservationRow): Reservation {
     scheduledEnd: row.scheduledEnd,
     notes: row.notes ?? undefined,
     paymentExpiresAt: row.paymentExpiresAt ?? undefined,
+    paymentMethod:
+      (row.paymentMethod as Reservation["paymentMethod"]) ?? undefined,
     cancelledAt: row.cancelledAt ?? undefined,
     cancelledBy: row.cancelledBy ?? undefined,
     createdAt: row.createdAt,
@@ -324,7 +327,11 @@ export async function checkCourtClosureConflict({
 export async function createReservation(
   createdBy: string,
   input: CreateReservationInput,
-  opts?: { pendingPayment?: boolean },
+  opts?: {
+    pendingPayment?: boolean;
+    holdMinutes?: number;
+    paymentMethod?: ReservationPaymentMethod;
+  },
 ): Promise<Reservation> {
   const court = await prisma.court.findUnique({
     where: { id: input.courtId },
@@ -385,6 +392,7 @@ export async function createReservation(
   }
 
   const pendingPayment = opts?.pendingPayment ?? false;
+  const holdMinutes = opts?.holdMinutes ?? PAYMENT_HOLD_MINUTES;
 
   // MVP rule: instant confirmation, no owner-approval step (docs/reservation-flow.md).
   // Exception: a club that requires prepayment gets a SCHEDULED hold instead,
@@ -403,8 +411,9 @@ export async function createReservation(
         scheduledEnd,
         notes: input.notes ?? null,
         paymentExpiresAt: pendingPayment
-          ? new Date(Date.now() + PAYMENT_HOLD_MINUTES * 60_000)
+          ? new Date(Date.now() + holdMinutes * 60_000)
           : null,
+        paymentMethod: pendingPayment ? (opts?.paymentMethod ?? null) : null,
         createdBy,
         updatedBy: createdBy,
       },
@@ -620,20 +629,25 @@ export async function cancelReservation(
   return toReservation(row);
 }
 
-// Transitions a pending-payment hold to CONFIRMED once Mercado Pago confirms
-// the payment (called only from the webhook route). No audit-log call here —
-// core/billing's recordPayment (called right before this in the webhook
-// handler) already logs the "payment.confirmed" audit event for the same
-// transaction; logging reservation.created already covers the reservation's
-// own audit trail from when the hold was created.
+// Transitions a pending-payment hold to CONFIRMED once its payment is
+// confirmed — called from both the Mercado Pago webhook route (default
+// `updatedBy`, no real user in that context) and the owner-facing
+// confirmTransfer route action (passes the real owner's userId, so the audit
+// trail attributes a manual confirmation to the owner who actually performed
+// it, not to the webhook). No audit-log call here — core/billing's
+// recordPayment (called right before this at both call sites) already logs
+// the "payment.confirmed" audit event for the same transaction; logging
+// reservation.created already covers the reservation's own audit trail from
+// when the hold was created.
 export async function confirmReservationPayment(
   id: string,
+  updatedBy: string = "system:mercadopago-webhook",
 ): Promise<Reservation> {
   const row = await prisma.reservation.update({
     where: { id },
     data: {
       status: "CONFIRMED",
-      updatedBy: "system:mercadopago-webhook",
+      updatedBy,
     },
   });
   return toReservation(row);

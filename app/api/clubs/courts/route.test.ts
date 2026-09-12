@@ -23,6 +23,7 @@ vi.mock("@/core/courts/services/courts.service", async () => {
   >("@/core/courts/services/courts.service");
   return {
     DuplicateCourtNameError: actual.DuplicateCourtNameError,
+    CourtLimitReachedError: actual.CourtLimitReachedError,
     createCourt: vi.fn(),
     listCourtsByClub: vi.fn(),
   };
@@ -33,6 +34,7 @@ import { requireClubOperational } from "../_lib/require-club-operational";
 import {
   createCourt,
   DuplicateCourtNameError,
+  CourtLimitReachedError,
   listCourtsByClub,
 } from "@/core/courts/services/courts.service";
 import { GET, POST } from "./route";
@@ -107,6 +109,17 @@ describe("POST /api/clubs/courts", () => {
     expect(response.status).toBe(409);
     const body = await response.json();
     expect(body.error).toMatch(/already exists/i);
+  });
+
+  it("returns 403 when the club has reached its plan's court limit", async () => {
+    requireClubOperationalMock.mockResolvedValue({ ok: true });
+    createCourtMock.mockRejectedValue(new CourtLimitReachedError("BASIC", 2));
+
+    const response = await POST(makeRequest({ name: "Court 3" }));
+
+    expect(response.status).toBe(403);
+    const body = await response.json();
+    expect(body.error).toMatch(/BASIC plan allows up to 2 courts/i);
   });
 });
 

@@ -40,6 +40,12 @@ export const onboardingFormSchema = z
     name: z.string().optional(),
     email: z.string().optional(),
     phone: z.string().optional(),
+    // Owner-only: WhatsApp number payment receipts get sent to. Kept as its
+    // own compound phone/country pair (like phone/country above) rather than
+    // reusing "phone" — an owner's business WhatsApp is often a different
+    // number than their general contact phone.
+    whatsappNumber: z.string().optional(),
+    whatsappCountry: z.string().optional(),
     // Step 3 (owner only) — legal & billing
     legalName: z.string().optional(),
     taxId: z.string().optional(),
@@ -74,11 +80,20 @@ export const onboardingFormSchema = z
   .superRefine((data, ctx) => {
     if (data.userType === "owner") {
       const requiredTextFields: [
-        "name" | "phone" | "address" | "legalName" | "taxId" | "displayName",
+        (
+          | "name"
+          | "phone"
+          | "whatsappNumber"
+          | "address"
+          | "legalName"
+          | "taxId"
+          | "displayName"
+        ),
         string,
       ][] = [
         ["name", "Club name is required"],
         ["phone", "Phone is required"],
+        ["whatsappNumber", "WhatsApp number is required"],
         ["address", "Address is required"],
         ["legalName", "Legal name is required"],
         ["taxId", "Tax ID is required"],
@@ -89,6 +104,20 @@ export const onboardingFormSchema = z
         if (!data[field]) {
           ctx.addIssue({ code: "custom", message, path: [field] });
         }
+      }
+
+      // A PhoneField can produce e.g. "+54" (country code, zero real digits)
+      // which is truthy and would otherwise pass the required-field check
+      // above — require a realistic amount of actual digits too.
+      if (
+        data.whatsappNumber &&
+        data.whatsappNumber.replace(/\D/g, "").length < 8
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Enter a valid WhatsApp number",
+          path: ["whatsappNumber"],
+        });
       }
 
       if (!data.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
@@ -156,6 +185,7 @@ export const STEP_FIELDS: Record<
     "name",
     "email",
     "phone",
+    "whatsappNumber",
     "address",
     "country",
     "province",

@@ -2,10 +2,14 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 vi.mock("@/infrastructure/db/client", () => ({
   prisma: {
+    club: {
+      findUnique: vi.fn(),
+    },
     court: {
       findFirst: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
+      count: vi.fn(),
     },
     courtAvailability: {
       createMany: vi.fn(),
@@ -24,13 +28,19 @@ vi.mock("@/core/clubs/services/operatingHours.service", () => ({
   resolveDefaultCourtAvailability: vi.fn(),
 }));
 
+vi.mock("@/core/billing/services/membership.service", () => ({
+  isClubOnFreePlan: vi.fn(),
+}));
+
 import { prisma } from "@/infrastructure/db/client";
 import { Prisma } from "@/lib/generated/prisma/client";
 import { resolveDefaultCourtAvailability } from "@/core/clubs/services/operatingHours.service";
+import { isClubOnFreePlan } from "@/core/billing/services/membership.service";
 import {
   createCourt,
   updateCourt,
   DuplicateCourtNameError,
+  CourtLimitReachedError,
 } from "./courts.service";
 
 // Real shape verified against the actual dev database (Postgres 23505
@@ -52,6 +62,8 @@ function makeDuplicateNameViolationError() {
 const findFirstMock = prisma.court.findFirst as ReturnType<typeof vi.fn>;
 const createMock = prisma.court.create as ReturnType<typeof vi.fn>;
 const updateMock = prisma.court.update as ReturnType<typeof vi.fn>;
+const countMock = prisma.court.count as ReturnType<typeof vi.fn>;
+const findUniqueClubMock = prisma.club.findUnique as ReturnType<typeof vi.fn>;
 const createAvailabilityManyMock = prisma.courtAvailability
   .createMany as ReturnType<typeof vi.fn>;
 const findUniqueUserMock = prisma.userProfile.findUnique as ReturnType<
@@ -59,6 +71,7 @@ const findUniqueUserMock = prisma.userProfile.findUnique as ReturnType<
 >;
 const resolveDefaultCourtAvailabilityMock =
   resolveDefaultCourtAvailability as ReturnType<typeof vi.fn>;
+const isClubOnFreePlanMock = isClubOnFreePlan as ReturnType<typeof vi.fn>;
 
 const COURT_ROW = {
   id: "court_1",
@@ -87,6 +100,8 @@ beforeEach(() => {
   findFirstMock.mockReset();
   createMock.mockReset();
   updateMock.mockReset();
+  countMock.mockReset();
+  findUniqueClubMock.mockReset();
   createAvailabilityManyMock.mockReset();
   findUniqueUserMock.mockReset();
   findUniqueUserMock.mockResolvedValue({ displayName: "Owner Test" });
@@ -94,6 +109,11 @@ beforeEach(() => {
   // Sane default for tests that create a court without asserting anything
   // about availability seeding — individual seeding tests override this.
   resolveDefaultCourtAvailabilityMock.mockResolvedValue([]);
+  isClubOnFreePlanMock.mockReset();
+  // Sane default for tests unrelated to the court-limit gate: bypass it
+  // entirely so they never need to stub club.findUnique/court.count too.
+  // The dedicated "court limit" tests below override this to `false`.
+  isClubOnFreePlanMock.mockResolvedValue(true);
 });
 
 describe("createCourt — duplicate name guard", () => {
@@ -173,6 +193,66 @@ describe("createCourt — duplicate name guard", () => {
     await expect(
       createCourt("club_1", { name: "Court 1" }, "user_1"),
     ).rejects.toThrow("connection terminated unexpectedly");
+  });
+});
+
+describe("createCourt — court limit", () => {
+  beforeEach(() => {
+    findFirstMock.mockResolvedValue(null); // no duplicate-name conflict
+    createMock.mockResolvedValue(COURT_ROW);
+    isClubOnFreePlanMock.mockResolvedValue(false);
+  });
+
+  it("allows creating a court when under the plan's default limit", async () => {
+    findUniqueClubMock.mockResolvedValue({ plan: "BASIC", courtLimit: null });
+    countMock.mockResolvedValue(1); // BASIC's limit is 2
+
+    await expect(
+      createCourt("club_1", { name: "Court 2" }, "user_1"),
+    ).resolves.toBeTruthy();
+    expect(createMock).toHaveBeenCalled();
+  });
+
+  it("rejects creating a court when already at the plan's default limit", async () => {
+    findUniqueClubMock.mockResolvedValue({ plan: "BASIC", courtLimit: null });
+    countMock.mockResolvedValue(2); // BASIC's limit is 2
+
+    await expect(
+      createCourt("club_1", { name: "Court 3" }, "user_1"),
+    ).rejects.toThrow(CourtLimitReachedError);
+    expect(createMock).not.toHaveBeenCalled();
+  });
+
+  it("uses the club's courtLimit override instead of the plan's default when set", async () => {
+    // PLUS's own default limit is 7, but this club was explicitly capped at 1.
+    findUniqueClubMock.mockResolvedValue({ plan: "PLUS", courtLimit: 1 });
+    countMock.mockResolvedValue(1);
+
+    await expect(
+      createCourt("club_1", { name: "Court 2" }, "user_1"),
+    ).rejects.toThrow(CourtLimitReachedError);
+    expect(createMock).not.toHaveBeenCalled();
+  });
+
+  it("treats a MAX-plan club with no courtLimit override as unlimited", async () => {
+    findUniqueClubMock.mockResolvedValue({ plan: "MAX", courtLimit: null });
+    countMock.mockResolvedValue(50);
+
+    await expect(
+      createCourt("club_1", { name: "Court 51" }, "user_1"),
+    ).resolves.toBeTruthy();
+    expect(createMock).toHaveBeenCalled();
+  });
+
+  it("bypasses the limit entirely for a club on the FREE membership plan, regardless of Club.plan or current court count", async () => {
+    isClubOnFreePlanMock.mockResolvedValue(true);
+    findUniqueClubMock.mockResolvedValue({ plan: "BASIC", courtLimit: null });
+    countMock.mockResolvedValue(999);
+
+    await expect(
+      createCourt("club_1", { name: "Court 1000" }, "user_1"),
+    ).resolves.toBeTruthy();
+    expect(createMock).toHaveBeenCalled();
   });
 });
 

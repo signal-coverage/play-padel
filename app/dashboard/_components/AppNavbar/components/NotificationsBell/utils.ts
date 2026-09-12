@@ -54,6 +54,10 @@ import type { NotificationType } from "@/core/notifications/types";
  * - PROFILE_UPDATED_BY_ADMIN (app/api/admin/players/[userId]/route.ts) ->
  *   the player's own dashboard — there's no dedicated "my profile" page to
  *   deep-link into.
+ * - RESERVATION_PAYMENT_HOLD_EXPIRED
+ *   (app/api/cron/bank-transfer-hold-sweep/route.ts) -> the player's own My
+ *   Reservations list, same group as RESERVATION_CANCELLED/UPDATED — their
+ *   bank-transfer hold lapsed and the slot was released.
  */
 export function getNotificationHref(
   type: NotificationType,
@@ -64,6 +68,7 @@ export function getNotificationHref(
     case "RESERVATION_CANCELLED":
     case "PAYMENT_CONFIRMED":
     case "RESERVATION_UPDATED":
+    case "RESERVATION_PAYMENT_HOLD_EXPIRED":
       return "/dashboard/my-reservations";
     case "WAITLIST_SLOT_AVAILABLE":
       return clubId ? `/dashboard/browse?club=${clubId}` : "/dashboard/browse";
@@ -101,6 +106,10 @@ export type NotificationToastVariant = "success" | "error" | "warning" | "info";
  * Grouped by genuine outcome, not by recipient: "good news" vs "bad news"
  * vs "not great yet, but not broken" vs "just a heads-up", matching what
  * the underlying event actually means rather than who it's for.
+ *
+ * RESERVATION_PAYMENT_HOLD_EXPIRED joins the "bad news" (error) group,
+ * same as RESERVATION_CANCELLED — the reservation's slot was released
+ * because its bank-transfer hold lapsed.
  */
 export function getNotificationToastVariant(
   type: NotificationType,
@@ -119,6 +128,7 @@ export function getNotificationToastVariant(
     case "RESERVATION_PAYMENT_CONFLICT":
     case "SYSTEM_JOB_FAILED":
     case "MEMBERSHIP_CANCELLED":
+    case "RESERVATION_PAYMENT_HOLD_EXPIRED":
       return "error";
     case "MEMBERSHIP_PAST_DUE":
       return "warning";

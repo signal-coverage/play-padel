@@ -8,6 +8,7 @@ import type {
   CourtAvailability,
   CreateClosureInput,
 } from "@/core/courts/types";
+import type { Plan } from "@/core/clubs/types";
 import type { CourtRecord, RawCourtClosure } from "./types";
 import { toCourtClosure } from "./utils";
 
@@ -29,6 +30,31 @@ export function useManagedCourts() {
       fetchJson<{ courts: CourtRecord[] }>(
         "/api/clubs/courts?includeInactive=true",
       ).then((data) => data.courts),
+  });
+}
+
+// Narrow read of the owner's own club (GET /api/clubs) — just enough to
+// decide whether the plan-based court limit applies here at all. `plan` and
+// `courtLimit` combine the same way core/courts/services/courts.service.ts's
+// createCourt enforces server-side (see lib/consts/planPricing.ts's
+// PLAN_COURT_LIMITS): a per-club courtLimit override wins when set,
+// otherwise the plan's own default applies. `isFreePlan` bypasses the check
+// entirely, regardless of `plan`. A failed/loading fetch resolves to
+// `undefined` fields below, which CourtsView treats as "not at the limit" —
+// the real enforcement lives server-side, so this frontend gate fails open
+// rather than blocking a legitimate create over a transient network hiccup.
+export function useClubPlanInfo() {
+  return useQuery({
+    queryKey: ["clubs", "current", "plan-info"] as const,
+    queryFn: () =>
+      fetchJson<{
+        club: { plan: Plan; courtLimit?: number | null };
+        isFreePlan: boolean;
+      }>("/api/clubs").then(({ club, isFreePlan }) => ({
+        plan: club.plan,
+        courtLimit: club.courtLimit ?? null,
+        isFreePlan,
+      })),
   });
 }
 

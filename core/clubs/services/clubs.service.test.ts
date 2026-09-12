@@ -87,6 +87,7 @@ function makeClubRow(overrides: Partial<Record<string, unknown>> = {}) {
     taxId: null,
     email: "club@example.com",
     phone: null,
+    whatsappNumber: null,
     address: null,
     country: null,
     province: null,
@@ -145,6 +146,50 @@ describe("createClub", () => {
     expect(createMock).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({ approvalStatus: "PENDING" }),
+      }),
+    );
+  });
+
+  it("persists whatsappNumber when provided, and maps it back on the returned Club", async () => {
+    createMock.mockResolvedValue(
+      makeClubRow({ whatsappNumber: "+54 11 1234-5678" }),
+    );
+
+    const club = await createClub(
+      {
+        name: "Test Club",
+        email: "club@example.com",
+        timezone: "America/Argentina/Buenos_Aires",
+        currency: "ARS",
+        whatsappNumber: "+54 11 1234-5678",
+      },
+      "user_1",
+    );
+
+    expect(createMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ whatsappNumber: "+54 11 1234-5678" }),
+      }),
+    );
+    expect(club.whatsappNumber).toBe("+54 11 1234-5678");
+  });
+
+  it("stores null (not omits the key) when whatsappNumber isn't provided", async () => {
+    createMock.mockResolvedValue(makeClubRow());
+
+    await createClub(
+      {
+        name: "Test Club",
+        email: "club@example.com",
+        timezone: "America/Argentina/Buenos_Aires",
+        currency: "ARS",
+      },
+      "user_1",
+    );
+
+    expect(createMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ whatsappNumber: null }),
       }),
     );
   });
@@ -534,11 +579,12 @@ describe("listAllClubs", () => {
       name: "Club Padel Norte",
       status: "ACTIVE",
       plan: "PRO",
+      courtLimit: null,
       mercadoPagoAccount: {
         status: "CONNECTED",
         tokenExpiresAt: daysFromNow(30),
       },
-      membershipSubscription: { status: "ACTIVE" },
+      membershipSubscription: { status: "ACTIVE", plan: "PRO" },
       _count: { operatingHours: 3 },
       ...overrides,
     };
@@ -556,8 +602,9 @@ describe("listAllClubs", () => {
         name: true,
         status: true,
         plan: true,
+        courtLimit: true,
         mercadoPagoAccount: { select: { status: true, tokenExpiresAt: true } },
-        membershipSubscription: { select: { status: true } },
+        membershipSubscription: { select: { status: true, plan: true } },
         _count: { select: { operatingHours: true } },
       },
     });
@@ -574,9 +621,11 @@ describe("listAllClubs", () => {
         name: "Club Padel Norte",
         status: "ACTIVE",
         plan: "PRO",
+        courtLimit: null,
         mpTokenIssue: false,
         membershipPastDue: false,
         noOperatingHours: false,
+        isFreePlan: false,
       },
     ]);
   });
@@ -669,6 +718,55 @@ describe("listAllClubs", () => {
     const [club] = await listAllClubs();
 
     expect(club.membershipPastDue).toBe(false);
+  });
+
+  // isFreePlan reflects the actual billing subscription's plan
+  // (ClubMembershipSubscription.plan), NOT Club.plan — activateFreePlan
+  // (core/billing/services/membership.service.ts) only ever sets the former
+  // to "FREE" when an admin comps a club, and deliberately never touches
+  // Club.plan (the court-capacity tier, set once at creation and otherwise
+  // never changed). Reading Club.plan here would make this flag permanently
+  // false for every club comped through the real flow.
+  it("flags isFreePlan true when the membership subscription's plan is FREE", async () => {
+    findManyMock.mockResolvedValue([
+      makeAdminRow({
+        membershipSubscription: { status: "ACTIVE", plan: "FREE" },
+      }),
+    ]);
+
+    const [club] = await listAllClubs();
+
+    expect(club.isFreePlan).toBe(true);
+  });
+
+  it("does not flag isFreePlan when the membership subscription's plan is not FREE", async () => {
+    findManyMock.mockResolvedValue([
+      makeAdminRow({
+        membershipSubscription: { status: "ACTIVE", plan: "PRO" },
+      }),
+    ]);
+
+    const [club] = await listAllClubs();
+
+    expect(club.isFreePlan).toBe(false);
+  });
+
+  it("does not flag isFreePlan when there is no membership subscription at all", async () => {
+    findManyMock.mockResolvedValue([
+      makeAdminRow({ membershipSubscription: null }),
+    ]);
+
+    const [club] = await listAllClubs();
+
+    expect(club.isFreePlan).toBe(false);
+  });
+
+  it("surfaces the club's courtLimit override so the admin picker can show/edit it", async () => {
+    findManyMock.mockResolvedValue([makeAdminRow({ courtLimit: 12 })]);
+
+    const [club] = await listAllClubs();
+
+    expect(club.courtLimit).toBe(12);
   });
 
   it("flags noOperatingHours when the club has zero configured operating-hours rows", async () => {

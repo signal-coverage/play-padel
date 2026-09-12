@@ -19,10 +19,12 @@ import { useGuardedDialogClose } from "@/hooks/use-guarded-dialog-close";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/hooks/use-auth";
 import { fireSuccessCelebration } from "@/lib/utils/celebration";
+import type { ReservationPaymentMethod } from "@/core/reservations/types";
 import { ClubListPanel } from "./components/ClubListPanel";
 import { ClubCourtsPanel } from "./components/ClubCourtsPanel";
 import { CourtSchedulePanel } from "./components/CourtSchedulePanel";
 import { BookingConfirmDialog } from "./components/BookingConfirmDialog";
+import { getBookingPaymentState } from "./components/BookingConfirmDialog/utils";
 import {
   useActiveClubs,
   useClubAvailability,
@@ -46,6 +48,14 @@ export function BrowseCourts() {
   );
   const [selected, setSelected] = useState<SelectedSlot | null>(null);
   const [partnerIds, setPartnerIds] = useState<string[]>([]);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] =
+    useState<ReservationPaymentMethod | null>(null);
+  // True once a TRANSFER confirm has come back as a pending (SCHEDULED,
+  // unpaid) hold rather than an actual "Reservation confirmed." success — see
+  // handleConfirm below. Kept separate from `selected` so the dialog can stay
+  // open showing the bank details/WhatsApp panel instead of being torn down.
+  const [confirmedTransferPending, setConfirmedTransferPending] =
+    useState(false);
   const shouldReduceMotion = useReducedMotion();
   const isMobile = useIsMobile();
   const { user } = useAuth();
@@ -67,6 +77,8 @@ export function BrowseCourts() {
   const handleDialogClose = useGuardedDialogClose(bookSlot.isPending, () => {
     setSelected(null);
     setPartnerIds([]);
+    setSelectedPaymentMethod(null);
+    setConfirmedTransferPending(false);
   });
 
   const currentClub = clubs?.find((c) => c.id === clubId);
@@ -106,6 +118,8 @@ export function BrowseCourts() {
     const court = courts?.find((c) => c.id === courtId);
     if (!court) return;
     setPartnerIds([]);
+    setSelectedPaymentMethod(currentClub.availablePaymentMethods[0] ?? null);
+    setConfirmedTransferPending(false);
     setSelected({
       courtId,
       courtName: court.name,
@@ -129,11 +143,32 @@ export function BrowseCourts() {
         courtId: selected.courtId,
         scheduledStart: selected.slot.start.toISOString(),
         scheduledEnd: selected.slot.end.toISOString(),
+        ...(selectedPaymentMethod && { paymentMethod: selectedPaymentMethod }),
         ...(partnerIds.length > 0 && { partnerIds }),
       })) as { checkoutUrl?: string };
 
       if (result.checkoutUrl) {
         window.location.href = result.checkoutUrl;
+        return;
+      }
+
+      // A successful TRANSFER response has no checkoutUrl but is NOT an
+      // actual confirmation either — it's an unpaid 60-minute SCHEDULED hold.
+      // Only treat it as pending when this was genuinely a priced ("pay-now")
+      // booking; a free court can still default `selectedPaymentMethod` to
+      // "TRANSFER" from the club's available methods even though no payment
+      // is ever required, and that path must behave exactly as before.
+      const isTransferPending =
+        selectedPaymentMethod === "TRANSFER" &&
+        getBookingPaymentState(selected.price).kind === "pay-now";
+
+      if (isTransferPending) {
+        toast.success(
+          "Slot held for 60 minutes — send your transfer and message the club.",
+        );
+        track("booking_pending_transfer");
+        trackAmplitude("booking_pending_transfer");
+        setConfirmedTransferPending(true);
         return;
       }
 
@@ -145,6 +180,7 @@ export function BrowseCourts() {
       }
       setSelected(null);
       setPartnerIds([]);
+      setSelectedPaymentMethod(null);
     } catch (err) {
       toast.error(
         err instanceof Error ? err.message : "Could not book this slot.",
@@ -257,6 +293,15 @@ export function BrowseCourts() {
         partnerIds={partnerIds}
         onPartnerIdsChange={setPartnerIds}
         currentUserId={user?.id}
+        availableMethods={currentClub?.availablePaymentMethods ?? []}
+        selectedMethod={selectedPaymentMethod}
+        onSelectMethod={setSelectedPaymentMethod}
+        bankTransferInfo={
+          selectedPaymentMethod === "TRANSFER"
+            ? (currentClub?.bankTransferInfo ?? null)
+            : null
+        }
+        confirmedTransferPending={confirmedTransferPending}
       />
     </div>
   );

@@ -4,6 +4,7 @@ vi.mock("@/infrastructure/db/client", () => ({
   prisma: {
     club: {
       findUnique: vi.fn(),
+      findMany: vi.fn(),
     },
   },
 }));
@@ -12,9 +13,12 @@ import { prisma } from "@/infrastructure/db/client";
 import {
   getClubOperationalStatus,
   CLUB_OPERATIONAL_WHERE,
+  getAvailablePaymentMethods,
+  getAvailablePaymentMethodsForClubs,
 } from "./operationalStatus";
 
 const findUniqueMock = prisma.club.findUnique as ReturnType<typeof vi.fn>;
+const findManyMock = prisma.club.findMany as ReturnType<typeof vi.fn>;
 
 describe("CLUB_OPERATIONAL_WHERE", () => {
   it("requires ACTIVE status AND (a CONNECTED Mercado Pago account OR a configured bank transfer account)", () => {
@@ -270,5 +274,93 @@ describe("getClubOperationalStatus", () => {
       email: null,
       nickname: null,
     });
+  });
+});
+
+describe("getAvailablePaymentMethods", () => {
+  beforeEach(() => {
+    findUniqueMock.mockReset();
+  });
+
+  it("returns only MERCADOPAGO when only MP is connected", async () => {
+    findUniqueMock.mockResolvedValue({
+      whatsappNumber: null,
+      mercadoPagoAccount: { status: "CONNECTED" },
+      bankTransferAccount: null,
+    });
+    const methods = await getAvailablePaymentMethods("club-1");
+    expect(methods).toEqual(["MERCADOPAGO"]);
+  });
+
+  it("returns only TRANSFER when a bank transfer account and a WhatsApp number are both set", async () => {
+    findUniqueMock.mockResolvedValue({
+      whatsappNumber: "+54 11 1234-5678",
+      mercadoPagoAccount: null,
+      bankTransferAccount: { id: "bta-1" },
+    });
+    const methods = await getAvailablePaymentMethods("club-1");
+    expect(methods).toEqual(["TRANSFER"]);
+  });
+
+  it("excludes TRANSFER when the bank transfer account exists but no WhatsApp number is set", async () => {
+    findUniqueMock.mockResolvedValue({
+      whatsappNumber: null,
+      mercadoPagoAccount: null,
+      bankTransferAccount: { id: "bta-1" },
+    });
+    const methods = await getAvailablePaymentMethods("club-1");
+    expect(methods).toEqual([]);
+  });
+
+  it("returns both when MP is connected and transfer is fully configured", async () => {
+    findUniqueMock.mockResolvedValue({
+      whatsappNumber: "+54 11 1234-5678",
+      mercadoPagoAccount: { status: "CONNECTED" },
+      bankTransferAccount: { id: "bta-1" },
+    });
+    const methods = await getAvailablePaymentMethods("club-1");
+    expect(methods).toEqual(["MERCADOPAGO", "TRANSFER"]);
+  });
+
+  it("returns an empty array when the club doesn't exist", async () => {
+    findUniqueMock.mockResolvedValue(null);
+    const methods = await getAvailablePaymentMethods("club-missing");
+    expect(methods).toEqual([]);
+  });
+});
+
+describe("getAvailablePaymentMethodsForClubs", () => {
+  beforeEach(() => {
+    findManyMock.mockReset();
+  });
+
+  it("returns a map keyed by clubId, batched in a single findMany call", async () => {
+    findManyMock.mockResolvedValue([
+      {
+        id: "club-1",
+        whatsappNumber: null,
+        mercadoPagoAccount: { status: "CONNECTED" },
+        bankTransferAccount: null,
+      },
+      {
+        id: "club-2",
+        whatsappNumber: "+54 11 1234-5678",
+        mercadoPagoAccount: null,
+        bankTransferAccount: { id: "bta-2" },
+      },
+    ]);
+    const result = await getAvailablePaymentMethodsForClubs([
+      "club-1",
+      "club-2",
+    ]);
+    expect(result.get("club-1")).toEqual(["MERCADOPAGO"]);
+    expect(result.get("club-2")).toEqual(["TRANSFER"]);
+    expect(findManyMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("returns an empty map for an empty input without querying the database", async () => {
+    const result = await getAvailablePaymentMethodsForClubs([]);
+    expect(result.size).toBe(0);
+    expect(findManyMock).not.toHaveBeenCalled();
   });
 });

@@ -20,6 +20,7 @@ model Club {
   // see app/api/onboarding/route.ts's P2002 handler.
   email              String             @unique
   phone              String?
+  whatsappNumber     String?
   address            String?
   country            String?
   province           String?
@@ -29,6 +30,13 @@ model Club {
   timezone           String
   currency           String
   plan               Plan               @default(BASIC)
+  // Per-club override of the plan's default court limit (see
+  // lib/consts/planPricing.ts's PLAN_COURT_LIMITS) — only ever set by an
+  // admin (AdminClubSettingsView), never by the owner's own settings form.
+  // BASIC/PRO/PLUS have a fixed limit in code; MAX has none, so this is the
+  // ONLY source of a court limit for a MAX club — null means "no limit set
+  // yet" and is treated as unlimited, not zero.
+  courtLimit         Int?
   status             ClubStatus         @default(ACTIVE)
   // Admin approval queue gate (see lib/auth/adminProfile.ts's isAdmin and
   // lib/mercadopago/operationalStatus.ts's PENDING_APPROVAL cause). Defaults
@@ -477,6 +485,8 @@ model Reservation {
   scheduledEnd     DateTime
   notes            String?
   paymentExpiresAt DateTime?
+  paymentMethod    String?
+  expiryNotifiedAt DateTime?
   cancelledAt      DateTime?
   cancelledBy      String?
   createdAt        DateTime          @default(now())
@@ -635,6 +645,7 @@ enum NotificationType {
   RESERVATION_UPDATED
   PROFILE_UPDATED_BY_ADMIN
   CLUB_UPDATED_BY_ADMIN
+  RESERVATION_PAYMENT_HOLD_EXPIRED
 }
 
 enum NotificationStatus {

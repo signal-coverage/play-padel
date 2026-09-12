@@ -168,6 +168,7 @@ export async function POST(request: Request) {
           legalName: data.legalName,
           taxId: data.taxId,
           phone: data.phone,
+          whatsappNumber: data.whatsappNumber,
           address: data.address,
           country: data.country,
           province: data.province,

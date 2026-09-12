@@ -1,6 +1,12 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, waitFor, cleanup } from "@testing-library/react";
+import {
+  render,
+  screen,
+  waitFor,
+  cleanup,
+  fireEvent,
+} from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AdminClubSettingsView } from "./AdminClubSettingsView";
@@ -64,20 +70,39 @@ function renderView(
       url: string,
       init?: RequestInit,
     ) => Promise<{ ok: boolean; json: () => Promise<unknown> }>;
+    onSetCourtLimit?: (
+      url: string,
+      init?: RequestInit,
+    ) => Promise<{ ok: boolean; json: () => Promise<unknown> }>;
+    clubs?: Array<Record<string, unknown>>;
   } = {},
 ) {
   const fetchMock = vi.fn((url: string, init?: RequestInit) => {
+    if (
+      init?.method === "PATCH" &&
+      url.startsWith("/api/admin/clubs/") &&
+      overrides.onSetCourtLimit
+    ) {
+      return overrides.onSetCourtLimit(url, init);
+    }
     if (url === "/api/admin/clubs") {
       return Promise.resolve({
         ok: true,
         json: async () => ({
-          clubs: [
-            { id: "club_1", name: "Club A", status: "ACTIVE", plan: "PRO" },
+          clubs: overrides.clubs ?? [
+            {
+              id: "club_1",
+              name: "Club A",
+              status: "ACTIVE",
+              plan: "PRO",
+              isFreePlan: false,
+            },
             {
               id: "club_2",
               name: "Club B",
               status: "SUSPENDED",
               plan: "BASIC",
+              isFreePlan: false,
             },
           ],
         }),
@@ -224,6 +249,46 @@ describe("AdminClubSettingsView", () => {
   // Deep-link support for app/dashboard/admin-search: clicking a club search
   // result lands here with ?clubId=<id> already set, so the admin doesn't
   // have to find and click the same club again in the picker list.
+  describe("AdminClubSettingsView export", () => {
+    it("renders an Export CSV link in the top-level bar (outside the list/detail columns) before any club is selected", async () => {
+      renderView();
+
+      await waitFor(() =>
+        expect(screen.getByText("Club A")).toBeInTheDocument(),
+      );
+      const exportLink = screen.getByRole("link", { name: /export csv/i });
+      expect(exportLink).toHaveAttribute("href", "/api/admin/export/clubs");
+      // The button now lives in AdminClubSettingsView's own top bar, not
+      // nested inside AdminClubList's list column — this is what
+      // distinguishes the new top-level bar from the old location, since
+      // AdminClubList itself is always mounted regardless of selection.
+      expect(
+        exportLink.closest('[data-testid="admin-club-settings-list-column"]'),
+      ).toBeNull();
+    });
+
+    it("keeps rendering the Export CSV link outside the columns once a club is selected", async () => {
+      renderView();
+
+      await waitFor(() =>
+        expect(screen.getByText("Club A")).toBeInTheDocument(),
+      );
+      screen.getByText("Club A").click();
+
+      await waitFor(() =>
+        expect(screen.getByDisplayValue("Club A")).toBeInTheDocument(),
+      );
+      const exportLink = screen.getByRole("link", { name: /export csv/i });
+      expect(exportLink).toHaveAttribute("href", "/api/admin/export/clubs");
+      expect(
+        exportLink.closest('[data-testid="admin-club-settings-list-column"]'),
+      ).toBeNull();
+      expect(
+        exportLink.closest('[data-testid="admin-club-settings-detail-column"]'),
+      ).toBeNull();
+    });
+  });
+
   describe("clubId deep-link pre-selection", () => {
     it("pre-selects the club named by the ?clubId search param on mount", async () => {
       currentSearchParams = new URLSearchParams("clubId=club_2");
@@ -362,6 +427,60 @@ describe("AdminClubSettingsView", () => {
       ).toBeInTheDocument();
     });
 
+    // Regression test: the button's visibility must key off isFreePlan (the
+    // actual membership subscription's plan, set by activateFreePlan), NOT
+    // the never-changing Club.plan court-capacity tier — otherwise the
+    // button never goes away even after a club has already been comped to
+    // free. `plan` is deliberately left as "BASIC" here to prove that.
+    it("hides the Activate free plan button once the selected club's isFreePlan is true, regardless of club.plan", async () => {
+      renderView({
+        clubs: [
+          {
+            id: "club_1",
+            name: "Club A",
+            status: "ACTIVE",
+            plan: "BASIC",
+            isFreePlan: true,
+          },
+        ],
+      });
+
+      await waitFor(() =>
+        expect(screen.getByText("Club A")).toBeInTheDocument(),
+      );
+      screen.getByText("Club A").click();
+
+      await waitFor(() =>
+        expect(screen.getByDisplayValue("Club A")).toBeInTheDocument(),
+      );
+      expect(
+        screen.queryByRole("button", { name: /activate free plan/i }),
+      ).not.toBeInTheDocument();
+    });
+
+    it("shows the Activate free plan button when the selected club's isFreePlan is false", async () => {
+      renderView({
+        clubs: [
+          {
+            id: "club_1",
+            name: "Club A",
+            status: "ACTIVE",
+            plan: "PRO",
+            isFreePlan: false,
+          },
+        ],
+      });
+
+      await waitFor(() =>
+        expect(screen.getByText("Club A")).toBeInTheDocument(),
+      );
+      screen.getByText("Club A").click();
+
+      expect(
+        await screen.findByRole("button", { name: /activate free plan/i }),
+      ).toBeInTheDocument();
+    });
+
     it("does nothing if the confirm dialog is dismissed", async () => {
       vi.stubGlobal("confirm", vi.fn().mockReturnValue(false));
       const { fetchMock } = renderView();
@@ -438,6 +557,137 @@ describe("AdminClubSettingsView", () => {
         expect(toastMock.error).toHaveBeenCalledWith(
           "Club already has a real Mercado Pago subscription — pass force to override",
         ),
+      );
+    });
+  });
+
+  describe("court limit override (MAX plan only)", () => {
+    it("shows no court limit control for a non-MAX club", async () => {
+      renderView(); // default fixture: club_1 is plan PRO
+
+      await waitFor(() =>
+        expect(screen.getByText("Club A")).toBeInTheDocument(),
+      );
+      screen.getByText("Club A").click();
+
+      await waitFor(() =>
+        expect(screen.getByDisplayValue("Club A")).toBeInTheDocument(),
+      );
+      expect(screen.queryByLabelText(/court limit/i)).not.toBeInTheDocument();
+    });
+
+    it("shows a court limit input pre-filled with the club's current override for a MAX-plan club", async () => {
+      renderView({
+        clubs: [
+          {
+            id: "club_1",
+            name: "Club A",
+            status: "ACTIVE",
+            plan: "MAX",
+            courtLimit: 15,
+            isFreePlan: false,
+          },
+        ],
+      });
+
+      await waitFor(() =>
+        expect(screen.getByText("Club A")).toBeInTheDocument(),
+      );
+      screen.getByText("Club A").click();
+
+      expect(await screen.findByLabelText(/court limit/i)).toHaveValue(15);
+    });
+
+    it("shows an empty court limit input when a MAX-plan club has no override set yet", async () => {
+      renderView({
+        clubs: [
+          {
+            id: "club_1",
+            name: "Club A",
+            status: "ACTIVE",
+            plan: "MAX",
+            courtLimit: null,
+            isFreePlan: false,
+          },
+        ],
+      });
+
+      await waitFor(() =>
+        expect(screen.getByText("Club A")).toBeInTheDocument(),
+      );
+      screen.getByText("Club A").click();
+
+      expect(await screen.findByLabelText(/court limit/i)).toHaveValue(null);
+    });
+
+    it("saves the entered court limit via PATCH /api/admin/clubs/[clubId], and shows a success toast", async () => {
+      const { fetchMock } = renderView({
+        clubs: [
+          {
+            id: "club_1",
+            name: "Club A",
+            status: "ACTIVE",
+            plan: "MAX",
+            courtLimit: null,
+            isFreePlan: false,
+          },
+        ],
+        onSetCourtLimit: async () =>
+          ({ ok: true, json: async () => ({ club: {} }) }) as {
+            ok: boolean;
+            json: () => Promise<unknown>;
+          },
+      });
+
+      await waitFor(() =>
+        expect(screen.getByText("Club A")).toBeInTheDocument(),
+      );
+      screen.getByText("Club A").click();
+
+      const input = await screen.findByLabelText(/court limit/i);
+      fireEvent.change(input, { target: { value: "20" } });
+      screen.getByRole("button", { name: /save limit/i }).click();
+
+      await waitFor(() =>
+        expect(fetchMock).toHaveBeenCalledWith(
+          "/api/admin/clubs/club_1",
+          expect.objectContaining({
+            method: "PATCH",
+            body: JSON.stringify({ courtLimit: 20 }),
+          }),
+        ),
+      );
+      await waitFor(() => expect(toastMock.success).toHaveBeenCalled());
+    });
+
+    it("shows an error toast when saving the court limit fails", async () => {
+      renderView({
+        clubs: [
+          {
+            id: "club_1",
+            name: "Club A",
+            status: "ACTIVE",
+            plan: "MAX",
+            courtLimit: 10,
+            isFreePlan: false,
+          },
+        ],
+        onSetCourtLimit: async () =>
+          ({
+            ok: false,
+            json: async () => ({ error: "Failed to update club" }),
+          }) as { ok: boolean; json: () => Promise<unknown> },
+      });
+
+      await waitFor(() =>
+        expect(screen.getByText("Club A")).toBeInTheDocument(),
+      );
+      screen.getByText("Club A").click();
+      await screen.findByLabelText(/court limit/i);
+      screen.getByRole("button", { name: /save limit/i }).click();
+
+      await waitFor(() =>
+        expect(toastMock.error).toHaveBeenCalledWith("Failed to update club"),
       );
     });
   });

@@ -360,4 +360,58 @@ describe("ClubSettingsView", () => {
       ).toBeInTheDocument();
     });
   });
+
+  describe("WhatsApp number field", () => {
+    it("renders an optional WhatsApp field (no required asterisk) distinct from the general Phone field", async () => {
+      renderView({ "/api/clubs": makeClub() });
+
+      await screen.findByText(/basic information/i);
+      expect(screen.getByText("Phone *")).toBeInTheDocument();
+      expect(
+        screen.getByText("WhatsApp (for payment receipts)"),
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByText("WhatsApp (for payment receipts) *"),
+      ).not.toBeInTheDocument();
+    });
+
+    it("loads and displays the club's WhatsApp number", async () => {
+      renderView({
+        "/api/clubs": makeClub({ whatsappNumber: "1123456789" }),
+      });
+
+      await waitFor(() =>
+        expect(screen.getByLabelText(/whatsapp/i)).toHaveValue("1123456789"),
+      );
+    });
+
+    it("saves an edited WhatsApp number via PATCH", async () => {
+      const { fetchMock } = renderView({
+        "/api/clubs": makeClub({ whatsappNumber: "" }),
+      });
+
+      await waitFor(() =>
+        expect(
+          screen.getByDisplayValue("Club Padel Norte"),
+        ).toBeInTheDocument(),
+      );
+
+      fireEvent.change(screen.getByLabelText(/whatsapp/i), {
+        target: { value: "1123456789" },
+      });
+
+      screen.getByRole("button", { name: /save changes/i }).click();
+
+      await waitFor(() => {
+        const patchCall = fetchMock.mock.calls.find(
+          ([url, init]) => url === "/api/clubs" && init?.method === "PATCH",
+        );
+        expect(patchCall).toBeTruthy();
+        const body = JSON.parse(
+          (patchCall as [string, RequestInit])[1]!.body as string,
+        );
+        expect(body.whatsappNumber).toBe("1123456789");
+      });
+    });
+  });
 });

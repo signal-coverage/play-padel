@@ -9,6 +9,12 @@ export function clubToFormValues(
     taxId: club?.taxId ?? "",
     email: club?.email ?? "",
     phone: club?.phone ?? "",
+    whatsappNumber: club?.whatsappNumber ?? "",
+    // Not derived from `club` — there's no persisted whatsappCountry column
+    // to seed from (see ClubSettingsFormValues); PhoneField's own
+    // splitPhone detects the country straight from the seeded
+    // whatsappNumber at mount, so this only tracks later combobox picks.
+    whatsappCountry: "",
     address: club?.address ?? "",
     country: club?.country ?? "",
     province: club?.province ?? "",

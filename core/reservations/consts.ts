@@ -12,6 +12,14 @@ export const ACTIVE_RESERVATION_STATUSES: readonly ReservationStatus[] = [
 // before it's treated as lapsed. See docs: Payments spec, "Slot-hold-with-expiry".
 export const PAYMENT_HOLD_MINUTES = 15;
 
+// How long an unpaid SCHEDULED bank-transfer reservation holds its slot
+// before it's treated as lapsed — longer than PAYMENT_HOLD_MINUTES because
+// confirming a transfer requires a human (the club owner) to notice a
+// WhatsApp message and manually check their bank account, unlike Mercado
+// Pago's instant webhook confirmation. See docs: bank-transfer-payment-
+// method design, "Hold window".
+export const BANK_TRANSFER_HOLD_MINUTES = 60;
+
 export const RESERVATION_STATUS_LABELS: Record<ReservationStatus, string> = {
   SCHEDULED: "Scheduled",
   CONFIRMED: "Confirmed",

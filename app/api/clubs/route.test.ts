@@ -11,17 +11,22 @@ vi.mock("@/core/clubs/services/clubs.service", () => ({
 
 vi.mock("@/core/billing/services/membership.service", () => ({
   requestPlanChange: vi.fn(),
+  isClubOnFreePlan: vi.fn(),
 }));
 
 import { requireOwnerClub } from "./_lib/require-owner";
 import { getClubById, updateClub } from "@/core/clubs/services/clubs.service";
-import { requestPlanChange } from "@/core/billing/services/membership.service";
+import {
+  requestPlanChange,
+  isClubOnFreePlan,
+} from "@/core/billing/services/membership.service";
 import { GET, PATCH } from "./route";
 
 const requireOwnerClubMock = requireOwnerClub as ReturnType<typeof vi.fn>;
 const getClubByIdMock = getClubById as ReturnType<typeof vi.fn>;
 const updateClubMock = updateClub as ReturnType<typeof vi.fn>;
 const requestPlanChangeMock = requestPlanChange as ReturnType<typeof vi.fn>;
+const isClubOnFreePlanMock = isClubOnFreePlan as ReturnType<typeof vi.fn>;
 
 function makePatchRequest(body: unknown) {
   return new Request("http://localhost/api/clubs", {
@@ -34,6 +39,7 @@ describe("GET /api/clubs", () => {
   beforeEach(() => {
     requireOwnerClubMock.mockReset();
     getClubByIdMock.mockReset();
+    isClubOnFreePlanMock.mockReset();
   });
 
   it("returns the auth failure response as-is when the caller is not an owner", async () => {
@@ -45,6 +51,24 @@ describe("GET /api/clubs", () => {
     const response = await GET();
 
     expect(response).toBe(forbidden);
+  });
+
+  it("includes isFreePlan (derived from the membership subscription) alongside the club", async () => {
+    requireOwnerClubMock.mockResolvedValue({
+      ok: true,
+      context: { userId: "user_1", clubId: "club_1" },
+    });
+    getClubByIdMock.mockResolvedValue({ id: "club_1", plan: "BASIC" });
+    isClubOnFreePlanMock.mockResolvedValue(true);
+
+    const response = await GET();
+    const json = await response.json();
+
+    expect(isClubOnFreePlanMock).toHaveBeenCalledWith("club_1");
+    expect(json).toEqual({
+      club: { id: "club_1", plan: "BASIC" },
+      isFreePlan: true,
+    });
   });
 });
 
