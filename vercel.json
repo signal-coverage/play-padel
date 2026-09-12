@@ -4,6 +4,6 @@
     { "path": "/api/cron/mercadopago-token-refresh", "schedule": "0 3 * * *" },
     { "path": "/api/cron/membership-grace-sweep", "schedule": "0 4 * * *" },
     { "path": "/api/cron/reset-preview-db", "schedule": "0 5 * * *" },
-    { "path": "/api/cron/bank-transfer-hold-sweep", "schedule": "*/10 * * * *" }
+    { "path": "/api/cron/bank-transfer-hold-sweep", "schedule": "0 6 * * *" }
   ]
 }
