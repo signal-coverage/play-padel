@@ -10,6 +10,7 @@ const {
   findUniqueMock,
   updateMock,
   userProfileFindManyMock,
+  notificationFindFirstMock,
 } = vi.hoisted(() => ({
   findManyMock: vi.fn(),
   findFirstMock: vi.fn(),
@@ -17,6 +18,7 @@ const {
   findUniqueMock: vi.fn(),
   updateMock: vi.fn(),
   userProfileFindManyMock: vi.fn(),
+  notificationFindFirstMock: vi.fn(),
 }));
 
 vi.mock("@/infrastructure/db/client", () => ({
@@ -30,6 +32,9 @@ vi.mock("@/infrastructure/db/client", () => ({
     userProfile: {
       findFirst: findFirstMock,
       findMany: userProfileFindManyMock,
+    },
+    notification: {
+      findFirst: notificationFindFirstMock,
     },
   },
 }));
@@ -46,6 +51,21 @@ vi.mock("@/lib/notifications/dispatcher", () => ({
   dispatch: dispatchMock,
 }));
 
+const { getClubOperationalStatusMock } = vi.hoisted(() => ({
+  getClubOperationalStatusMock: vi.fn(),
+}));
+
+vi.mock("@/lib/mercadopago/operationalStatus", async (importOriginal) => {
+  const actual =
+    await importOriginal<
+      typeof import("@/lib/mercadopago/operationalStatus")
+    >();
+  return {
+    ...actual,
+    getClubOperationalStatus: getClubOperationalStatusMock,
+  };
+});
+
 import {
   createClub,
   listActiveClubs,
@@ -54,6 +74,7 @@ import {
   approveClub,
   rejectClub,
   getClubOwner,
+  notifyClubOperationalIfNeeded,
   MP_TOKEN_EXPIRY_WARNING_DAYS,
 } from "./clubs.service";
 import { CLUB_OPERATIONAL_WHERE } from "@/lib/mercadopago/operationalStatus";
@@ -66,6 +87,7 @@ function makeClubRow(overrides: Partial<Record<string, unknown>> = {}) {
     taxId: null,
     email: "club@example.com",
     phone: null,
+    whatsappNumber: null,
     address: null,
     country: null,
     province: null,
@@ -127,6 +149,50 @@ describe("createClub", () => {
       }),
     );
   });
+
+  it("persists whatsappNumber when provided, and maps it back on the returned Club", async () => {
+    createMock.mockResolvedValue(
+      makeClubRow({ whatsappNumber: "+54 11 1234-5678" }),
+    );
+
+    const club = await createClub(
+      {
+        name: "Test Club",
+        email: "club@example.com",
+        timezone: "America/Argentina/Buenos_Aires",
+        currency: "ARS",
+        whatsappNumber: "+54 11 1234-5678",
+      },
+      "user_1",
+    );
+
+    expect(createMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ whatsappNumber: "+54 11 1234-5678" }),
+      }),
+    );
+    expect(club.whatsappNumber).toBe("+54 11 1234-5678");
+  });
+
+  it("stores null (not omits the key) when whatsappNumber isn't provided", async () => {
+    createMock.mockResolvedValue(makeClubRow());
+
+    await createClub(
+      {
+        name: "Test Club",
+        email: "club@example.com",
+        timezone: "America/Argentina/Buenos_Aires",
+        currency: "ARS",
+      },
+      "user_1",
+    );
+
+    expect(createMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ whatsappNumber: null }),
+      }),
+    );
+  });
 });
 
 describe("listPendingClubs (admin approval queue)", () => {
@@ -134,22 +200,33 @@ describe("listPendingClubs (admin approval queue)", () => {
     findManyMock.mockReset();
   });
 
-  it("queries clubs with approvalStatus PENDING, ordered oldest-first, selecting only the review-relevant fields", async () => {
+  it("queries clubs with approvalStatus PENDING, ordered oldest-first, selecting the review-relevant fields plus address (for duplicate detection)", async () => {
     const createdAt = new Date("2026-09-01T00:00:00Z");
-    findManyMock.mockResolvedValue([
-      {
-        id: "club_1",
-        name: "Pending Club",
-        email: "club@example.com",
-        createdAt,
-      },
-    ]);
+    findManyMock
+      .mockResolvedValueOnce([
+        {
+          id: "club_1",
+          name: "Pending Club",
+          email: "club@example.com",
+          address: "123 Main St",
+          createdAt,
+        },
+      ])
+      .mockResolvedValueOnce([
+        { id: "club_1", email: "club@example.com", address: "123 Main St" },
+      ]);
 
     const result = await listPendingClubs();
 
-    expect(findManyMock).toHaveBeenCalledWith({
+    expect(findManyMock).toHaveBeenNthCalledWith(1, {
       where: { approvalStatus: "PENDING" },
-      select: { id: true, name: true, email: true, createdAt: true },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        address: true,
+        createdAt: true,
+      },
       orderBy: { createdAt: "asc" },
     });
     expect(result).toEqual([
@@ -158,8 +235,87 @@ describe("listPendingClubs (admin approval queue)", () => {
         name: "Pending Club",
         email: "club@example.com",
         createdAt,
+        possibleDuplicate: false,
       },
     ]);
+  });
+
+  it("flags possibleDuplicate when another club (any status) shares the same email, case-insensitively", async () => {
+    const createdAt = new Date("2026-09-01T00:00:00Z");
+    findManyMock
+      .mockResolvedValueOnce([
+        {
+          id: "club_1",
+          name: "Pending Club",
+          email: "Club@Example.com",
+          address: null,
+          createdAt,
+        },
+      ])
+      .mockResolvedValueOnce([
+        { id: "club_1", email: "Club@Example.com", address: null },
+        {
+          id: "club_existing",
+          email: "club@example.com",
+          address: "999 Other Ave",
+        },
+      ]);
+
+    const result = await listPendingClubs();
+
+    expect(result[0].possibleDuplicate).toBe(true);
+  });
+
+  it("flags possibleDuplicate when another club shares the same address, ignoring case/whitespace", async () => {
+    const createdAt = new Date("2026-09-01T00:00:00Z");
+    findManyMock
+      .mockResolvedValueOnce([
+        {
+          id: "club_1",
+          name: "Pending Club",
+          email: "unique@example.com",
+          address: "  Pasaje Nuñez del Prado 3551  ",
+          createdAt,
+        },
+      ])
+      .mockResolvedValueOnce([
+        {
+          id: "club_1",
+          email: "unique@example.com",
+          address: "  Pasaje Nuñez del Prado 3551  ",
+        },
+        {
+          id: "club_existing",
+          email: "someoneelse@example.com",
+          address: "pasaje nuñez del prado 3551",
+        },
+      ]);
+
+    const result = await listPendingClubs();
+
+    expect(result[0].possibleDuplicate).toBe(true);
+  });
+
+  it("never flags a club against itself, and leaves possibleDuplicate false when nothing else matches", async () => {
+    const createdAt = new Date("2026-09-01T00:00:00Z");
+    findManyMock
+      .mockResolvedValueOnce([
+        {
+          id: "club_1",
+          name: "Pending Club",
+          email: "unique@example.com",
+          address: null,
+          createdAt,
+        },
+      ])
+      .mockResolvedValueOnce([
+        { id: "club_1", email: "unique@example.com", address: null },
+        { id: "club_other", email: "someoneelse@example.com", address: null },
+      ]);
+
+    const result = await listPendingClubs();
+
+    expect(result[0].possibleDuplicate).toBe(false);
   });
 });
 
@@ -204,7 +360,12 @@ describe("approveClub (admin approval queue action)", () => {
     expect(result).toEqual({ status: "ok", clubId: "club_1" });
   });
 
-  it("dispatches a CLUB_APPROVED in-app notification to the club owner after a successful approval", async () => {
+  it("dispatches a CLUB_APPROVED notification by email to the club owner after a successful approval", async () => {
+    // Unlike CLUB_REJECTED (in-app only, an owner who was mid-onboarding
+    // notices right away) an approved owner has no way to know their club is
+    // ready other than logging back in and checking — this is the only
+    // signal that ever tells them to come back, so it must actually reach
+    // their inbox, not just the in-app notification feed.
     findUniqueMock.mockResolvedValue({ approvalStatus: "PENDING" });
     updateMock.mockResolvedValue({ id: "club_1", approvalStatus: "APPROVED" });
     findFirstMock.mockResolvedValue({
@@ -224,7 +385,7 @@ describe("approveClub (admin approval queue action)", () => {
         recipientId: "user_owner",
         recipientEmail: "owner@example.com",
         recipientName: "Owner Person",
-        sendEmail: false,
+        sendEmail: true,
       }),
     );
   });
@@ -418,11 +579,12 @@ describe("listAllClubs", () => {
       name: "Club Padel Norte",
       status: "ACTIVE",
       plan: "PRO",
+      courtLimit: null,
       mercadoPagoAccount: {
         status: "CONNECTED",
         tokenExpiresAt: daysFromNow(30),
       },
-      membershipSubscription: { status: "ACTIVE" },
+      membershipSubscription: { status: "ACTIVE", plan: "PRO" },
       _count: { operatingHours: 3 },
       ...overrides,
     };
@@ -440,8 +602,9 @@ describe("listAllClubs", () => {
         name: true,
         status: true,
         plan: true,
+        courtLimit: true,
         mercadoPagoAccount: { select: { status: true, tokenExpiresAt: true } },
-        membershipSubscription: { select: { status: true } },
+        membershipSubscription: { select: { status: true, plan: true } },
         _count: { select: { operatingHours: true } },
       },
     });
@@ -458,9 +621,11 @@ describe("listAllClubs", () => {
         name: "Club Padel Norte",
         status: "ACTIVE",
         plan: "PRO",
+        courtLimit: null,
         mpTokenIssue: false,
         membershipPastDue: false,
         noOperatingHours: false,
+        isFreePlan: false,
       },
     ]);
   });
@@ -555,6 +720,55 @@ describe("listAllClubs", () => {
     expect(club.membershipPastDue).toBe(false);
   });
 
+  // isFreePlan reflects the actual billing subscription's plan
+  // (ClubMembershipSubscription.plan), NOT Club.plan — activateFreePlan
+  // (core/billing/services/membership.service.ts) only ever sets the former
+  // to "FREE" when an admin comps a club, and deliberately never touches
+  // Club.plan (the court-capacity tier, set once at creation and otherwise
+  // never changed). Reading Club.plan here would make this flag permanently
+  // false for every club comped through the real flow.
+  it("flags isFreePlan true when the membership subscription's plan is FREE", async () => {
+    findManyMock.mockResolvedValue([
+      makeAdminRow({
+        membershipSubscription: { status: "ACTIVE", plan: "FREE" },
+      }),
+    ]);
+
+    const [club] = await listAllClubs();
+
+    expect(club.isFreePlan).toBe(true);
+  });
+
+  it("does not flag isFreePlan when the membership subscription's plan is not FREE", async () => {
+    findManyMock.mockResolvedValue([
+      makeAdminRow({
+        membershipSubscription: { status: "ACTIVE", plan: "PRO" },
+      }),
+    ]);
+
+    const [club] = await listAllClubs();
+
+    expect(club.isFreePlan).toBe(false);
+  });
+
+  it("does not flag isFreePlan when there is no membership subscription at all", async () => {
+    findManyMock.mockResolvedValue([
+      makeAdminRow({ membershipSubscription: null }),
+    ]);
+
+    const [club] = await listAllClubs();
+
+    expect(club.isFreePlan).toBe(false);
+  });
+
+  it("surfaces the club's courtLimit override so the admin picker can show/edit it", async () => {
+    findManyMock.mockResolvedValue([makeAdminRow({ courtLimit: 12 })]);
+
+    const [club] = await listAllClubs();
+
+    expect(club.courtLimit).toBe(12);
+  });
+
   it("flags noOperatingHours when the club has zero configured operating-hours rows", async () => {
     findManyMock.mockResolvedValue([
       makeAdminRow({ _count: { operatingHours: 0 } }),
@@ -619,5 +833,93 @@ describe("getClubOwner", () => {
     const owner = await getClubOwner("club_1");
 
     expect(owner).toBeNull();
+  });
+});
+
+// Dispatched exactly once per club, the first time it becomes fully
+// operational (admin-approved AND has a payout method connected) — reminds
+// the owner to set operating hours in Settings, now that they can actually
+// reach that page (see app/dashboard/_components/ClubOperationalGate).
+describe("notifyClubOperationalIfNeeded", () => {
+  beforeEach(() => {
+    getClubOperationalStatusMock.mockReset();
+    notificationFindFirstMock.mockReset();
+    findFirstMock.mockReset();
+    dispatchMock.mockReset();
+    dispatchMock.mockResolvedValue(undefined);
+  });
+
+  it("dispatches CLUB_OPERATIONAL_READY to the club owner when operational and not already notified", async () => {
+    getClubOperationalStatusMock.mockResolvedValue({
+      operational: true,
+      cause: null,
+      email: null,
+      nickname: null,
+    });
+    notificationFindFirstMock.mockResolvedValue(null);
+    findFirstMock.mockResolvedValue({
+      id: "user_owner",
+      displayName: "Owner Person",
+      photoURL: null,
+      email: "owner@example.com",
+    });
+
+    await notifyClubOperationalIfNeeded("club_1");
+
+    expect(notificationFindFirstMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          clubId: "club_1",
+          type: "CLUB_OPERATIONAL_READY",
+        }),
+      }),
+    );
+    expect(dispatchMock).toHaveBeenCalledTimes(1);
+    expect(dispatchMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "CLUB_OPERATIONAL_READY",
+        clubId: "club_1",
+        recipientId: "user_owner",
+        recipientEmail: "owner@example.com",
+        recipientName: "Owner Person",
+        sendEmail: false,
+      }),
+    );
+  });
+
+  it("does not dispatch when the club is not operational", async () => {
+    getClubOperationalStatusMock.mockResolvedValue({
+      operational: false,
+      cause: "MP_NOT_CONNECTED",
+      email: null,
+      nickname: null,
+    });
+
+    await notifyClubOperationalIfNeeded("club_1");
+
+    expect(notificationFindFirstMock).not.toHaveBeenCalled();
+    expect(dispatchMock).not.toHaveBeenCalled();
+  });
+
+  it("does not dispatch a second time when a CLUB_OPERATIONAL_READY notification already exists for the club", async () => {
+    getClubOperationalStatusMock.mockResolvedValue({
+      operational: true,
+      cause: null,
+      email: null,
+      nickname: null,
+    });
+    notificationFindFirstMock.mockResolvedValue({ id: "notif_1" });
+
+    await notifyClubOperationalIfNeeded("club_1");
+
+    expect(dispatchMock).not.toHaveBeenCalled();
+  });
+
+  it("never throws even when dispatch/prisma calls fail", async () => {
+    getClubOperationalStatusMock.mockRejectedValue(new Error("db down"));
+
+    await expect(
+      notifyClubOperationalIfNeeded("club_1"),
+    ).resolves.toBeUndefined();
   });
 });

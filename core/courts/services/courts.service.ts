@@ -15,6 +15,9 @@ import type {
 } from "@/core/courts/types";
 import { ACTIVE_RESERVATION_STATUSES } from "@/core/reservations/consts";
 import { resolveDefaultCourtAvailability } from "@/core/clubs/services/operatingHours.service";
+import { isClubOnFreePlan } from "@/core/billing/services/membership.service";
+import { PLAN_COURT_LIMITS } from "@/lib/consts/planPricing";
+import type { Plan } from "@/core/clubs/types";
 
 type CourtRow = NonNullable<
   Awaited<ReturnType<typeof prisma.court.findUnique>>
@@ -30,6 +33,43 @@ export class DuplicateCourtNameError extends Error {
   constructor(name: string) {
     super(`A court named "${name}" already exists in this club`);
     this.name = "DuplicateCourtNameError";
+  }
+}
+
+export class CourtLimitReachedError extends Error {
+  constructor(plan: Plan, limit: number) {
+    super(
+      `Your ${plan} plan allows up to ${limit} court${limit === 1 ? "" : "s"}. Upgrade your plan to add more.`,
+    );
+    this.name = "CourtLimitReachedError";
+  }
+}
+
+// Bypassed entirely for a club on the hidden FREE membership plan (testing
+// tier — see core/billing/services/membership.service.ts's
+// isClubOnFreePlan), regardless of Club.plan. Otherwise: Club.courtLimit
+// (an admin-set override, only ever meaningful for MAX today — see its
+// schema doc comment) wins when set; falling back to
+// PLAN_COURT_LIMITS[plan] otherwise. No entry in either place (MAX with no
+// override) means unlimited.
+async function assertCourtLimitNotReached(clubId: string): Promise<void> {
+  if (await isClubOnFreePlan(clubId)) return;
+
+  const club = await prisma.club.findUnique({
+    where: { id: clubId },
+    select: { plan: true, courtLimit: true },
+  });
+  if (!club) return;
+
+  const plan = club.plan as Plan;
+  const limit = club.courtLimit ?? PLAN_COURT_LIMITS[plan];
+  if (limit == null) return;
+
+  const count = await prisma.court.count({
+    where: { clubId, deletedAt: null },
+  });
+  if (count >= limit) {
+    throw new CourtLimitReachedError(plan, limit);
   }
 }
 
@@ -72,6 +112,7 @@ function toCourt(row: CourtRow): Court {
     id: row.id,
     clubId: row.clubId,
     name: row.name,
+    courtNumber: row.courtNumber ?? undefined,
     surface: row.surface ?? undefined,
     indoor: row.indoor,
     color: row.color ?? undefined,
@@ -123,6 +164,7 @@ export async function createCourt(
   input: CreateCourtInput,
   createdBy: string,
 ): Promise<Court> {
+  await assertCourtLimitNotReached(clubId);
   await assertNoDuplicateCourtName(clubId, input.name);
 
   let row;
@@ -131,6 +173,7 @@ export async function createCourt(
       data: {
         clubId,
         name: input.name,
+        courtNumber: input.courtNumber ?? null,
         surface: input.surface ?? null,
         indoor: input.indoor ?? false,
         color: input.color ?? null,
@@ -211,6 +254,9 @@ export async function updateCourt(
       where: { id },
       data: {
         ...(input.name !== undefined && { name: input.name }),
+        ...(input.courtNumber !== undefined && {
+          courtNumber: input.courtNumber ?? null,
+        }),
         ...(input.surface !== undefined && {
           surface: input.surface ?? null,
         }),

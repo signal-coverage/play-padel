@@ -75,12 +75,22 @@ export async function listUsersByClub(clubId: string): Promise<UserProfile[]> {
  * in place instead: PII is scrubbed, the row (and its id, role, clubId,
  * createdAt/createdBy, and reservations relation) survives. See
  * docs/COMPLIANCE.md.
+ *
+ * Uses `updateMany` (never throws on a zero-row match) rather than
+ * `update`, and returns whether a row actually existed — a Clerk user who
+ * signed up but never completed onboarding has no UserProfile row at all
+ * (see app/api/onboarding/route.ts, the only place one is ever created), so
+ * deleting that Clerk account still fires this same webhook with nothing
+ * here to anonymize. `update` would throw Prisma's "No record was found for
+ * an update" and 500 the whole webhook; the caller (see
+ * app/api/webhooks/clerk/route.ts) uses the returned boolean to skip
+ * logging a misleading audit entry for a profile that was never touched.
  */
 export async function anonymizeUserProfile(
   uid: string,
   actor: string,
-): Promise<void> {
-  await prisma.userProfile.update({
+): Promise<boolean> {
+  const result = await prisma.userProfile.updateMany({
     where: { id: uid },
     data: {
       displayName: "Deleted User",
@@ -99,6 +109,7 @@ export async function anonymizeUserProfile(
       updatedBy: actor,
     },
   });
+  return result.count > 0;
 }
 
 /**

@@ -22,7 +22,19 @@ export function AppNavbar() {
     <header className="flex items-center justify-between gap-4 border-b border-border bg-background px-6 py-4 md:px-6">
       <CommandPalette role={role} />
 
-      <div className="flex min-w-0 items-center gap-8">
+      {/* flex-1 (not just min-w-0) on both this group AND NavLinks itself
+          below is load-bearing, not cosmetic: NavLinks' own internal
+          nav-overflow-container (see hooks.ts's useOverflowNav) is flex-1
+          too, and only ever has REAL, viewport-stable space to claim if
+          everything between it and <header>'s justify-between row is also
+          stretched to the header's true available width — otherwise this
+          whole chain sizes to its own content instead. That's harmless
+          while every item still fits, but once anything collapses into
+          "More", the row's rendered width shrinks to match its now-smaller
+          content, which never grows back even on a much wider resize —
+          there's no longer anything forcing it wider, since nothing is
+          being externally squeezed anymore. See AppNavbar.test.tsx. */}
+      <div className="flex min-w-0 flex-1 items-center gap-8">
         <Link
           href="/dashboard"
           className="flex shrink-0 items-center gap-2 text-lg font-bold tracking-tight"
@@ -34,7 +46,7 @@ export function AppNavbar() {
         <NavLinks
           role={role}
           isAdmin={isAdmin}
-          className="hidden min-w-0 min-[809px]:flex"
+          className="hidden min-w-0 flex-1 min-[809px]:flex"
         />
       </div>
 

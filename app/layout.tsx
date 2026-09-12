@@ -125,7 +125,7 @@ export default function RootLayout({
           >
             <ThemeFavicon />
             <AuthProvider>{children}</AuthProvider>
-            <Toaster position="top-right" />
+            <Toaster position="bottom-right" />
             <SuccessCelebrationPortal />
           </ThemeProvider>
         </ClerkProvider>

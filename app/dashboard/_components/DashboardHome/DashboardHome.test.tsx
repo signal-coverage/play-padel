@@ -22,13 +22,6 @@ vi.mock("next/image", () => ({
   ),
 }));
 
-// Isolates this test from AdminDashboardHome's own data-fetching concerns
-// (covered by its own test file) — this file only cares about which branch
-// DashboardHome picks.
-vi.mock("./components/AdminDashboardHome", () => ({
-  AdminDashboardHome: () => <div>Admin dashboard content</div>,
-}));
-
 vi.mock("./components/SearchableCardsGrid", () => ({
   SearchableCardsGrid: () => <div>Searchable cards grid</div>,
 }));
@@ -91,21 +84,27 @@ describe("DashboardHome", () => {
     vi.restoreAllMocks();
   });
 
-  it("renders AdminDashboardHome (not the player branch) for an admin with role player", () => {
+  // The platform-wide admin metrics view moved to its own page (see
+  // app/dashboard/admin-overview/page.tsx, reached from the Admin
+  // dropdown's new "Overview" item) — an admin who's ALSO a player/owner
+  // must keep seeing their own normal dashboard here, not have it replaced
+  // wholesale just because isAdmin is true (role and isAdmin are
+  // independent — see prisma/schema.prisma's UserProfile.isAdmin comment).
+  it("renders the normal player view for an admin with role player, not a separate admin dashboard", () => {
     mockAuth({ role: "player", isAdmin: true });
 
     renderDashboardHome();
 
-    expect(screen.getByText("Admin dashboard content")).toBeInTheDocument();
-    expect(screen.queryByText("Searchable cards grid")).not.toBeInTheDocument();
+    expect(screen.getByText("Searchable cards grid")).toBeInTheDocument();
+    expect(screen.getByText("Player overview card")).toBeInTheDocument();
   });
 
-  it("renders AdminDashboardHome (not the owner branch) for an admin with role owner", () => {
+  it("renders the normal owner view for an admin with role owner, not a separate admin dashboard", () => {
     mockAuth({ role: "owner", isAdmin: true });
 
     renderDashboardHome();
 
-    expect(screen.getByText("Admin dashboard content")).toBeInTheDocument();
+    expect(screen.getByText("Searchable cards grid")).toBeInTheDocument();
   });
 
   it("renders the normal player view for a non-admin player", () => {
@@ -113,9 +112,6 @@ describe("DashboardHome", () => {
 
     renderDashboardHome();
 
-    expect(
-      screen.queryByText("Admin dashboard content"),
-    ).not.toBeInTheDocument();
     expect(screen.getByText("Searchable cards grid")).toBeInTheDocument();
   });
 
@@ -124,9 +120,6 @@ describe("DashboardHome", () => {
 
     renderDashboardHome();
 
-    expect(
-      screen.queryByText("Admin dashboard content"),
-    ).not.toBeInTheDocument();
     expect(screen.getByText("Searchable cards grid")).toBeInTheDocument();
   });
 });

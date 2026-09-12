@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { Download, Pencil, Trash2, UserRoundCog } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import {
@@ -108,7 +109,24 @@ export function PlayersDirectory() {
               )}
               <AvatarFallback>{getInitials(player.displayName)}</AvatarFallback>
             </Avatar>
-            <span className="truncate font-medium">{player.displayName}</span>
+            <span className="flex min-w-0 items-center gap-1.5">
+              <span className="truncate font-medium">{player.displayName}</span>
+              {/* The signed-in user's own row in this directory — GET
+                  /api/players is a global player directory, not scoped to
+                  the caller, so this is the only client-side way to spot
+                  "that's me" among the list. Shown regardless of admin
+                  status: this isn't the admin-only Role column, just a
+                  personal marker for whoever's actually logged in. */}
+              {player.id === user?.id && (
+                // Accent, not the neutral outline every other badge in
+                // this table uses (Role/Category) — this calls out "that's
+                // you", not status info, so it should stand out rather
+                // than blend in.
+                <Badge className="shrink-0 border-transparent bg-accent text-accent-foreground">
+                  You
+                </Badge>
+              )}
+            </span>
           </button>
         ),
       },
@@ -116,74 +134,148 @@ export function PlayersDirectory() {
       ...(isAdmin
         ? [
             {
+              // Only meaningful to an admin viewer — a regular player never
+              // gets `isAdmin` back from GET /api/players at all (see that
+              // route's own comment), so this column only ever exists
+              // inside this same isAdmin-gated block.
+              key: "role",
+              header: "Role",
+              cell: (player: PlayerListItem) => (
+                <Badge variant={player.isAdmin ? "default" : "outline"}>
+                  {player.isAdmin ? "Admin" : "Player"}
+                </Badge>
+              ),
+            },
+            {
               key: "actions",
               header: "Actions",
               headerClassName: "text-right",
               className: "text-right",
-              cell: (player: PlayerListItem) => (
-                <div className="flex justify-end gap-1.5">
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        aria-label={`Edit ${player.displayName}`}
-                        onClick={() => setEditingPlayer(player)}
-                      >
-                        <Pencil />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>Edit player</TooltipContent>
-                  </Tooltip>
+              cell: (player: PlayerListItem) => {
+                // The server rejects both of these for your OWN row the
+                // same way it rejects impersonating another admin — POST
+                // /api/admin/impersonate ("You cannot impersonate
+                // yourself.") and DELETE /api/admin/players/[userId]
+                // ("You cannot delete your own account.") each check this
+                // before anything else. Disabled here too so an admin
+                // never has to click through to discover either, rather
+                // than as a real security boundary of its own.
+                const isSelf = player.id === user?.id;
+                const impersonateDisabled =
+                  isSelf ||
+                  player.isAdmin ||
+                  (impersonatePlayer.isPending &&
+                    impersonatePlayer.variables?.userId === player.id);
+                return (
+                  <div className="flex justify-end gap-1.5">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          aria-label={`Edit ${player.displayName}`}
+                          onClick={() => setEditingPlayer(player)}
+                        >
+                          <Pencil />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Edit player</TooltipContent>
+                    </Tooltip>
 
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        aria-label={`Delete ${player.displayName}`}
-                        onClick={() => setDeletingPlayer(player)}
-                      >
-                        <Trash2 />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>Delete player</TooltipContent>
-                  </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        {/* A disabled native <button> never fires pointer
+                            or focus events at all (not just a CSS thing —
+                            browsers withhold them entirely), so
+                            TooltipTrigger's own hover/focus listeners would
+                            never fire if attached to the Button directly
+                            whenever isSelf disables it, leaving its "why"
+                            permanently invisible. Wrapping it in a plain,
+                            never-disabled span gives Radix something that
+                            DOES receive those events — the button's own
+                            pointer-events: none (see disabled:pointer-events-none
+                            in button.tsx) lets hover on its area pass
+                            through to this wrapper anyway. tabIndex only
+                            when actually disabled: when enabled, the
+                            Button itself is already a real tab stop, so an
+                            unconditional tabIndex here would add a
+                            redundant one right before it. */}
+                        <span
+                          tabIndex={isSelf ? 0 : undefined}
+                          className="inline-flex"
+                        >
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            aria-label={`Delete ${player.displayName}`}
+                            disabled={isSelf}
+                            onClick={() => setDeletingPlayer(player)}
+                          >
+                            <Trash2 />
+                          </Button>
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        {isSelf
+                          ? "You can't delete your own account"
+                          : "Delete player"}
+                      </TooltipContent>
+                    </Tooltip>
 
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        aria-label={`Impersonate ${player.displayName}`}
-                        disabled={
-                          impersonatePlayer.isPending &&
-                          impersonatePlayer.variables?.userId === player.id
-                        }
-                        onClick={() =>
-                          impersonatePlayer.mutate({ userId: player.id })
-                        }
-                      >
-                        <UserRoundCog />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>Sign in as this player</TooltipContent>
-                  </Tooltip>
-                </div>
-              ),
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        {/* Same disabled-button/tooltip wrapper as Delete
+                            above — this one can also end up disabled by
+                            player.isAdmin, not just isSelf. */}
+                        <span
+                          tabIndex={impersonateDisabled ? 0 : undefined}
+                          className="inline-flex"
+                        >
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            aria-label={`Impersonate ${player.displayName}`}
+                            disabled={impersonateDisabled}
+                            onClick={() =>
+                              impersonatePlayer.mutate({ userId: player.id })
+                            }
+                          >
+                            <UserRoundCog />
+                          </Button>
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        {isSelf
+                          ? "You can't impersonate yourself"
+                          : player.isAdmin
+                            ? "Can't impersonate another admin"
+                            : "Sign in as this player"}
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
+                );
+              },
             },
           ]
         : []),
     ],
-    [isAdmin, impersonatePlayer],
+    [isAdmin, impersonatePlayer, user?.id],
   );
 
   return (
     <div className="flex h-full min-h-0 min-w-0 flex-col gap-4">
-      <div className="flex items-start justify-between gap-4">
+      {/* flex-col by default so the filter bar (already flex-col
+          sm:flex-row internally) gets the whole row's width on mobile
+          instead of being squeezed into a narrow column next to the Export
+          button — same sm: breakpoint PlayersFilterBar's own fields switch
+          at, so both stack/unstack together. */}
+      <div
+        data-testid="players-toolbar"
+        className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4"
+      >
         <PlayersFilterBar
           query={query}
           onQueryChange={setQuery}
@@ -194,7 +286,7 @@ export function PlayersDirectory() {
         />
 
         {isAdmin && (
-          <Button variant="outline" size="sm" asChild>
+          <Button variant="outline" size="sm" asChild className="self-start">
             <a href="/api/admin/export/players" download>
               <Download size={14} strokeWidth={2.25} />
               Export CSV
@@ -207,7 +299,19 @@ export function PlayersDirectory() {
         <StatusBox>Could not load players. Try again later.</StatusBox>
       ) : (
         <DataTable
-          className="min-h-0 flex-1"
+          // main (DashboardShell.tsx) is overflow-y-auto (whole-page scroll)
+          // below md, not md:overflow-hidden — so the h-full/flex-1 chain
+          // this table normally stretches against never gets a definite
+          // height there, and it collapses to its own content's height
+          // instead. min-h-[60svh] doesn't depend on that chain (it's sized
+          // off the viewport), giving the table real height — and its own
+          // internal overflow-auto (see DataTable.tsx) then scrolls that
+          // fixed-height box instead of only the outer page. md:min-h-0
+          // restores the exact previous desktop sizing untouched. Trailing
+          // breathing room below the (mobile-only) overflowing table lives
+          // in the sibling spacer div right after this component, not a
+          // margin/padding here — see that div's own comment for why.
+          className="min-h-[60svh] flex-1 md:min-h-0"
           columns={columns}
           rows={visiblePlayers}
           rowKey={(player) => player.id}
@@ -216,6 +320,21 @@ export function PlayersDirectory() {
           emptyState={<StatusBox>No players match your filters.</StatusBox>}
         />
       )}
+
+      {/* Real spacer box (height, not margin/padding) below the table,
+          mobile only. PlayersDirectory's own wrapper above has min-h-0 and a
+          fixed computed height (from its PlayersPage parent's h-full flex
+          shrink) — that's exactly what lets the taller table overflow it and
+          reach useful height at all (see the DataTable className comment).
+          But a fixed-height, overflow-visible flex container's rendered
+          scrollHeight (as seen by <main>, the real mobile scrollport) does
+          NOT include a descendant's trailing margin/padding past that
+          overflow — a well-known browser quirk. An actual block box with its
+          own height doesn't have that problem: it's real layout content, so
+          it reliably extends <main>'s scrollable area and keeps the table
+          from sitting flush against the fixed MobileBottomNav once scrolled
+          to the end. */}
+      <div className="h-8 shrink-0 md:hidden" aria-hidden="true" />
 
       <Dialog
         open={selectedPlayer !== null}

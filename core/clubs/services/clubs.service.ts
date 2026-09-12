@@ -1,6 +1,9 @@
 import { prisma } from "@/infrastructure/db/client";
 import { logAudit } from "@/core/audit/services/audit.service";
-import { CLUB_OPERATIONAL_WHERE } from "@/lib/mercadopago/operationalStatus";
+import {
+  CLUB_OPERATIONAL_WHERE,
+  getClubOperationalStatus,
+} from "@/lib/mercadopago/operationalStatus";
 import { dispatch } from "@/lib/notifications/dispatcher";
 import type {
   Club,
@@ -21,6 +24,7 @@ function toClub(row: ClubRow): Club {
     taxId: row.taxId ?? undefined,
     email: row.email,
     phone: row.phone ?? undefined,
+    whatsappNumber: row.whatsappNumber ?? undefined,
     address: row.address ?? undefined,
     country: row.country ?? undefined,
     province: row.province ?? undefined,
@@ -29,6 +33,7 @@ function toClub(row: ClubRow): Club {
     timezone: row.timezone,
     currency: row.currency,
     plan: row.plan as Club["plan"],
+    courtLimit: row.courtLimit ?? undefined,
     status: row.status as Club["status"],
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
@@ -48,6 +53,7 @@ export async function createClub(
       taxId: input.taxId ?? null,
       email: input.email,
       phone: input.phone ?? null,
+      whatsappNumber: input.whatsappNumber ?? null,
       address: input.address ?? null,
       country: input.country ?? null,
       province: input.province ?? null,
@@ -77,15 +83,66 @@ export async function getClubById(id: string): Promise<Club | null> {
   return toClub(row);
 }
 
+// Case/whitespace-insensitive comparison key — address text is free-form and
+// never normalized/geocoded, so this only catches an exact-looking retype,
+// not every real-world duplicate. Good enough for a warning signal, not for
+// a hard uniqueness guarantee.
+function duplicateKey(value: string): string {
+  return value.trim().toLowerCase();
+}
+
 // Admin approval queue (see app/api/admin/clubs/pending/route.ts) — every
 // club currently awaiting review, oldest-first so the queue reads
 // first-in-first-out. Deliberately narrow (PendingClubSummary, not the full
 // Club shape) since this list only needs enough for an admin to decide.
+//
+// Also flags `possibleDuplicate` — whether ANY other club (any status,
+// pending or already approved/rejected) shares this club's email or address
+// — so an admin can catch someone accidentally (or deliberately) onboarding
+// the same club twice before approving it, without hard-blocking the
+// onboarding submission itself over what might be a false positive (see
+// PendingClubSummary's own doc comment).
 export async function listPendingClubs(): Promise<PendingClubSummary[]> {
-  return prisma.club.findMany({
+  const pending = await prisma.club.findMany({
     where: { approvalStatus: "PENDING" },
-    select: { id: true, name: true, email: true, createdAt: true },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      address: true,
+      createdAt: true,
+    },
     orderBy: { createdAt: "asc" },
+  });
+  if (pending.length === 0) return [];
+
+  // One extra query for every OTHER club's email/address, rather than one
+  // query per pending club — this list is small (an admin review queue),
+  // so an in-memory cross-check is simpler than N+1 duplicate-detection
+  // queries and just as correct.
+  const allClubs = await prisma.club.findMany({
+    select: { id: true, email: true, address: true },
+  });
+
+  return pending.map((club) => {
+    const email = duplicateKey(club.email);
+    const address = club.address ? duplicateKey(club.address) : null;
+    const possibleDuplicate = allClubs.some((other) => {
+      if (other.id === club.id) return false;
+      if (duplicateKey(other.email) === email) return true;
+      if (address && other.address && duplicateKey(other.address) === address) {
+        return true;
+      }
+      return false;
+    });
+
+    return {
+      id: club.id,
+      name: club.name,
+      email: club.email,
+      createdAt: club.createdAt,
+      possibleDuplicate,
+    };
   });
 }
 
@@ -137,7 +194,12 @@ export async function approveClub(
         recipientName: owner.displayName,
         subject: "Your club has been approved",
         html: "Your club is now approved and can accept reservations.",
-        sendEmail: false,
+        // Sent by email (not just in-app) — approval timing is entirely in
+        // an admin's hands, so logging in on the off chance is the owner's
+        // only other way to find out; see CLUB_REJECTED below, which stays
+        // in-app only since a rejected owner is still mid-onboarding and
+        // notices right away.
+        sendEmail: true,
       });
     }
   } catch {
@@ -196,6 +258,51 @@ export async function getClubOwner(clubId: string): Promise<{
     select: { id: true, displayName: true, photoURL: true, email: true },
   });
   return owner ?? null;
+}
+
+/**
+ * Dispatches an in-app CLUB_OPERATIONAL_READY notification to the club owner
+ * exactly once, the first time a club becomes fully operational
+ * (admin-approved AND has some payout method connected). Sent from here
+ * rather than at approval time because Settings — where operating hours are
+ * actually configured — stays blocked by ClubOperationalGate until the club
+ * is operational (see app/dashboard/_components/ClubOperationalGate), so a
+ * reminder sent any earlier would point to a page the owner still can't
+ * reach.
+ *
+ * Non-throwing: this is a side effect of "a club just gained a payout
+ * method" (Mercado Pago connect callback, bank transfer setup) and must
+ * never break the caller's own success path if it fails.
+ */
+export async function notifyClubOperationalIfNeeded(
+  clubId: string,
+): Promise<void> {
+  try {
+    const status = await getClubOperationalStatus(clubId);
+    if (!status.operational) return;
+
+    const existing = await prisma.notification.findFirst({
+      where: { clubId, type: "CLUB_OPERATIONAL_READY" },
+      select: { id: true },
+    });
+    if (existing) return;
+
+    const owner = await getClubOwner(clubId);
+    if (!owner) return;
+
+    await dispatch({
+      type: "CLUB_OPERATIONAL_READY",
+      clubId,
+      recipientId: owner.id,
+      recipientEmail: owner.email,
+      recipientName: owner.displayName,
+      subject: "Your club is ready to accept reservations",
+      html: "Your club can now accept real reservations. Don't forget to set your operating hours in Settings so players know when they can book.",
+      sendEmail: false,
+    });
+  } catch {
+    // notification failure must not affect the caller's own success path
+  }
 }
 
 export async function updateClub(
@@ -262,7 +369,7 @@ export async function listActiveClubs(): Promise<Club[]> {
 
 export type AdminClubListItem = Pick<
   Club,
-  "id" | "name" | "status" | "plan"
+  "id" | "name" | "status" | "plan" | "courtLimit"
 > & {
   /**
    * True when the club has no Mercado Pago account at all, the account
@@ -275,6 +382,17 @@ export type AdminClubListItem = Pick<
   membershipPastDue: boolean;
   /** True when the club has zero configured ClubOperatingHours rows. */
   noOperatingHours: boolean;
+  /**
+   * True when the club's ClubMembershipSubscription.plan is "FREE" —
+   * deliberately NOT Club.plan (the court-capacity tier). Club.plan is set
+   * once at club creation and is essentially never changed afterward;
+   * activateFreePlan (core/billing/services/membership.service.ts) only
+   * ever sets the membership subscription's plan to "FREE" when an admin
+   * comps a club, and explicitly never touches Club.plan. Reading Club.plan
+   * here would make this flag permanently false for any club comped through
+   * the real flow.
+   */
+  isFreePlan: boolean;
 };
 
 /**
@@ -303,8 +421,9 @@ export async function listAllClubs(): Promise<AdminClubListItem[]> {
       name: true,
       status: true,
       plan: true,
+      courtLimit: true,
       mercadoPagoAccount: { select: { status: true, tokenExpiresAt: true } },
-      membershipSubscription: { select: { status: true } },
+      membershipSubscription: { select: { status: true, plan: true } },
       _count: { select: { operatingHours: true } },
     },
   });
@@ -327,9 +446,11 @@ export async function listAllClubs(): Promise<AdminClubListItem[]> {
       name: row.name,
       status: row.status as ClubStatus,
       plan: row.plan as Plan,
+      courtLimit: row.courtLimit,
       mpTokenIssue,
       membershipPastDue: row.membershipSubscription?.status === "PAST_DUE",
       noOperatingHours: row._count.operatingHours === 0,
+      isFreePlan: row.membershipSubscription?.plan === "FREE",
     };
   });
 }

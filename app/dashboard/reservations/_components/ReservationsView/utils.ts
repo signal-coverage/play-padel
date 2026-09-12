@@ -39,6 +39,10 @@ export function toReservationRecord(raw: RawReservation): ReservationRecord {
     scheduledStart: new Date(raw.scheduledStart),
     scheduledEnd: new Date(raw.scheduledEnd),
     notes: raw.notes,
+    paymentMethod: raw.paymentMethod,
+    paymentExpiresAt: raw.paymentExpiresAt
+      ? new Date(raw.paymentExpiresAt)
+      : undefined,
   };
 }
 
@@ -70,4 +74,21 @@ export function formatTimeRange(start: Date, end: Date): string {
 
 export function isActionable(status: ReservationRecord["status"]): boolean {
   return (ACTIONABLE_STATUSES as readonly string[]).includes(status);
+}
+
+/** True only for a bank-transfer hold the owner can still confirm — a
+ * lapsed or already-settled one shows no such button (see docs:
+ * bank-transfer-payment-method design's confirm-past-expiry guard). */
+export function needsTransferConfirmation(
+  reservation: Pick<
+    ReservationRecord,
+    "status" | "paymentMethod" | "paymentExpiresAt"
+  >,
+): boolean {
+  return (
+    reservation.status === "SCHEDULED" &&
+    reservation.paymentMethod === "TRANSFER" &&
+    !!reservation.paymentExpiresAt &&
+    reservation.paymentExpiresAt.getTime() > Date.now()
+  );
 }

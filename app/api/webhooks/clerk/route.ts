@@ -3,7 +3,9 @@ import { verifyWebhook } from "@clerk/nextjs/webhooks";
 import {
   anonymizeUserProfile,
   syncUserProfileFromClerk,
+  getUserProfile,
 } from "@/core/users/services/users.service";
+import { updateClub } from "@/core/clubs/services/clubs.service";
 import { logAudit } from "@/core/audit/services/audit.service";
 import { logSystemJob } from "@/core/systemJobs/services/systemJobs.service";
 
@@ -84,16 +86,38 @@ async function handlePost(request: NextRequest) {
       return NextResponse.json({ ok: true });
     }
 
-    await anonymizeUserProfile(userId, SYSTEM_ACTOR);
+    const anonymized = await anonymizeUserProfile(userId, SYSTEM_ACTOR);
 
-    logAudit({
-      clubId: null,
-      userId,
-      userDisplayName: "Deleted User",
-      action: "user.anonymized",
-      entity: "UserProfile",
-      entityId: userId,
-    });
+    // No UserProfile row existed for this Clerk user (they never completed
+    // onboarding — see anonymizeUserProfile's own comment) — nothing was
+    // actually anonymized, so an audit entry here would be misleading.
+    if (anonymized) {
+      logAudit({
+        clubId: null,
+        userId,
+        userDisplayName: "Deleted User",
+        action: "user.anonymized",
+        entity: "UserProfile",
+        entityId: userId,
+      });
+    }
+
+    // anonymizeUserProfile preserves role/clubId (see its own doc comment),
+    // so this still reads the pre-deletion ownership. A club has exactly one
+    // owner (see getClubOwner's own comment) — losing them makes the club
+    // permanently unmanageable, so it's deactivated the same way any other
+    // lockout is (Club.status = "INACTIVE", never a hard delete, same
+    // integrity/audit reasoning as anonymizeUserProfile itself). This is
+    // what keeps an owner's deleted account from leaving a phantom club
+    // counted as active forever (see GET /api/admin/metrics's totalClubs).
+    const deletedProfile = await getUserProfile(userId);
+    if (deletedProfile?.role === "owner" && deletedProfile.clubId) {
+      await updateClub(
+        deletedProfile.clubId,
+        { status: "INACTIVE" },
+        SYSTEM_ACTOR,
+      );
+    }
 
     return NextResponse.json({ ok: true });
   }

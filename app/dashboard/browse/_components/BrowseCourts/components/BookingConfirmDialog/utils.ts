@@ -1,4 +1,5 @@
 import { formatCurrency } from "@/lib/utils/currency";
+import type { ReservationPaymentMethod } from "@/core/reservations/types";
 import type { BookingPaymentState } from "./types";
 
 function formatTime(date: Date): string {
@@ -41,9 +42,13 @@ export function getBookingPaymentState(
 export function getBookingConfirmMessage(
   state: BookingPaymentState,
   currency: string,
+  selectedMethod: ReservationPaymentMethod | null,
 ): string {
   switch (state.kind) {
     case "pay-now":
+      if (selectedMethod === "TRANSFER") {
+        return `This reservation requires payment to be confirmed. Send ${formatCurrency(state.price, currency)} via bank transfer and message the club's WhatsApp with your receipt within 30 minutes — your slot is held for 60 minutes total. If the club doesn't confirm in time, the slot is released automatically (Mercado Pago is the only method that confirms instantly).`;
+      }
       return `This reservation requires payment to be confirmed. You'll pay ${formatCurrency(state.price, currency)} via Mercado Pago — you'll be redirected to complete it, and your slot is held for 15 minutes.`;
     case "free":
       return "This court is free — no payment needed. You can cancel for free up to 2 hours before your reservation.";

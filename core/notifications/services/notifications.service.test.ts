@@ -37,6 +37,7 @@ import {
   listRecipientNotifications,
   countUnreadNotifications,
   markAllAsRead,
+  markAsRead,
   listAdminRecipients,
   getPendingReservationReminders,
 } from "./notifications.service";
@@ -134,6 +135,23 @@ describe("markAllAsRead", () => {
 
     expect(updateManyMock).toHaveBeenCalledWith({
       where: { recipientId: "user_1", readAt: null },
+      data: { readAt: expect.any(Date) },
+    });
+  });
+});
+
+describe("markAsRead", () => {
+  beforeEach(() => {
+    updateManyMock.mockReset();
+  });
+
+  it("sets readAt on exactly the given notification, scoped to its recipient so a user can't mark someone else's notification read", async () => {
+    updateManyMock.mockResolvedValue({ count: 1 });
+
+    await markAsRead("user_1", "notif_1");
+
+    expect(updateManyMock).toHaveBeenCalledWith({
+      where: { id: "notif_1", recipientId: "user_1", readAt: null },
       data: { readAt: expect.any(Date) },
     });
   });

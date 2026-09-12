@@ -126,6 +126,22 @@ export function ClubSettingsView({ clubId }: ClubSettingsViewProps = {}) {
           </div>
 
           <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex-1">
+              {/* No `*` in this label — unlike onboarding, this field is
+                  optional here since an already-onboarded club may not have
+                  set it yet; it only becomes required in practice once the
+                  owner wants to enable bank transfer as a payment method. */}
+              <PhoneField
+                control={control}
+                errors={errors}
+                phoneFieldName="whatsappNumber"
+                countryFieldName="whatsappCountry"
+                label="WhatsApp (for payment receipts)"
+              />
+            </div>
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex-1">{provinceField}</div>
             <div className="flex-1">{cityField}</div>
           </div>

@@ -18,6 +18,8 @@ function makeClub(overrides: Partial<ClubBrowseSummary>): ClubBrowseSummary {
     updatedBy: "owner-1",
     courtCount: 0,
     hasAvailabilityToday: true,
+    availablePaymentMethods: [],
+    bankTransferInfo: null,
     ...overrides,
   };
 }

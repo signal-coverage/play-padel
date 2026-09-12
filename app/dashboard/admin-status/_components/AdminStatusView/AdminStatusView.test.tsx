@@ -142,4 +142,43 @@ describe("AdminStatusView", () => {
       expect(screen.getByText(/could not load/i)).toBeInTheDocument(),
     );
   });
+
+  it("gives the recent activity table extra minimum height on mobile with a trailing spacer, while leaving desktop sizing untouched", async () => {
+    const recent = [
+      {
+        id: "log_1",
+        kind: "CRON",
+        name: "notifications",
+        status: "SUCCESS",
+        startedAt: "2026-09-04T08:00:00.000Z",
+        finishedAt: "2026-09-04T08:00:01.000Z",
+        errorMessage: null,
+        createdAt: "2026-09-04T08:00:01.000Z",
+      },
+    ];
+    renderView(
+      vi
+        .fn()
+        .mockResolvedValue(
+          jsonResponse({ summary: NEVER_RUN_SUMMARY, recent }),
+        ),
+    );
+
+    // Same fix as PlayersDirectory's table (see its own comments for the
+    // full explanation) — scoped to the "Recent activity" table only, via
+    // its "When" header (unique to it; AdminStatusSummary's own small,
+    // naturally-sized table above it is untouched, since it never tried to
+    // stretch full-height in the first place).
+    await waitFor(() => expect(screen.getByText("When")).toBeInTheDocument());
+    const table = screen.getByText("When").closest("table");
+    const wrapper = table?.closest(".rounded-sm.border");
+    expect(wrapper?.className).toContain("min-h-[60svh]");
+    expect(wrapper?.className).toMatch(/\bmd:min-h-0\b/);
+
+    const spacer = wrapper?.nextElementSibling as HTMLElement | null;
+    expect(spacer).not.toBeNull();
+    expect(spacer?.getAttribute("aria-hidden")).toBe("true");
+    expect(spacer?.className).toMatch(/\bh-8\b/);
+    expect(spacer?.className).toMatch(/\bmd:hidden\b/);
+  });
 });

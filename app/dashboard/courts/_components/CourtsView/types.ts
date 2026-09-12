@@ -1,6 +1,7 @@
 export type CourtRecord = {
   id: string;
   name: string;
+  courtNumber?: number;
   surface?: string;
   indoor: boolean;
   color?: string;
@@ -16,6 +17,7 @@ export type CourtRecord = {
 
 export type CourtFormValues = {
   name: string;
+  courtNumber?: number;
   surface: string;
   indoor: boolean;
   color: string;

@@ -40,26 +40,17 @@ export const onboardingFormSchema = z
     name: z.string().optional(),
     email: z.string().optional(),
     phone: z.string().optional(),
+    // Owner-only: WhatsApp number payment receipts get sent to. Kept as its
+    // own compound phone/country pair (like phone/country above) rather than
+    // reusing "phone" — an owner's business WhatsApp is often a different
+    // number than their general contact phone.
+    whatsappNumber: z.string().optional(),
+    whatsappCountry: z.string().optional(),
     // Step 3 (owner only) — legal & billing
     legalName: z.string().optional(),
     taxId: z.string().optional(),
     timezone: z.string().optional(),
     currency: z.string().optional(),
-    // Step 4 (owner only) — weekly operating hours: club-level "normally
-    // open" days/hours, distinct from per-court CourtAvailability. Always
-    // exactly 7 entries in practice (one per day of week, active: false for
-    // closed days) — enforced by the superRefine branch below, not the shape
-    // itself, since players never populate this field at all.
-    operatingHours: z
-      .array(
-        z.object({
-          dayOfWeek: z.number().int().min(0).max(6),
-          active: z.boolean(),
-          startTime: z.string(),
-          endTime: z.string(),
-        }),
-      )
-      .optional(),
     // Profile — owner: just a display name.
     displayName: z.string().optional(),
     // Profile — player only
@@ -89,11 +80,20 @@ export const onboardingFormSchema = z
   .superRefine((data, ctx) => {
     if (data.userType === "owner") {
       const requiredTextFields: [
-        "name" | "phone" | "address" | "legalName" | "taxId" | "displayName",
+        (
+          | "name"
+          | "phone"
+          | "whatsappNumber"
+          | "address"
+          | "legalName"
+          | "taxId"
+          | "displayName"
+        ),
         string,
       ][] = [
         ["name", "Club name is required"],
         ["phone", "Phone is required"],
+        ["whatsappNumber", "WhatsApp number is required"],
         ["address", "Address is required"],
         ["legalName", "Legal name is required"],
         ["taxId", "Tax ID is required"],
@@ -106,31 +106,25 @@ export const onboardingFormSchema = z
         }
       }
 
+      // A PhoneField can produce e.g. "+54" (country code, zero real digits)
+      // which is truthy and would otherwise pass the required-field check
+      // above — require a realistic amount of actual digits too.
+      if (
+        data.whatsappNumber &&
+        data.whatsappNumber.replace(/\D/g, "").length < 8
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Enter a valid WhatsApp number",
+          path: ["whatsappNumber"],
+        });
+      }
+
       if (!data.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
         ctx.addIssue({
           code: "custom",
           message: "Invalid email address",
           path: ["email"],
-        });
-      }
-
-      const operatingHours = data.operatingHours ?? [];
-      const hasActiveDay = operatingHours.some((entry) => entry.active);
-      if (!hasActiveDay) {
-        ctx.addIssue({
-          code: "custom",
-          message: "Select at least one day your club is open",
-          path: ["operatingHours"],
-        });
-      } else {
-        operatingHours.forEach((entry, index) => {
-          if (entry.active && entry.startTime === entry.endTime) {
-            ctx.addIssue({
-              code: "custom",
-              message: "Start and end time cannot be the same",
-              path: ["operatingHours", index, "endTime"],
-            });
-          }
         });
       }
     }
@@ -175,7 +169,6 @@ export const OWNER_FLOW = [
   "userType",
   "clubBasics",
   "legalBilling",
-  "operatingHours",
   "profile",
   "terms",
 ] as const;
@@ -192,6 +185,7 @@ export const STEP_FIELDS: Record<
     "name",
     "email",
     "phone",
+    "whatsappNumber",
     "address",
     "country",
     "province",
@@ -199,7 +193,6 @@ export const STEP_FIELDS: Record<
     "zipCode",
   ],
   legalBilling: ["legalName", "taxId"],
-  operatingHours: ["operatingHours"],
   profile: ["displayName"],
   playerProfile: [
     "firstName",

@@ -13,6 +13,14 @@ vi.mock("@/core/courts/services/courts.service", () => ({
   getClubsAvailability: vi.fn(),
 }));
 
+vi.mock("@/lib/mercadopago/operationalStatus", () => ({
+  getAvailablePaymentMethodsForClubs: vi.fn(),
+}));
+
+vi.mock("@/core/clubs/services/bankTransferAccount.service", () => ({
+  getClubBankTransferAccount: vi.fn(),
+}));
+
 vi.mock("@vercel/firewall", () => ({
   checkRateLimit: vi.fn(),
 }));
@@ -21,11 +29,18 @@ import { auth } from "@clerk/nextjs/server";
 import { checkRateLimit } from "@vercel/firewall";
 import { listActiveClubs } from "@/core/clubs/services/clubs.service";
 import { getClubsAvailability } from "@/core/courts/services/courts.service";
+import { getAvailablePaymentMethodsForClubs } from "@/lib/mercadopago/operationalStatus";
+import { getClubBankTransferAccount } from "@/core/clubs/services/bankTransferAccount.service";
 import { GET } from "./route";
 
 const authMock = auth as unknown as ReturnType<typeof vi.fn>;
 const listActiveClubsMock = listActiveClubs as ReturnType<typeof vi.fn>;
 const getClubsAvailabilityMock = getClubsAvailability as ReturnType<
+  typeof vi.fn
+>;
+const mockGetAvailablePaymentMethodsForClubs =
+  getAvailablePaymentMethodsForClubs as ReturnType<typeof vi.fn>;
+const getClubBankTransferAccountMock = getClubBankTransferAccount as ReturnType<
   typeof vi.fn
 >;
 const checkRateLimitMock = checkRateLimit as unknown as ReturnType<
@@ -42,8 +57,12 @@ describe("GET /api/player/clubs", () => {
     listActiveClubsMock.mockReset();
     getClubsAvailabilityMock.mockReset();
     checkRateLimitMock.mockReset();
+    mockGetAvailablePaymentMethodsForClubs.mockReset();
+    getClubBankTransferAccountMock.mockReset();
     authMock.mockResolvedValue({ userId: "user_1" });
     checkRateLimitMock.mockResolvedValue({ rateLimited: false });
+    mockGetAvailablePaymentMethodsForClubs.mockResolvedValue(new Map());
+    getClubBankTransferAccountMock.mockResolvedValue(null);
   });
 
   it("returns 429 when the shared rate limit is exceeded", async () => {
@@ -89,5 +108,71 @@ describe("GET /api/player/clubs", () => {
 
     expect(response.status).toBe(200);
     expect(body.clubs).toEqual([]);
+  });
+
+  it("includes each club's availablePaymentMethods", async () => {
+    listActiveClubsMock.mockResolvedValue([{ id: "club-1", name: "Club One" }]);
+    getClubsAvailabilityMock.mockResolvedValue(
+      new Map([["club-1", { courtCount: 1, hasAvailabilityToday: true }]]),
+    );
+    mockGetAvailablePaymentMethodsForClubs.mockResolvedValue(
+      new Map([["club-1", ["MERCADOPAGO", "TRANSFER"]]]),
+    );
+
+    const res = await GET(makeRequest("2026-09-15"));
+    const body = await res.json();
+
+    expect(mockGetAvailablePaymentMethodsForClubs).toHaveBeenCalledTimes(1);
+    expect(mockGetAvailablePaymentMethodsForClubs).toHaveBeenCalledWith([
+      "club-1",
+    ]);
+    expect(body.clubs[0].availablePaymentMethods).toEqual([
+      "MERCADOPAGO",
+      "TRANSFER",
+    ]);
+  });
+
+  it("includes bankTransferInfo when TRANSFER is one of the club's available methods", async () => {
+    listActiveClubsMock.mockResolvedValue([
+      { id: "club-1", name: "Club One", whatsappNumber: "+5491100000000" },
+    ]);
+    getClubsAvailabilityMock.mockResolvedValue(
+      new Map([["club-1", { courtCount: 1, hasAvailabilityToday: true }]]),
+    );
+    mockGetAvailablePaymentMethodsForClubs.mockResolvedValue(
+      new Map([["club-1", ["MERCADOPAGO", "TRANSFER"]]]),
+    );
+    getClubBankTransferAccountMock.mockResolvedValue({
+      bankName: "Banco Test",
+      cbu: "0000000000000000000000",
+      alias: "club.test.alias",
+    });
+
+    const res = await GET(makeRequest("2026-09-15"));
+    const body = await res.json();
+
+    expect(getClubBankTransferAccountMock).toHaveBeenCalledWith("club-1");
+    expect(body.clubs[0].bankTransferInfo).toEqual({
+      bankName: "Banco Test",
+      cbu: "0000000000000000000000",
+      alias: "club.test.alias",
+      whatsappNumber: "+5491100000000",
+    });
+  });
+
+  it("never looks up bank-transfer details for a club that doesn't offer TRANSFER, and reports bankTransferInfo: null", async () => {
+    listActiveClubsMock.mockResolvedValue([{ id: "club-1", name: "Club One" }]);
+    getClubsAvailabilityMock.mockResolvedValue(
+      new Map([["club-1", { courtCount: 1, hasAvailabilityToday: true }]]),
+    );
+    mockGetAvailablePaymentMethodsForClubs.mockResolvedValue(
+      new Map([["club-1", ["MERCADOPAGO"]]]),
+    );
+
+    const res = await GET(makeRequest("2026-09-15"));
+    const body = await res.json();
+
+    expect(getClubBankTransferAccountMock).not.toHaveBeenCalled();
+    expect(body.clubs[0].bankTransferInfo).toBeNull();
   });
 });

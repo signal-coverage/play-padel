@@ -6,6 +6,11 @@ import { z } from "zod";
 // of truth — this only drives inline field validation in the Sheet.
 export const courtFormSchema = z.object({
   name: z.string().min(1, "Name is required"),
+  // See CourtFormSheet.tsx's registration of this field (setValueAs, not
+  // valueAsNumber) — an empty optional number input must resolve to
+  // `undefined` here, never NaN, or Create/Save would stay permanently
+  // disabled until the owner typed something into a field that's optional.
+  courtNumber: z.number().int().positive().optional(),
   surface: z.string().min(1, "Surface is required"),
   indoor: z.boolean(),
   color: z.string().min(1, "Color is required"),

@@ -19,6 +19,10 @@ vi.mock("@/core/audit/services/audit.service", () => ({
   logAudit: vi.fn(),
 }));
 
+vi.mock("@/lib/notifications/dispatcher", () => ({
+  dispatch: vi.fn(),
+}));
+
 import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/infrastructure/db/client";
 import {
@@ -26,6 +30,7 @@ import {
   anonymizeUserProfile,
 } from "@/core/users/services/users.service";
 import { logAudit } from "@/core/audit/services/audit.service";
+import { dispatch } from "@/lib/notifications/dispatcher";
 import { PATCH, DELETE } from "./route";
 
 const authMock = auth as unknown as ReturnType<typeof vi.fn>;
@@ -37,6 +42,7 @@ const anonymizeUserProfileMock = anonymizeUserProfile as ReturnType<
   typeof vi.fn
 >;
 const logAuditMock = logAudit as ReturnType<typeof vi.fn>;
+const dispatchMock = dispatch as ReturnType<typeof vi.fn>;
 
 const ADMIN_ID = "user_admin";
 const PLAYER_ID = "user_player";
@@ -76,6 +82,8 @@ beforeEach(() => {
   updateUserProfileMock.mockReset();
   anonymizeUserProfileMock.mockReset();
   logAuditMock.mockReset();
+  dispatchMock.mockReset();
+  dispatchMock.mockResolvedValue(undefined);
 
   authMock.mockResolvedValue({ userId: ADMIN_ID });
   // First call inside requireAdminProfile resolves the admin's own gate;
@@ -194,6 +202,25 @@ describe("PATCH /api/admin/players/[userId]", () => {
       phone: "+541100000000",
     });
   });
+
+  // The real gap reported: the player whose profile an admin just edited
+  // had zero live signal — only the admin's own audit trail recorded it.
+  it("notifies the player in-app that their profile was updated", async () => {
+    await PATCH(
+      makeRequest({ displayName: "New Name" }),
+      makeParams(PLAYER_ID),
+    );
+
+    expect(dispatchMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "PROFILE_UPDATED_BY_ADMIN",
+        clubId: null,
+        recipientId: PLAYER_ID,
+        recipientEmail: "old@example.com",
+        sendEmail: false,
+      }),
+    );
+  });
 });
 
 describe("DELETE /api/admin/players/[userId]", () => {
@@ -270,5 +297,22 @@ describe("DELETE /api/admin/players/[userId]", () => {
       entityId: PLAYER_ID,
       metadata: { targetDisplayName: "Old Name" },
     });
+  });
+
+  // The real gap reported: the player being deleted had zero notice —
+  // emailed (not just in-app) since their account is gone, so an in-app
+  // notification would be unreadable after the fact.
+  it("emails the player (using their pre-anonymization address) that their account was deleted", async () => {
+    await DELETE(makeDeleteRequest(), makeParams(PLAYER_ID));
+
+    expect(dispatchMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "PROFILE_UPDATED_BY_ADMIN",
+        clubId: null,
+        recipientId: PLAYER_ID,
+        recipientEmail: "old@example.com",
+        sendEmail: true,
+      }),
+    );
   });
 });

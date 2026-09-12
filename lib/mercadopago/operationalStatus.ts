@@ -1,5 +1,6 @@
 import { Prisma } from "@/lib/generated/prisma/client";
 import { prisma } from "@/infrastructure/db/client";
+import type { ReservationPaymentMethod } from "@/core/reservations/types";
 
 export type ClubOperationalCause =
   "MP_NOT_CONNECTED" | "CLUB_INACTIVE" | "PENDING_APPROVAL";
@@ -82,4 +83,70 @@ export async function getClubOperationalStatus(clubId: string): Promise<{
   }
 
   return { operational: true, cause: null, email, nickname };
+}
+
+/**
+ * What a player can actually pay with at this club, derived from what's
+ * configured — never hardcoded. A third payment method later only extends
+ * this function's return list; callers never branch on club fields directly.
+ * "TRANSFER" requires BOTH a ClubBankTransferAccount row AND
+ * Club.whatsappNumber set (the WhatsApp number is the confirmation channel —
+ * without it there's nowhere to tell the player to send their receipt).
+ */
+export async function getAvailablePaymentMethods(
+  clubId: string,
+): Promise<ReservationPaymentMethod[]> {
+  const club = await prisma.club.findUnique({
+    where: { id: clubId },
+    select: {
+      whatsappNumber: true,
+      mercadoPagoAccount: { select: { status: true } },
+      bankTransferAccount: { select: { id: true } },
+    },
+  });
+  if (!club) return [];
+
+  const methods: ReservationPaymentMethod[] = [];
+  if (club.mercadoPagoAccount?.status === "CONNECTED") {
+    methods.push("MERCADOPAGO");
+  }
+  if (club.bankTransferAccount && club.whatsappNumber) {
+    methods.push("TRANSFER");
+  }
+  return methods;
+}
+
+/**
+ * Batched equivalent of getAvailablePaymentMethods for a club LIST screen
+ * (Browse Courts) — a single findMany instead of one findUnique per club,
+ * same "batch instead of N+1" precedent as listActiveClubs' owner-photo
+ * lookup in clubs.service.ts.
+ */
+export async function getAvailablePaymentMethodsForClubs(
+  clubIds: string[],
+): Promise<Map<string, ReservationPaymentMethod[]>> {
+  if (clubIds.length === 0) return new Map();
+
+  const clubs = await prisma.club.findMany({
+    where: { id: { in: clubIds } },
+    select: {
+      id: true,
+      whatsappNumber: true,
+      mercadoPagoAccount: { select: { status: true } },
+      bankTransferAccount: { select: { id: true } },
+    },
+  });
+
+  const result = new Map<string, ReservationPaymentMethod[]>();
+  for (const club of clubs) {
+    const methods: ReservationPaymentMethod[] = [];
+    if (club.mercadoPagoAccount?.status === "CONNECTED") {
+      methods.push("MERCADOPAGO");
+    }
+    if (club.bankTransferAccount && club.whatsappNumber) {
+      methods.push("TRANSFER");
+    }
+    result.set(club.id, methods);
+  }
+  return result;
 }

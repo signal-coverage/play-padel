@@ -12,8 +12,15 @@ model Club {
   name               String
   legalName          String?
   taxId              String?
-  email              String
+  // Enforced unique — a Club row is only ever created once, at the very end
+  // of onboarding (right after Terms acceptance), so this email is
+  // permanently claimed even if the club's owner account is later deleted
+  // (see app/api/webhooks/clerk/route.ts's deactivation-on-owner-deletion —
+  // the Club row survives, INACTIVE, not gone). Reusing it needs a human:
+  // see app/api/onboarding/route.ts's P2002 handler.
+  email              String             @unique
   phone              String?
+  whatsappNumber     String?
   address            String?
   country            String?
   province           String?
@@ -23,6 +30,13 @@ model Club {
   timezone           String
   currency           String
   plan               Plan               @default(BASIC)
+  // Per-club override of the plan's default court limit (see
+  // lib/consts/planPricing.ts's PLAN_COURT_LIMITS) — only ever set by an
+  // admin (AdminClubSettingsView), never by the owner's own settings form.
+  // BASIC/PRO/PLUS have a fixed limit in code; MAX has none, so this is the
+  // ONLY source of a court limit for a MAX club — null means "no limit set
+  // yet" and is treated as unlimited, not zero.
+  courtLimit         Int?
   status             ClubStatus         @default(ACTIVE)
   // Admin approval queue gate (see lib/auth/adminProfile.ts's isAdmin and
   // lib/mercadopago/operationalStatus.ts's PENDING_APPROVAL cause). Defaults
@@ -53,6 +67,7 @@ model Club {
   membershipSubscription ClubMembershipSubscription?
   operatingHours         ClubOperatingHours[]
   bankTransferAccount    ClubBankTransferAccount?
+  tournaments            Tournament[]
 
   @@map("clubs")
 }
@@ -321,8 +336,11 @@ model UserProfile {
   createdBy       String
   updatedBy       String
 
-  reservations    Reservation[]
-  waitlistEntries WaitlistEntry[]
+  reservations        Reservation[]
+  waitlistEntries     WaitlistEntry[]
+  reservationPartners ReservationPartner[]
+  player1AsTeam       TournamentTeam[]     @relation("TournamentTeamPlayer1")
+  player2AsTeam       TournamentTeam[]     @relation("TournamentTeamPlayer2")
 
   @@index([clubId])
   @@map("user_profiles")
@@ -340,6 +358,7 @@ model Court {
   clubId              String
   club                Club      @relation(fields: [clubId], references: [id])
   name                String
+  courtNumber         Int?
   surface             String?
   indoor              Boolean   @default(false)
   color               String?
@@ -466,6 +485,8 @@ model Reservation {
   scheduledEnd     DateTime
   notes            String?
   paymentExpiresAt DateTime?
+  paymentMethod    String?
+  expiryNotifiedAt DateTime?
   cancelledAt      DateTime?
   cancelledBy      String?
   createdAt        DateTime          @default(now())
@@ -474,12 +495,34 @@ model Reservation {
   updatedBy        String?
 
   invoices Invoice[]
+  partners ReservationPartner[]
 
   @@index([clubId, scheduledStart])
   @@index([clubId, userId])
   @@index([clubId, courtId])
   @@index([clubId, status])
   @@map("reservations")
+}
+
+// Optional, additive tagging: the booker of a Reservation can tag up to 3
+// other registered players (UserProfile rows) they're playing with, at
+// booking-creation time — no confirmation/consent needed from the tagged
+// player (see docs: Latest Partner spec, "played together" counts the
+// instant the booker tags them). Purely additive — a Reservation with no
+// rows here behaves exactly as before this model existed. Drives the
+// PlayerOverview "Latest Partner" card (core/reservations/services/
+// reservationPartners.service.ts) rather than any confirmation/consent flow.
+model ReservationPartner {
+  id            String      @id @default(cuid())
+  reservationId String
+  reservation   Reservation @relation(fields: [reservationId], references: [id])
+  playerId      String
+  player        UserProfile @relation(fields: [playerId], references: [id])
+  createdAt     DateTime    @default(now())
+
+  @@unique([reservationId, playerId])
+  @@index([playerId])
+  @@map("reservation_partners")
 }
 
 enum WaitlistEntryStatus {
@@ -595,6 +638,14 @@ enum NotificationType {
   CLUB_PENDING_APPROVAL
   SYSTEM_JOB_FAILED
   RESERVATION_PAYMENT_CONFLICT
+  CLUB_OPERATIONAL_READY
+  ADMIN_ACCESS_GRANTED
+  ADMIN_ACCESS_REVOKED
+  MEMBERSHIP_CANCELLED
+  RESERVATION_UPDATED
+  PROFILE_UPDATED_BY_ADMIN
+  CLUB_UPDATED_BY_ADMIN
+  RESERVATION_PAYMENT_HOLD_EXPIRED
 }
 
 enum NotificationStatus {
@@ -678,4 +729,285 @@ model AuditLog {
   @@index([clubId, timestamp(sort: Desc)])
   @@index([clubId, entity])
   @@map("audit_logs")
+}
+
+// Build order slice 1 of the Tournaments feature (see the approved plan) —
+// schema + registration core only. Deliberately does NOT yet include
+// TournamentGroup/TournamentMatch/MatchSet or the knockout-bracket fields
+// (nextMatchId/knockoutRound/etc.) described for TournamentTeam in the full
+// plan — those belong to later, separate slices with no consumer yet in this
+// one. `TournamentTeam.groupId` from the full plan is likewise omitted here
+// for the same reason (no TournamentGroup model exists yet in this slice).
+enum TournamentStatus {
+  DRAFT
+  REGISTRATION_OPEN
+  REGISTRATION_CLOSED
+  GROUPS_LOCKED
+  KNOCKOUT
+  COMPLETED
+  CANCELLED
+}
+
+// Mirrors TournamentStatus's lifecycle at the per-category level (see the
+// plan's "each category has its own independent groups/bracket/standings").
+enum TournamentCategoryStatus {
+  DRAFT
+  REGISTRATION_OPEN
+  REGISTRATION_CLOSED
+  GROUPS_LOCKED
+  KNOCKOUT
+  COMPLETED
+  CANCELLED
+}
+
+enum TournamentTeamStatus {
+  REGISTERED
+  ADVANCED
+  ELIMINATED
+  CHAMPION
+  WITHDRAWN
+}
+
+model Tournament {
+  id     String @id @default(cuid())
+  clubId String
+  club   Club   @relation(fields: [clubId], references: [id])
+
+  name        String
+  description String?
+  status      TournamentStatus @default(DRAFT)
+
+  registrationOpensAt  DateTime
+  registrationClosesAt DateTime
+  // Drives the future "New"/"Open" nav badge (slice 5) — set once, the
+  // moment publishTournament transitions DRAFT -> REGISTRATION_OPEN.
+  publishedAt          DateTime?
+  startDate            DateTime?
+  endDate              DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String
+  updatedBy String
+
+  categories TournamentCategory[]
+
+  @@index([clubId, status])
+  @@index([status, registrationOpensAt, registrationClosesAt])
+  @@map("tournaments")
+}
+
+model TournamentCategory {
+  id           String     @id @default(cuid())
+  tournamentId String
+  tournament   Tournament @relation(fields: [tournamentId], references: [id])
+
+  name   String
+  status TournamentCategoryStatus @default(DRAFT)
+
+  // Padel category bounds (1 = strongest .. 8 = beginner — see
+  // core/users/consts.ts's PADEL_CATEGORY_OPTIONS). Both optional: an
+  // unrestricted category sets neither.
+  minCategoryLevel Int?
+  maxCategoryLevel Int?
+
+  groupCount       Int
+  advancesPerGroup Int
+  maxTeams         Int?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  teams TournamentTeam[]
+
+  // Added in slice 2 ("Owner group + scoring tools") — see TournamentGroup/
+  // TournamentMatch's own comments.
+  groups  TournamentGroup[]
+  matches TournamentMatch[]
+
+  @@index([tournamentId])
+  @@map("tournament_categories")
+}
+
+// A team is always exactly a pair (flat player1Id/player2Id FKs, same
+// convention as ReservationPartner rather than a join table — see the plan's
+// data model decision). `@@unique` per player per category is the DB-level
+// backstop behind registerTeam's own friendly pre-check (one team per player
+// per category).
+model TournamentTeam {
+  id                   String             @id @default(cuid())
+  tournamentCategoryId String
+  tournamentCategory   TournamentCategory @relation(fields: [tournamentCategoryId], references: [id])
+
+  player1Id String
+  player1   UserProfile @relation("TournamentTeamPlayer1", fields: [player1Id], references: [id])
+  player2Id String
+  player2   UserProfile @relation("TournamentTeamPlayer2", fields: [player2Id], references: [id])
+
+  // Average of both partners' padelCategory at registration time, rounded to
+  // the nearest integer; null when either partner has no padelCategory set.
+  // Snapshotted rather than recomputed later so a subsequent profile edit
+  // never silently reshuffles an already-registered team's seeding.
+  combinedCategoryLevel Int?
+
+  status TournamentTeamStatus @default(REGISTERED)
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  createdBy   String
+  // Mirrors CourtClosure's cancelledAt/cancelledBy pair for the same reason:
+  // a terminal state transition (here, withdrawTeam) worth its own audit
+  // trail beyond the generic updatedAt.
+  withdrawnAt DateTime?
+  withdrawnBy String?
+
+  // Added in slice 2 ("Owner group + scoring tools") — deliberately omitted
+  // by slice 1 since no TournamentGroup model existed yet then. Nullable:
+  // a team sits ungrouped until setGroupsManually/generateGroupsAutomatically
+  // assigns it.
+  groupId String?
+  group   TournamentGroup? @relation(fields: [groupId], references: [id])
+
+  matchesAsTeamA TournamentMatch[] @relation("TournamentMatchTeamA")
+  matchesAsTeamB TournamentMatch[] @relation("TournamentMatchTeamB")
+  matchesWon     TournamentMatch[] @relation("TournamentMatchWinner")
+
+  @@unique([tournamentCategoryId, player1Id])
+  @@unique([tournamentCategoryId, player2Id])
+  @@index([tournamentCategoryId, status])
+  @@index([groupId])
+  @@map("tournament_teams")
+}
+
+// Build order slice 2 ("Owner group + scoring tools") of the Tournaments
+// feature — see the approved plan. Only GROUP-stage rows are ever produced by
+// this slice; KNOCKOUT is included now purely for forward-compatibility with
+// slice 3 (bracket progression), which is the first slice to actually create
+// those rows. Deliberately does NOT yet add a `KnockoutRound` enum or
+// TournamentMatch.knockoutRound/nextMatchId/nextMatchSlot bracket-progression
+// fields — meaningless with no knockout rows existing yet; those belong to
+// slice 3.
+enum TournamentMatchStage {
+  GROUP
+  KNOCKOUT
+}
+
+// Per the plan's list this also allows IN_PROGRESS, but slice 2 (full score
+// entry only, no live scoring UI) never produces that state, so it's omitted
+// here rather than half-supporting an unused status. Flagged in the slice 2
+// report — add it in whichever later slice actually needs it.
+enum TournamentMatchStatus {
+  SCHEDULED
+  COMPLETED
+  WALKOVER
+  CANCELLED
+}
+
+model TournamentGroup {
+  id                   String             @id @default(cuid())
+  tournamentCategoryId String
+  tournamentCategory   TournamentCategory @relation(fields: [tournamentCategoryId], references: [id])
+
+  name     String
+  position Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  teams   TournamentTeam[]
+  matches TournamentMatch[]
+
+  @@unique([tournamentCategoryId, name])
+  @@index([tournamentCategoryId])
+  @@map("tournament_groups")
+}
+
+// Build order slice 3 ("Knockout + standings") of the Tournaments feature —
+// see the approved plan. Fixed ladder (caps a category's bracket at 32
+// teams — plenty for a club event, per the plan's explicit decision).
+enum KnockoutRound {
+  ROUND_OF_32
+  ROUND_OF_16
+  QUARTERFINAL
+  SEMIFINAL
+  FINAL
+}
+
+// `winnerTeamId` is a denormalized cache, always re-derivable from this
+// match's MatchSet rows (source of truth) via deriveMatchResult — see
+// core/tournaments/services/matchResult.ts. teamA/teamB are nullable now
+// because a slice-3 knockout match may be created before both of its feeder
+// matches have resolved; every slice 2 GROUP match always has both set at
+// creation time (generateRoundRobinMatches never emits an incomplete
+// pairing). Note: the plan floated a separate `walkoverTeamId` field for
+// "which team a WALKOVER promotes" — slice 2's `winnerTeamId` already covers
+// that (recordWalkover writes the winner there same as a scored win), so no
+// extra column was added; see bracketBuilder.ts/matches.service.ts's
+// generateKnockoutBracket doc comment for the confirmation.
+model TournamentMatch {
+  id                   String             @id @default(cuid())
+  tournamentCategoryId String
+  tournamentCategory   TournamentCategory @relation(fields: [tournamentCategoryId], references: [id])
+
+  stage TournamentMatchStage @default(GROUP)
+
+  groupId String?
+  group   TournamentGroup? @relation(fields: [groupId], references: [id])
+
+  // Slice 3 additions — only ever set on a KNOCKOUT-stage match.
+  knockoutRound KnockoutRound?
+
+  teamAId String?
+  teamA   TournamentTeam? @relation("TournamentMatchTeamA", fields: [teamAId], references: [id])
+  teamBId String?
+  teamB   TournamentTeam? @relation("TournamentMatchTeamB", fields: [teamBId], references: [id])
+
+  status TournamentMatchStatus @default(SCHEDULED)
+
+  winnerTeamId String?
+  winnerTeam   TournamentTeam? @relation("TournamentMatchWinner", fields: [winnerTeamId], references: [id])
+
+  // Bracket-progression pointer (slice 3): this match's winner is written
+  // into nextMatch's teamAId/teamBId slot (nextMatchSlot: "A" | "B"). Self-
+  // relation — a knockout match's own previous (feeder) matches are the
+  // reverse side, previousMatches. Both null for a GROUP match and for the
+  // bracket's FINAL.
+  nextMatchId     String?
+  nextMatch       TournamentMatch?  @relation("MatchProgression", fields: [nextMatchId], references: [id])
+  nextMatchSlot   String?
+  previousMatches TournamentMatch[] @relation("MatchProgression")
+
+  // Informational only in this pass — no integration with the Court/
+  // Reservation booking system (see the plan's explicit decision).
+  scheduledAt DateTime?
+  completedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  sets MatchSet[]
+
+  @@index([tournamentCategoryId, stage])
+  @@index([groupId, status])
+  @@index([nextMatchId])
+  @@map("tournament_matches")
+}
+
+model MatchSet {
+  id      String          @id @default(cuid())
+  matchId String
+  match   TournamentMatch @relation(fields: [matchId], references: [id])
+
+  setNumber           Int
+  teamAGames          Int
+  teamBGames          Int
+  // Optional per the plan ("optional tiebreak points") — slice 2's loose
+  // scoring rules never require these to derive a winner.
+  teamATiebreakPoints Int?
+  teamBTiebreakPoints Int?
+
+  createdAt DateTime @default(now())
+
+  @@unique([matchId, setNumber])
+  @@map("match_sets")
 }

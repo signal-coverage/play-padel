@@ -8,6 +8,10 @@ export type PlayerProfileData = {
   dominantHand: DominantHand | null;
   email: string;
   phone: string | null;
+  // Only ever present for an admin caller (see GET /api/players's own
+  // comment) — backs PlayersDirectory's admin-only Role column and its
+  // per-row "can't impersonate an admin" Impersonate-button guard.
+  isAdmin?: boolean;
   // Match/win-rate stats — undefined for real directory players (no match
   // data exists yet, see docs/superpowers/specs/2026-08-05-player-profile-directory-design.md).
   // Only ever populated today via LatestPartnerCard's mocked partner data.

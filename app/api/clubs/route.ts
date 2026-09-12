@@ -1,7 +1,10 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getClubById, updateClub } from "@/core/clubs/services/clubs.service";
 import { updateClubSchema } from "@/core/clubs/schemas/club.schema";
-import { requestPlanChange } from "@/core/billing/services/membership.service";
+import {
+  requestPlanChange,
+  isClubOnFreePlan,
+} from "@/core/billing/services/membership.service";
 import { requireOwnerClub } from "./_lib/require-owner";
 
 export async function GET() {
@@ -13,7 +16,14 @@ export async function GET() {
     return NextResponse.json({ error: "Club not found" }, { status: 404 });
   }
 
-  return NextResponse.json({ club });
+  // Surfaced alongside `club` (rather than folded into it) since it mirrors
+  // AdminClubListItem's own isFreePlan derivation (see
+  // core/clubs/services/clubs.service.ts's listAllClubs) rather than a real
+  // Club column. CourtsView reads it to know whether the court-limit gate
+  // applies to this owner's club at all.
+  const isFreePlan = await isClubOnFreePlan(authResult.context.clubId);
+
+  return NextResponse.json({ club, isFreePlan });
 }
 
 export async function PATCH(request: NextRequest) {
@@ -36,6 +46,11 @@ export async function PATCH(request: NextRequest) {
   // `plan` is stripped from the payload passed to `updateClub` below so it
   // can never sneak back in as a direct write.
   const { plan, ...rest } = parsed.data;
+  // Stripped the same way `plan` is: it's a real field on
+  // updateClubSchema/updateClub so the admin-only PATCH /api/admin/clubs/
+  // [clubId] route can reuse them unchanged, but an owner must never be able
+  // to set their own court-limit override via their own settings form.
+  delete rest.courtLimit;
 
   if (plan) {
     try {

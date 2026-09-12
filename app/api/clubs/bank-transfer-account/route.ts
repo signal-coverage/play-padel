@@ -5,6 +5,7 @@ import {
   setClubBankTransferAccount,
 } from "@/core/clubs/services/bankTransferAccount.service";
 import { setClubBankTransferAccountSchema } from "@/core/clubs/schemas/bankTransferAccount.schema";
+import { notifyClubOperationalIfNeeded } from "@/core/clubs/services/clubs.service";
 
 // Reads the caller's own club's manual bank-transfer payout details. Consumed
 // by the Club Settings "Bank Transfer" tab. `account` is `null` when the club
@@ -37,5 +38,11 @@ export async function PUT(request: NextRequest) {
     parsed.data,
     authResult.context.userId,
   );
+
+  // Club just gained a payout method — dispatches the one-time
+  // "operational" reminder if this is what tips it over into operational
+  // (non-throwing, safe to await inline).
+  await notifyClubOperationalIfNeeded(authResult.context.clubId);
+
   return NextResponse.json({ account });
 }

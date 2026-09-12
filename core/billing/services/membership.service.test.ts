@@ -50,6 +50,8 @@ import {
   reactivateCancelledSubscription,
   saveMembershipPayerIdentification,
   activateFreePlan,
+  clubHasRealMercadoPagoSubscription,
+  grantWelcomePeriod,
   ClubNotFoundError,
   RealSubscriptionExistsError,
 } from "./membership.service";
@@ -369,6 +371,35 @@ describe("startTrial", () => {
       data: { status: "ACTIVE" },
     });
   });
+
+  it("notifies the club owner in-app that the dashboard is unlocked once the trial starts", async () => {
+    findUniqueMock.mockResolvedValue(null);
+    createMock.mockResolvedValue(row({ status: "TRIALING" }));
+    clubUpdateMock.mockResolvedValue({ id: "club_1", status: "ACTIVE" });
+    getClubOwnerMock.mockResolvedValue({
+      id: "owner_1",
+      displayName: "Jane Doe",
+      email: "jane@example.com",
+    });
+
+    await startTrial({
+      clubId: "club_1",
+      plan: "PRO",
+      cycle: "MONTHLY",
+      renewalMode: "AUTO",
+      currency: "ARS",
+      fallbackWelcomeFreeMonths: 3,
+    });
+
+    expect(dispatchMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "CLUB_OPERATIONAL_READY",
+        clubId: "club_1",
+        recipientId: "owner_1",
+        sendEmail: false,
+      }),
+    );
+  });
 });
 
 describe("recordSuccessfulCharge", () => {
@@ -565,6 +596,49 @@ describe("recordSuccessfulCharge", () => {
     expect(updateMock).toHaveBeenCalledTimes(1);
     expect(clubUpdateMock).toHaveBeenCalledTimes(1);
   });
+
+  // The real gap reported live: an owner sitting on the "past due, update
+  // your payment" screen after retrying gets zero live confirmation it
+  // worked — only recordFailedCharge (notifyMembershipPastDue) ever
+  // notified. Scoped to genuine recovery only, not every routine renewal —
+  // see the next test.
+  it("notifies the club owner in-app when recovering from PAST_DUE", async () => {
+    findUniqueMock.mockResolvedValue(row({ status: "PAST_DUE" }));
+    updateMock.mockResolvedValue(row({ status: "ACTIVE" }));
+    clubUpdateMock.mockResolvedValue({ id: "club_1", status: "ACTIVE" });
+    getClubOwnerMock.mockResolvedValue({
+      id: "owner_1",
+      displayName: "Jane Doe",
+      email: "jane@example.com",
+    });
+
+    await recordSuccessfulCharge({
+      clubId: "club_1",
+      chargedAt: new Date("2026-01-01T00:00:00Z"),
+    });
+
+    expect(dispatchMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "CLUB_OPERATIONAL_READY",
+        clubId: "club_1",
+        recipientId: "owner_1",
+        sendEmail: false,
+      }),
+    );
+  });
+
+  it("does not notify for a routine renewal that was already ACTIVE (nothing was ever broken)", async () => {
+    findUniqueMock.mockResolvedValue(row({ status: "ACTIVE" }));
+    updateMock.mockResolvedValue(row({ status: "ACTIVE" }));
+    clubUpdateMock.mockResolvedValue({ id: "club_1", status: "ACTIVE" });
+
+    await recordSuccessfulCharge({
+      clubId: "club_1",
+      chargedAt: new Date("2026-01-01T00:00:00Z"),
+    });
+
+    expect(dispatchMock).not.toHaveBeenCalled();
+  });
 });
 
 describe("recordFailedCharge (AUTO recycling signal)", () => {
@@ -744,6 +818,56 @@ describe("recordAutoCancellation (AUTO: MP auto-cancelled after 3 rejections)", 
     expect(updateMock).toHaveBeenCalledTimes(1);
     expect(clubUpdateMock).toHaveBeenCalledTimes(1);
   });
+
+  // The real gap reported live: MP's own auto-cancellation runs fully async
+  // (a webhook), so an owner mid-session gets locked out of
+  // ClubOperationalGate with zero warning otherwise. Emailed (unlike
+  // notifyMembershipPastDue's in-app-only warning) since this is the actual
+  // lockout, not just an early heads-up — the owner needs to know even if
+  // they aren't currently looking at the dashboard.
+  it("notifies the club owner (in-app + email) that their membership was cancelled", async () => {
+    findUniqueMock.mockResolvedValue(row({ status: "PAST_DUE" }));
+    updateMock.mockResolvedValue(row({ status: "CANCELLED" }));
+    clubUpdateMock.mockResolvedValue({ id: "club_1", status: "INACTIVE" });
+    getClubOwnerMock.mockResolvedValue({
+      id: "owner_1",
+      displayName: "Jane Doe",
+      email: "jane@example.com",
+    });
+
+    await recordAutoCancellation({
+      clubId: "club_1",
+      cancelledAt: new Date("2026-01-20T00:00:00Z"),
+    });
+
+    expect(dispatchMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "MEMBERSHIP_CANCELLED",
+        clubId: "club_1",
+        recipientId: "owner_1",
+        sendEmail: true,
+      }),
+    );
+  });
+
+  it("a notification-dispatch failure never blocks the cancellation from having already succeeded", async () => {
+    findUniqueMock.mockResolvedValue(row({ status: "PAST_DUE" }));
+    updateMock.mockResolvedValue(row({ status: "CANCELLED" }));
+    clubUpdateMock.mockResolvedValue({ id: "club_1", status: "INACTIVE" });
+    getClubOwnerMock.mockResolvedValue({
+      id: "owner_1",
+      displayName: "Jane Doe",
+      email: "jane@example.com",
+    });
+    dispatchMock.mockRejectedValue(new Error("resend is down"));
+
+    const result = await recordAutoCancellation({
+      clubId: "club_1",
+      cancelledAt: new Date("2026-01-20T00:00:00Z"),
+    });
+
+    expect(result.status).toBe("CANCELLED");
+  });
 });
 
 describe("recordManualPeriodExpiredWithoutRenewal (MANUAL grace-period entry, cron-driven)", () => {
@@ -914,6 +1038,37 @@ describe("recordManualLockout (MANUAL's sole/authoritative lockout trigger, cron
     expect(transactionMock.mock.calls[0][0]).toHaveLength(2);
     expect(updateMock).toHaveBeenCalledTimes(1);
     expect(clubUpdateMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("notifies the club owner (in-app + email) that their membership was cancelled", async () => {
+    findUniqueMock.mockResolvedValue(
+      row({
+        status: "PAST_DUE",
+        renewalMode: "MANUAL",
+        pastDueUntil: new Date("2026-01-17T00:00:00Z"),
+      }),
+    );
+    updateMock.mockResolvedValue(row({ status: "CANCELLED" }));
+    clubUpdateMock.mockResolvedValue({ id: "club_1", status: "INACTIVE" });
+    getClubOwnerMock.mockResolvedValue({
+      id: "owner_1",
+      displayName: "Jane Doe",
+      email: "jane@example.com",
+    });
+
+    await recordManualLockout({
+      clubId: "club_1",
+      now: new Date("2026-01-18T00:00:00Z"),
+    });
+
+    expect(dispatchMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "MEMBERSHIP_CANCELLED",
+        clubId: "club_1",
+        recipientId: "owner_1",
+        sendEmail: true,
+      }),
+    );
   });
 });
 
@@ -1559,14 +1714,274 @@ describe("activateFreePlan (admin-only override — unblocks ClubOperationalGate
 
     await activateFreePlan({ clubId: "club_1" });
 
-    // Otherwise this hidden FREE-plan testing bypass would silently break
-    // once the admin approval gate ships: a FREE-plan test club would still
-    // get stuck on the new PENDING_APPROVAL screen (see
-    // lib/mercadopago/operationalStatus.ts) despite its subscription being
-    // fully confirmed.
+    // Otherwise a FREE-plan test club would get stuck on the
+    // PENDING_APPROVAL screen (see lib/mercadopago/operationalStatus.ts)
+    // despite its subscription being fully confirmed — approvalStatus is
+    // checked before payout-method connectivity, and a FREE plan is never
+    // meant to require manual admin approval.
     expect(clubUpdateMock).toHaveBeenCalledWith({
       where: { id: "club_1" },
       data: { status: "ACTIVE", approvalStatus: "APPROVED" },
     });
+  });
+
+  // The real bug reported live: activating the FREE plan via the admin CLI
+  // (scripts/menu.ts) never showed up on the owner's already-open dashboard
+  // until they manually reloaded — nothing told their session anything had
+  // changed, unlike the live nav refresh already built for admin
+  // grant/revoke (see NotificationsBell/hooks.ts). This closes that gap the
+  // same way: an in-app notification the owner's own NotificationsBell
+  // picks up, which invalidates the membership-subscription query the
+  // owner's membership screens (PlanSelectionModal, PaymentActivationScreen)
+  // read.
+  it("notifies the club owner in-app the moment the FREE plan is activated", async () => {
+    clubFindUniqueMock.mockResolvedValue({ currency: "ARS" });
+    findUniqueMock.mockResolvedValue(null);
+    createMock.mockResolvedValue(row({ plan: "FREE", status: "ACTIVE" }));
+    clubUpdateMock.mockResolvedValue({ id: "club_1", status: "ACTIVE" });
+    getClubOwnerMock.mockResolvedValue({
+      id: "owner_1",
+      displayName: "Jane Doe",
+      email: "jane@example.com",
+    });
+
+    await activateFreePlan({ clubId: "club_1" });
+
+    expect(dispatchMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "CLUB_OPERATIONAL_READY",
+        clubId: "club_1",
+        recipientId: "owner_1",
+        recipientEmail: "jane@example.com",
+        recipientName: "Jane Doe",
+        sendEmail: false,
+      }),
+    );
+  });
+
+  it("does not notify when the club has no owner on record", async () => {
+    clubFindUniqueMock.mockResolvedValue({ currency: "ARS" });
+    findUniqueMock.mockResolvedValue(null);
+    createMock.mockResolvedValue(row({ plan: "FREE", status: "ACTIVE" }));
+    clubUpdateMock.mockResolvedValue({ id: "club_1", status: "ACTIVE" });
+    getClubOwnerMock.mockResolvedValue(null);
+
+    await activateFreePlan({ clubId: "club_1" });
+
+    expect(dispatchMock).not.toHaveBeenCalled();
+  });
+
+  it("a notification-dispatch failure never blocks the FREE-plan activation from having already succeeded", async () => {
+    clubFindUniqueMock.mockResolvedValue({ currency: "ARS" });
+    findUniqueMock.mockResolvedValue(null);
+    createMock.mockResolvedValue(row({ plan: "FREE", status: "ACTIVE" }));
+    clubUpdateMock.mockResolvedValue({ id: "club_1", status: "ACTIVE" });
+    getClubOwnerMock.mockResolvedValue({
+      id: "owner_1",
+      displayName: "Jane Doe",
+      email: "jane@example.com",
+    });
+    dispatchMock.mockRejectedValue(new Error("resend is down"));
+
+    const result = await activateFreePlan({ clubId: "club_1" });
+
+    expect(result.plan).toBe("FREE");
+  });
+});
+
+describe("clubHasRealMercadoPagoSubscription (read-only pre-check — scripts/menu.ts's activate-free-plan flow, so it only asks to override when there's an actual conflict)", () => {
+  it("returns false when the club has no subscription row at all", async () => {
+    findUniqueMock.mockResolvedValue(null);
+
+    await expect(clubHasRealMercadoPagoSubscription("club_1")).resolves.toBe(
+      false,
+    );
+  });
+
+  it("returns false for a subscription with neither a real mpPreapprovalId nor mpPreferenceId (e.g. still PENDING, or already FREE)", async () => {
+    findUniqueMock.mockResolvedValue(row({ plan: "FREE", status: "ACTIVE" }));
+
+    await expect(clubHasRealMercadoPagoSubscription("club_1")).resolves.toBe(
+      false,
+    );
+  });
+
+  it("returns true when a real mpPreapprovalId is attached", async () => {
+    findUniqueMock.mockResolvedValue(
+      row({ plan: "PRO", mpPreapprovalId: "preap_real" }),
+    );
+
+    await expect(clubHasRealMercadoPagoSubscription("club_1")).resolves.toBe(
+      true,
+    );
+  });
+
+  it("returns true when a real mpPreferenceId is attached", async () => {
+    findUniqueMock.mockResolvedValue(
+      row({ plan: "PRO", mpPreferenceId: "pref_real" }),
+    );
+
+    await expect(clubHasRealMercadoPagoSubscription("club_1")).resolves.toBe(
+      true,
+    );
+  });
+});
+
+describe("grantWelcomePeriod (admin-only override — free welcome time for any club, any status)", () => {
+  it("throws ClubNotFoundError when the club doesn't exist", async () => {
+    clubFindUniqueMock.mockResolvedValue(null);
+
+    await expect(
+      grantWelcomePeriod({ clubId: "club_ghost", months: 3 }),
+    ).rejects.toThrow(ClubNotFoundError);
+    expect(findUniqueMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects a months value outside 1-7, without touching the database at all", async () => {
+    await expect(
+      grantWelcomePeriod({ clubId: "club_1", months: 0 }),
+    ).rejects.toThrow(/between 1 and 7/);
+    await expect(
+      grantWelcomePeriod({ clubId: "club_1", months: 8 }),
+    ).rejects.toThrow(/between 1 and 7/);
+    expect(clubFindUniqueMock).not.toHaveBeenCalled();
+  });
+
+  it("sets an existing subscription to TRIALING with trialEndsAt N months out, preserving its plan/cycle/currency untouched", async () => {
+    clubFindUniqueMock.mockResolvedValue({ plan: "PRO", currency: "USD" });
+    findUniqueMock.mockResolvedValue(
+      row({ status: "PAST_DUE", plan: "PRO", currency: "USD" }),
+    );
+    updateMock.mockResolvedValue(
+      row({
+        status: "TRIALING",
+        plan: "PRO",
+        currency: "USD",
+        trialEndsAt: new Date("2026-04-01T00:00:00Z"),
+      }),
+    );
+    clubUpdateMock.mockResolvedValue({ id: "club_1", status: "ACTIVE" });
+
+    const result = await grantWelcomePeriod({
+      clubId: "club_1",
+      months: 3,
+      now: new Date("2026-01-01T00:00:00Z"),
+    });
+
+    expect(updateMock).toHaveBeenCalledWith({
+      where: { clubId: "club_1" },
+      data: {
+        status: "TRIALING",
+        trialEndsAt: new Date("2026-04-01T00:00:00Z"),
+      },
+    });
+    expect(createMock).not.toHaveBeenCalled();
+    expect(result.status).toBe("TRIALING");
+  });
+
+  it("works from ACTIVE, not just PENDING — the whole point is covering an already-live club needing a grace extension", async () => {
+    clubFindUniqueMock.mockResolvedValue({ plan: "BASIC", currency: "ARS" });
+    findUniqueMock.mockResolvedValue(row({ status: "ACTIVE", plan: "BASIC" }));
+    updateMock.mockResolvedValue(row({ status: "TRIALING", plan: "BASIC" }));
+    clubUpdateMock.mockResolvedValue({ id: "club_1", status: "ACTIVE" });
+
+    await expect(
+      grantWelcomePeriod({ clubId: "club_1", months: 1 }),
+    ).resolves.not.toThrow();
+  });
+
+  it("seeds a fresh TRIALING subscription (deriving plan/currency from Club) when none exists yet", async () => {
+    clubFindUniqueMock.mockResolvedValue({ plan: "PLUS", currency: "ARS" });
+    findUniqueMock.mockResolvedValue(null);
+    createMock.mockResolvedValue(
+      row({ status: "TRIALING", plan: "PLUS", currency: "ARS" }),
+    );
+    clubUpdateMock.mockResolvedValue({ id: "club_1", status: "ACTIVE" });
+
+    await grantWelcomePeriod({
+      clubId: "club_1",
+      months: 7,
+      now: new Date("2026-01-01T00:00:00Z"),
+    });
+
+    expect(createMock).toHaveBeenCalledWith({
+      data: {
+        clubId: "club_1",
+        plan: "PLUS",
+        cycle: "MONTHLY",
+        renewalMode: "AUTO",
+        currency: "ARS",
+        status: "TRIALING",
+        trialEndsAt: new Date("2026-08-01T00:00:00Z"),
+      },
+    });
+    expect(updateMock).not.toHaveBeenCalled();
+  });
+
+  it("refuses to overwrite a subscription with a real mpPreapprovalId unless force is passed", async () => {
+    clubFindUniqueMock.mockResolvedValue({ plan: "PRO", currency: "ARS" });
+    findUniqueMock.mockResolvedValue(
+      row({ status: "ACTIVE", plan: "PRO", mpPreapprovalId: "preap_real" }),
+    );
+
+    await expect(
+      grantWelcomePeriod({ clubId: "club_1", months: 2 }),
+    ).rejects.toThrow(RealSubscriptionExistsError);
+    expect(updateMock).not.toHaveBeenCalled();
+    expect(createMock).not.toHaveBeenCalled();
+  });
+
+  it("succeeds despite an existing real mpPreapprovalId when force is true", async () => {
+    clubFindUniqueMock.mockResolvedValue({ plan: "PRO", currency: "ARS" });
+    findUniqueMock.mockResolvedValue(
+      row({ status: "ACTIVE", plan: "PRO", mpPreapprovalId: "preap_real" }),
+    );
+    updateMock.mockResolvedValue(row({ status: "TRIALING", plan: "PRO" }));
+    clubUpdateMock.mockResolvedValue({ id: "club_1", status: "ACTIVE" });
+
+    const result = await grantWelcomePeriod({
+      clubId: "club_1",
+      months: 2,
+      force: true,
+    });
+
+    expect(result.status).toBe("TRIALING");
+  });
+
+  it("resets Club.status to ACTIVE, reversing any prior lockout", async () => {
+    clubFindUniqueMock.mockResolvedValue({ plan: "BASIC", currency: "ARS" });
+    findUniqueMock.mockResolvedValue(row({ status: "CANCELLED" }));
+    updateMock.mockResolvedValue(row({ status: "TRIALING" }));
+    clubUpdateMock.mockResolvedValue({ id: "club_1", status: "ACTIVE" });
+
+    await grantWelcomePeriod({ clubId: "club_1", months: 5 });
+
+    expect(clubUpdateMock).toHaveBeenCalledWith({
+      where: { id: "club_1" },
+      data: { status: "ACTIVE" },
+    });
+  });
+
+  it("notifies the club owner in-app that the dashboard is unlocked once the welcome period is granted", async () => {
+    clubFindUniqueMock.mockResolvedValue({ plan: "BASIC", currency: "ARS" });
+    findUniqueMock.mockResolvedValue(row({ status: "CANCELLED" }));
+    updateMock.mockResolvedValue(row({ status: "TRIALING" }));
+    clubUpdateMock.mockResolvedValue({ id: "club_1", status: "ACTIVE" });
+    getClubOwnerMock.mockResolvedValue({
+      id: "owner_1",
+      displayName: "Jane Doe",
+      email: "jane@example.com",
+    });
+
+    await grantWelcomePeriod({ clubId: "club_1", months: 5 });
+
+    expect(dispatchMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "CLUB_OPERATIONAL_READY",
+        clubId: "club_1",
+        recipientId: "owner_1",
+        sendEmail: false,
+      }),
+    );
   });
 });

@@ -5,6 +5,7 @@ export type ClubRecord = {
   taxId?: string;
   email: string;
   phone?: string;
+  whatsappNumber?: string;
   address?: string;
   country?: string;
   province?: string;
@@ -34,6 +35,13 @@ export type ClubSettingsFormValues = {
   taxId: string;
   email: string;
   phone: string;
+  whatsappNumber: string;
+  // Form-only, like onboarding's ClubBasicsStep: PhoneField's own
+  // calling-code combobox writes the matched country's display name here to
+  // keep itself in sync, but there's no persisted "whatsappCountry" column
+  // (see prisma/schema.prisma's Club.whatsappNumber) — only whatsappNumber
+  // round-trips through the server.
+  whatsappCountry: string;
   address: string;
   country: string;
   province: string;

@@ -3,7 +3,7 @@ import type { ClubSettingsTab } from "./types";
 
 export const CLUB_SETTINGS_TABS: ClubSettingsTab[] = [
   { value: "basic", label: "Club settings", icon: Settings2 },
-  { value: "hours", label: "Operating Hours", icon: Clock },
+  { value: "hours", label: "Schedule", icon: Clock },
   { value: "mercadopago", label: "Mercado Pago", icon: CreditCard },
   { value: "bank-transfer", label: "Bank Transfer", icon: Landmark },
 ];

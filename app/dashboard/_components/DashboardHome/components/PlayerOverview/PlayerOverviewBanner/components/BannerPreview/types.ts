@@ -1,3 +1,4 @@
 export type BannerPreviewProps = {
-  partnerInitials: string;
+  // null when the player has no partner history yet.
+  partnerInitials: string | null;
 };

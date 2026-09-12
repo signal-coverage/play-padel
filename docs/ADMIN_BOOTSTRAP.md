@@ -33,16 +33,13 @@ MSYS_NO_PATHCONV=1 clerk api /users/<user_id>/metadata -X PATCH -d '{"public_met
 
 ## 2. `UserProfile.isAdmin` (DB)
 
-Requires the user to have already signed in at least once (a `UserProfile` row must exist — it's created on first login/onboarding). Once it exists, the row's `isAdmin` field is set directly in the database:
+Requires the user to have already signed in at least once (a `UserProfile` row must exist — it's created on first login/onboarding). Once it exists, run:
 
-```ts
-await prisma.userProfile.update({
-  where: { id: "<clerk_user_id>" },
-  data: { isAdmin: true },
-});
+```bash
+npm run manage
 ```
 
-There's no CLI command for this yet — ask Claude to run it once the target account has signed in, and specify dev or prod explicitly.
+and pick **Grant admin access** from the menu — it asks for the target database and the user's email, and sets `UserProfile.isAdmin = true` directly. See `scripts/menu.ts` for the full list of maintenance actions available this way.
 
 ## Order of operations for a new admin
 

@@ -1,0 +1,1 @@
+export { NavBadge } from "./NavBadge";

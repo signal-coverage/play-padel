@@ -385,6 +385,12 @@ export async function startTrial(
     data: { status: "ACTIVE" },
   });
 
+  await notifyClubDashboardUnlocked(
+    input.clubId,
+    "Your dashboard is unlocked",
+    "Your club's trial has started — your dashboard is now unlocked.",
+  );
+
   return toSnapshot(row);
 }
 
@@ -461,6 +467,17 @@ export async function recordSuccessfulCharge(
       data: { status: "ACTIVE" },
     }),
   ]);
+
+  // Scoped to genuine recovery only — an owner locked out by PAST_DUE
+  // deserves a "you're unblocked again" signal, but a routine ACTIVE ->
+  // ACTIVE renewal (nothing was ever broken) would just be noise.
+  if (currentStatus === "PAST_DUE") {
+    await notifyClubDashboardUnlocked(
+      input.clubId,
+      "Your dashboard is unlocked",
+      "Your club's membership payment was successful — your dashboard is unlocked again.",
+    );
+  }
 
   return toSnapshot(row);
 }
@@ -564,6 +581,8 @@ export async function recordAutoCancellation(
     }),
   ]);
 
+  await notifyMembershipCancelled(input.clubId);
+
   return toSnapshot(row);
 }
 
@@ -666,6 +685,8 @@ export async function recordManualLockout(
     }),
   ]);
 
+  await notifyMembershipCancelled(input.clubId);
+
   return toSnapshot(row);
 }
 
@@ -704,6 +725,114 @@ export async function changeTrialPlan(
   });
 
   return toSnapshot(row);
+}
+
+/**
+ * Shared by every path below that can flip a club from locked-out (or
+ * never-yet-confirmed) to usable: a FREE-plan activation, an admin-granted
+ * welcome period, a recovered PAST_DUE payment, or a newly-started trial.
+ * Notifies the club owner in-app the instant it happens — otherwise this
+ * only ever showed up on their dashboard after a manual reload, since
+ * nothing told their already-open session anything had changed (same "live
+ * nav refresh" mechanism already used for ADMIN_ACCESS_GRANTED, see
+ * NotificationsBell/hooks.ts's unconditional invalidation on any new
+ * notification). Reuses CLUB_OPERATIONAL_READY — the same type
+ * notifyClubOperationalIfNeeded (clubs.service.ts) uses for the MP-connect/
+ * bank-transfer path — since the observable effect for the owner (dashboard
+ * unlocked) is the same regardless of why; each caller supplies its own
+ * copy since the underlying reason (and whether real payments are actually
+ * possible yet) differs.
+ */
+async function notifyClubDashboardUnlocked(
+  clubId: string,
+  subject: string,
+  html: string,
+): Promise<void> {
+  try {
+    const owner = await getClubOwner(clubId);
+    if (owner) {
+      await dispatch({
+        type: "CLUB_OPERATIONAL_READY",
+        clubId,
+        recipientId: owner.id,
+        recipientEmail: owner.email,
+        recipientName: owner.displayName,
+        subject,
+        html,
+        sendEmail: false,
+      });
+    }
+  } catch {
+    // notification failure must not affect the caller's own state transition
+  }
+}
+
+// A FREE plan does NOT connect a real payout method, so unlike
+// notifyClubOperationalIfNeeded's own MP-connect/bank-transfer copy, this
+// must not claim players can now pay for real reservations
+// (requireClubOperational/createCheckoutPreference still require a real
+// Mercado Pago or bank transfer connection regardless of plan).
+async function notifyFreePlanActivated(clubId: string): Promise<void> {
+  await notifyClubDashboardUnlocked(
+    clubId,
+    "Your dashboard is unlocked",
+    "An admin activated the FREE testing plan for your club — your dashboard is now unlocked. Real player reservations still need a connected payment method (Mercado Pago or bank transfer) in Settings.",
+  );
+}
+
+/**
+ * Notifies the club owner (in-app AND email — see notifyClubDashboardUnlocked
+ * above for the in-app-only default this deliberately overrides) that their
+ * membership was cancelled and the dashboard is now locked behind
+ * ClubOperationalGate. Both recordAutoCancellation (MP's own AUTO
+ * auto-cancellation webhook) and recordManualLockout (the cron sweep) run
+ * fully async — an owner mid-session gets zero warning otherwise, and email
+ * matters here specifically because they may not even be looking at the
+ * dashboard when it happens.
+ */
+async function notifyMembershipCancelled(clubId: string): Promise<void> {
+  try {
+    const owner = await getClubOwner(clubId);
+    if (owner) {
+      await dispatch({
+        type: "MEMBERSHIP_CANCELLED",
+        clubId,
+        recipientId: owner.id,
+        recipientEmail: owner.email,
+        recipientName: owner.displayName,
+        subject: "Your club's membership was cancelled",
+        html: "Your club's membership subscription has been cancelled and your dashboard is now locked. Reactivate your membership to restore access.",
+        sendEmail: true,
+      });
+    }
+  } catch {
+    // notification failure must not affect billing state transitions
+  }
+}
+
+/**
+ * Read-only pre-check — used by scripts/menu.ts's activate-free-plan flow
+ * to decide, BEFORE asking anything, whether the "override a real
+ * subscription" question needs to be asked at all. A FREE plan is
+ * exclusively a testing tool (see this menu entry's own description), so
+ * the overwhelming majority of clubs it's ever run against have no real
+ * Mercado Pago subscription attached — asking the override question
+ * unconditionally there read as "a conflict was detected" even when
+ * nothing had been checked yet. Kept as its own independent lookup rather
+ * than sharing state with activateFreePlan's internal check below, so this
+ * pre-check can never accidentally affect the actual activation's own
+ * safety guard.
+ */
+export async function clubHasRealMercadoPagoSubscription(
+  clubId: string,
+): Promise<boolean> {
+  const existing = await prisma.clubMembershipSubscription.findUnique({
+    where: { clubId },
+  });
+  return (
+    existing != null &&
+    (existing.mpPreapprovalId != null || existing.mpPreferenceId != null)
+  );
 }
 
 export interface ActivateFreePlanInput {
@@ -803,6 +932,117 @@ export async function activateFreePlan(
     where: { id: input.clubId },
     data: { status: "ACTIVE", approvalStatus: "APPROVED" },
   });
+
+  await notifyFreePlanActivated(input.clubId);
+
+  return toSnapshot(row);
+}
+
+const MIN_WELCOME_MONTHS = 1;
+const MAX_WELCOME_MONTHS = 7;
+
+export interface GrantWelcomePeriodInput {
+  clubId: string;
+  /** 1–7 months of free "welcome" time. */
+  months: number;
+  /**
+   * Overrides the safety guard that otherwise refuses to touch a
+   * subscription that already has a real `mpPreapprovalId`/`mpPreferenceId`
+   * — same net as `activateFreePlan`'s own `force`, against accidentally
+   * granting a real, actively-charging club unwanted free time via a
+   * mistyped `clubId`. Defaults to `false`.
+   */
+  force?: boolean;
+  now?: Date;
+}
+
+/**
+ * Admin-only override: grants a club N months (1-7) of free "welcome" time
+ * — for an eventuality, a grace extension, or marketing purposes. Pushes
+ * `trialEndsAt` out N months from now and sets `status` to `TRIALING`,
+ * which unlocks the dashboard exactly like any other confirmed trial
+ * (`isMembershipConfirmed`) until it naturally lapses — the existing
+ * membership-grace-sweep cron then treats it like any other expired trial,
+ * no separate cleanup needed.
+ *
+ * Deliberately bypasses `assertMembershipTransition`, same philosophy as
+ * `activateFreePlan` above: unlike `startTrial` (only reachable from
+ * `PENDING`), this works from ANY existing status — `ACTIVE`, `PAST_DUE`,
+ * `CANCELLED`, whatever — since covering an already-live club that needs a
+ * grace extension is the whole point, not just a brand-new signup's first
+ * trial.
+ *
+ * Preserves the club's existing plan/cycle/renewalMode/currency untouched
+ * when a subscription already exists — only `status`/`trialEndsAt` change.
+ * Seeds a fresh subscription (deriving plan/currency from `Club`) only for
+ * the rare pre-seeding-era club with no subscription row at all yet.
+ */
+export async function grantWelcomePeriod(
+  input: GrantWelcomePeriodInput,
+): Promise<MembershipSubscriptionSnapshot> {
+  if (input.months < MIN_WELCOME_MONTHS || input.months > MAX_WELCOME_MONTHS) {
+    throw new Error(
+      `months must be between ${MIN_WELCOME_MONTHS} and ${MAX_WELCOME_MONTHS} (got ${input.months})`,
+    );
+  }
+
+  const now = input.now ?? new Date();
+  const trialEndsAt = resolveTrialEndsAt(now, null, input.months);
+  if (!trialEndsAt) {
+    // Unreachable given the months guard above — resolveFreeTrialConfig
+    // only returns undefined when BOTH inputs are null/undefined.
+    throw new Error("Could not resolve a trial end date");
+  }
+
+  const club = await prisma.club.findUnique({
+    where: { id: input.clubId },
+    select: { plan: true, currency: true },
+  });
+  if (!club) {
+    throw new ClubNotFoundError(input.clubId);
+  }
+
+  const existing = await prisma.clubMembershipSubscription.findUnique({
+    where: { clubId: input.clubId },
+  });
+
+  const hasRealSubscription =
+    existing != null &&
+    (existing.mpPreapprovalId != null || existing.mpPreferenceId != null);
+
+  if (hasRealSubscription && !input.force) {
+    throw new RealSubscriptionExistsError();
+  }
+
+  const row = existing
+    ? await prisma.clubMembershipSubscription.update({
+        where: { clubId: input.clubId },
+        data: { status: "TRIALING", trialEndsAt },
+      })
+    : await prisma.clubMembershipSubscription.create({
+        data: {
+          clubId: input.clubId,
+          plan: club.plan,
+          cycle: "MONTHLY",
+          renewalMode: "AUTO",
+          currency: club.currency,
+          status: "TRIALING",
+          trialEndsAt,
+        },
+      });
+
+  // Same Club.status reversal as startTrial/activateFreePlan — undoes any
+  // prior lockout so the club is immediately usable again.
+  await prisma.club.update({
+    where: { id: input.clubId },
+    data: { status: "ACTIVE" },
+  });
+
+  await notifyClubDashboardUnlocked(
+    input.clubId,
+    "Your dashboard is unlocked",
+    `An admin granted your club ${input.months} free month(s) — your dashboard is now unlocked. Real player reservations still need a connected payment method (Mercado Pago or bank transfer) in Settings.`,
+  );
 
   return toSnapshot(row);
 }
@@ -941,6 +1181,24 @@ export async function getMembershipSubscription(
     where: { clubId },
   });
   return existing ? toSnapshot(existing) : null;
+}
+
+/**
+ * True when this club's ClubMembershipSubscription.plan is "FREE" — the
+ * hidden admin-only testing tier activated via `activateFreePlan`, which
+ * only ever touches this field, never `Club.plan` (the court-capacity
+ * tier). Deliberately NOT `Club.plan === "FREE"` — see
+ * core/clubs/services/clubs.service.ts's `listAllClubs`/`isFreePlan`, the
+ * original derivation this mirrors for non-admin call sites (the owner's
+ * own GET /api/clubs, and the court-limit check in
+ * core/courts/services/courts.service.ts's `createCourt`).
+ */
+export async function isClubOnFreePlan(clubId: string): Promise<boolean> {
+  const subscription = await prisma.clubMembershipSubscription.findUnique({
+    where: { clubId },
+    select: { plan: true },
+  });
+  return subscription?.plan === "FREE";
 }
 
 /**

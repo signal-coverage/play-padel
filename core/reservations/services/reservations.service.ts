@@ -6,6 +6,7 @@ import * as React from "react";
 import type {
   Reservation,
   ReservationFilters,
+  ReservationPaymentMethod,
   ReservationStatus,
   TicketData,
 } from "@/core/reservations/types";
@@ -22,6 +23,10 @@ import { dispatch } from "@/lib/notifications/dispatcher";
 import { ReservationCancelled } from "@/lib/email/templates/ReservationCancelled";
 import { logAudit } from "@/core/audit/services/audit.service";
 import { notifyWaitlistForSlot } from "@/core/waitlist/services/waitlist.service";
+import {
+  validatePartnerIds,
+  tagReservationPartners,
+} from "@/core/reservations/services/reservationPartners.service";
 
 type ReservationRow = NonNullable<
   Awaited<ReturnType<typeof prisma.reservation.findUnique>>
@@ -40,6 +45,8 @@ function toReservation(row: ReservationRow): Reservation {
     scheduledEnd: row.scheduledEnd,
     notes: row.notes ?? undefined,
     paymentExpiresAt: row.paymentExpiresAt ?? undefined,
+    paymentMethod:
+      (row.paymentMethod as Reservation["paymentMethod"]) ?? undefined,
     cancelledAt: row.cancelledAt ?? undefined,
     cancelledBy: row.cancelledBy ?? undefined,
     createdAt: row.createdAt,
@@ -320,7 +327,11 @@ export async function checkCourtClosureConflict({
 export async function createReservation(
   createdBy: string,
   input: CreateReservationInput,
-  opts?: { pendingPayment?: boolean },
+  opts?: {
+    pendingPayment?: boolean;
+    holdMinutes?: number;
+    paymentMethod?: ReservationPaymentMethod;
+  },
 ): Promise<Reservation> {
   const court = await prisma.court.findUnique({
     where: { id: input.courtId },
@@ -337,6 +348,14 @@ export async function createReservation(
   if (!user) {
     throw new Error("User not found");
   }
+
+  // Validated up front, before any reservation write — a bad partner tag
+  // (self-tag, unknown player, too many) must fail the whole booking rather
+  // than leaving an orphaned reservation with no tags. See
+  // reservationPartners.service.ts's validatePartnerIds for the full rules.
+  // Empty/omitted partnerIds resolves to [] with no DB call — fully
+  // additive, matches every pre-existing createReservation caller exactly.
+  const partnerIds = await validatePartnerIds(input.userId, input.partnerIds);
 
   const scheduledStart = new Date(input.scheduledStart);
   const scheduledEnd = new Date(input.scheduledEnd);
@@ -373,6 +392,7 @@ export async function createReservation(
   }
 
   const pendingPayment = opts?.pendingPayment ?? false;
+  const holdMinutes = opts?.holdMinutes ?? PAYMENT_HOLD_MINUTES;
 
   // MVP rule: instant confirmation, no owner-approval step (docs/reservation-flow.md).
   // Exception: a club that requires prepayment gets a SCHEDULED hold instead,
@@ -391,8 +411,9 @@ export async function createReservation(
         scheduledEnd,
         notes: input.notes ?? null,
         paymentExpiresAt: pendingPayment
-          ? new Date(Date.now() + PAYMENT_HOLD_MINUTES * 60_000)
+          ? new Date(Date.now() + holdMinutes * 60_000)
           : null,
+        paymentMethod: pendingPayment ? (opts?.paymentMethod ?? null) : null,
         createdBy,
         updatedBy: createdBy,
       },
@@ -410,6 +431,12 @@ export async function createReservation(
     throw err;
   }
 
+  // Best-effort side effect (see tagReservationPartners) — a failure here
+  // must not undo an otherwise-successful booking.
+  if (partnerIds.length > 0) {
+    await tagReservationPartners(row.id, partnerIds);
+  }
+
   logAudit({
     clubId: row.clubId,
     userId: createdBy,
@@ -421,6 +448,38 @@ export async function createReservation(
   });
 
   return toReservation(row);
+}
+
+/**
+ * Notifies a reservation's owner in-app that something about it changed —
+ * shared by updateReservation (an owner/staff reschedule or reassignment),
+ * completeReservation, and noShowReservation, all of which change a
+ * reservation a player could be looking at in "My Reservations" at that
+ * exact moment with zero live signal otherwise.
+ */
+async function notifyReservationUpdated(
+  row: ReservationRow,
+  subject: string,
+  html: string,
+): Promise<void> {
+  try {
+    const user = await prisma.userProfile.findUnique({
+      where: { id: row.userId },
+      select: { email: true, displayName: true },
+    });
+    await dispatch({
+      type: "RESERVATION_UPDATED",
+      clubId: row.clubId,
+      recipientId: row.userId,
+      recipientEmail: user?.email ?? null,
+      recipientName: user?.displayName ?? row.userName,
+      subject,
+      html,
+      sendEmail: false,
+    });
+  } catch {
+    // notification failure must not affect the reservation mutation itself
+  }
 }
 
 export async function updateReservation(
@@ -468,6 +527,12 @@ export async function updateReservation(
       updatedBy,
     },
   });
+
+  await notifyReservationUpdated(
+    row,
+    "Your reservation has been updated",
+    "One of your reservations was updated by the club. Check My Reservations for the latest details.",
+  );
 
   return toReservation(row);
 }
@@ -564,20 +629,25 @@ export async function cancelReservation(
   return toReservation(row);
 }
 
-// Transitions a pending-payment hold to CONFIRMED once Mercado Pago confirms
-// the payment (called only from the webhook route). No audit-log call here —
-// core/billing's recordPayment (called right before this in the webhook
-// handler) already logs the "payment.confirmed" audit event for the same
-// transaction; logging reservation.created already covers the reservation's
-// own audit trail from when the hold was created.
+// Transitions a pending-payment hold to CONFIRMED once its payment is
+// confirmed — called from both the Mercado Pago webhook route (default
+// `updatedBy`, no real user in that context) and the owner-facing
+// confirmTransfer route action (passes the real owner's userId, so the audit
+// trail attributes a manual confirmation to the owner who actually performed
+// it, not to the webhook). No audit-log call here — core/billing's
+// recordPayment (called right before this at both call sites) already logs
+// the "payment.confirmed" audit event for the same transaction; logging
+// reservation.created already covers the reservation's own audit trail from
+// when the hold was created.
 export async function confirmReservationPayment(
   id: string,
+  updatedBy: string = "system:mercadopago-webhook",
 ): Promise<Reservation> {
   const row = await prisma.reservation.update({
     where: { id },
     data: {
       status: "CONFIRMED",
-      updatedBy: "system:mercadopago-webhook",
+      updatedBy,
     },
   });
   return toReservation(row);
@@ -620,6 +690,12 @@ export async function completeReservation(
     metadata: { courtId: row.courtId, courtName: row.courtName },
   });
 
+  await notifyReservationUpdated(
+    row,
+    "Your reservation is complete",
+    "Your reservation has been marked as completed.",
+  );
+
   return toReservation(row);
 }
 
@@ -649,6 +725,12 @@ export async function noShowReservation(
     entityId: row.id,
     metadata: { courtId: row.courtId, courtName: row.courtName },
   });
+
+  await notifyReservationUpdated(
+    row,
+    "You were marked as a no-show",
+    "You were marked as a no-show for a reservation. If you believe this is a mistake, contact the club.",
+  );
 
   return toReservation(row);
 }

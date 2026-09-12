@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Plan } from "@/core/clubs/types";
 import type { MembershipRenewalModeValue } from "@/core/billing/services/membership.service";
@@ -35,6 +36,39 @@ export type UseMembershipSubscriptionOptions = {
   refetchIntervalMs?: number | false;
 };
 
+// Opens GET /api/clubs/membership/stream (Server-Sent Events) ONLY while
+// actively awaiting a webhook confirmation (same condition that turns on the
+// query's own refetchIntervalMs below) — never while the modal is just
+// showing the plan-selection step, so an idle open modal doesn't hold a live
+// connection it has no use for. Invalidates the shared subscription query
+// the instant the server notices a status change, instead of waiting out
+// AWAITING_CONFIRMATION_POLL_INTERVAL_MS. Same "SSE is additive, the poll
+// stays as a fallback baseline" precedent as
+// NotificationsBell/hooks.ts's useNotificationStream and
+// PaymentReturnView/hooks.ts's usePaymentReturnStream.
+function useMembershipSubscriptionStream(shouldStream: boolean) {
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (!shouldStream) return;
+
+    const source = new EventSource("/api/clubs/membership/stream");
+
+    function handleChanged() {
+      queryClient.invalidateQueries({
+        queryKey: MEMBERSHIP_SUBSCRIPTION_QUERY_KEY,
+      });
+    }
+
+    source.addEventListener("changed", handleChanged);
+
+    return () => {
+      source.removeEventListener("changed", handleChanged);
+      source.close();
+    };
+  }, [shouldStream, queryClient]);
+}
+
 // Reads the caller's own club's membership subscription snapshot. Shared
 // across every consumer (PaymentActivationScreen, UpgradeMembershipButton,
 // and this modal itself) via one TanStack Query key so they read from a
@@ -47,6 +81,11 @@ export type UseMembershipSubscriptionOptions = {
 export function useMembershipSubscription(
   options: UseMembershipSubscriptionOptions = {},
 ) {
+  useMembershipSubscriptionStream(
+    options.refetchIntervalMs !== undefined &&
+      options.refetchIntervalMs !== false,
+  );
+
   return useQuery({
     queryKey: MEMBERSHIP_SUBSCRIPTION_QUERY_KEY,
     enabled: options.enabled ?? true,

@@ -1,8 +1,6 @@
 "use client";
 
 import { BouncingBall } from "@/components/BouncingBall";
-import { useMembershipSubscription } from "@/components/PlanSelectionModal/hooks";
-import { isMembershipConfirmed } from "@/components/PlanSelectionModal/utils";
 import type { ClubOperationalGateProps } from "./types";
 import { useClubOperationalStatus } from "./hooks";
 import { PaymentActivationScreen } from "./components/PaymentActivationScreen";
@@ -38,10 +36,8 @@ import { PendingApprovalCard } from "./components/PendingApprovalCard";
  */
 export function ClubOperationalGate({ children }: ClubOperationalGateProps) {
   const { data: status, isLoading } = useClubOperationalStatus();
-  const { data: subscription, isLoading: membershipLoading } =
-    useMembershipSubscription();
 
-  if (isLoading || membershipLoading) {
+  if (isLoading) {
     // Fills the gate's full slot height, same shell GateScreen uses for the
     // other non-operational states below — StatusBox is a padded, bordered
     // card sized to its own content, not the page-content area, so the ball
@@ -54,30 +50,14 @@ export function ClubOperationalGate({ children }: ClubOperationalGateProps) {
     );
   }
 
-  // Hidden, admin-only FREE-plan testing bypass (see
-  // core/billing/services/membership.service.ts's activateFreePlan and
-  // core/clubs/types's Plan comment): a FREE plan can never itself connect a
-  // real Mercado Pago account or bank transfer, so once its subscription is
-  // confirmed this gate skips PaymentActivationScreen ENTIRELY (both the
-  // membership step and the payout-method step) rather than leaving the
-  // owner stuck on step 2 forever. Scoped ONLY to this client-side rendering
-  // decision — getClubOperationalStatus/CLUB_OPERATIONAL_WHERE and the
-  // player-side reservation payment check (app/api/player/reservations/
-  // route.ts) are untouched and still require a real payout method, since
-  // createCheckoutPreference genuinely needs a connected Mercado Pago
-  // account to generate a checkout link.
-  const isFreePlanBypass =
-    status?.cause === "MP_NOT_CONNECTED" &&
-    subscription?.plan === "FREE" &&
-    isMembershipConfirmed(subscription.status);
-
   // Fails open on error (`!status`) — same as before: an owner who already
   // has an operational club shouldn't get locked out by a flaky status
   // check, only a genuinely non-operational one should ever see a gate.
-  // CLUB_INACTIVE is deliberately NOT bypassed even on the FREE plan — a
-  // club an admin has separately suspended/disabled should still show
-  // ClubInactiveCard.
-  if (!status || status.operational || isFreePlanBypass) {
+  // No FREE-plan bypass here (deliberately removed): a real payout method
+  // (Mercado Pago or bank transfer) is required before any owner reaches
+  // dashboard content, regardless of plan — connecting one is a required
+  // step, not an optional one a FREE plan can skip.
+  if (!status || status.operational) {
     return <>{children}</>;
   }
 

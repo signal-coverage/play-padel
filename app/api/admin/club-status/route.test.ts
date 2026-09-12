@@ -342,6 +342,43 @@ describe("PATCH /api/admin/club-status", () => {
     expect(dispatchMock).not.toHaveBeenCalled();
   });
 
+  // The real gap reported: reactivating a suspended club only ever wrote
+  // Club.status — the owner, presumably refreshing/retrying after being
+  // locked out, had no live signal that they'd been let back in.
+  it("dispatches a CLUB_OPERATIONAL_READY notification to the owner when un-suspending (SUSPENDED -> anything else)", async () => {
+    findUniqueMock.mockResolvedValue({ status: "SUSPENDED" });
+    updateMock.mockResolvedValue({
+      id: "club-1",
+      name: "Padel Club",
+      status: "ACTIVE",
+      updatedBy: "admin@example.com",
+      updatedAt: new Date("2026-01-01T00:00:00.000Z"),
+    });
+    getClubOwnerMock.mockResolvedValue({
+      id: "user_owner",
+      displayName: "Owner Person",
+      photoURL: null,
+      email: "owner@example.com",
+    });
+
+    const response = await PATCH(
+      makePatchRequest({
+        clubId: "club-1",
+        status: "ACTIVE",
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(dispatchMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "CLUB_OPERATIONAL_READY",
+        clubId: "club-1",
+        recipientId: "user_owner",
+        sendEmail: false,
+      }),
+    );
+  });
+
   it("does not dispatch when transitioning between two non-SUSPENDED statuses", async () => {
     findUniqueMock.mockResolvedValue({ status: "ACTIVE" });
     updateMock.mockResolvedValue({

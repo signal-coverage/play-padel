@@ -29,7 +29,9 @@ export function PlayerOverviewBanner({ className }: PlayerOverviewBannerProps) {
         )}
         style={{ animationDelay: "180ms" }}
       >
-        <BannerPreview partnerInitials={getInitials(partner.name)} />
+        <BannerPreview
+          partnerInitials={partner ? getInitials(partner.name) : null}
+        />
       </button>
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetContent side="bottom">
