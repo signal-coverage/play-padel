@@ -8,6 +8,7 @@ export type PlayerStyle = {
 };
 
 export type PartnerSummary = {
+  id: string;
   name: string;
   avatarUrl: string | null;
   timesPlayedTogether: number;
@@ -17,10 +18,15 @@ export type PartnerSummary = {
   dominantHand: DominantHand | null;
   email: string;
   phone: string | null;
-  individualWinRate: number;
-  individualMatchesPlayed: number;
+  // Match/win-rate stats — this app has no Tournament/Match model yet (see
+  // PlayerProfileCard's PlayerProfileData, which this type otherwise
+  // mirrors), so a real partner never has these. Optional rather than
+  // removed so a future match-history feature can populate them without
+  // another type change.
+  individualWinRate?: number;
+  individualMatchesPlayed?: number;
   // Couple-matches-played is timesPlayedTogether above — no separate field.
-  coupleWinRate: number;
+  coupleWinRate?: number;
 };
 
 export type PerformanceSummary = {

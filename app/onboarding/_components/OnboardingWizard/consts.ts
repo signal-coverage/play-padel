@@ -1,6 +1,5 @@
 import {
   Building2,
-  Clock,
   FileText,
   Landmark,
   Trophy,
@@ -17,7 +16,6 @@ export const STEP_META: Record<
   userType: { label: "You", icon: Users },
   clubBasics: { label: "Club", icon: Building2 },
   legalBilling: { label: "Legal", icon: Landmark },
-  operatingHours: { label: "Hours", icon: Clock },
   profile: { label: "Profile", icon: User },
   playerProfile: { label: "Profile", icon: User },
   padelProfile: { label: "Padel", icon: Trophy },

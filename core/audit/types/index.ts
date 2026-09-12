@@ -21,7 +21,21 @@ export type AuditAction =
   | "user.role_changed"
   | "payment.confirmed"
   | "payment.refunded"
-  | "waitlist.notified";
+  | "waitlist.notified"
+  | "tournament.created"
+  | "tournament.updated"
+  | "tournament.published"
+  | "tournament.cancelled"
+  | "tournament_team.registered"
+  | "tournament_team.withdrawn"
+  // Slice 2 ("Owner group + scoring tools") additions below.
+  | "tournament_groups.set_manually"
+  | "tournament_groups.generated_automatically"
+  | "tournament_groups.locked"
+  | "tournament_match.score_entered"
+  | "tournament_match.walkover_recorded"
+  // Slice 3 ("Knockout + standings") addition below.
+  | "tournament_knockout.generated";
 
 export interface AuditLog {
   id: string;

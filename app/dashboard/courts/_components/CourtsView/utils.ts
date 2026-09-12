@@ -18,6 +18,7 @@ export function courtToFormValues(
 ): Omit<CourtFormValues, "reservationFee"> & { reservationFee?: number } {
   return {
     name: court?.name ?? "",
+    courtNumber: court?.courtNumber,
     surface: court?.surface ?? "",
     indoor: court?.indoor ?? false,
     color: court?.color ?? DEFAULT_COURT_COLOR,

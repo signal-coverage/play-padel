@@ -82,13 +82,43 @@ describe("CommandPalette", () => {
   });
 
   it("never fetches operational status for a player, and lists the full player nav", async () => {
-    const fetchMock = vi.fn();
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ tournaments: [] }),
+    });
     renderCommandPalette("player", fetchMock);
 
     expect(screen.getByText("Dashboard")).toBeInTheDocument();
     expect(screen.getByText("Browse Courts")).toBeInTheDocument();
 
     await Promise.resolve();
-    expect(fetchMock).not.toHaveBeenCalled();
+    expect(fetchMock).not.toHaveBeenCalledWith(
+      "/api/clubs/mercadopago/operational-status",
+    );
+  });
+
+  it("hides Tournaments for a player when no tournament is open", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ tournaments: [] }),
+    });
+    renderCommandPalette("player", fetchMock);
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalled());
+    expect(screen.queryByText("Tournaments")).not.toBeInTheDocument();
+  });
+
+  it("shows Tournaments for a player once at least one tournament is open (⌘K parity with the navbar)", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        tournaments: [{ id: "t1", publishedAt: null }],
+      }),
+    });
+    renderCommandPalette("player", fetchMock);
+
+    await waitFor(() =>
+      expect(screen.getByText("Tournaments")).toBeInTheDocument(),
+    );
   });
 });

@@ -30,6 +30,18 @@ const PLAYER_ROWS = [
     dominantHand: "right",
     email: "ana@example.com",
     phone: "+541100000000",
+    isAdmin: false,
+  },
+  {
+    id: "user_2",
+    displayName: "Bruno",
+    photoURL: null,
+    padelCategory: 3,
+    preferredSide: "backhand",
+    dominantHand: "left",
+    email: "bruno@example.com",
+    phone: "+541100000001",
+    isAdmin: true,
   },
 ];
 
@@ -71,6 +83,30 @@ describe("GET /api/players", () => {
     expect(response.status).toBe(200);
     expect(body.players[0].email).toBe("ana@example.com");
     expect(body.players[0].phone).toBe("+541100000000");
+  });
+
+  it("includes each listed player's own isAdmin flag for an admin caller (backs the directory's admin-only Role column)", async () => {
+    authMock.mockResolvedValue({ userId: "user_admin" });
+    findUniqueMock.mockResolvedValue({ isAdmin: true });
+
+    const response = await GET();
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.players[0].isAdmin).toBe(false);
+    expect(body.players[1].isAdmin).toBe(true);
+  });
+
+  it("strips each listed player's isAdmin flag for a non-admin caller, same as email/phone", async () => {
+    authMock.mockResolvedValue({ userId: "user_2" });
+    findUniqueMock.mockResolvedValue({ isAdmin: false });
+
+    const response = await GET();
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.players[0].isAdmin).toBeUndefined();
+    expect(body.players[1].isAdmin).toBeUndefined();
   });
 
   it("strips email and phone when the caller's profile can't be found (treated as non-admin)", async () => {

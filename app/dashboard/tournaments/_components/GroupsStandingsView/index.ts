@@ -1,0 +1,1 @@
+export { GroupsStandingsView } from "./GroupsStandingsView";

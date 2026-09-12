@@ -89,6 +89,33 @@ export async function PATCH(request: Request) {
       }
     }
 
+    // The un-suspend direction — an owner who was locked out (presumably
+    // refreshing/retrying) deserves the same live "you're back" signal as
+    // every other path that reverses a lockout (see
+    // core/billing/services/membership.service.ts's
+    // notifyClubDashboardUnlocked). Reuses CLUB_OPERATIONAL_READY, same
+    // reasoning as that helper: the observable effect for the owner
+    // (dashboard usable again) is the same regardless of why.
+    if (previousStatus === "SUSPENDED" && status !== "SUSPENDED") {
+      try {
+        const owner = await getClubOwner(clubId);
+        if (owner) {
+          await dispatch({
+            type: "CLUB_OPERATIONAL_READY",
+            clubId,
+            recipientId: owner.id,
+            recipientEmail: owner.email,
+            recipientName: owner.displayName,
+            subject: "Your dashboard is unlocked",
+            html: "Your club is no longer suspended — your dashboard is unlocked again.",
+            sendEmail: false,
+          });
+        }
+      } catch {
+        // notification failure must not affect the status update response
+      }
+    }
+
     return NextResponse.json({ club });
   } catch (err) {
     if (

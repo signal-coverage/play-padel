@@ -6,18 +6,18 @@ import { COURT_FORM_STEP_LABELS } from "./consts";
 import type { CourtFormStepIndicatorProps } from "./types";
 
 // Same numbered-circle + connecting-line visual language as
-// PaymentStepIndicator (see components/PlanSelectionModal/
-// components/MembershipCheckoutDrawer/components/PaymentStepIndicator), but
-// CLICKABLE: unlike that drawer's linear email -> card flow, these two steps
-// aren't gated — the owner can freely jump between "Details" and
-// "Availability" before submitting — so each step renders as a button
-// instead of a static div.
+// PaymentStepIndicator/ActivationStepIndicator/OnboardingWizard's own
+// StepIndicator — and, like all three of those, purely visual now (no
+// `onChange`, no button): a step only ever advances via the modal's own
+// Back/Next/Create buttons, never by clicking a step directly, so nothing
+// here is interactive. Narrower and centered (max-w-sm mx-auto) now that
+// there are 4 steps instead of 2 — spanning the full modal width read as
+// needlessly spread out once the label count doubled.
 export function CourtFormStepIndicator({
   current,
-  onChange,
 }: CourtFormStepIndicatorProps) {
   return (
-    <div className="flex w-full items-center px-4 pb-4">
+    <div className="mx-auto flex w-full max-w-sm items-center px-4 pb-4">
       {COURT_FORM_STEP_LABELS.map((label, i) => {
         const done = current > i;
         const active = current === i;
@@ -28,11 +28,7 @@ export function CourtFormStepIndicator({
             className="flex flex-1 items-center last:flex-none"
             aria-current={active ? "step" : undefined}
           >
-            <button
-              type="button"
-              onClick={() => onChange(i as 0 | 1)}
-              className="flex flex-col items-center gap-1"
-            >
+            <div className="flex flex-col items-center gap-1">
               <div
                 className={cn(
                   "flex size-7 items-center justify-center rounded-full border-2 text-xs font-semibold transition-all duration-300 ease-out",
@@ -57,7 +53,7 @@ export function CourtFormStepIndicator({
               >
                 {label}
               </span>
-            </button>
+            </div>
             {i < COURT_FORM_STEP_LABELS.length - 1 && (
               <div
                 className={cn(

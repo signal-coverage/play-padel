@@ -19,12 +19,17 @@ vi.mock("@/lib/mercadopago/tokenCrypto", () => ({
   encryptToken: vi.fn((value: string) => `encrypted(${value})`),
 }));
 
+vi.mock("@/core/clubs/services/clubs.service", () => ({
+  notifyClubOperationalIfNeeded: vi.fn(),
+}));
+
 import { prisma } from "@/infrastructure/db/client";
 import {
   verifyOAuthState,
   exchangeAuthorizationCode,
   fetchMercadoPagoUserProfile,
 } from "@/lib/mercadopago/oauth";
+import { notifyClubOperationalIfNeeded } from "@/core/clubs/services/clubs.service";
 import { GET } from "./route";
 
 const upsertMock = prisma.clubMercadoPagoAccount.upsert as ReturnType<
@@ -36,6 +41,8 @@ const exchangeAuthorizationCodeMock = exchangeAuthorizationCode as ReturnType<
 >;
 const fetchMercadoPagoUserProfileMock =
   fetchMercadoPagoUserProfile as ReturnType<typeof vi.fn>;
+const notifyClubOperationalIfNeededMock =
+  notifyClubOperationalIfNeeded as ReturnType<typeof vi.fn>;
 
 function makeRequest(query: string) {
   return new NextRequest(
@@ -49,6 +56,8 @@ beforeEach(() => {
   verifyOAuthStateMock.mockReset();
   exchangeAuthorizationCodeMock.mockReset();
   fetchMercadoPagoUserProfileMock.mockReset();
+  notifyClubOperationalIfNeededMock.mockReset();
+  notifyClubOperationalIfNeededMock.mockResolvedValue(undefined);
 });
 
 describe("GET /api/clubs/mercadopago/callback", () => {
@@ -99,6 +108,7 @@ describe("GET /api/clubs/mercadopago/callback", () => {
     const location = response.headers.get("location");
     expect(location).toContain("/dashboard/courts");
     expect(location).toContain("mpConnect=success");
+    expect(notifyClubOperationalIfNeededMock).toHaveBeenCalledWith("club_1");
   });
 
   it("still connects the account when fetching the MP profile fails", async () => {
@@ -146,6 +156,7 @@ describe("GET /api/clubs/mercadopago/callback", () => {
 
     expect(exchangeAuthorizationCodeMock).not.toHaveBeenCalled();
     expect(upsertMock).not.toHaveBeenCalled();
+    expect(notifyClubOperationalIfNeededMock).not.toHaveBeenCalled();
     const location = response.headers.get("location");
     expect(location).toContain("mpConnect=error");
     expect(location).toContain("invalid_state");

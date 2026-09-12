@@ -6,6 +6,7 @@ import {
   fetchMercadoPagoUserProfile,
 } from "@/lib/mercadopago/oauth";
 import { encryptToken } from "@/lib/mercadopago/tokenCrypto";
+import { notifyClubOperationalIfNeeded } from "@/core/clubs/services/clubs.service";
 
 function requireAppUrl(): string {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL;
@@ -117,6 +118,11 @@ export async function GET(request: NextRequest) {
   } catch {
     return settingsRedirect({ mpConnect: "error", reason: "storage_failed" });
   }
+
+  // Club just gained a payout method — dispatches the one-time
+  // "operational" reminder if this is what tips it over into operational
+  // (non-throwing, safe to await inline).
+  await notifyClubOperationalIfNeeded(verified.clubId);
 
   return settingsRedirect({ mpConnect: "success" });
 }

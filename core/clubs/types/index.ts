@@ -20,6 +20,14 @@ export interface PendingClubSummary {
   name: string;
   email: string;
   createdAt: Date;
+  // True when another club (any approval/operational status, address text
+  // compared case/whitespace-insensitively) shares this club's email or
+  // address — see listPendingClubs in core/clubs/services/clubs.service.ts.
+  // A warning surfaced for the admin to judge during review, never an
+  // automatic rejection: address text isn't normalized/geocoded, so this
+  // can't distinguish a real duplicate from two different addresses that
+  // happen to be typed the same way.
+  possibleDuplicate: boolean;
 }
 
 export interface Club {
@@ -29,6 +37,7 @@ export interface Club {
   taxId?: string;
   email: string;
   phone?: string;
+  whatsappNumber?: string;
   address?: string;
   country?: string;
   province?: string;
@@ -43,6 +52,11 @@ export interface Club {
   timezone: string;
   currency: string;
   plan: Plan;
+  // Per-club override of the plan's default court limit — see
+  // lib/consts/planPricing.ts's PLAN_COURT_LIMITS and prisma/schema.prisma's
+  // Club.courtLimit doc comment. Null/undefined means "use the plan's
+  // default (or unlimited, for MAX with nothing set yet)".
+  courtLimit?: number | null;
   status: ClubStatus;
   createdAt: Date;
   updatedAt: Date;
@@ -58,6 +72,7 @@ export interface CreateClubInput {
   legalName?: string;
   taxId?: string;
   phone?: string;
+  whatsappNumber?: string;
   address?: string;
   country?: string;
   province?: string;
@@ -76,6 +91,7 @@ export interface UpdateClubInput {
   taxId?: string;
   email?: string;
   phone?: string;
+  whatsappNumber?: string;
   address?: string;
   country?: string;
   province?: string;
@@ -84,5 +100,9 @@ export interface UpdateClubInput {
   timezone?: string;
   currency?: string;
   plan?: Plan;
+  // Admin-only in practice — see require-owner's PATCH /api/clubs, which
+  // strips this before calling updateClub so an owner can never set their
+  // own override.
+  courtLimit?: number | null;
   status?: ClubStatus;
 }

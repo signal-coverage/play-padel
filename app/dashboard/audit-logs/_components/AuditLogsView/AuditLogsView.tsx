@@ -45,7 +45,15 @@ export function AuditLogsView() {
         </p>
       ) : (
         <AuditLogsTable
-          className="min-h-0 flex-1"
+          // Same fix as PlayersDirectory's table
+          // (app/dashboard/players/_components/PlayersDirectory/PlayersDirectory.tsx)
+          // — see its own comments for the full explanation. <main>
+          // (DashboardShell.tsx) is overflow-y-auto (whole-page scroll)
+          // below md, not md:overflow-hidden, so the h-full/flex-1 chain
+          // this table normally stretches against collapses there;
+          // min-h-[60svh] doesn't depend on that chain, md:min-h-0 restores
+          // the exact previous desktop sizing.
+          className="min-h-[60svh] flex-1 md:min-h-0"
           logs={data?.logs ?? []}
           isLoading={isLoading}
         />
@@ -78,6 +86,13 @@ export function AuditLogsView() {
           </Button>
         </div>
       </div>
+
+      {/* Real spacer box (height, not margin/padding), mobile only — see
+          PlayersDirectory.tsx's identical spacer for the full explanation
+          of why margin/padding doesn't work here. Placed after the
+          pagination footer (not right after the table) since that footer
+          is genuinely the last thing on the page. */}
+      <div className="h-8 shrink-0 md:hidden" aria-hidden="true" />
     </div>
   );
 }

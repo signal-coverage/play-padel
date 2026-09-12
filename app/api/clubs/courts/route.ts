@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import {
   createCourt,
   DuplicateCourtNameError,
+  CourtLimitReachedError,
   listCourtsByClub,
 } from "@/core/courts/services/courts.service";
 import { createCourtSchema } from "@/core/courts/schemas/court.schema";
@@ -49,6 +50,9 @@ export async function POST(request: NextRequest) {
   } catch (err) {
     if (err instanceof DuplicateCourtNameError) {
       return NextResponse.json({ error: err.message }, { status: 409 });
+    }
+    if (err instanceof CourtLimitReachedError) {
+      return NextResponse.json({ error: err.message }, { status: 403 });
     }
     return NextResponse.json(
       { error: "Failed to create court" },

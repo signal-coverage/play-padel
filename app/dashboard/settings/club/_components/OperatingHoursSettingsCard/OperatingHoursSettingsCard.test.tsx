@@ -44,6 +44,16 @@ function renderCard(getEntries: AvailabilityEntry[]) {
   return { ...utils, fetchMock, queryClient };
 }
 
+// The card now renders AvailabilityRowsEditor in its "split" (accordion) day
+// list: a day's Start/End TimeInputs only mount once that day's row is
+// expanded, by clicking the day-name button in its header. This helper finds
+// that button by its accessible name (the plain day label, e.g. "Monday")
+// rather than the chevron toggle button (accessible name "Expand Monday" /
+// "Collapse Monday"), which sits right next to it in the same row.
+function expandDay(dayLabel: string) {
+  fireEvent.click(screen.getByRole("button", { name: dayLabel }));
+}
+
 describe("OperatingHoursSettingsCard", () => {
   afterEach(() => {
     // This repo's vitest.config.mts does not enable `test.globals`, so
@@ -57,11 +67,14 @@ describe("OperatingHoursSettingsCard", () => {
     renderCard([{ dayOfWeek: 1, startTime: "08:00", endTime: "18:00" }]);
 
     await waitFor(() =>
-      expect(screen.getByDisplayValue("08:00")).toBeInTheDocument(),
+      expect(screen.getByRole("switch", { name: "Monday" })).toBeChecked(),
     );
-    expect(screen.getByDisplayValue("18:00")).toBeInTheDocument();
-    expect(screen.getByRole("switch", { name: "Monday" })).toBeChecked();
     expect(screen.getByRole("switch", { name: "Sunday" })).not.toBeChecked();
+
+    expandDay("Monday");
+
+    expect(screen.getByDisplayValue("08:00")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("18:00")).toBeInTheDocument();
   });
 
   it("toggling a day and clicking Save calls PUT with the right body", async () => {
@@ -101,8 +114,11 @@ describe("OperatingHoursSettingsCard", () => {
     ]);
 
     await waitFor(() =>
-      expect(container.querySelector("#day-1-end")).toHaveValue("21:00"),
+      expect(screen.getByRole("switch", { name: "Monday" })).toBeChecked(),
     );
+    expandDay("Monday");
+
+    expect(container.querySelector("#day-1-end")).toHaveValue("21:00");
     expect(
       screen.getByRole("button", { name: /save changes/i }),
     ).not.toBeDisabled();
@@ -124,8 +140,11 @@ describe("OperatingHoursSettingsCard", () => {
     ]);
 
     await waitFor(() =>
-      expect(container.querySelector("#day-1-end")).toHaveValue("21:00"),
+      expect(screen.getByRole("switch", { name: "Monday" })).toBeChecked(),
     );
+    expandDay("Monday");
+
+    expect(container.querySelector("#day-1-end")).toHaveValue("21:00");
 
     const mondayEndInput = container.querySelector("#day-1-end");
     expect(mondayEndInput).not.toBeNull();

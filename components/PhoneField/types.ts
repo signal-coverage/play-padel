@@ -1,4 +1,4 @@
-import type { Control, FieldErrors, FieldValues } from "react-hook-form";
+import type { Control, FieldErrors, FieldValues, Path } from "react-hook-form";
 
 // Minimal field shape PhoneField needs from the host form: it writes to both
 // "phone" (the compound "+<dial code> <rest>" value) and "country" (kept in
@@ -16,4 +16,10 @@ export type PhoneFieldProps<
 > = {
   control: Control<TFieldValues>;
   errors: FieldErrors<TFieldValues>;
+  /** Field name for the compound "+<dial code> <rest>" value. Defaults to "phone" — every existing call site is unaffected. */
+  phoneFieldName?: Path<TFieldValues>;
+  /** Field name for the matched country's display name. Defaults to "country". */
+  countryFieldName?: Path<TFieldValues>;
+  /** Field label text. Defaults to "Phone *". */
+  label?: string;
 };

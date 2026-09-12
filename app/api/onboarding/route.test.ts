@@ -26,10 +26,6 @@ vi.mock("@/core/clubs/services/clubs.service", () => ({
   createClub: vi.fn(),
 }));
 
-vi.mock("@/core/clubs/services/operatingHours.service", () => ({
-  setClubOperatingHours: vi.fn(),
-}));
-
 vi.mock("@/core/billing/services/membership.service", () => ({
   createPendingMembershipSubscription: vi.fn(),
 }));
@@ -48,7 +44,6 @@ import { checkRateLimit } from "@vercel/firewall";
 import { Prisma } from "@/lib/generated/prisma/client";
 import { prisma } from "@/infrastructure/db/client";
 import { createClub } from "@/core/clubs/services/clubs.service";
-import { setClubOperatingHours } from "@/core/clubs/services/operatingHours.service";
 import { createPendingMembershipSubscription } from "@/core/billing/services/membership.service";
 import { logAudit } from "@/core/audit/services/audit.service";
 import { notifyAllAdmins } from "@/lib/notifications/dispatcher";
@@ -65,19 +60,10 @@ const findUniqueMock = prisma.userProfile.findUnique as ReturnType<
 >;
 const upsertMock = prisma.userProfile.upsert as ReturnType<typeof vi.fn>;
 const createClubMock = createClub as ReturnType<typeof vi.fn>;
-const setClubOperatingHoursMock = setClubOperatingHours as ReturnType<
-  typeof vi.fn
->;
 const createPendingMembershipSubscriptionMock =
   createPendingMembershipSubscription as ReturnType<typeof vi.fn>;
 const logAuditMock = logAudit as ReturnType<typeof vi.fn>;
 const notifyAllAdminsMock = notifyAllAdmins as ReturnType<typeof vi.fn>;
-
-const DEFAULT_OWNER_OPERATING_HOURS = [
-  { dayOfWeek: 1, active: true, startTime: "09:00", endTime: "21:00" },
-  { dayOfWeek: 2, active: true, startTime: "09:00", endTime: "21:00" },
-  { dayOfWeek: 3, active: false, startTime: "09:00", endTime: "21:00" },
-];
 
 function ownerBody(overrides: Record<string, unknown> = {}) {
   return {
@@ -85,11 +71,11 @@ function ownerBody(overrides: Record<string, unknown> = {}) {
     name: "Test Club",
     email: "owner@example.com",
     phone: "+541122223333",
+    whatsappNumber: "+541122224444",
     legalName: "Test Club S.A.",
     taxId: "30-12345678-9",
     timezone: "America/Argentina/Buenos_Aires",
     currency: "ARS",
-    operatingHours: DEFAULT_OWNER_OPERATING_HOURS,
     address: "Main St 123",
     displayName: "Owner Name",
     confirmedAge: true,
@@ -126,7 +112,6 @@ describe("POST /api/onboarding", () => {
     findUniqueMock.mockReset();
     upsertMock.mockReset();
     createClubMock.mockReset();
-    setClubOperatingHoursMock.mockReset();
     createPendingMembershipSubscriptionMock.mockReset();
     logAuditMock.mockReset();
     notifyAllAdminsMock.mockReset();
@@ -189,7 +174,10 @@ describe("POST /api/onboarding", () => {
     // Plan/membership tier selection now happens later, in the dashboard's
     // payment-activation gate — every new club is created on BASIC.
     expect(createClubMock).toHaveBeenCalledWith(
-      expect.objectContaining({ plan: "BASIC" }),
+      expect.objectContaining({
+        plan: "BASIC",
+        whatsappNumber: "+541122224444",
+      }),
       "user_1",
     );
 
@@ -223,84 +211,6 @@ describe("POST /api/onboarding", () => {
     );
   });
 
-  it("owner path: seeds the club's operating hours from the filtered/mapped active days", async () => {
-    createClubMock.mockResolvedValue({
-      id: "club_1",
-      name: "Test Club",
-      plan: "BASIC",
-    });
-
-    await POST(makeRequest(ownerBody()));
-
-    expect(setClubOperatingHoursMock).toHaveBeenCalledWith("club_1", [
-      { dayOfWeek: 1, startTime: "09:00", endTime: "21:00" },
-      { dayOfWeek: 2, startTime: "09:00", endTime: "21:00" },
-    ]);
-  });
-
-  // A defensive-only branch: onboardingFormSchema's superRefine already
-  // requires >=1 active operatingHours entry for any owner payload that
-  // passes validation (see app/onboarding/types.ts), so a real request can
-  // never reach the route with an empty/missing operatingHours — confirmed
-  // here by the 400 rather than a 200, since parsing fails before this
-  // route's own club-creation logic ever runs.
-  it("owner path: rejects with 400 before ever creating a club when operatingHours has no active day (schema-enforced)", async () => {
-    const response = await POST(makeRequest(ownerBody({ operatingHours: [] })));
-
-    expect(response.status).toBe(400);
-    expect(createClubMock).not.toHaveBeenCalled();
-    expect(setClubOperatingHoursMock).not.toHaveBeenCalled();
-  });
-
-  it("owner path: accepts an active day whose end time is numerically before its start time (overnight hours)", async () => {
-    createClubMock.mockResolvedValue({
-      id: "club_1",
-      name: "Test Club",
-      plan: "BASIC",
-    });
-
-    const response = await POST(
-      makeRequest(
-        ownerBody({
-          operatingHours: [
-            {
-              dayOfWeek: 1,
-              active: true,
-              startTime: "21:00",
-              endTime: "02:00",
-            },
-          ],
-        }),
-      ),
-    );
-
-    expect(response.status).toBe(200);
-    expect(setClubOperatingHoursMock).toHaveBeenCalledWith("club_1", [
-      { dayOfWeek: 1, startTime: "21:00", endTime: "02:00" },
-    ]);
-  });
-
-  it("owner path: rejects with 400 when an active day's start and end time are the same", async () => {
-    const response = await POST(
-      makeRequest(
-        ownerBody({
-          operatingHours: [
-            {
-              dayOfWeek: 1,
-              active: true,
-              startTime: "09:00",
-              endTime: "09:00",
-            },
-          ],
-        }),
-      ),
-    );
-
-    expect(response.status).toBe(400);
-    expect(createClubMock).not.toHaveBeenCalled();
-    expect(setClubOperatingHoursMock).not.toHaveBeenCalled();
-  });
-
   it("owner path: broadcasts CLUB_PENDING_APPROVAL to all admins after creating the PENDING club", async () => {
     createClubMock.mockResolvedValue({
       id: "club_1",
@@ -319,13 +229,20 @@ describe("POST /api/onboarding", () => {
     );
   });
 
+  it("rejects an owner submission missing whatsappNumber", async () => {
+    const body = ownerBody({ whatsappNumber: undefined });
+    const response = await POST(makeRequest(body));
+
+    expect(response.status).toBe(400);
+    expect(createClubMock).not.toHaveBeenCalled();
+  });
+
   it("player path: does not touch the membership subscription service at all", async () => {
     const response = await POST(makeRequest(playerBody()));
 
     expect(response.status).toBe(200);
     expect(createClubMock).not.toHaveBeenCalled();
     expect(createPendingMembershipSubscriptionMock).not.toHaveBeenCalled();
-    expect(setClubOperatingHoursMock).not.toHaveBeenCalled();
   });
 
   // Real shape verified against the actual dev database (Postgres unique
@@ -349,6 +266,35 @@ describe("POST /api/onboarding", () => {
     expect(response.status).toBe(409);
     const body = await response.json();
     expect(body.error).toBe("A user with this email is already registered.");
+  });
+
+  // Real shape verified against the actual dev database (Postgres unique
+  // violation on "clubs_email_key", the club-side counterpart migration to
+  // 20260906110000_add_user_profile_email_unique) — same fixture convention
+  // as the UserProfile.email test above. Positionally distinct from it:
+  // createClub runs BEFORE the owner's own UserProfile.upsert, so a P2002
+  // thrown from createClub can only ever be the club's email colliding, not
+  // the Clerk account's own.
+  it("returns 409 with a support-contact message when the club's email is already registered to another club", async () => {
+    createClubMock.mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError(
+        "Unique constraint failed on the constraint: `clubs_email_key`",
+        {
+          code: "P2002",
+          clientVersion: "7.9.1",
+          meta: { modelName: "Club" },
+        },
+      ),
+    );
+
+    const response = await POST(makeRequest(ownerBody()));
+
+    expect(response.status).toBe(409);
+    const body = await response.json();
+    expect(body.error).toBe(
+      "This club's email is already registered. Please contact hello@playpadel.com to resolve this.",
+    );
+    expect(upsertMock).not.toHaveBeenCalled();
   });
 
   it("returns 500 without upserting the profile when seeding the membership subscription fails", async () => {

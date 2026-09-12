@@ -1,4 +1,4 @@
-import { ChevronRight, LayoutGrid } from "lucide-react";
+import { ChevronRight, LayoutGrid, Users } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import type { BannerPreviewProps } from "./types";
 
@@ -16,7 +16,7 @@ export function BannerPreview({ partnerInitials }: BannerPreviewProps) {
       </div>
       <Avatar size="sm">
         <AvatarFallback className="bg-primary/15 font-bold text-primary">
-          {partnerInitials}
+          {partnerInitials ?? <Users className="size-3" />}
         </AvatarFallback>
       </Avatar>
       <ChevronRight

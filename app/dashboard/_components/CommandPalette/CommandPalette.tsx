@@ -10,7 +10,10 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import { useIsClubOperational } from "../AppNavbar/hooks";
+import {
+  useIsClubOperational,
+  useOpenTournamentsStatus,
+} from "../AppNavbar/hooks";
 import { getVisibleNavItems } from "../AppNavbar/utils";
 import { useCommandPaletteShortcut } from "./hooks";
 import type { CommandPaletteProps } from "./types";
@@ -18,14 +21,20 @@ import type { CommandPaletteProps } from "./types";
 // Entries come from the same navItems source of truth (via
 // getVisibleNavItems) as NavLinks and MobileBottomNav, so this can never
 // drift into a second, inconsistent route list — including the
-// non-operational-owner "Dashboard only" reduction.
+// non-operational-owner "Dashboard only" reduction and the Tournaments
+// item's dynamic "at least one tournament is open" condition (reuses
+// useOpenTournamentsStatus, the same hook the navbar itself calls, rather
+// than duplicating its fetch logic — see AppNavbar/hooks.ts).
 export function CommandPalette({ role }: CommandPaletteProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   useCommandPaletteShortcut(setOpen);
 
   const isOperational = useIsClubOperational(role);
-  const visibleItems = getVisibleNavItems(role, isOperational);
+  const { anyOpen: tournamentsOpen } = useOpenTournamentsStatus(role);
+  const visibleItems = getVisibleNavItems(role, isOperational, false, {
+    tournamentsOpen,
+  });
 
   function handleSelect(href: string) {
     setOpen(false);

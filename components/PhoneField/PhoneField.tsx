@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useController } from "react-hook-form";
-import type { FieldErrors, FieldValues, Path } from "react-hook-form";
+import type { FieldValues, Path } from "react-hook-form";
 import { Check, ChevronsUpDown } from "lucide-react";
 import * as FlagIcons from "country-flag-icons/react/3x2";
 import { Button } from "@/components/ui/button";
@@ -93,15 +93,28 @@ function splitPhone(phone: string): {
 // string alone can silently resolve to the wrong country.
 export function PhoneField<
   TFieldValues extends FieldValues = PhoneFieldValues,
->({ control, errors }: PhoneFieldProps<TFieldValues>) {
-  const phoneName = "phone" as Path<TFieldValues>;
-  const countryName = "country" as Path<TFieldValues>;
+>({
+  control,
+  errors,
+  phoneFieldName,
+  countryFieldName,
+  label = "Phone *",
+}: PhoneFieldProps<TFieldValues>) {
+  const phoneName = phoneFieldName ?? ("phone" as Path<TFieldValues>);
+  const countryName = countryFieldName ?? ("country" as Path<TFieldValues>);
   const { field: phoneField } = useController({ control, name: phoneName });
   const { field: countryField } = useController({
     control,
     name: countryName,
   });
-  const fieldErrors = errors as unknown as FieldErrors<PhoneFieldValues>;
+  // Field names are now dynamic, so index into errors by the resolved key
+  // instead of the previous hardcoded `.phone` cast.
+  const fieldErrors = errors as unknown as Record<
+    string,
+    { message?: string } | undefined
+  >;
+  const phoneError = fieldErrors[phoneName as string];
+  const inputId = `${String(phoneName)}-rest`;
 
   const [countryIsoCode, setCountryIsoCode] = useState<string | undefined>(
     () => splitPhone((phoneField.value as string) ?? "").countryIsoCode,
@@ -156,7 +169,7 @@ export function PhoneField<
 
   return (
     <Field>
-      <FieldLabel htmlFor="phone-rest">Phone *</FieldLabel>
+      <FieldLabel htmlFor={inputId}>{label}</FieldLabel>
       {/* Stacked (code above, number full-width below) at 1023px and below;
           side by side from 1024px (Tailwind's `lg`) up. */}
       <div className="flex flex-col gap-2 lg:flex-row">
@@ -167,7 +180,7 @@ export function PhoneField<
               variant="outline"
               role="combobox"
               aria-expanded={open}
-              aria-invalid={!!fieldErrors.phone}
+              aria-invalid={!!phoneError}
               className="h-8 w-full justify-between px-2.5 font-normal lg:w-24 lg:shrink-0"
             >
               <span className="flex items-center gap-1.5 truncate">
@@ -212,15 +225,15 @@ export function PhoneField<
         </Popover>
 
         <Input
-          id="phone-rest"
+          id={inputId}
           className="h-8 lg:flex-1"
           placeholder={getPhonePlaceholder(countryIsoCode)}
           value={restOfNumber}
           onChange={(e) => handleRestOfNumberChange(e.target.value)}
-          aria-invalid={!!fieldErrors.phone}
+          aria-invalid={!!phoneError}
         />
       </div>
-      <FieldError errors={[fieldErrors.phone]} />
+      <FieldError errors={[phoneError]} />
     </Field>
   );
 }

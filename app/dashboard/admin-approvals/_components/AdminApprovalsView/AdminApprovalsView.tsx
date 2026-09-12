@@ -4,6 +4,7 @@ import { useState } from "react";
 import { DataTable } from "@/components/DataTable";
 import { StatusBox } from "@/components/StatusBox";
 import { Button } from "@/components/ui/button";
+import { BouncingBall } from "@/components/BouncingBall";
 import { usePendingClubs, useApproveClub, useRejectClub } from "./hooks";
 import { RejectConfirmDialog } from "./components/RejectConfirmDialog";
 import type { DataTableColumn } from "@/components/DataTable";
@@ -31,7 +32,23 @@ export function AdminApprovalsView() {
       header: "Club",
       cell: (club) => (
         <div className="flex flex-col gap-1 py-0.5">
-          <span className="font-medium">{club.name}</span>
+          <div className="flex items-center gap-1.5">
+            <span className="font-medium">{club.name}</span>
+            {club.possibleDuplicate && (
+              // The app's status-icon language is the tennis ball
+              // (BouncingBall — see components/ui/sonner.tsx's toast icons),
+              // recolored per severity and always bouncing, rather than a
+              // generic icon set.
+              <span title="Another club already has this email or address — check before approving.">
+                <BouncingBall
+                  size={14}
+                  amplitude={4}
+                  fill="var(--warning)"
+                  stroke="color-mix(in oklch, var(--warning) 70%, black)"
+                />
+              </span>
+            )}
+          </div>
           <span className="text-muted-foreground">{club.email}</span>
         </div>
       ),
@@ -40,25 +57,36 @@ export function AdminApprovalsView() {
       key: "actions",
       header: "",
       className: "text-right",
-      cell: (club) => (
-        <div className="flex justify-end gap-2">
-          <Button
-            size="sm"
-            onClick={() => approve.mutate(club.id)}
-            disabled={approve.isPending}
-          >
-            Approve
-          </Button>
-          <Button
-            size="sm"
-            variant="destructive"
-            onClick={() => setRejectTarget(club)}
-            disabled={reject.isPending}
-          >
-            Reject
-          </Button>
-        </div>
-      ),
+      cell: (club) => {
+        // Scoped to THIS row: approve/reject are each a single shared
+        // mutation instance reused across every row (not one per row, which
+        // the rules of hooks wouldn't allow for a dynamic list), so a plain
+        // `approve.isPending` would disable/relabel every row at once
+        // whenever ANY row's approval is in flight. Comparing against
+        // `.variables` (the id last passed to `.mutate()`) isolates it to
+        // the row that's actually pending.
+        const isApprovingThis =
+          approve.isPending && approve.variables === club.id;
+        return (
+          <div className="flex justify-end gap-2">
+            <Button
+              size="sm"
+              onClick={() => approve.mutate(club.id)}
+              disabled={isApprovingThis}
+            >
+              {isApprovingThis ? "Approving…" : "Approve"}
+            </Button>
+            <Button
+              size="sm"
+              variant="destructive"
+              onClick={() => setRejectTarget(club)}
+              disabled={isApprovingThis}
+            >
+              Reject
+            </Button>
+          </div>
+        );
+      },
     },
   ];
 

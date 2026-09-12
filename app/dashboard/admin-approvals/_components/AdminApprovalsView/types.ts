@@ -8,4 +8,8 @@ export type PendingClub = {
   name: string;
   email: string;
   createdAt: string;
+  // True when another club (any status) shares this club's email or
+  // address — a warning for the admin to judge, not an automatic rejection.
+  // See PendingClubSummary's own doc comment in core/clubs/types.
+  possibleDuplicate: boolean;
 };

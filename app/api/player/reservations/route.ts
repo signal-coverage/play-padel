@@ -14,9 +14,13 @@ import {
   getReservationIdsWithReceipt,
 } from "@/core/billing/services/billing.service";
 import { createCheckoutPreference } from "@/lib/mercadopago/preferences";
-import { getClubOperationalStatus } from "@/lib/mercadopago/operationalStatus";
+import {
+  getClubOperationalStatus,
+  getAvailablePaymentMethods,
+} from "@/lib/mercadopago/operationalStatus";
 import { checkBot } from "@/lib/security/botGuard";
 import { enforceRateLimit } from "@/lib/security/rateLimit";
+import { BANK_TRANSFER_HOLD_MINUTES } from "@/core/reservations/consts";
 
 // Player's "my reservations" list, across all clubs. Each row also carries a
 // server-computed canSelfCancel flag (docs/reservation-flow.md: self-cancel
@@ -68,6 +72,20 @@ export async function POST(request: NextRequest) {
   const scheduledStart = body?.scheduledStart;
   const scheduledEnd = body?.scheduledEnd;
   const notes = typeof body?.notes === "string" ? body.notes : undefined;
+  // Optional, additive co-player tagging (see prisma/schema.prisma's
+  // ReservationPartner) — applies identically to both booking paths below
+  // (free instant-CONFIRMED and paid SCHEDULED-hold). Real validation (max
+  // 3, no self-tag, must be real players) happens inside createReservation;
+  // this only narrows the request body to a string array or undefined.
+  const partnerIds = Array.isArray(body?.partnerIds)
+    ? body.partnerIds.filter(
+        (id: unknown): id is string => typeof id === "string",
+      )
+    : undefined;
+  const paymentMethod =
+    body?.paymentMethod === "MERCADOPAGO" || body?.paymentMethod === "TRANSFER"
+      ? body.paymentMethod
+      : undefined;
 
   if (
     typeof courtId !== "string" ||
@@ -119,6 +137,7 @@ export async function POST(request: NextRequest) {
         scheduledStart,
         scheduledEnd,
         notes,
+        partnerIds,
       });
       return NextResponse.json({ reservation }, { status: 201 });
     } catch (err) {
@@ -153,12 +172,49 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  // The player may only pick a payment method the club has actually
+  // configured (see getAvailablePaymentMethods's doc comment) — never trust
+  // the client's own claim about what's available. Computed before the
+  // missing-paymentMethod check below so an omitted paymentMethod can be
+  // resolved automatically when the club only offers one option.
+  const availableMethods = await getAvailablePaymentMethods(club.id);
+
+  // A client running a pre-deploy JS bundle (rolling deploy) — or simply an
+  // older client — omits paymentMethod entirely. Previously this always
+  // hard-400'd, even though most clubs only ever offer one method. Fall back
+  // to that single method automatically; only force the client to specify
+  // one when the club genuinely offers 2+ options.
+  const effectivePaymentMethod =
+    paymentMethod ??
+    (availableMethods.length === 1 ? availableMethods[0] : undefined);
+
+  if (!effectivePaymentMethod) {
+    return NextResponse.json(
+      { error: "paymentMethod is required for a priced court" },
+      { status: 400 },
+    );
+  }
+
+  if (!availableMethods.includes(effectivePaymentMethod)) {
+    return NextResponse.json(
+      { error: "This payment method isn't available for this club" },
+      { status: 422 },
+    );
+  }
+
   let reservation: Awaited<ReturnType<typeof createReservation>> | undefined;
   try {
     reservation = await createReservation(
       userId,
-      { userId, courtId, scheduledStart, scheduledEnd, notes },
-      { pendingPayment: true },
+      { userId, courtId, scheduledStart, scheduledEnd, notes, partnerIds },
+      {
+        pendingPayment: true,
+        holdMinutes:
+          effectivePaymentMethod === "TRANSFER"
+            ? BANK_TRANSFER_HOLD_MINUTES
+            : undefined,
+        paymentMethod: effectivePaymentMethod,
+      },
     );
 
     const invoice = await createInvoice(court.clubId, userId, {
@@ -178,15 +234,20 @@ export async function POST(request: NextRequest) {
     });
     await issueInvoice(court.clubId, invoice.id, userId);
 
-    const { checkoutUrl } = await createCheckoutPreference({
-      clubId: court.clubId,
-      reservationId: reservation.id,
-      courtName: court.name,
-      price: court.reservationFee,
-      currency: club.currency,
-    });
+    if (effectivePaymentMethod === "MERCADOPAGO") {
+      const { checkoutUrl } = await createCheckoutPreference({
+        clubId: court.clubId,
+        reservationId: reservation.id,
+        courtName: court.name,
+        price: court.reservationFee,
+        currency: club.currency,
+      });
+      return NextResponse.json({ reservation, checkoutUrl }, { status: 201 });
+    }
 
-    return NextResponse.json({ reservation, checkoutUrl }, { status: 201 });
+    // TRANSFER: the client already showed the club's bank details and
+    // WhatsApp number before confirming — nothing left to redirect to.
+    return NextResponse.json({ reservation }, { status: 201 });
   } catch (err) {
     // If the reservation hold was created before a later step (invoice,
     // issue, or checkout preference) threw, roll it back so no orphaned

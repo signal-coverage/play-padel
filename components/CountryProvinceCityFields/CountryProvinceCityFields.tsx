@@ -83,21 +83,39 @@ export function useCountryProvinceCityFields<
     cityField.onChange("");
   }
 
-  // The country field can now also be set from OUTSIDE this hook — the
-  // PhoneField's calling-code picker writes to the same "country" RHF field
-  // when the owner/player picks a dial code, since phone and location now
-  // live on the same form. The lazy useState initializer above only
-  // re-hydrates countryIsoCode once, on mount, so a LATER external write
-  // (after mount) would otherwise leave countryIsoCode stale — silently
-  // breaking the province/city cascade for whatever country got set. This
-  // effect re-derives countryIsoCode whenever the RHF country value no
-  // longer matches what countryIsoCode currently represents, resetting
-  // province/city the same way handleCountryChange already does.
+  // The country field can now also be set from OUTSIDE this hook — either
+  // PhoneField's calling-code picker (country ONLY, province/city genuinely
+  // go stale and must clear), or a host form's own reset() re-seeding
+  // country/province/city TOGETHER from freshly-fetched data (e.g.
+  // ClubSettingsView.tsx's re-seed effect once the club query resolves —
+  // province/city are still correct and must NOT be cleared). The lazy
+  // useState initializer above only re-hydrates countryIsoCode once, on
+  // mount, so a LATER external write (after mount) would otherwise leave
+  // countryIsoCode stale — silently breaking the province/city cascade for
+  // whatever country got set. This effect re-derives countryIsoCode whenever
+  // the RHF country value no longer matches what countryIsoCode currently
+  // represents.
   //
-  // When the change originates from handleCountryChange itself, this is a
-  // no-op: that handler already synchronously sets both countryField's value
-  // and countryIsoCode to match, so by the time this effect runs, the two
-  // are already in sync and the early return fires.
+  // Rather than unconditionally clearing province/city (the previous, buggy
+  // behavior — see this file's own test for the exact regression), it
+  // re-derives stateIsoCode from whatever the RHF province value ALREADY is
+  // at that moment. A same-update reset() has already landed the real
+  // province by the time this effect runs, so it resolves and survives
+  // untouched; a genuinely stale province (PhoneField's country-only change)
+  // simply won't match any of the new country's states, so stateIsoCode ends
+  // up undefined — same end result as clearing, without an explicit
+  // .onChange("") that would stomp on a sibling field mid-reset. City is
+  // never touched directly either: once stateIsoCode resolves, the `cities`
+  // list recomputes and the Select's own controlled value (cityField.value,
+  // untouched here) naturally shows selected/blank depending on whether it
+  // matches — clearing it explicitly would be redundant at best and another
+  // reset-clobbering hazard at worst.
+  //
+  // When the change originates from handleCountryChange/handleProvinceChange
+  // themselves, this is a no-op: those handlers already synchronously keep
+  // countryIsoCode/stateIsoCode in sync with the RHF value they just set, so
+  // by the time this effect runs, everything is already in sync and the
+  // early return fires.
   useEffect(() => {
     const currentName = countryIsoCode
       ? ALL_COUNTRIES.find((c) => c.isoCode === countryIsoCode)?.name
@@ -108,16 +126,18 @@ export function useCountryProvinceCityFields<
     const nextIsoCode = currentCountryValue
       ? ALL_COUNTRIES.find((c) => c.name === currentCountryValue)?.isoCode
       : undefined;
-    // External sync: the RHF "country" value changed from outside this hook
-    // (e.g. PhoneField's calling-code picker), so local cascade state must be
-    // re-derived to match, same as the existing pattern in OnboardingWizard.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setCountryIsoCode(nextIsoCode);
-    setStateIsoCode(undefined);
-    provinceField.onChange("");
-    cityField.onChange("");
+
+    const nextStates = nextIsoCode ? State.getStatesOfCountry(nextIsoCode) : [];
+    const currentProvinceValue = provinceField.value as string;
+    setStateIsoCode(
+      nextStates.find((s) => s.name === currentProvinceValue)?.isoCode,
+    );
     // Only the RHF country value should retrigger this sync — countryIsoCode
-    // itself is derived state written by this same effect/handleCountryChange.
+    // itself is derived state written by this same effect/handleCountryChange,
+    // and provinceField.value is read as of whenever this effect happens to
+    // run (deliberately not a dependency — see the comment above).
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [countryField.value]);
 

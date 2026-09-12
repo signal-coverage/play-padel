@@ -12,6 +12,11 @@ vi.mock("@clerk/nextjs/webhooks", () => ({
 vi.mock("@/core/users/services/users.service", () => ({
   anonymizeUserProfile: vi.fn(),
   syncUserProfileFromClerk: vi.fn(),
+  getUserProfile: vi.fn(),
+}));
+
+vi.mock("@/core/clubs/services/clubs.service", () => ({
+  updateClub: vi.fn(),
 }));
 
 vi.mock("@/core/audit/services/audit.service", () => ({
@@ -26,7 +31,9 @@ import { verifyWebhook } from "@clerk/nextjs/webhooks";
 import {
   anonymizeUserProfile,
   syncUserProfileFromClerk,
+  getUserProfile,
 } from "@/core/users/services/users.service";
+import { updateClub } from "@/core/clubs/services/clubs.service";
 import { logAudit } from "@/core/audit/services/audit.service";
 import { POST } from "./route";
 
@@ -37,6 +44,8 @@ const anonymizeUserProfileMock = anonymizeUserProfile as ReturnType<
 const syncUserProfileFromClerkMock = syncUserProfileFromClerk as ReturnType<
   typeof vi.fn
 >;
+const getUserProfileMock = getUserProfile as ReturnType<typeof vi.fn>;
+const updateClubMock = updateClub as ReturnType<typeof vi.fn>;
 const logAuditMock = logAudit as ReturnType<typeof vi.fn>;
 
 function makeRequest() {
@@ -50,10 +59,14 @@ beforeEach(() => {
   verifyWebhookMock.mockReset();
   anonymizeUserProfileMock.mockReset();
   syncUserProfileFromClerkMock.mockReset();
+  getUserProfileMock.mockReset();
+  updateClubMock.mockReset();
   logAuditMock.mockReset();
   logSystemJobMock.mockReset();
-  anonymizeUserProfileMock.mockResolvedValue(undefined);
+  anonymizeUserProfileMock.mockResolvedValue(true);
   syncUserProfileFromClerkMock.mockResolvedValue(undefined);
+  getUserProfileMock.mockResolvedValue(null);
+  updateClubMock.mockResolvedValue(undefined);
 });
 
 describe("POST /api/webhooks/clerk — existing behavior", () => {
@@ -89,6 +102,29 @@ describe("POST /api/webhooks/clerk — existing behavior", () => {
     );
   });
 
+  // The real bug reported live: a Clerk user who signed up but never
+  // finished onboarding has no UserProfile row at all (see
+  // app/api/onboarding/route.ts — that row is only ever created there, not
+  // by any webhook). Deleting that Clerk account still fires user.deleted;
+  // anonymizeUserProfile no-ops (returns false) instead of throwing
+  // Prisma's "No record was found for an update", and this must still
+  // 200-ack (Clerk retries on anything else) without logging a misleading
+  // "user.anonymized" audit entry for a profile that was never touched.
+  it("acks without logging an audit entry when user.deleted arrives for a Clerk user who has no UserProfile row", async () => {
+    verifyWebhookMock.mockResolvedValue({
+      type: "user.deleted",
+      data: { id: "user_ghost" },
+    });
+    anonymizeUserProfileMock.mockResolvedValue(false);
+
+    const response = await POST(makeRequest());
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body).toEqual({ ok: true });
+    expect(logAuditMock).not.toHaveBeenCalled();
+  });
+
   it("acks without anonymizing when user.deleted carries no id", async () => {
     verifyWebhookMock.mockResolvedValue({
       type: "user.deleted",
@@ -99,6 +135,60 @@ describe("POST /api/webhooks/clerk — existing behavior", () => {
 
     expect(response.status).toBe(200);
     expect(anonymizeUserProfileMock).not.toHaveBeenCalled();
+    expect(updateClubMock).not.toHaveBeenCalled();
+  });
+
+  it("deactivates the deleted owner's club — an orphaned club must stop counting as active", async () => {
+    verifyWebhookMock.mockResolvedValue({
+      type: "user.deleted",
+      data: { id: "user_1" },
+    });
+    getUserProfileMock.mockResolvedValue({
+      id: "user_1",
+      role: "owner",
+      clubId: "club_1",
+    });
+
+    const response = await POST(makeRequest());
+
+    expect(response.status).toBe(200);
+    expect(updateClubMock).toHaveBeenCalledWith(
+      "club_1",
+      { status: "INACTIVE" },
+      "system:clerk-webhook",
+    );
+  });
+
+  it("does not touch any club when the deleted user was a player, not an owner", async () => {
+    verifyWebhookMock.mockResolvedValue({
+      type: "user.deleted",
+      data: { id: "user_1" },
+    });
+    getUserProfileMock.mockResolvedValue({
+      id: "user_1",
+      role: "player",
+      clubId: undefined,
+    });
+
+    await POST(makeRequest());
+
+    expect(updateClubMock).not.toHaveBeenCalled();
+  });
+
+  it("does not touch any club when the deleted owner never had a clubId", async () => {
+    verifyWebhookMock.mockResolvedValue({
+      type: "user.deleted",
+      data: { id: "user_1" },
+    });
+    getUserProfileMock.mockResolvedValue({
+      id: "user_1",
+      role: "owner",
+      clubId: undefined,
+    });
+
+    await POST(makeRequest());
+
+    expect(updateClubMock).not.toHaveBeenCalled();
   });
 
   it("syncs the user profile and acks on user.updated", async () => {

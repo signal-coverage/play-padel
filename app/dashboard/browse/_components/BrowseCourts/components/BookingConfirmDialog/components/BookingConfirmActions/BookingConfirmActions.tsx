@@ -15,8 +15,25 @@ export function BookingConfirmActions({
   isSubmitting,
   onCancel,
   onConfirm,
+  selectedMethod,
+  confirmedTransferPending,
 }: BookingConfirmActionsProps) {
   const canConfirm = canConfirmBooking(paymentState);
+
+  // Once a TRANSFER booking has come back as a pending hold, there's nothing
+  // left to confirm or cancel — just a single dismiss action that leaves the
+  // bank details visible until the player closes the dialog themselves.
+  if (confirmedTransferPending) {
+    return (
+      <GuardedActionButton
+        isPending={false}
+        disabled={false}
+        onClick={onCancel}
+      >
+        Got it
+      </GuardedActionButton>
+    );
+  }
 
   return (
     <>
@@ -31,7 +48,9 @@ export function BookingConfirmActions({
         {isSubmitting
           ? "Booking…"
           : paymentState.kind === "pay-now"
-            ? "Continue to payment"
+            ? selectedMethod === "TRANSFER"
+              ? "Confirm booking"
+              : "Continue to payment"
             : paymentState.kind === "price-missing"
               ? "Price not set"
               : "Book court"}

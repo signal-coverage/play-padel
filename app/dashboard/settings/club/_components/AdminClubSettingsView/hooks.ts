@@ -1,6 +1,6 @@
 "use client";
 
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import type { AdminClubListItem, ClubOwner } from "./types";
 
@@ -40,6 +40,68 @@ export function useClubOwner(clubId?: string) {
       return data.owner ?? null;
     },
     enabled: Boolean(clubId),
+  });
+}
+
+// Activates the hidden, admin-only FREE membership tier for a club — see
+// app/api/admin/membership-free-plan/route.ts and
+// core/billing/services/membership.service.ts's activateFreePlan. Same
+// action scripts/make-free-plan.ts performs from a terminal. Invalidates the
+// clubs list so the picker's plan badge picks up the change immediately.
+export function useActivateFreePlan() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (clubId: string) => {
+      const res = await fetch("/api/admin/membership-free-plan", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ clubId }),
+      });
+      const body = await res.json().catch(() => null);
+      if (!res.ok) {
+        throw new Error(
+          body?.error ?? "Something went wrong. Please try again.",
+        );
+      }
+      return body;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ADMIN_CLUBS_QUERY_KEY });
+      toast.success("Club activated on the FREE plan");
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+}
+
+// Sets (or clears, with `null`) a MAX-plan club's negotiated court-limit
+// override — see prisma/schema.prisma's Club.courtLimit doc comment and
+// core/courts/services/courts.service.ts's createCourt, the only place that
+// actually enforces it. Routes through the same admin-only PATCH
+// /api/admin/clubs/[clubId] endpoint ClubSettingsView's own useUpdateClub
+// uses for every other field — no dedicated endpoint needed since
+// updateClubSchema/updateClub already carry courtLimit end to end.
+export function useSetCourtLimit(clubId: string | undefined) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (courtLimit: number | null) => {
+      const res = await fetch(`/api/admin/clubs/${clubId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ courtLimit }),
+      });
+      const body = await res.json().catch(() => null);
+      if (!res.ok) {
+        throw new Error(
+          body?.error ?? "Something went wrong. Please try again.",
+        );
+      }
+      return body;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ADMIN_CLUBS_QUERY_KEY });
+      toast.success("Court limit updated");
+    },
+    onError: (error: Error) => toast.error(error.message),
   });
 }
 

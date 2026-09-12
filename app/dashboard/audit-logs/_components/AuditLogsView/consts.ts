@@ -8,6 +8,10 @@ export const AUDIT_ENTITY_OPTIONS = [
   "CourtClosure",
   "Payment",
   "Reservation",
+  "Tournament",
+  "TournamentCategory",
+  "TournamentMatch",
+  "TournamentTeam",
   "UserProfile",
   "WaitlistEntry",
 ] as const;
@@ -34,4 +38,17 @@ export const AUDIT_ACTION_LABELS: Record<AuditAction, string> = {
   "payment.confirmed": "Payment confirmed",
   "payment.refunded": "Payment refunded",
   "waitlist.notified": "Waitlist notified",
+  "tournament.created": "Tournament created",
+  "tournament.updated": "Tournament updated",
+  "tournament.published": "Tournament published",
+  "tournament.cancelled": "Tournament cancelled",
+  "tournament_team.registered": "Tournament team registered",
+  "tournament_team.withdrawn": "Tournament team withdrawn",
+  "tournament_groups.set_manually": "Tournament groups set manually",
+  "tournament_groups.generated_automatically":
+    "Tournament groups generated automatically",
+  "tournament_groups.locked": "Tournament groups locked",
+  "tournament_match.score_entered": "Tournament match score entered",
+  "tournament_match.walkover_recorded": "Tournament match walkover recorded",
+  "tournament_knockout.generated": "Tournament knockout bracket generated",
 };

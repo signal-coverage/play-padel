@@ -10,7 +10,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { formatTimeRange, isActionable } from "../../utils";
+import {
+  formatTimeRange,
+  isActionable,
+  needsTransferConfirmation,
+} from "../../utils";
 import { ReservationActionButtons } from "../ReservationActionButtons";
 import type { SlotDetailsDialogProps } from "./types";
 
@@ -87,6 +91,7 @@ export function SlotDetailsDialog({
               reservationId={reservation.id}
               onAction={onAction}
               isPending={isPending}
+              showConfirmTransfer={needsTransferConfirmation(reservation)}
             />
           </DialogFooter>
         )}

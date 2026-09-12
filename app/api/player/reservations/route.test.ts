@@ -31,6 +31,7 @@ vi.mock("@/lib/mercadopago/preferences", () => ({
 
 vi.mock("@/lib/mercadopago/operationalStatus", () => ({
   getClubOperationalStatus: vi.fn(),
+  getAvailablePaymentMethods: vi.fn(),
 }));
 
 vi.mock("botid/server", () => ({
@@ -55,7 +56,10 @@ import {
   issueInvoice,
 } from "@/core/billing/services/billing.service";
 import { createCheckoutPreference } from "@/lib/mercadopago/preferences";
-import { getClubOperationalStatus } from "@/lib/mercadopago/operationalStatus";
+import {
+  getClubOperationalStatus,
+  getAvailablePaymentMethods,
+} from "@/lib/mercadopago/operationalStatus";
 import { POST } from "./route";
 
 const authMock = auth as unknown as ReturnType<typeof vi.fn>;
@@ -69,6 +73,9 @@ const createCheckoutPreferenceMock = createCheckoutPreference as ReturnType<
   typeof vi.fn
 >;
 const getClubOperationalStatusMock = getClubOperationalStatus as ReturnType<
+  typeof vi.fn
+>;
+const getAvailablePaymentMethodsMock = getAvailablePaymentMethods as ReturnType<
   typeof vi.fn
 >;
 const checkBotIdMock = checkBotId as unknown as ReturnType<typeof vi.fn>;
@@ -102,6 +109,7 @@ beforeEach(() => {
   issueInvoiceMock.mockReset();
   createCheckoutPreferenceMock.mockReset();
   getClubOperationalStatusMock.mockReset();
+  getAvailablePaymentMethodsMock.mockReset();
   checkBotIdMock.mockReset();
   checkRateLimitMock.mockReset();
 
@@ -110,6 +118,7 @@ beforeEach(() => {
   getClubByIdMock.mockResolvedValue(CLUB);
   checkBotIdMock.mockResolvedValue({ isBot: false });
   checkRateLimitMock.mockResolvedValue({ rateLimited: false });
+  getAvailablePaymentMethodsMock.mockResolvedValue(["MERCADOPAGO", "TRANSFER"]);
 });
 
 describe("POST /api/player/reservations — security guards", () => {
@@ -198,6 +207,7 @@ describe("POST /api/player/reservations — booking-time operational gate", () =
         courtId: "court_1",
         scheduledStart: "2026-09-01T10:00:00Z",
         scheduledEnd: "2026-09-01T11:00:00Z",
+        paymentMethod: "MERCADOPAGO",
       }),
     );
 
@@ -225,6 +235,7 @@ describe("POST /api/player/reservations — booking-time operational gate", () =
         courtId: "court_1",
         scheduledStart: "2026-09-01T10:00:00Z",
         scheduledEnd: "2026-09-01T11:00:00Z",
+        paymentMethod: "MERCADOPAGO",
       }),
     );
 
@@ -256,6 +267,7 @@ describe("POST /api/player/reservations — booking-time operational gate", () =
         courtId: "court_1",
         scheduledStart: "2026-09-01T10:00:00Z",
         scheduledEnd: "2026-09-01T11:00:00Z",
+        paymentMethod: "MERCADOPAGO",
       }),
     );
 
@@ -301,5 +313,253 @@ describe("POST /api/player/reservations — booking-time operational gate", () =
 
     expect(response.status).toBe(422);
     expect(getClubOperationalStatusMock).not.toHaveBeenCalled();
+  });
+});
+
+describe("POST /api/player/reservations — optional partner tagging", () => {
+  it("passes partnerIds through to createReservation on a free-court booking", async () => {
+    getCourtByIdMock.mockResolvedValue({ ...COURT, reservationFee: 0 });
+    createReservationMock.mockResolvedValue({ id: "res_free" });
+
+    const response = await POST(
+      makeRequest({
+        courtId: "court_1",
+        scheduledStart: "2026-09-01T10:00:00Z",
+        scheduledEnd: "2026-09-01T11:00:00Z",
+        partnerIds: ["partner_1", "partner_2"],
+      }),
+    );
+
+    expect(response.status).toBe(201);
+    expect(createReservationMock).toHaveBeenCalledWith(
+      "user_1",
+      expect.objectContaining({ partnerIds: ["partner_1", "partner_2"] }),
+    );
+  });
+
+  it("passes partnerIds through to createReservation on a paid-court booking", async () => {
+    getClubOperationalStatusMock.mockResolvedValue({
+      operational: true,
+      cause: null,
+    });
+    createReservationMock.mockResolvedValue({ id: "res_1", clubId: "club_1" });
+    createInvoiceMock.mockResolvedValue({ id: "invoice_1" });
+    issueInvoiceMock.mockResolvedValue({ id: "invoice_1" });
+    createCheckoutPreferenceMock.mockResolvedValue({
+      checkoutUrl: "https://mp.example.com/checkout/abc",
+    });
+
+    const response = await POST(
+      makeRequest({
+        courtId: "court_1",
+        scheduledStart: "2026-09-01T10:00:00Z",
+        scheduledEnd: "2026-09-01T11:00:00Z",
+        partnerIds: ["partner_1"],
+        paymentMethod: "MERCADOPAGO",
+      }),
+    );
+
+    expect(response.status).toBe(201);
+    expect(createReservationMock).toHaveBeenCalledWith(
+      "user_1",
+      expect.objectContaining({ partnerIds: ["partner_1"] }),
+      {
+        pendingPayment: true,
+        holdMinutes: undefined,
+        paymentMethod: "MERCADOPAGO",
+      },
+    );
+  });
+
+  it("passes undefined partnerIds through when the field is omitted (no behavior change)", async () => {
+    getCourtByIdMock.mockResolvedValue({ ...COURT, reservationFee: 0 });
+    createReservationMock.mockResolvedValue({ id: "res_free" });
+
+    await POST(
+      makeRequest({
+        courtId: "court_1",
+        scheduledStart: "2026-09-01T10:00:00Z",
+        scheduledEnd: "2026-09-01T11:00:00Z",
+      }),
+    );
+
+    expect(createReservationMock).toHaveBeenCalledWith(
+      "user_1",
+      expect.objectContaining({ partnerIds: undefined }),
+    );
+  });
+
+  it("ignores a non-array partnerIds value instead of throwing", async () => {
+    getCourtByIdMock.mockResolvedValue({ ...COURT, reservationFee: 0 });
+    createReservationMock.mockResolvedValue({ id: "res_free" });
+
+    const response = await POST(
+      makeRequest({
+        courtId: "court_1",
+        scheduledStart: "2026-09-01T10:00:00Z",
+        scheduledEnd: "2026-09-01T11:00:00Z",
+        partnerIds: "not-an-array",
+      }),
+    );
+
+    expect(response.status).toBe(201);
+    expect(createReservationMock).toHaveBeenCalledWith(
+      "user_1",
+      expect.objectContaining({ partnerIds: undefined }),
+    );
+  });
+});
+
+describe("POST /api/player/reservations — payment method selection", () => {
+  it("returns 400 when a priced court's booking omits paymentMethod and the club offers 2+ methods", async () => {
+    getClubOperationalStatusMock.mockResolvedValue({
+      operational: true,
+      cause: null,
+    });
+    getAvailablePaymentMethodsMock.mockResolvedValue([
+      "MERCADOPAGO",
+      "TRANSFER",
+    ]);
+
+    const response = await POST(
+      makeRequest({
+        courtId: "court_1",
+        scheduledStart: "2026-09-01T10:00:00Z",
+        scheduledEnd: "2026-09-01T11:00:00Z",
+      }),
+    );
+
+    expect(response.status).toBe(400);
+    expect(createReservationMock).not.toHaveBeenCalled();
+  });
+
+  // Rolling-deploy / older-client safety net: a client that doesn't yet know
+  // about paymentMethod omits it entirely. When the club only offers one
+  // method there's no real ambiguity, so this must succeed exactly like the
+  // pre-paymentMethod behavior (always Mercado Pago) instead of hard-400ing.
+  it("falls back to the club's single available payment method when paymentMethod is omitted", async () => {
+    getClubOperationalStatusMock.mockResolvedValue({
+      operational: true,
+      cause: null,
+    });
+    getAvailablePaymentMethodsMock.mockResolvedValue(["MERCADOPAGO"]);
+    createReservationMock.mockResolvedValue({ id: "res_1", clubId: "club_1" });
+    createInvoiceMock.mockResolvedValue({ id: "invoice_1" });
+    issueInvoiceMock.mockResolvedValue({ id: "invoice_1" });
+    createCheckoutPreferenceMock.mockResolvedValue({
+      checkoutUrl: "https://mp.example.com/checkout/abc",
+    });
+
+    const response = await POST(
+      makeRequest({
+        courtId: "court_1",
+        scheduledStart: "2026-09-01T10:00:00Z",
+        scheduledEnd: "2026-09-01T11:00:00Z",
+      }),
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(201);
+    expect(body.checkoutUrl).toBe("https://mp.example.com/checkout/abc");
+    expect(createReservationMock).toHaveBeenCalledWith(
+      "user_1",
+      expect.anything(),
+      expect.objectContaining({
+        pendingPayment: true,
+        paymentMethod: "MERCADOPAGO",
+      }),
+    );
+  });
+
+  it("returns 422 when the chosen paymentMethod isn't available for the club", async () => {
+    getClubOperationalStatusMock.mockResolvedValue({
+      operational: true,
+      cause: null,
+    });
+    getAvailablePaymentMethodsMock.mockResolvedValue(["MERCADOPAGO"]);
+
+    const response = await POST(
+      makeRequest({
+        courtId: "court_1",
+        scheduledStart: "2026-09-01T10:00:00Z",
+        scheduledEnd: "2026-09-01T11:00:00Z",
+        paymentMethod: "TRANSFER",
+      }),
+    );
+
+    expect(response.status).toBe(422);
+    expect(createReservationMock).not.toHaveBeenCalled();
+  });
+
+  it("creates a 60-minute TRANSFER hold and returns no checkoutUrl when paymentMethod is TRANSFER", async () => {
+    getClubOperationalStatusMock.mockResolvedValue({
+      operational: true,
+      cause: null,
+    });
+    getAvailablePaymentMethodsMock.mockResolvedValue([
+      "MERCADOPAGO",
+      "TRANSFER",
+    ]);
+    createReservationMock.mockResolvedValue({ id: "res_1", clubId: "club_1" });
+    createInvoiceMock.mockResolvedValue({ id: "invoice_1" });
+    issueInvoiceMock.mockResolvedValue({ id: "invoice_1" });
+
+    const response = await POST(
+      makeRequest({
+        courtId: "court_1",
+        scheduledStart: "2026-09-01T10:00:00Z",
+        scheduledEnd: "2026-09-01T11:00:00Z",
+        paymentMethod: "TRANSFER",
+      }),
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(201);
+    expect(body.checkoutUrl).toBeUndefined();
+    expect(createReservationMock).toHaveBeenCalledWith(
+      "user_1",
+      expect.anything(),
+      expect.objectContaining({
+        pendingPayment: true,
+        holdMinutes: 60,
+        paymentMethod: "TRANSFER",
+      }),
+    );
+    expect(createCheckoutPreferenceMock).not.toHaveBeenCalled();
+  });
+
+  it("still creates the standard 15-minute MERCADOPAGO hold and calls createCheckoutPreference when paymentMethod is MERCADOPAGO", async () => {
+    getClubOperationalStatusMock.mockResolvedValue({
+      operational: true,
+      cause: null,
+    });
+    getAvailablePaymentMethodsMock.mockResolvedValue(["MERCADOPAGO"]);
+    createReservationMock.mockResolvedValue({ id: "res_1", clubId: "club_1" });
+    createInvoiceMock.mockResolvedValue({ id: "invoice_1" });
+    issueInvoiceMock.mockResolvedValue({ id: "invoice_1" });
+    createCheckoutPreferenceMock.mockResolvedValue({
+      checkoutUrl: "https://mp.example.com/checkout/abc",
+    });
+
+    const response = await POST(
+      makeRequest({
+        courtId: "court_1",
+        scheduledStart: "2026-09-01T10:00:00Z",
+        scheduledEnd: "2026-09-01T11:00:00Z",
+        paymentMethod: "MERCADOPAGO",
+      }),
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(201);
+    expect(body.checkoutUrl).toBeDefined();
+    expect(createReservationMock).toHaveBeenCalledWith(
+      "user_1",
+      expect.anything(),
+      expect.objectContaining({
+        pendingPayment: true,
+        paymentMethod: "MERCADOPAGO",
+      }),
+    );
   });
 });

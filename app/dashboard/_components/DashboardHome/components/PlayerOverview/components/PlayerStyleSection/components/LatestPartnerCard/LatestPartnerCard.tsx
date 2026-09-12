@@ -10,6 +10,17 @@ import { getInitials } from "@/lib/utils/initials";
 import type { LatestPartnerCardProps } from "./types";
 
 export function LatestPartnerCard({ partner }: LatestPartnerCardProps) {
+  if (!partner) {
+    return (
+      <div className="flex w-full items-center gap-3 rounded-sm border border-dashed border-border bg-muted/20 p-3 text-left">
+        <p className="text-xs text-muted-foreground">
+          No partners yet — tag a co-player when you book a court to see them
+          here.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -32,10 +43,12 @@ export function LatestPartnerCard({ partner }: LatestPartnerCardProps) {
               {getPreferredSideLabel(partner.preferredSide)}
             </p>
             <p className="truncate text-xs text-muted-foreground">
-              <span className="font-medium text-foreground">
-                {partner.coupleWinRate}% WR
-              </span>{" "}
-              • Played {partner.timesPlayedTogether}x
+              {partner.coupleWinRate !== undefined && (
+                <span className="font-medium text-foreground">
+                  {partner.coupleWinRate}% WR •{" "}
+                </span>
+              )}
+              Played {partner.timesPlayedTogether}x
             </p>
           </div>
           <ChevronRight

@@ -76,6 +76,18 @@ export function ClubBasicsStep({
       </div>
 
       <div className="flex flex-col sm:flex-row gap-4">
+        <div className="flex-1">
+          <PhoneField
+            control={control}
+            errors={errors}
+            phoneFieldName="whatsappNumber"
+            countryFieldName="whatsappCountry"
+            label="WhatsApp (for payment receipts) *"
+          />
+        </div>
+      </div>
+
+      <div className="flex flex-col sm:flex-row gap-4">
         <div className="flex-1">{provinceField}</div>
         <div className="flex-1">{cityField}</div>
       </div>

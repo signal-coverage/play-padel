@@ -9,9 +9,11 @@ export type AdminClubListItem = {
   name: string;
   status: ClubStatus;
   plan: Plan;
+  courtLimit: number | null;
   mpTokenIssue: boolean;
   membershipPastDue: boolean;
   noOperatingHours: boolean;
+  isFreePlan: boolean;
 };
 
 // Mirrors the `owner` field GET /api/admin/clubs/[clubId] now returns

@@ -2,6 +2,7 @@ export interface Court {
   id: string;
   clubId: string;
   name: string;
+  courtNumber?: number;
   surface?: string;
   indoor: boolean;
   color?: string;
@@ -33,6 +34,7 @@ export interface CourtAvailability {
 
 export interface CreateCourtInput {
   name: string;
+  courtNumber?: number;
   surface?: string;
   indoor?: boolean;
   color?: string;
@@ -50,6 +52,7 @@ export interface CreateCourtInput {
 
 export interface UpdateCourtInput {
   name?: string;
+  courtNumber?: number;
   surface?: string;
   indoor?: boolean;
   color?: string;

@@ -88,6 +88,20 @@ export type PlanDetails = {
   features: string[];
 };
 
+// Court-count ceiling enforced at court-creation time (see
+// core/courts/services/courts.service.ts's `createCourt`) — kept in sync
+// with the "Up to N courts" line in each tier's `features` below. MAX has no
+// entry: its limit is negotiated per client and lives only on
+// `Club.courtLimit` (an admin-set override, never a fixed constant); with no
+// override set it is treated as unlimited. FREE (the hidden testing tier)
+// bypasses the check entirely via `isClubOnFreePlan`, regardless of
+// `Club.plan`, so it has no entry either.
+export const PLAN_COURT_LIMITS: Partial<Record<Plan, number>> = {
+  BASIC: 2,
+  PRO: 4,
+  PLUS: 7,
+};
+
 export const PLAN_DETAILS: Record<Plan, PlanDetails> = {
   BASIC: {
     tagline: "Perfect for clubs just getting started.",

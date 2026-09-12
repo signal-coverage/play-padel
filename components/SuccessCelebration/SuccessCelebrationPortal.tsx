@@ -9,39 +9,69 @@ import {
   CELEBRATION_DURATION_MS,
   BOUNCE_EASE,
   BOUNCE_TIMES,
+  DRIFT_VW_MIN,
+  DRIFT_VW_STEP,
+  FALL_VH_MIN,
+  FALL_VH_STEP,
 } from "./consts";
 import type { BallProps } from "./types";
 
 let nextCelebrationId = 0;
 
-// One falling, bouncing ball. `index` only ever varies placement/timing —
-// deterministically, not randomly — so this renders identically given the
-// same props (no `Math.random()`), matching this codebase's general
-// preference for predictable, testable rendering.
+// One falling, bouncing, drifting ball. `index` only ever varies placement/
+// timing/size/direction — deterministically, not randomly — so this renders
+// identically given the same props (no `Math.random()`), matching this
+// codebase's general preference for predictable, testable rendering.
 function Ball({ index }: BallProps) {
+  // Near-full width (4%-96%, not the ball's own edge-to-edge 0-100%) so the
+  // group reads as covering the whole screen without any ball's icon
+  // clipping past the viewport edge.
   const leftPercent =
-    BALL_COUNT === 1 ? 50 : 10 + (index * 80) / (BALL_COUNT - 1);
-  const delay = (index % 4) * 0.08;
-  const fallDistance = 260 + (index % 3) * 40;
+    BALL_COUNT === 1 ? 50 : 4 + (index * 92) / (BALL_COUNT - 1);
+  const delay = (index % 6) * 0.08;
+  const fallVh = FALL_VH_MIN + (index % 3) * FALL_VH_STEP;
+  // Bigger balls read as "closer", smaller ones as "farther" — cheap depth
+  // cue that also just makes the whole burst feel bigger and more varied
+  // than a uniform grid of same-size icons.
+  const size = 18 + (index % 4) * 5;
+  // Alternating direction per ball (not every ball drifting the same way)
+  // is what makes the group actually scatter outward instead of sliding
+  // sideways together as one block.
+  const driftVw =
+    (index % 2 === 0 ? 1 : -1) * (DRIFT_VW_MIN + (index % 5) * DRIFT_VW_STEP);
+  const spin = index % 3 === 0 ? -1 : 1;
 
   return (
     <motion.div
       className="absolute top-0"
       style={{ left: `${leftPercent}%` }}
-      initial={{ y: -40, opacity: 0, rotate: 0 }}
+      initial={{ y: "-8vh", x: 0, opacity: 0, rotate: 0 }}
       animate={{
         y: [
-          -40,
-          fallDistance,
-          fallDistance * 0.55,
-          fallDistance,
-          fallDistance * 0.28,
-          fallDistance,
-          fallDistance * 0.12,
-          fallDistance,
+          "-8vh",
+          `${fallVh}vh`,
+          `${fallVh * 0.55}vh`,
+          `${fallVh}vh`,
+          `${fallVh * 0.28}vh`,
+          `${fallVh}vh`,
+          `${fallVh * 0.12}vh`,
+          `${fallVh}vh`,
+        ],
+        // Steps outward at each bounce's impact rather than a smooth
+        // constant drift — reads as the ball actually skipping sideways on
+        // contact, the same way a real bounced ball would.
+        x: [
+          "0vw",
+          `${driftVw * 0.25}vw`,
+          `${driftVw * 0.25}vw`,
+          `${driftVw * 0.55}vw`,
+          `${driftVw * 0.55}vw`,
+          `${driftVw * 0.8}vw`,
+          `${driftVw * 0.8}vw`,
+          `${driftVw}vw`,
         ],
         opacity: [0, 1, 1, 1, 1, 1, 1, 0],
-        rotate: [0, 180, 260, 380, 430, 520, 550, 600],
+        rotate: [0, 180, 260, 380, 430, 520, 550, 600].map((deg) => deg * spin),
       }}
       transition={{
         delay,
@@ -54,7 +84,7 @@ function Ball({ index }: BallProps) {
         ease: [...BOUNCE_EASE],
       }}
     >
-      <TennisBallIcon />
+      <TennisBallIcon size={size} />
     </motion.div>
   );
 }

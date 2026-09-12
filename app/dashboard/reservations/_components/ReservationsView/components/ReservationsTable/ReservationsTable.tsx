@@ -5,7 +5,11 @@ import { ReservationStatusBadge } from "@/components/ReservationStatusBadge";
 import { DataTable } from "@/components/DataTable";
 import { StatusBox } from "@/components/StatusBox";
 import { Skeleton } from "@/components/ui/skeleton";
-import { formatTimeRange, isActionable } from "../../utils";
+import {
+  formatTimeRange,
+  isActionable,
+  needsTransferConfirmation,
+} from "../../utils";
 import { ReservationActionButtons } from "../ReservationActionButtons";
 import type { DataTableColumn } from "@/components/DataTable";
 import type { ReservationsTableProps } from "./types";
@@ -66,6 +70,7 @@ export function ReservationsTable({
                 onAction={onAction}
                 isPending={isPending}
                 size="sm"
+                showConfirmTransfer={needsTransferConfirmation(reservation)}
               />
             </div>
           );

@@ -1,2 +1,0 @@
-export const DEFAULT_QUICK_SETUP_START = "09:00";
-export const DEFAULT_QUICK_SETUP_END = "21:00";

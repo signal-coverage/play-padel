@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import {
   useMutation,
   useQueries,
@@ -54,8 +55,40 @@ export function useCourtSlotsQueries(courtIds: string[], date: Date) {
   });
 }
 
+// Opens GET /api/clubs/reservations/stream (Server-Sent Events), scoped to
+// this one date, and refetches both the "reservations" and "court-slots"
+// query families the instant the server notices this date's schedule
+// actually changed — instead of waiting out LIVE_REFETCH_INTERVAL_MS. Same
+// two-query invalidation shape as useReservationAction's own onSuccess
+// above (both are two views of the same underlying data), and same "SSE is
+// additive, the poll stays as a fallback baseline" precedent as
+// NotificationsBell/hooks.ts's useNotificationStream.
+function useReservationsStream(key: string) {
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    const source = new EventSource(
+      `/api/clubs/reservations/stream?date=${key}`,
+    );
+
+    function handleChanged() {
+      queryClient.invalidateQueries({ queryKey: ["reservations"] });
+      queryClient.invalidateQueries({ queryKey: ["court-slots"] });
+    }
+
+    source.addEventListener("changed", handleChanged);
+
+    return () => {
+      source.removeEventListener("changed", handleChanged);
+      source.close();
+    };
+  }, [key, queryClient]);
+}
+
 export function useDayReservations(date: Date) {
   const key = dateKey(date);
+  useReservationsStream(key);
+
   return useQuery({
     queryKey: ["reservations", key],
     queryFn: (): Promise<ReservationRecord[]> =>
