@@ -1,13 +1,18 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-const { findUniqueMock, updateMock, disconnectMock, dispatchMock } = vi.hoisted(
-  () => ({
-    findUniqueMock: vi.fn(),
-    updateMock: vi.fn(),
-    disconnectMock: vi.fn(),
-    dispatchMock: vi.fn(),
-  }),
-);
+const {
+  findUniqueMock,
+  updateMock,
+  disconnectMock,
+  dispatchMock,
+  updateUserMetadataMock,
+} = vi.hoisted(() => ({
+  findUniqueMock: vi.fn(),
+  updateMock: vi.fn(),
+  disconnectMock: vi.fn(),
+  dispatchMock: vi.fn(),
+  updateUserMetadataMock: vi.fn(),
+}));
 
 vi.mock("../../infrastructure/db/client", () => ({
   prisma: {
@@ -23,6 +28,12 @@ vi.mock("../../lib/notifications/dispatcher", () => ({
   dispatch: dispatchMock,
 }));
 
+vi.mock("@clerk/nextjs/server", () => ({
+  clerkClient: async () => ({
+    users: { updateUserMetadata: updateUserMetadataMock },
+  }),
+}));
+
 import { grantAdmin } from "./grant-admin";
 
 beforeEach(() => {
@@ -31,6 +42,8 @@ beforeEach(() => {
   disconnectMock.mockReset();
   dispatchMock.mockReset();
   dispatchMock.mockResolvedValue(undefined);
+  updateUserMetadataMock.mockReset();
+  updateUserMetadataMock.mockResolvedValue(undefined);
 });
 
 describe("grantAdmin", () => {
@@ -90,6 +103,34 @@ describe("grantAdmin", () => {
     });
     updateMock.mockResolvedValue({});
     dispatchMock.mockRejectedValue(new Error("resend is down"));
+
+    await expect(grantAdmin("jane@example.com")).resolves.not.toThrow();
+    expect(updateMock).toHaveBeenCalled();
+  });
+
+  it("also sets Clerk publicMetadata.isAdmin so both admin flags stay in sync", async () => {
+    findUniqueMock.mockResolvedValue({
+      id: "user_1",
+      displayName: "Jane Doe",
+      isAdmin: false,
+    });
+    updateMock.mockResolvedValue({});
+
+    await grantAdmin("jane@example.com");
+
+    expect(updateUserMetadataMock).toHaveBeenCalledWith("user_1", {
+      publicMetadata: { isAdmin: true },
+    });
+  });
+
+  it("a Clerk metadata sync failure never blocks the DB grant from having already happened", async () => {
+    findUniqueMock.mockResolvedValue({
+      id: "user_1",
+      displayName: "Jane Doe",
+      isAdmin: false,
+    });
+    updateMock.mockResolvedValue({});
+    updateUserMetadataMock.mockRejectedValue(new Error("Clerk API is down"));
 
     await expect(grantAdmin("jane@example.com")).resolves.not.toThrow();
     expect(updateMock).toHaveBeenCalled();

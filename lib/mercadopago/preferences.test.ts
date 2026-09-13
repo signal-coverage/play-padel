@@ -39,6 +39,7 @@ describe("createCheckoutPreference", () => {
   it("resolves and uses the owning club's Mercado Pago client, not a platform singleton", async () => {
     await createCheckoutPreference({
       clubId: "club_1",
+      clubName: "Alpha Club",
       reservationId: "res_1",
       courtName: "Court 1",
       price: 1000,
@@ -53,6 +54,7 @@ describe("createCheckoutPreference", () => {
   it("does not set any marketplace_fee on the preference body", async () => {
     await createCheckoutPreference({
       clubId: "club_1",
+      clubName: "Alpha Club",
       reservationId: "res_1",
       courtName: "Court 1",
       price: 1000,
@@ -66,6 +68,7 @@ describe("createCheckoutPreference", () => {
   it("accepts a forward-compat marketplaceFee param without populating or exposing it", async () => {
     await createCheckoutPreference({
       clubId: "club_1",
+      clubName: "Alpha Club",
       reservationId: "res_1",
       courtName: "Court 1",
       price: 1000,
@@ -81,6 +84,7 @@ describe("createCheckoutPreference", () => {
   it("embeds reservationId as a query param on notification_url for webhook club resolution", async () => {
     await createCheckoutPreference({
       clubId: "club_1",
+      clubName: "Alpha Club",
       reservationId: "res_1",
       courtName: "Court 1",
       price: 1000,
@@ -101,6 +105,7 @@ describe("createCheckoutPreference", () => {
     await expect(
       createCheckoutPreference({
         clubId: "club_1",
+        clubName: "Alpha Club",
         reservationId: "res_1",
         courtName: "Court 1",
         price: 1000,
@@ -108,5 +113,63 @@ describe("createCheckoutPreference", () => {
       }),
     ).rejects.toThrow("does not have a valid Mercado Pago connection");
     expect(createMock).not.toHaveBeenCalled();
+  });
+
+  it("brands the item title with the club's name and Play Padel, not just the court", async () => {
+    await createCheckoutPreference({
+      clubId: "club_1",
+      clubName: "Alpha Club",
+      reservationId: "res_1",
+      courtName: "Court 1",
+      price: 1000,
+      currency: "ARS",
+    });
+
+    const callArgs = createMock.mock.calls[0][0];
+    expect(callArgs.body.items[0].title).toBe(
+      "Court 1 — Alpha Club · Play Padel",
+    );
+  });
+
+  it("sets a statement_descriptor combining the club's name and Play Padel", async () => {
+    await createCheckoutPreference({
+      clubId: "club_1",
+      clubName: "Alpha Club",
+      reservationId: "res_1",
+      courtName: "Court 1",
+      price: 1000,
+      currency: "ARS",
+    });
+
+    const callArgs = createMock.mock.calls[0][0];
+    expect(callArgs.body.statement_descriptor).toBe("ALPHA CLUB-PLAYPADEL");
+  });
+
+  it("truncates a long club name in statement_descriptor to fit the 22-char issuer limit", async () => {
+    await createCheckoutPreference({
+      clubId: "club_1",
+      clubName: "The Extremely Long Padel Club Name",
+      reservationId: "res_1",
+      courtName: "Court 1",
+      price: 1000,
+      currency: "ARS",
+    });
+
+    const callArgs = createMock.mock.calls[0][0];
+    expect(callArgs.body.statement_descriptor.length).toBeLessThanOrEqual(22);
+  });
+
+  it("never changes external_reference — the webhook still matches it against the reservationId untouched", async () => {
+    await createCheckoutPreference({
+      clubId: "club_1",
+      clubName: "Alpha Club",
+      reservationId: "res_1",
+      courtName: "Court 1",
+      price: 1000,
+      currency: "ARS",
+    });
+
+    const callArgs = createMock.mock.calls[0][0];
+    expect(callArgs.body.external_reference).toBe("res_1");
   });
 });

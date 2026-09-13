@@ -118,6 +118,7 @@ function makeClub(
   return {
     id: "club_1",
     name: "Club Padel Norte",
+    slug: "club-padel-norte",
     email: "club@example.com",
     timezone: "America/Argentina/Buenos_Aires",
     currency: "ARS",
@@ -161,7 +162,7 @@ function renderBrowseCourts() {
           ClubListPanel/ClubCourtsPanel — this keeps the test focused on the
           BookingConfirmDialog payment-method wiring rather than nuqs's own
           multi-key update batching. */}
-      <NuqsTestingAdapter searchParams="?club=club_1&court=court_1">
+      <NuqsTestingAdapter searchParams="?club=club-padel-norte&court=court_1">
         <BrowseCourts />
       </NuqsTestingAdapter>
     </QueryClientProvider>,

@@ -8,8 +8,11 @@ import * as Sentry from "@sentry/nextjs";
 Sentry.init({
   dsn: "https://2c4d484b8ed2948003226bcbf3be3014@o4511929038340096.ingest.us.sentry.io/4511929053151232",
 
-  // Define how likely traces are sampled. Adjust this value in production, or use tracesSampler for greater control.
-  tracesSampleRate: 1,
+  // Full sampling in development; a lower rate in production to bound
+  // Sentry's trace volume/cost at real traffic (no env-aware helper exists
+  // for this in lib/env.ts, so read NODE_ENV directly, same as elsewhere in
+  // this codebase).
+  tracesSampleRate: process.env.NODE_ENV === "production" ? 0.1 : 1,
 
   // Enable logs to be sent to Sentry
   enableLogs: true,

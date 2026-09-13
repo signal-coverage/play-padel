@@ -33,6 +33,8 @@ export interface PendingClubSummary {
 export interface Club {
   id: string;
   name: string;
+  // Immutable once set — see prisma/schema.prisma's Club.slug doc comment.
+  slug: string;
   legalName?: string;
   taxId?: string;
   email: string;

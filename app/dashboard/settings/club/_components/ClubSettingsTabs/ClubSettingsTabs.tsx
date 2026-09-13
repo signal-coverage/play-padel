@@ -4,6 +4,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BankTransferAccountSettingsCard } from "../BankTransferAccountSettingsCard";
+import { ClubClosuresCard } from "../ClubClosuresCard";
 import { ClubSettingsView } from "../ClubSettingsView";
 import { MercadoPagoConnectionCard } from "../MercadoPagoConnectionCard";
 import { OperatingHoursSettingsCard } from "../OperatingHoursSettingsCard";
@@ -83,6 +84,13 @@ export function ClubSettingsTabs() {
         className="mt-6 min-h-0 overflow-y-auto animate-in fade-in-0 duration-200"
       >
         <OperatingHoursSettingsCard />
+      </TabsContent>
+
+      <TabsContent
+        value="closures"
+        className="mt-6 min-h-0 overflow-y-auto animate-in fade-in-0 duration-200"
+      >
+        <ClubClosuresCard />
       </TabsContent>
 
       <TabsContent

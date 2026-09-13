@@ -5,6 +5,7 @@ import {
   cancelReservation,
 } from "@/core/reservations/services/reservations.service";
 import { requireAuthUser } from "@/lib/auth/requireAuthUser";
+import { withErrorHandling } from "@/lib/api/withErrorHandling";
 
 // Self-cancel, scoped to the caller's own reservations. core/reservations
 // only exposes getReservation(clubId, id) (club-scoped, for the owner
@@ -12,7 +13,7 @@ import { requireAuthUser } from "@/lib/auth/requireAuthUser";
 // know the clubId up front. Rather than add one to core (read-only
 // dependency for this agent), ownership + the reservation's own fields are
 // read back via listReservationsByUser, which is already scoped to userId.
-export async function POST(
+export const POST = withErrorHandling(async function POST(
   _request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
@@ -46,4 +47,4 @@ export async function POST(
   // & Conditions section 4.
   const cancelled = await cancelReservation(id, userId);
   return NextResponse.json({ reservation: cancelled });
-}
+});

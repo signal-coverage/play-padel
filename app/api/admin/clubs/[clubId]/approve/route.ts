@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { approveClub } from "@/core/clubs/services/clubs.service";
 import { requireAdminProfile } from "@/lib/auth/adminProfile";
 import { logAudit } from "@/core/audit/services/audit.service";
+import { withErrorHandling } from "@/lib/api/withErrorHandling";
 
 type RouteParams = { params: Promise<{ clubId: string }> };
 
@@ -11,7 +12,10 @@ type RouteParams = { params: Promise<{ clubId: string }> };
 // it) — a state conflict, not a silent no-op, consistent with how this
 // codebase's other admin mutation routes report an invalid state transition
 // (see PATCH /api/admin/clubs/[clubId]'s own 409 on a rejected plan change).
-export async function POST(_request: NextRequest, { params }: RouteParams) {
+export const POST = withErrorHandling(async function POST(
+  _request: NextRequest,
+  { params }: RouteParams,
+) {
   const authResult = await requireAdminProfile();
   if (!authResult.ok) return authResult.response;
 
@@ -38,4 +42,4 @@ export async function POST(_request: NextRequest, { params }: RouteParams) {
   });
 
   return NextResponse.json({ ok: true });
-}
+});

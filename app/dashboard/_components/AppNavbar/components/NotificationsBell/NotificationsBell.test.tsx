@@ -416,6 +416,7 @@ describe("NotificationsBell", () => {
           {
             id: "2",
             clubId: "club_1",
+            clubSlug: "club-a-slug",
             type: "CLUB_APPROVED",
             recipientId: "owner_1",
             recipientEmail: "owner@b.com",
@@ -439,12 +440,12 @@ describe("NotificationsBell", () => {
         name: /your reservation is tomorrow/i,
       }),
     ).toHaveAttribute("href", "/dashboard/my-reservations");
-    // ?clubId= pre-selects the right club for an owner-who's-also-admin,
+    // ?club=<slug> pre-selects the right club for an owner-who's-also-admin,
     // who'd otherwise land on AdminClubSettingsView's bare picker instead
     // of their own club's settings (see getNotificationHref's own comment).
     expect(
       screen.getByRole("link", { name: /your club has been approved/i }),
-    ).toHaveAttribute("href", "/dashboard/settings/club?clubId=club_1");
+    ).toHaveAttribute("href", "/dashboard/settings/club?club=club-a-slug");
   });
 
   it("closes the popover when a notification is clicked", async () => {

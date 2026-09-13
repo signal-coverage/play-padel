@@ -7,6 +7,7 @@ function makeClub(overrides: Partial<ClubBrowseSummary>): ClubBrowseSummary {
   return {
     id: "1",
     name: "Test Club",
+    slug: "test-club",
     email: "club@example.com",
     timezone: "America/Argentina/Buenos_Aires",
     currency: "ARS",

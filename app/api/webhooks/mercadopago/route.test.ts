@@ -309,6 +309,72 @@ describe("POST /api/webhooks/mercadopago", () => {
     );
   });
 
+  it("acks without a loud error log when a duplicate webhook delivery finds the invoice already PAID AND the reservation already CONFIRMED — a genuinely already-processed delivery, not a real failure", async () => {
+    findReservationByIdMock.mockResolvedValueOnce(RESERVATION);
+    findReservationByIdMock.mockResolvedValueOnce({
+      ...RESERVATION,
+      status: "CONFIRMED",
+    });
+    getMercadoPagoPaymentMock.mockResolvedValue({
+      id: 12345,
+      status: "approved",
+      externalReference: "res_1",
+      transactionAmount: 1000,
+    });
+    getInvoiceByReservationIdMock.mockResolvedValueOnce(INVOICE);
+    getInvoiceByReservationIdMock.mockResolvedValueOnce({
+      ...INVOICE,
+      status: "PAID",
+    });
+    recordPaymentMock.mockRejectedValue(
+      new Error("Only ISSUED invoices can receive payments"),
+    );
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const response = await POST(
+      makeRequest({ reservationId: "res_1", dataId: "12345" }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ ok: true });
+    expect(confirmReservationPaymentMock).not.toHaveBeenCalled();
+    expect(errorSpy).not.toHaveBeenCalled();
+
+    errorSpy.mockRestore();
+  });
+
+  it("returns 500 and logs loudly — instead of silently acking as 'already processed' — when the invoice is PAID but the reservation never made it to CONFIRMED (recordPayment itself succeeded, but whatever ran after it failed)", async () => {
+    findReservationByIdMock.mockResolvedValueOnce(RESERVATION);
+    findReservationByIdMock.mockResolvedValueOnce({
+      ...RESERVATION,
+      status: "SCHEDULED",
+    });
+    getMercadoPagoPaymentMock.mockResolvedValue({
+      id: 12345,
+      status: "approved",
+      externalReference: "res_1",
+      transactionAmount: 1000,
+    });
+    getInvoiceByReservationIdMock.mockResolvedValueOnce(INVOICE);
+    getInvoiceByReservationIdMock.mockResolvedValueOnce({
+      ...INVOICE,
+      status: "PAID",
+    });
+    recordPaymentMock.mockRejectedValue(
+      new Error("Only ISSUED invoices can receive payments"),
+    );
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const response = await POST(
+      makeRequest({ reservationId: "res_1", dataId: "12345" }),
+    );
+
+    expect(response.status).toBe(500);
+    expect(errorSpy).toHaveBeenCalled();
+
+    errorSpy.mockRestore();
+  });
+
   it("does not record a payment for a non-approved status", async () => {
     findReservationByIdMock.mockResolvedValue(RESERVATION);
     getMercadoPagoPaymentMock.mockResolvedValue({

@@ -11,6 +11,7 @@ import { getClubById } from "@/core/clubs/services/clubs.service";
 import {
   createInvoice,
   issueInvoice,
+  voidInvoice,
   getReservationIdsWithReceipt,
 } from "@/core/billing/services/billing.service";
 import { createCheckoutPreference } from "@/lib/mercadopago/preferences";
@@ -203,6 +204,7 @@ export async function POST(request: NextRequest) {
   }
 
   let reservation: Awaited<ReturnType<typeof createReservation>> | undefined;
+  let invoice: Awaited<ReturnType<typeof createInvoice>> | undefined;
   try {
     reservation = await createReservation(
       userId,
@@ -217,7 +219,7 @@ export async function POST(request: NextRequest) {
       },
     );
 
-    const invoice = await createInvoice(court.clubId, userId, {
+    invoice = await createInvoice(court.clubId, userId, {
       userId,
       reservationId: reservation.id,
       currency: club.currency,
@@ -237,6 +239,7 @@ export async function POST(request: NextRequest) {
     if (effectivePaymentMethod === "MERCADOPAGO") {
       const { checkoutUrl } = await createCheckoutPreference({
         clubId: court.clubId,
+        clubName: club.name,
         reservationId: reservation.id,
         courtName: court.name,
         price: court.reservationFee,
@@ -255,6 +258,17 @@ export async function POST(request: NextRequest) {
     // was never given a way to complete. A rollback failure here must not
     // mask the original error — it's swallowed and the original error
     // response is returned regardless.
+    if (invoice) {
+      try {
+        // Void first, while the reservation this invoice points at still
+        // exists — without this, a DRAFT/ISSUED invoice is left dangling
+        // (pointing at a reservation about to be cancelled below) with
+        // nothing left to ever revisit it.
+        await voidInvoice(court.clubId, invoice.id, userId);
+      } catch {
+        // Best-effort rollback; original error below still applies.
+      }
+    }
     if (reservation) {
       try {
         await cancelReservation(reservation.id, userId);

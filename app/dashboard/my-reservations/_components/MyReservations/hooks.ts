@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { myReservationsBaseKey, myReservationsQueryKey } from "./consts";
-import { toPlayerReservation } from "./utils";
+import { hasPendingPaymentHold, toPlayerReservation } from "./utils";
 import type { RawPlayerReservation } from "./types";
 
 async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
@@ -14,6 +14,15 @@ async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
   return body as T;
 }
 
+// While a reservation on this list is a SCHEDULED hold still waiting on its
+// payment outcome (Mercado Pago's webhook, or a bank transfer the club hasn't
+// confirmed yet), poll so that outcome — paid (CONFIRMED) or lapsed
+// (CANCELLED, via the server's own lazy-expiry) — shows up here without a
+// manual refresh, same intent as PaymentReturnView/hooks.ts's own
+// usePaymentReturnStatus polling. Stops automatically (see
+// hasPendingPaymentHold) once nothing on the list is still pending.
+const PENDING_HOLD_REFETCH_INTERVAL_MS = 5_000;
+
 export function useMyReservations(includePast: boolean) {
   return useQuery({
     queryKey: myReservationsQueryKey(includePast),
@@ -21,6 +30,10 @@ export function useMyReservations(includePast: boolean) {
       fetchJson<{ reservations: RawPlayerReservation[] }>(
         `/api/player/reservations?includePast=${includePast}`,
       ).then((d) => d.reservations.map(toPlayerReservation)),
+    refetchInterval: (query) =>
+      hasPendingPaymentHold(query.state.data)
+        ? PENDING_HOLD_REFETCH_INTERVAL_MS
+        : false,
   });
 }
 

@@ -8,6 +8,7 @@ import {
 } from "@/core/reservations/services/reservations.service";
 import { TicketDocument } from "@/lib/pdf/TicketDocument";
 import { requireAuthUser } from "@/lib/auth/requireAuthUser";
+import { withErrorHandling } from "@/lib/api/withErrorHandling";
 
 // Player-scoped booking-ticket download/preview, mirroring the [id]/receipt
 // route's ownership-check pattern exactly: there's no club-agnostic lookup by
@@ -16,7 +17,7 @@ import { requireAuthUser } from "@/lib/auth/requireAuthUser";
 // from the URL alone. Unlike the receipt, this works for ANY CONFIRMED
 // reservation — paid or free — since a ticket proves the booking, not the
 // payment.
-export async function GET(
+export const GET = withErrorHandling(async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
@@ -69,4 +70,4 @@ export async function GET(
       "Content-Disposition": `${preview ? "inline" : "attachment"}; filename="ticket-${ticketData.id}.pdf"`,
     },
   });
-}
+});

@@ -66,4 +66,18 @@ describe("GET /api/admin/clubs", () => {
     expect(response.status).toBe(200);
     expect(json).toEqual({ clubs });
   });
+
+  it("returns the app's standard {error} 500 JSON shape instead of throwing when listAllClubs rejects", async () => {
+    requireAdminMock.mockResolvedValue({
+      ok: true,
+      context: { userId: "user_admin" },
+    });
+    listAllClubsMock.mockRejectedValue(new Error("connection reset"));
+
+    const response = await GET();
+    const json = await response.json();
+
+    expect(response.status).toBe(500);
+    expect(typeof json.error).toBe("string");
+  });
 });

@@ -1,14 +1,32 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { MercadoPagoConfig } from "mercadopago";
 
-vi.mock("@/infrastructure/db/client", () => ({
-  prisma: {
+vi.mock("@/infrastructure/db/client", () => {
+  const mockPrisma: {
+    clubMercadoPagoAccount: {
+      findUnique: ReturnType<typeof vi.fn>;
+      update: ReturnType<typeof vi.fn>;
+    };
+    $queryRaw: ReturnType<typeof vi.fn>;
+    $transaction: ReturnType<typeof vi.fn>;
+  } = {
     clubMercadoPagoAccount: {
       findUnique: vi.fn(),
       update: vi.fn(),
     },
-  },
-}));
+    $queryRaw: vi.fn().mockResolvedValue(undefined),
+    $transaction: vi.fn(),
+  };
+  // Interactive transactions in real Prisma run every query inside the
+  // callback on one dedicated connection. The mock only needs to preserve
+  // that single-connection illusion: invoke the callback with the same
+  // mock object so `tx.clubMercadoPagoAccount.update` in production code is
+  // the exact same spy as `prisma.clubMercadoPagoAccount.update` here.
+  mockPrisma.$transaction.mockImplementation(
+    (fn: (tx: typeof mockPrisma) => unknown) => fn(mockPrisma),
+  );
+  return { prisma: mockPrisma };
+});
 
 vi.mock("./tokenCrypto", () => ({
   decryptToken: vi.fn(),
@@ -24,7 +42,10 @@ import { decryptToken, encryptToken } from "./tokenCrypto";
 import { refreshClubAccessToken } from "./oauth";
 import {
   getClubMercadoPagoClient,
+  refreshAndPersist,
   ClubMercadoPagoConnectionError,
+  CLUB_CLIENT_TIMEOUT_MS,
+  CLUB_CLIENT_MAX_RETRIES,
 } from "./clubMercadoPagoClient";
 
 const findUniqueMock = prisma.clubMercadoPagoAccount.findUnique as ReturnType<
@@ -33,6 +54,8 @@ const findUniqueMock = prisma.clubMercadoPagoAccount.findUnique as ReturnType<
 const updateMock = prisma.clubMercadoPagoAccount.update as ReturnType<
   typeof vi.fn
 >;
+const queryRawMock = prisma.$queryRaw as ReturnType<typeof vi.fn>;
+const transactionMock = prisma.$transaction as ReturnType<typeof vi.fn>;
 const decryptTokenMock = decryptToken as ReturnType<typeof vi.fn>;
 const encryptTokenMock = encryptToken as ReturnType<typeof vi.fn>;
 const refreshClubAccessTokenMock = refreshClubAccessToken as ReturnType<
@@ -55,6 +78,12 @@ describe("getClubMercadoPagoClient", () => {
   beforeEach(() => {
     findUniqueMock.mockReset();
     updateMock.mockReset();
+    queryRawMock.mockReset();
+    queryRawMock.mockResolvedValue(undefined);
+    transactionMock.mockReset();
+    transactionMock.mockImplementation((fn: (tx: unknown) => unknown) =>
+      fn(prisma),
+    );
     decryptTokenMock.mockReset();
     encryptTokenMock.mockReset();
     refreshClubAccessTokenMock.mockReset();
@@ -75,6 +104,19 @@ describe("getClubMercadoPagoClient", () => {
     expect(client).toBeInstanceOf(MercadoPagoConfig);
     expect(client.accessToken).toBe("plaintext-access");
     expect(refreshClubAccessTokenMock).not.toHaveBeenCalled();
+  });
+
+  it("builds the client with a bounded timeout and retry budget instead of the SDK's 60s/3-retry defaults", async () => {
+    findUniqueMock.mockResolvedValue(makeAccountRow());
+
+    const client = await getClubMercadoPagoClient("club_1");
+
+    expect(client.options).toEqual({
+      timeout: CLUB_CLIENT_TIMEOUT_MS,
+      maxRetries: CLUB_CLIENT_MAX_RETRIES,
+    });
+    expect(client.options?.timeout).toBeLessThanOrEqual(10000);
+    expect(client.options?.maxRetries).toBeLessThanOrEqual(2);
   });
 
   it("lazily refreshes the token when it is near expiry, and returns a client built from the new token", async () => {
@@ -214,5 +256,114 @@ describe("getClubMercadoPagoClient", () => {
         }),
       }),
     );
+  });
+});
+
+describe("refreshAndPersist", () => {
+  beforeEach(() => {
+    findUniqueMock.mockReset();
+    updateMock.mockReset();
+    queryRawMock.mockReset();
+    queryRawMock.mockResolvedValue(undefined);
+    transactionMock.mockReset();
+    transactionMock.mockImplementation((fn: (tx: unknown) => unknown) =>
+      fn(prisma),
+    );
+    decryptTokenMock.mockReset();
+    encryptTokenMock.mockReset();
+    refreshClubAccessTokenMock.mockReset();
+
+    decryptTokenMock.mockImplementation((value: string) =>
+      value.replace("encrypted-", "plaintext-"),
+    );
+    encryptTokenMock.mockImplementation((value: string) =>
+      value.replace("plaintext-", "encrypted-"),
+    );
+  });
+
+  it("runs the refresh-and-persist critical section inside a single Prisma transaction", async () => {
+    findUniqueMock.mockResolvedValue(
+      makeAccountRow({
+        tokenExpiresAt: new Date(Date.now() + 60 * 60 * 1000), // still near expiry
+      }),
+    );
+    refreshClubAccessTokenMock.mockResolvedValue({
+      access_token: "plaintext-new-access",
+      refresh_token: "plaintext-new-refresh",
+      expires_in: 15552000,
+    });
+    updateMock.mockResolvedValue(undefined);
+
+    await refreshAndPersist("club_1", "encrypted-refresh");
+
+    expect(transactionMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("acquires a per-club Postgres advisory lock scoped by the club id before touching the token", async () => {
+    findUniqueMock.mockResolvedValue(
+      makeAccountRow({
+        tokenExpiresAt: new Date(Date.now() + 60 * 60 * 1000),
+      }),
+    );
+    refreshClubAccessTokenMock.mockResolvedValue({
+      access_token: "plaintext-new-access",
+      refresh_token: "plaintext-new-refresh",
+      expires_in: 15552000,
+    });
+    updateMock.mockResolvedValue(undefined);
+
+    await refreshAndPersist("club_1", "encrypted-refresh");
+
+    expect(queryRawMock).toHaveBeenCalledTimes(1);
+    const lockCallArgs = queryRawMock.mock.calls[0];
+    expect(lockCallArgs).toContain("club_1");
+    // The lock must be acquired before the external refresh call and the
+    // persistence write, not after — otherwise it protects nothing.
+    const lockCallOrder = queryRawMock.mock.invocationCallOrder[0];
+    const refreshCallOrder =
+      refreshClubAccessTokenMock.mock.invocationCallOrder[0];
+    const updateCallOrder = updateMock.mock.invocationCallOrder[0];
+    expect(lockCallOrder).toBeLessThan(refreshCallOrder);
+    expect(lockCallOrder).toBeLessThan(updateCallOrder);
+  });
+
+  it("when another instance already refreshed the token while this call was waiting on the lock, returns the fresh token instead of racing the already-rotated refresh token", async () => {
+    // The outer caller decided to refresh based on a near-expiry read, but
+    // by the time the advisory lock is acquired, a concurrent instance has
+    // already rotated + persisted a brand new token pair.
+    findUniqueMock.mockResolvedValue(
+      makeAccountRow({
+        accessTokenEncrypted: "encrypted-already-refreshed-access",
+        refreshTokenEncrypted: "encrypted-already-refreshed-refresh",
+        tokenExpiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // far out now
+      }),
+    );
+
+    const accessToken = await refreshAndPersist("club_1", "encrypted-refresh");
+
+    expect(refreshClubAccessTokenMock).not.toHaveBeenCalled();
+    expect(updateMock).not.toHaveBeenCalled();
+    expect(accessToken).toBe("plaintext-already-refreshed-access");
+  });
+
+  it("still performs its own refresh when the fresh re-read confirms the token is genuinely still near expiry", async () => {
+    findUniqueMock.mockResolvedValue(
+      makeAccountRow({
+        tokenExpiresAt: new Date(Date.now() + 60 * 60 * 1000), // still near expiry
+      }),
+    );
+    refreshClubAccessTokenMock.mockResolvedValue({
+      access_token: "plaintext-new-access",
+      refresh_token: "plaintext-new-refresh",
+      expires_in: 15552000,
+    });
+    updateMock.mockResolvedValue(undefined);
+
+    const accessToken = await refreshAndPersist("club_1", "encrypted-refresh");
+
+    expect(refreshClubAccessTokenMock).toHaveBeenCalledWith(
+      "plaintext-refresh",
+    );
+    expect(accessToken).toBe("plaintext-new-access");
   });
 });

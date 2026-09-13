@@ -52,6 +52,7 @@ function makeClubDetail(overrides: Record<string, unknown> = {}) {
   return {
     id: "club_1",
     name: "Club A",
+    slug: "club-a",
     legalName: "",
     taxId: "",
     email: "a@example.com",
@@ -93,6 +94,7 @@ function renderView(
             {
               id: "club_1",
               name: "Club A",
+              slug: "club-a",
               status: "ACTIVE",
               plan: "PRO",
               isFreePlan: false,
@@ -100,6 +102,7 @@ function renderView(
             {
               id: "club_2",
               name: "Club B",
+              slug: "club-b",
               status: "SUSPENDED",
               plan: "BASIC",
               isFreePlan: false,
@@ -289,9 +292,9 @@ describe("AdminClubSettingsView", () => {
     });
   });
 
-  describe("clubId deep-link pre-selection", () => {
-    it("pre-selects the club named by the ?clubId search param on mount", async () => {
-      currentSearchParams = new URLSearchParams("clubId=club_2");
+  describe("club slug deep-link pre-selection", () => {
+    it("pre-selects the club named by the ?club search param's slug on mount", async () => {
+      currentSearchParams = new URLSearchParams("club=club-b");
       renderView();
 
       await waitFor(() =>
@@ -304,7 +307,19 @@ describe("AdminClubSettingsView", () => {
       ).not.toBeInTheDocument();
     });
 
-    it("falls back to the placeholder when no clubId param is present", async () => {
+    it("falls back to the placeholder when the slug doesn't match any club", async () => {
+      currentSearchParams = new URLSearchParams("club=no-such-club");
+      renderView();
+
+      await waitFor(() =>
+        expect(screen.getByText("Club A")).toBeInTheDocument(),
+      );
+      expect(
+        screen.getByText(/select a club to view its settings/i),
+      ).toBeInTheDocument();
+    });
+
+    it("falls back to the placeholder when no club param is present", async () => {
       renderView();
 
       await waitFor(() =>

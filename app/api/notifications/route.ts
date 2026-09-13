@@ -4,8 +4,9 @@ import {
   countUnreadNotifications,
 } from "@/core/notifications/services/notifications.service";
 import { requireAuthUser } from "@/lib/auth/requireAuthUser";
+import { withErrorHandling } from "@/lib/api/withErrorHandling";
 
-export async function GET() {
+export const GET = withErrorHandling(async function GET() {
   const authResult = await requireAuthUser();
   if (!authResult.ok) return authResult.response;
   const { userId } = authResult;
@@ -16,4 +17,4 @@ export async function GET() {
   ]);
 
   return NextResponse.json({ notifications, unreadCount });
-}
+});

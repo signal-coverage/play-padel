@@ -71,18 +71,37 @@ function CourtLimitControl({
  * club is selected via ClubSettingsView's optional `clubId` prop, which
  * routes it through the admin-gated /api/admin/clubs/[clubId] endpoints
  * instead of the owner-only /api/clubs (right ~70%). Selection is local
- * component state, seeded from an optional `?clubId=` URL search param on
- * mount (see app/dashboard/admin-search, whose club results deep-link here)
- * — otherwise there's no precedent in this codebase for reflecting this
- * kind of in-page picker selection in the URL beyond that one entry point,
- * so nothing pushes selection changes back into the URL.
+ * component state, seeded from an optional `?club=<slug>` URL search param
+ * on mount (see app/dashboard/admin-search, whose club results deep-link
+ * here, and NotificationsBell) — the slug, never the raw clubId, is what
+ * appears in the URL (see prisma/schema.prisma's Club.slug doc comment), so
+ * it's resolved back to a real id once `clubs` has loaded. Otherwise
+ * there's no precedent in this codebase for reflecting this kind of in-page
+ * picker selection in the URL beyond that one entry point, so nothing
+ * pushes further selection changes back into the URL.
  */
 export function AdminClubSettingsView() {
   const { data: clubs = [], isLoading } = useAdminClubs();
   const searchParams = useSearchParams();
+  const seedSlug = searchParams.get("club");
   const [selectedClubId, setSelectedClubId] = useState<string | undefined>(
-    () => searchParams.get("clubId") ?? undefined,
+    undefined,
   );
+  // Seeds the initial selection from the URL's `?club=<slug>` the first time
+  // `clubs` has actually loaded, adjusted during render rather than in a
+  // `useEffect` — same idiom (and same reason) as ClubSettingsView's own
+  // render-time `reset()` seeding: a `useEffect`-deferred setState here
+  // would commit an extra, visible render (briefly showing the bare
+  // picker) instead of landing the right club in this component's very
+  // first meaningful paint. Guarded by hasSeededFromUrl (not just
+  // `clubs.length`) so it never re-fires and clobbers a selection the admin
+  // has since changed by hand.
+  const [hasSeededFromUrl, setHasSeededFromUrl] = useState(!seedSlug);
+  if (!hasSeededFromUrl && clubs.length > 0) {
+    const match = clubs.find((club) => club.slug === seedSlug);
+    if (match) setSelectedClubId(match.id);
+    setHasSeededFromUrl(true);
+  }
   const { data: owner } = useClubOwner(selectedClubId);
   const impersonateOwner = useImpersonateOwner();
   const activateFreePlan = useActivateFreePlan();

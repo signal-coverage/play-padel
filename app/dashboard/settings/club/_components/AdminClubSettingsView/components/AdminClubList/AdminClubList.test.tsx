@@ -14,6 +14,7 @@ class ResizeObserverStub {
 const CLUB_A: AdminClubListItem = {
   id: "club_1",
   name: "Club Padel Norte",
+  slug: "club-padel-norte",
   status: "ACTIVE",
   plan: "PRO",
   courtLimit: null,

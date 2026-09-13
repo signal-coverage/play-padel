@@ -5,15 +5,48 @@ import {
   confirmReservationPayment,
   getReservation,
   noShowReservation,
+  checkCourtClosureConflict,
+  checkCourtConflict,
 } from "@/core/reservations/services/reservations.service";
 import {
   getInvoiceByReservationId,
   recordPayment,
 } from "@/core/billing/services/billing.service";
+import { getClubOwner } from "@/core/clubs/services/clubs.service";
+import { dispatch } from "@/lib/notifications/dispatcher";
 import { requireOwnerClub } from "../../_lib/require-owner";
 
 type RouteParams = { params: Promise<{ reservationId: string }> };
 type ReservationAction = "cancel" | "complete" | "noShow" | "confirmTransfer";
+
+// Best-effort — mirrors the Mercado Pago webhook's own owner notification for
+// this exact scenario (see app/api/webhooks/mercadopago/route.ts). A failure
+// here must never mask the caller's own response.
+async function notifyOwnerOfPaymentConflict(
+  clubId: string,
+  reservationId: string,
+): Promise<void> {
+  try {
+    const owner = await getClubOwner(clubId);
+    if (owner) {
+      await dispatch({
+        type: "RESERVATION_PAYMENT_CONFLICT",
+        clubId,
+        recipientId: owner.id,
+        recipientEmail: owner.email,
+        recipientName: owner.displayName,
+        subject: "A paid reservation could not be confirmed",
+        html: "A player's payment was received, but their slot could not be confirmed automatically. Please resolve this manually.",
+        sendEmail: false,
+      });
+    }
+  } catch (notifyErr) {
+    console.error(
+      `[confirmTransfer] Failed to notify owner of a payment conflict for reservation ${reservationId}:`,
+      notifyErr,
+    );
+  }
+}
 
 export async function PATCH(request: NextRequest, { params }: RouteParams) {
   const authResult = await requireOwnerClub();
@@ -119,13 +152,69 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
           amount: invoice.total,
           currency: invoice.currency,
         });
+
+        // The payment is now permanently captured/recorded — everything
+        // below this point must never leave that fact silently unreflected.
+        // Re-check the slot right before confirming, same as the Mercado
+        // Pago webhook already does (app/api/webhooks/mercadopago/route.ts):
+        // the hold's own paymentExpiresAt guard above only protects against
+        // it lapsing before this point, not against the court closing or
+        // another booking landing in the (however brief) window between
+        // that check and this one.
+        const closureReason = await checkCourtClosureConflict({
+          courtId: existing.courtId,
+          scheduledStart: existing.scheduledStart,
+          scheduledEnd: existing.scheduledEnd,
+        });
+        const overlapsAnotherReservation = closureReason
+          ? false
+          : await checkCourtConflict({
+              clubId,
+              courtId: existing.courtId,
+              scheduledStart: existing.scheduledStart,
+              scheduledEnd: existing.scheduledEnd,
+              excludeId: reservationId,
+            });
+
+        if (closureReason || overlapsAnotherReservation) {
+          console.error(
+            `[confirmTransfer] Payment recorded for reservation ${reservationId} but its ${
+              closureReason
+                ? `court is now closed ("${closureReason}")`
+                : "slot now overlaps another reservation"
+            } — needs manual resolution via the owner Reservations page.`,
+          );
+          await notifyOwnerOfPaymentConflict(clubId, reservationId);
+          return NextResponse.json({
+            reservation: existing,
+            warning:
+              "Payment recorded, but this slot is no longer available. Please resolve manually.",
+          });
+        }
+
         // Recorded under the real owner's userId (not the Mercado Pago
         // webhook's default attribution) — this confirmation was a manual
         // owner action, and the audit trail must reflect that.
-        const reservation = await confirmReservationPayment(
-          reservationId,
-          userId,
-        );
+        let reservation;
+        try {
+          reservation = await confirmReservationPayment(reservationId, userId);
+        } catch (err) {
+          // A failure here (e.g. a genuine race losing to the exclusion
+          // constraint despite the re-check above) must never fall through
+          // to the generic 500 below — that response is indistinguishable
+          // from "nothing happened", but the payment was already
+          // permanently committed by recordPayment above.
+          console.error(
+            `[confirmTransfer] Payment recorded for reservation ${reservationId} but confirming it failed — needs manual resolution via the owner Reservations page.`,
+            err,
+          );
+          await notifyOwnerOfPaymentConflict(clubId, reservationId);
+          return NextResponse.json({
+            reservation: existing,
+            warning:
+              "Payment recorded, but confirming the reservation failed. Please resolve manually.",
+          });
+        }
         return NextResponse.json({ reservation });
       }
       default:

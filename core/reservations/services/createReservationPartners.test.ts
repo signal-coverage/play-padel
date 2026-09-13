@@ -8,6 +8,7 @@ const {
   courtClosureFindFirstMock,
   reservationCreateMock,
   reservationPartnerCreateManyMock,
+  transactionMock,
 } = vi.hoisted(() => ({
   courtFindUniqueMock: vi.fn(),
   userFindUniqueMock: vi.fn(),
@@ -16,6 +17,7 @@ const {
   courtClosureFindFirstMock: vi.fn(),
   reservationCreateMock: vi.fn(),
   reservationPartnerCreateManyMock: vi.fn(),
+  transactionMock: vi.fn(),
 }));
 
 vi.mock("@/infrastructure/db/client", () => ({
@@ -28,6 +30,7 @@ vi.mock("@/infrastructure/db/client", () => ({
     },
     courtClosure: { findFirst: courtClosureFindFirstMock },
     reservationPartner: { createMany: reservationPartnerCreateManyMock },
+    $transaction: transactionMock,
   },
 }));
 
@@ -35,6 +38,7 @@ vi.mock("@/core/audit/services/audit.service", () => ({
   logAudit: vi.fn(),
 }));
 
+import { prisma } from "@/infrastructure/db/client";
 import { createReservation } from "@/core/reservations/services/reservations.service";
 
 const INPUT = {
@@ -78,6 +82,9 @@ beforeEach(() => {
   reservationFindFirstMock.mockResolvedValue(null);
   courtClosureFindFirstMock.mockResolvedValue(null);
   reservationCreateMock.mockResolvedValue(baseReservationRow());
+  transactionMock.mockImplementation((cb: (tx: typeof prisma) => unknown) =>
+    cb(prisma),
+  );
 });
 
 describe("createReservation — no partnerIds (existing behavior)", () => {

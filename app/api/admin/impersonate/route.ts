@@ -43,43 +43,51 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const target = await prisma.userProfile.findUnique({
-    where: { id: targetUserId },
-  });
-  if (!target) {
-    return NextResponse.json({ error: "User not found" }, { status: 404 });
-  }
+  try {
+    const target = await prisma.userProfile.findUnique({
+      where: { id: targetUserId },
+    });
+    if (!target) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
 
-  if (target.isAdmin) {
+    if (target.isAdmin) {
+      return NextResponse.json(
+        { error: "You cannot impersonate another admin." },
+        { status: 400 },
+      );
+    }
+
+    const client = await clerkClient();
+    const actorToken = await client.actorTokens.create({
+      userId: targetUserId,
+      actor: { sub: adminResult.context.userId },
+      // Keep the documented Clerk defaults (1hr token lifetime / 30min
+      // session cap) — short-lived enough for a support session, and no
+      // strong reason found to shorten them further.
+      expiresInSeconds: 3600,
+      sessionMaxDurationInSeconds: 1800,
+    });
+
+    logAudit({
+      clubId: null,
+      userId: adminResult.context.userId,
+      userDisplayName: adminResult.context.displayName,
+      action: "user.impersonated",
+      entity: "UserProfile",
+      entityId: targetUserId,
+      metadata: {
+        actorTokenId: actorToken.id,
+        targetDisplayName: target.displayName,
+      },
+    });
+
+    return NextResponse.json({ url: actorToken.url });
+  } catch (err) {
+    console.error("[admin/impersonate] Unexpected error:", err);
     return NextResponse.json(
-      { error: "You cannot impersonate another admin." },
-      { status: 400 },
+      { error: "Failed to impersonate user" },
+      { status: 500 },
     );
   }
-
-  const client = await clerkClient();
-  const actorToken = await client.actorTokens.create({
-    userId: targetUserId,
-    actor: { sub: adminResult.context.userId },
-    // Keep the documented Clerk defaults (1hr token lifetime / 30min
-    // session cap) — short-lived enough for a support session, and no
-    // strong reason found to shorten them further.
-    expiresInSeconds: 3600,
-    sessionMaxDurationInSeconds: 1800,
-  });
-
-  logAudit({
-    clubId: null,
-    userId: adminResult.context.userId,
-    userDisplayName: adminResult.context.displayName,
-    action: "user.impersonated",
-    entity: "UserProfile",
-    entityId: targetUserId,
-    metadata: {
-      actorTokenId: actorToken.id,
-      targetDisplayName: target.displayName,
-    },
-  });
-
-  return NextResponse.json({ url: actorToken.url });
 }

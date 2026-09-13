@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/sheet";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { useGuardedDialogClose } from "@/hooks/use-guarded-dialog-close";
+import { summarizeClosureFanOut } from "@/core/courts/utils/closureFanOut";
 import {
   useCancelCourtClosure,
   useCourtClosures,
@@ -59,29 +60,15 @@ export function ClosuresSheet({
         createClosure.mutateAsync({ courtId: id, input }),
       ),
     );
-    const failures = results.filter(
-      (r): r is PromiseRejectedResult => r.status === "rejected",
-    );
+    const outcome = summarizeClosureFanOut(results);
 
-    if (failures.length === 0) {
-      toast.success(
-        targetCourtIds.length > 1
-          ? `Closure created for ${targetCourtIds.length} courts`
-          : "Closure created",
-      );
-    } else if (failures.length === targetCourtIds.length) {
-      toast.error(
-        failures[0].reason instanceof Error
-          ? failures[0].reason.message
-          : "Failed to create closure",
-      );
+    if (outcome.toastTone === "success") {
+      toast.success(outcome.toastMessage);
     } else {
-      toast.error(
-        `Created for ${targetCourtIds.length - failures.length} of ${targetCourtIds.length} courts. ${failures.length} conflicted — check each court's closures.`,
-      );
+      toast.error(outcome.toastMessage);
     }
 
-    return failures.length === 0;
+    return outcome.allSucceeded;
   }
 
   async function handleConfirmCancel() {

@@ -56,8 +56,8 @@ export function AdminSearchView() {
             <AdminSearchClubResults
               clubs={data?.clubs ?? []}
               isLoading={isLoading}
-              onSelectClub={(clubId) =>
-                router.push(`/dashboard/settings/club?clubId=${clubId}`)
+              onSelectClub={(clubSlug) =>
+                router.push(`/dashboard/settings/club?club=${clubSlug}`)
               }
             />
           </section>

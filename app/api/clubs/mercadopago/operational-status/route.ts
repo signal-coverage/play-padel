@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireOwnerClub } from "../../_lib/require-owner";
 import { getClubOperationalStatus } from "@/lib/mercadopago/operationalStatus";
+import { withErrorHandling } from "@/lib/api/withErrorHandling";
 
 /**
  * Owner-only read used by the dashboard's `ClubOperationalGate` overlay
@@ -10,7 +11,7 @@ import { getClubOperationalStatus } from "@/lib/mercadopago/operationalStatus";
  * player-facing read filters — so this never defines "operational"
  * differently than those call sites.
  */
-export async function GET() {
+export const GET = withErrorHandling(async function GET() {
   const authResult = await requireOwnerClub();
   if (!authResult.ok) return authResult.response;
 
@@ -18,4 +19,4 @@ export async function GET() {
     await getClubOperationalStatus(authResult.context.clubId);
 
   return NextResponse.json({ operational, cause, email, nickname });
-}
+});

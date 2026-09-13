@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { listMatchesForGroup } from "@/core/tournaments/services/matches.service";
 import { requireOwnerClub } from "../../../../../../../_lib/require-owner";
 import { findOwnedCategory } from "../../../../../../../_lib/find-owned-category";
+import { withErrorHandling } from "@/lib/api/withErrorHandling";
 
 type RouteParams = {
   params: Promise<{
@@ -14,7 +15,10 @@ type RouteParams = {
 // Read-only, owner-scoped. Not part of the plan's original explicit route
 // list — added so the owner UI has somewhere to fetch "a plain list of a
 // group's matches" from, per this slice's own UI requirement.
-export async function GET(_request: NextRequest, { params }: RouteParams) {
+export const GET = withErrorHandling(async function GET(
+  _request: NextRequest,
+  { params }: RouteParams,
+) {
   const authResult = await requireOwnerClub();
   if (!authResult.ok) return authResult.response;
 
@@ -30,4 +34,4 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
 
   const matches = await listMatchesForGroup(groupId);
   return NextResponse.json({ matches });
-}
+});

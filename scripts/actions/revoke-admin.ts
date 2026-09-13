@@ -1,14 +1,18 @@
 /**
  * Sets UserProfile.isAdmin = false for one user by email — undoes
  * grant-admin.ts's own action, revoking the same gate
- * requireAdminProfile() (lib/auth/adminProfile.ts) checks. Never touches
- * the separate, legacy Clerk publicMetadata.isAdmin mechanism (see
- * docs/ADMIN_BOOTSTRAP.md) — same scope as grant-admin.ts.
+ * requireAdminProfile() (lib/auth/adminProfile.ts) checks. Also clears the
+ * separate, legacy Clerk publicMetadata.isAdmin flag (lib/auth/admin.ts) on
+ * the same user, mirroring grant-admin.ts's own sync so a revoke can't
+ * accidentally leave the legacy mechanism still granting access (see
+ * docs/ADMIN_BOOTSTRAP.md).
  *
  * DATABASE_URL is expected to already be set (scripts/menu.ts loads it from
  * the chosen .env file before calling this) — this module never picks an
- * environment on its own.
+ * environment on its own. CLERK_SECRET_KEY must be set from the same .env
+ * file for the Clerk sync step below.
  */
+import { clerkClient } from "@clerk/nextjs/server";
 import { log, withSpinner } from "../lib/prompt";
 import { dispatch } from "../../lib/notifications/dispatcher";
 
@@ -39,6 +43,21 @@ export async function revokeAdmin(email: string): Promise<void> {
         data: { isAdmin: false },
       }),
     );
+
+    // Keeps the two admin mechanisms in sync going forward — failure here
+    // must not affect the DB revoke that already happened above, same
+    // "the real gate already succeeded" convention as the notification
+    // dispatch below.
+    try {
+      const client = await clerkClient();
+      await client.users.updateUserMetadata(profile.id, {
+        publicMetadata: { isAdmin: false },
+      });
+    } catch (err) {
+      log.warn(
+        `Clerk publicMetadata sync failed (DB revoke still succeeded): ${err instanceof Error ? err.message : "unknown error"}`,
+      );
+    }
 
     // Failure here must not affect the revoke that already happened above —
     // same "notification failure must not affect the actual action"
