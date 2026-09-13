@@ -15,7 +15,7 @@ import { enforceRateLimit } from "@/lib/security/rateLimit";
 // Same address app/error.tsx and app/global-error.tsx already show as the
 // site-wide support contact — kept as a local const per this repo's
 // SRP-per-folder convention rather than a shared cross-folder import.
-const SUPPORT_EMAIL = "hello@playpadel.com";
+const SUPPORT_EMAIL = "signal.coverage.lead@gmail.com";
 
 // Completes onboarding for the current Clerk user: player -> UserProfile only
 // (no club), owner -> Club + UserProfile pointing at it. Upserts on the

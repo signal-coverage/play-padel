@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { RotateCw } from "lucide-react";
 import "./globals.css";
 
-const SUPPORT_EMAIL = "hello@playpadel.com";
+const SUPPORT_EMAIL = "signal.coverage.lead@gmail.com";
 
 // This replaces the root layout entirely when an error is thrown within it,
 // so it must define its own <html>/<body> and re-import global styles —

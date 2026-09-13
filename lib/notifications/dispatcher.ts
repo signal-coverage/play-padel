@@ -10,10 +10,10 @@ import type { DispatchParams } from "@/core/notifications/types";
 // cached here — same "check process.env at call time" convention this file
 // already uses for RESEND_API_KEY) so a per-environment sender can be set
 // without a code change or redeploy — e.g. Resend's onboarding@resend.dev
-// for local/dev testing, until playpadel.app's domain is verified on Resend
-// (see https://resend.com/domains). Falls back to this default when unset,
-// so production keeps working unchanged until it sets its own override.
-const DEFAULT_FROM_ADDRESS = "noreply@playpadel.app";
+// for local/dev testing. play-padel.com.ar is verified on Resend (see
+// https://resend.com/domains), so this is the production default; falls
+// back to this default when the env var is unset.
+const DEFAULT_FROM_ADDRESS = "noreply@play-padel.com.ar";
 
 /**
  * Persist-then-send dispatcher.

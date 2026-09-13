@@ -10,7 +10,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { ease } from "@/lib/consts";
 import notFoundImage from "@/assets/images/404.jpg";
 
-const SUPPORT_EMAIL = "hello@playpadel.com";
+const SUPPORT_EMAIL = "signal.coverage.lead@gmail.com";
 
 export default function NotFound() {
   const shouldReduce = useReducedMotion();

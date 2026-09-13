@@ -112,7 +112,7 @@ describe("dispatch — sendEmail: false (in-app-only notification)", () => {
     process.env.RESEND_API_KEY = previousApiKey;
   });
 
-  it("sends from the default noreply@playpadel.app address when RESEND_FROM_ADDRESS isn't set", async () => {
+  it("sends from the default noreply@play-padel.com.ar address when RESEND_FROM_ADDRESS isn't set", async () => {
     const previousApiKey = process.env.RESEND_API_KEY;
     const previousFromAddress = process.env.RESEND_FROM_ADDRESS;
     process.env.RESEND_API_KEY = "test_key";
@@ -130,7 +130,7 @@ describe("dispatch — sendEmail: false (in-app-only notification)", () => {
     });
 
     expect(sendMock).toHaveBeenCalledWith(
-      expect.objectContaining({ from: "noreply@playpadel.app" }),
+      expect.objectContaining({ from: "noreply@play-padel.com.ar" }),
     );
 
     process.env.RESEND_API_KEY = previousApiKey;
