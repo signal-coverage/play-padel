@@ -4,6 +4,7 @@ vi.mock("@/infrastructure/db/client", () => ({
   prisma: {
     clubBankTransferAccount: {
       findUnique: vi.fn(),
+      findMany: vi.fn(),
       upsert: vi.fn(),
     },
   },
@@ -12,10 +13,14 @@ vi.mock("@/infrastructure/db/client", () => ({
 import { prisma } from "@/infrastructure/db/client";
 import {
   getClubBankTransferAccount,
+  getClubBankTransferAccountsByClubIds,
   setClubBankTransferAccount,
 } from "./bankTransferAccount.service";
 
 const findUniqueMock = prisma.clubBankTransferAccount.findUnique as ReturnType<
+  typeof vi.fn
+>;
+const findManyMock = prisma.clubBankTransferAccount.findMany as ReturnType<
   typeof vi.fn
 >;
 const upsertMock = prisma.clubBankTransferAccount.upsert as ReturnType<
@@ -36,6 +41,7 @@ const ROW = {
 
 beforeEach(() => {
   findUniqueMock.mockReset();
+  findManyMock.mockReset();
   upsertMock.mockReset();
 });
 
@@ -57,6 +63,36 @@ describe("getClubBankTransferAccount", () => {
     const result = await getClubBankTransferAccount("club_1");
 
     expect(result).toEqual(ROW);
+  });
+});
+
+describe("getClubBankTransferAccountsByClubIds", () => {
+  it("returns an empty map without querying when given no club ids", async () => {
+    const result = await getClubBankTransferAccountsByClubIds([]);
+
+    expect(findManyMock).not.toHaveBeenCalled();
+    expect(result).toEqual(new Map());
+  });
+
+  it("fetches every requested club's account via ONE batched findMany query, regardless of how many club ids are given", async () => {
+    findManyMock.mockResolvedValue([
+      { ...ROW, clubId: "club_1" },
+      { ...ROW, clubId: "club_3", bankName: "Banco Galicia" },
+    ]);
+
+    const result = await getClubBankTransferAccountsByClubIds([
+      "club_1",
+      "club_2",
+      "club_3",
+    ]);
+
+    expect(findManyMock).toHaveBeenCalledTimes(1);
+    expect(findManyMock).toHaveBeenCalledWith({
+      where: { clubId: { in: ["club_1", "club_2", "club_3"] } },
+    });
+    expect(result.get("club_1")).toEqual({ ...ROW, clubId: "club_1" });
+    expect(result.get("club_3")?.bankName).toBe("Banco Galicia");
+    expect(result.has("club_2")).toBe(false);
   });
 });
 

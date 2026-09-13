@@ -19,10 +19,14 @@ type NotificationRow = NonNullable<
   Awaited<ReturnType<typeof prisma.notification.findUnique>>
 >;
 
-function toNotification(row: NotificationRow): Notification {
+function toNotification(
+  row: NotificationRow,
+  clubSlug: string | null = null,
+): Notification {
   return {
     id: row.id,
     clubId: row.clubId,
+    clubSlug,
     type: row.type as NotificationType,
     recipientId: row.recipientId,
     recipientEmail: row.recipientEmail,
@@ -220,7 +224,12 @@ export async function listNotifications(
   ]);
 
   return {
-    notifications: rows.map(toNotification),
+    // Every row here is already scoped to the one known `clubId` above (not
+    // resolved per-row like listRecipientNotifications' own batch lookup),
+    // but this admin/owner listing doesn't build any club-scoped deep-link
+    // href from its results — `clubSlug` is left null rather than adding an
+    // unused extra query.
+    notifications: rows.map((row) => toNotification(row)),
     total,
     page,
     pageSize,
@@ -236,7 +245,31 @@ export async function listRecipientNotifications(
     orderBy: { createdAt: "desc" },
     take: limit,
   });
-  return rows.map(toNotification);
+
+  // Single batched lookup for every distinct club referenced across this
+  // page of notifications — never one query per row (the exact N+1 pattern
+  // already fixed elsewhere in this codebase, see app/api/player/clubs/
+  // route.ts's own comment on the same anti-pattern). Notification.clubId
+  // is a plain string column, not a real Prisma relation (see its own
+  // schema doc comment), so this can't be a `select`/`include` join.
+  const clubIds = [
+    ...new Set(rows.map((row) => row.clubId).filter((id) => id !== null)),
+  ];
+  const clubSlugById = new Map<string, string>();
+  if (clubIds.length > 0) {
+    const clubs = await prisma.club.findMany({
+      where: { id: { in: clubIds } },
+      select: { id: true, slug: true },
+    });
+    for (const club of clubs) clubSlugById.set(club.id, club.slug);
+  }
+
+  return rows.map((row) =>
+    toNotification(
+      row,
+      row.clubId ? (clubSlugById.get(row.clubId) ?? null) : null,
+    ),
+  );
 }
 
 export async function countUnreadNotifications(

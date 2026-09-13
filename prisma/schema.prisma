@@ -10,6 +10,13 @@ datasource db {
 model Club {
   id                 String             @id @default(cuid())
   name               String
+  // URL-safe, immutable identifier derived from `name` at creation time —
+  // never regenerated on a later rename, so a bookmarked/shared link never
+  // silently breaks. Exists purely so `id` (an internal cuid) never has to
+  // appear in a user-facing URL (Browse Courts, the admin club picker,
+  // notification deep-links) — see lib/slug.ts's slugify() + the
+  // per-creation uniqueness handling in createClub.
+  slug               String             @unique
   legalName          String?
   taxId              String?
   // Enforced unique — a Club row is only ever created once, at the very end
@@ -622,6 +629,14 @@ model Payment {
   createdAt DateTime      @default(now())
   createdBy String?
 
+  // Backstops recordPayment's own race-safe ISSUED-only transactional guard
+  // (core/billing/services/billing.service.ts) at the DB layer: the only
+  // code path that ever creates a Payment row caps each Invoice at exactly
+  // one successful capture (full-amount only, no partial payments), so two
+  // Payment rows for the same invoiceId can only mean the same capture was
+  // recorded twice. A concurrent double-insert that somehow slips past the
+  // application-level guard fails here instead of silently succeeding.
+  @@unique([invoiceId])
   @@map("payments")
 }
 

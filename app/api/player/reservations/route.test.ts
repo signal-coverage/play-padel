@@ -22,6 +22,7 @@ vi.mock("@/core/clubs/services/clubs.service", () => ({
 vi.mock("@/core/billing/services/billing.service", () => ({
   createInvoice: vi.fn(),
   issueInvoice: vi.fn(),
+  voidInvoice: vi.fn(),
   getReservationIdsWithReceipt: vi.fn(),
 }));
 
@@ -54,6 +55,7 @@ import { getClubById } from "@/core/clubs/services/clubs.service";
 import {
   createInvoice,
   issueInvoice,
+  voidInvoice,
 } from "@/core/billing/services/billing.service";
 import { createCheckoutPreference } from "@/lib/mercadopago/preferences";
 import {
@@ -69,6 +71,7 @@ const getCourtByIdMock = getCourtById as ReturnType<typeof vi.fn>;
 const getClubByIdMock = getClubById as ReturnType<typeof vi.fn>;
 const createInvoiceMock = createInvoice as ReturnType<typeof vi.fn>;
 const issueInvoiceMock = issueInvoice as ReturnType<typeof vi.fn>;
+const voidInvoiceMock = voidInvoice as ReturnType<typeof vi.fn>;
 const createCheckoutPreferenceMock = createCheckoutPreference as ReturnType<
   typeof vi.fn
 >;
@@ -107,6 +110,7 @@ beforeEach(() => {
   getClubByIdMock.mockReset();
   createInvoiceMock.mockReset();
   issueInvoiceMock.mockReset();
+  voidInvoiceMock.mockReset();
   createCheckoutPreferenceMock.mockReset();
   getClubOperationalStatusMock.mockReset();
   getAvailablePaymentMethodsMock.mockReset();
@@ -561,5 +565,93 @@ describe("POST /api/player/reservations — payment method selection", () => {
         paymentMethod: "MERCADOPAGO",
       }),
     );
+  });
+});
+
+describe("POST /api/player/reservations — rollback on partial failure", () => {
+  it("voids the dangling ISSUED invoice (not just the reservation hold) when createCheckoutPreference fails after issueInvoice already succeeded", async () => {
+    getClubOperationalStatusMock.mockResolvedValue({
+      operational: true,
+      cause: null,
+    });
+    getAvailablePaymentMethodsMock.mockResolvedValue(["MERCADOPAGO"]);
+    createReservationMock.mockResolvedValue({ id: "res_1", clubId: "club_1" });
+    createInvoiceMock.mockResolvedValue({ id: "invoice_1" });
+    issueInvoiceMock.mockResolvedValue({ id: "invoice_1" });
+    createCheckoutPreferenceMock.mockRejectedValue(
+      new Error("Mercado Pago is unavailable"),
+    );
+
+    const response = await POST(
+      makeRequest({
+        courtId: "court_1",
+        scheduledStart: "2026-09-01T10:00:00Z",
+        scheduledEnd: "2026-09-01T11:00:00Z",
+        paymentMethod: "MERCADOPAGO",
+      }),
+    );
+
+    expect(response.status).toBe(409);
+    expect(cancelReservationMock).toHaveBeenCalledWith("res_1", "user_1");
+    // Without this, the invoice would be left ISSUED and pointing at a
+    // cancelled reservation — orphaned forever, since nothing else ever
+    // revisits a voided/cancelled reservation's invoice.
+    expect(voidInvoiceMock).toHaveBeenCalledWith(
+      "club_1",
+      "invoice_1",
+      "user_1",
+    );
+  });
+
+  it("still cancels the reservation and returns the original error even when voidInvoice itself fails (best-effort rollback)", async () => {
+    getClubOperationalStatusMock.mockResolvedValue({
+      operational: true,
+      cause: null,
+    });
+    getAvailablePaymentMethodsMock.mockResolvedValue(["MERCADOPAGO"]);
+    createReservationMock.mockResolvedValue({ id: "res_1", clubId: "club_1" });
+    createInvoiceMock.mockResolvedValue({ id: "invoice_1" });
+    issueInvoiceMock.mockResolvedValue({ id: "invoice_1" });
+    createCheckoutPreferenceMock.mockRejectedValue(
+      new Error("Mercado Pago is unavailable"),
+    );
+    voidInvoiceMock.mockRejectedValue(new Error("void failed"));
+
+    const response = await POST(
+      makeRequest({
+        courtId: "court_1",
+        scheduledStart: "2026-09-01T10:00:00Z",
+        scheduledEnd: "2026-09-01T11:00:00Z",
+        paymentMethod: "MERCADOPAGO",
+      }),
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(409);
+    expect(body.error).toBe("Mercado Pago is unavailable");
+    expect(cancelReservationMock).toHaveBeenCalledWith("res_1", "user_1");
+  });
+
+  it("does not attempt to void an invoice when createInvoice itself never succeeded", async () => {
+    getClubOperationalStatusMock.mockResolvedValue({
+      operational: true,
+      cause: null,
+    });
+    getAvailablePaymentMethodsMock.mockResolvedValue(["MERCADOPAGO"]);
+    createReservationMock.mockResolvedValue({ id: "res_1", clubId: "club_1" });
+    createInvoiceMock.mockRejectedValue(new Error("invoice creation failed"));
+
+    const response = await POST(
+      makeRequest({
+        courtId: "court_1",
+        scheduledStart: "2026-09-01T10:00:00Z",
+        scheduledEnd: "2026-09-01T11:00:00Z",
+        paymentMethod: "MERCADOPAGO",
+      }),
+    );
+
+    expect(response.status).toBe(409);
+    expect(cancelReservationMock).toHaveBeenCalledWith("res_1", "user_1");
+    expect(voidInvoiceMock).not.toHaveBeenCalled();
   });
 });

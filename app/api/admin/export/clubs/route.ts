@@ -3,6 +3,7 @@ import { format } from "date-fns";
 import { prisma } from "@/infrastructure/db/client";
 import { requireAdminProfile } from "@/lib/auth/adminProfile";
 import { toCsv } from "@/lib/csv/toCsv";
+import { withErrorHandling } from "@/lib/api/withErrorHandling";
 
 const HEADERS = [
   "id",
@@ -19,7 +20,7 @@ const HEADERS = [
 // requireAdminProfile gate and unscoped-across-clubs shape as
 // GET /api/admin/clubs, just serialized as a downloadable CSV instead of
 // JSON for the admin's own record-keeping/reporting needs.
-export async function GET() {
+export const GET = withErrorHandling(async function GET() {
   const authResult = await requireAdminProfile();
   if (!authResult.ok) return authResult.response;
 
@@ -60,4 +61,4 @@ export async function GET() {
       "Content-Disposition": `attachment; filename="${filename}"`,
     },
   });
-}
+});

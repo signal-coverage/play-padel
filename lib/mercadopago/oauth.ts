@@ -10,6 +10,19 @@ import { requireEnv, requireAppUrl } from "@/lib/env";
 // flow.
 const STATE_TTL_MS = 10 * 60 * 1000; // 10 minutes — generous for a redirect round-trip.
 
+// The SDK's own undeclared defaults are a 60s timeout with up to 3 retries
+// (verified against the installed SDK, same finding that already bounded
+// lib/mercadopago/clubMercadoPagoClient.ts and platformClient.ts) — every
+// call in this module runs on a club owner's interactive connect/callback
+// flow, so a slow/degraded Mercado Pago should fail fast with a retry
+// rather than leave the browser hanging on a redirect for a minute-plus.
+const OAUTH_TIMEOUT_MS = 8000;
+const OAUTH_MAX_RETRIES = 1;
+const OAUTH_CLIENT_OPTIONS = {
+  timeout: OAUTH_TIMEOUT_MS,
+  maxRetries: OAUTH_MAX_RETRIES,
+};
+
 export type OAuthStatePayload = {
   clubId: string;
   ts: number;
@@ -52,6 +65,7 @@ function signPayload(encodedPayload: string): string {
 function getPlatformMercadoPagoConfig(): MercadoPagoConfig {
   return new MercadoPagoConfig({
     accessToken: requireEnv("MERCADOPAGO_ACCESS_TOKEN"),
+    options: OAUTH_CLIENT_OPTIONS,
   });
 }
 
@@ -157,7 +171,9 @@ export type MpUserProfile = {
 export async function fetchMercadoPagoUserProfile(
   accessToken: string,
 ): Promise<MpUserProfile> {
-  const user = new User(new MercadoPagoConfig({ accessToken }));
+  const user = new User(
+    new MercadoPagoConfig({ accessToken, options: OAUTH_CLIENT_OPTIONS }),
+  );
   const profile = await user.get();
   return {
     email: profile.email ?? null,

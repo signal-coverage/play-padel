@@ -96,7 +96,7 @@ export function NotificationsBell() {
                   key={notification.id}
                   href={getNotificationHref(
                     notification.type,
-                    notification.clubId,
+                    notification.clubSlug,
                   )}
                   onClick={() => {
                     setOpen(false);

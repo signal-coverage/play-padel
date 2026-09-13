@@ -36,8 +36,11 @@ Sentry.init({
   // Add optional integrations for additional features
   integrations: [Sentry.replayIntegration()],
 
-  // Define how likely traces are sampled. Adjust this value in production, or use tracesSampler for greater control.
-  tracesSampleRate: 1,
+  // Full sampling in development; a lower rate in production to bound
+  // Sentry's trace volume/cost at real traffic (no env-aware helper exists
+  // for this in lib/env.ts, so read NODE_ENV directly, same as elsewhere in
+  // this codebase).
+  tracesSampleRate: process.env.NODE_ENV === "production" ? 0.1 : 1,
   // Enable logs to be sent to Sentry
   enableLogs: true,
 

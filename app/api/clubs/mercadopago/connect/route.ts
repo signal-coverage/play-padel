@@ -5,6 +5,7 @@ import {
   signOAuthState,
   buildMercadoPagoAuthorizationUrl,
 } from "@/lib/mercadopago/oauth";
+import { withErrorHandling } from "@/lib/api/withErrorHandling";
 
 // Kicks off the Mercado Pago OAuth authorization-code flow for the caller's
 // own club. The redirect target is signed (see lib/mercadopago/oauth.ts) so
@@ -16,7 +17,7 @@ import {
 // must have a paid or authorized-trial membership before it can ever reach
 // Mercado Pago's authorization URL. This route's own OAuth mechanics are
 // otherwise unchanged from `mercadopago-club-split-payments`.
-export async function GET() {
+export const GET = withErrorHandling(async function GET() {
   const authResult = await requireOwnerClub();
   if (!authResult.ok) return authResult.response;
 
@@ -31,4 +32,4 @@ export async function GET() {
   const authorizationUrl = buildMercadoPagoAuthorizationUrl(state);
 
   return NextResponse.redirect(authorizationUrl);
-}
+});

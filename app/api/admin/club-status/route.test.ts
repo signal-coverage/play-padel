@@ -18,28 +18,21 @@ vi.mock("@/lib/auth/admin", () => ({
 }));
 
 vi.mock("@/core/clubs/services/clubs.service", () => ({
-  getClubOwner: vi.fn(),
-}));
-
-vi.mock("@/lib/notifications/dispatcher", () => ({
-  dispatch: vi.fn(),
+  setClubStatus: vi.fn(),
 }));
 
 import { NextResponse } from "next/server";
 import { prisma } from "@/infrastructure/db/client";
-import { Prisma } from "@/lib/generated/prisma/client";
 import { auth } from "@clerk/nextjs/server";
 import { requireAdmin } from "@/lib/auth/admin";
-import { getClubOwner } from "@/core/clubs/services/clubs.service";
-import { dispatch } from "@/lib/notifications/dispatcher";
+import { setClubStatus } from "@/core/clubs/services/clubs.service";
 import { GET, PATCH } from "./route";
 
 const findUniqueMock = prisma.club.findUnique as ReturnType<typeof vi.fn>;
 const updateMock = prisma.club.update as ReturnType<typeof vi.fn>;
 const authMock = auth as unknown as ReturnType<typeof vi.fn>;
 const requireAdminMock = requireAdmin as ReturnType<typeof vi.fn>;
-const getClubOwnerMock = getClubOwner as ReturnType<typeof vi.fn>;
-const dispatchMock = dispatch as ReturnType<typeof vi.fn>;
+const setClubStatusMock = setClubStatus as ReturnType<typeof vi.fn>;
 
 function makeGetRequest(clubId?: string) {
   const url = new URL("https://app.example.com/api/admin/club-status");
@@ -62,12 +55,9 @@ beforeEach(() => {
   updateMock.mockReset();
   authMock.mockReset();
   requireAdminMock.mockReset();
-  getClubOwnerMock.mockReset();
-  dispatchMock.mockReset();
+  setClubStatusMock.mockReset();
   authMock.mockResolvedValue({ userId: "user_admin" });
   requireAdminMock.mockResolvedValue(null);
-  getClubOwnerMock.mockResolvedValue(null);
-  dispatchMock.mockResolvedValue(undefined);
 });
 
 describe("GET /api/admin/club-status", () => {
@@ -143,6 +133,12 @@ describe("GET /api/admin/club-status", () => {
   });
 });
 
+// The actual status-transition + conditional owner-notification logic now
+// lives in setClubStatus (core/clubs/services/clubs.service.ts, see its own
+// describe block for that coverage) — this route is just the HTTP glue
+// around it: auth, parsing, deriving updatedBy, and mapping a null result to
+// 404. Mocking setClubStatus directly (not the prisma/dispatch calls it
+// makes internally) keeps this file from duplicating that coverage.
 describe("PATCH /api/admin/club-status", () => {
   it("returns 401 when there is no signed-in Clerk user", async () => {
     requireAdminMock.mockResolvedValue(
@@ -157,7 +153,7 @@ describe("PATCH /api/admin/club-status", () => {
     );
 
     expect(response.status).toBe(401);
-    expect(updateMock).not.toHaveBeenCalled();
+    expect(setClubStatusMock).not.toHaveBeenCalled();
   });
 
   it("returns 403 when signed in but not an admin", async () => {
@@ -173,7 +169,7 @@ describe("PATCH /api/admin/club-status", () => {
     );
 
     expect(response.status).toBe(403);
-    expect(updateMock).not.toHaveBeenCalled();
+    expect(setClubStatusMock).not.toHaveBeenCalled();
   });
 
   it("rejects an invalid status enum value with 400", async () => {
@@ -185,7 +181,7 @@ describe("PATCH /api/admin/club-status", () => {
     );
 
     expect(response.status).toBe(400);
-    expect(updateMock).not.toHaveBeenCalled();
+    expect(setClubStatusMock).not.toHaveBeenCalled();
   });
 
   it("rejects malformed JSON bodies with 400 instead of throwing", async () => {
@@ -203,13 +199,8 @@ describe("PATCH /api/admin/club-status", () => {
     expect(response.status).toBe(400);
   });
 
-  it("returns 404 when the club doesn't exist", async () => {
-    updateMock.mockRejectedValue(
-      new Prisma.PrismaClientKnownRequestError("Record not found", {
-        code: "P2025",
-        clientVersion: "test",
-      }),
-    );
+  it("returns 404 when setClubStatus reports the club doesn't exist", async () => {
+    setClubStatusMock.mockResolvedValue(null);
 
     const response = await PATCH(
       makePatchRequest({
@@ -231,7 +222,7 @@ describe("PATCH /api/admin/club-status", () => {
       updatedBy: "admin@example.com",
       updatedAt: new Date("2026-01-01T00:00:00.000Z"),
     };
-    updateMock.mockResolvedValue(club);
+    setClubStatusMock.mockResolvedValue(club);
 
     const response = await PATCH(
       makePatchRequest({
@@ -241,17 +232,11 @@ describe("PATCH /api/admin/club-status", () => {
     );
     const body = await response.json();
 
-    expect(updateMock).toHaveBeenCalledWith({
-      where: { id: "club-1" },
-      data: { status: "SUSPENDED", updatedBy: "user_admin" },
-      select: {
-        id: true,
-        name: true,
-        status: true,
-        updatedBy: true,
-        updatedAt: true,
-      },
-    });
+    expect(setClubStatusMock).toHaveBeenCalledWith(
+      "club-1",
+      "SUSPENDED",
+      "user_admin",
+    );
     expect(response.status).toBe(200);
     expect(body.club).toEqual({
       ...club,
@@ -260,7 +245,7 @@ describe("PATCH /api/admin/club-status", () => {
   });
 
   it("derives updatedBy from the authenticated admin's own userId, ignoring any updatedBy the client sends in the body", async () => {
-    updateMock.mockResolvedValue({
+    setClubStatusMock.mockResolvedValue({
       id: "club-1",
       name: "Padel Club",
       status: "SUSPENDED",
@@ -278,124 +263,10 @@ describe("PATCH /api/admin/club-status", () => {
       }),
     );
 
-    expect(updateMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: { status: "SUSPENDED", updatedBy: "user_admin" },
-      }),
+    expect(setClubStatusMock).toHaveBeenCalledWith(
+      "club-1",
+      "SUSPENDED",
+      "user_admin",
     );
-  });
-
-  it("dispatches a CLUB_SUSPENDED notification to the owner when transitioning into SUSPENDED", async () => {
-    findUniqueMock.mockResolvedValue({ status: "ACTIVE" });
-    updateMock.mockResolvedValue({
-      id: "club-1",
-      name: "Padel Club",
-      status: "SUSPENDED",
-      updatedBy: "admin@example.com",
-      updatedAt: new Date("2026-01-01T00:00:00.000Z"),
-    });
-    getClubOwnerMock.mockResolvedValue({
-      id: "user_owner",
-      displayName: "Owner Person",
-      photoURL: null,
-      email: "owner@example.com",
-    });
-
-    const response = await PATCH(
-      makePatchRequest({
-        clubId: "club-1",
-        status: "SUSPENDED",
-      }),
-    );
-
-    expect(response.status).toBe(200);
-    expect(dispatchMock).toHaveBeenCalledTimes(1);
-    expect(dispatchMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        type: "CLUB_SUSPENDED",
-        clubId: "club-1",
-        recipientId: "user_owner",
-        recipientEmail: "owner@example.com",
-        recipientName: "Owner Person",
-        sendEmail: false,
-      }),
-    );
-  });
-
-  it("does not dispatch when the club is already SUSPENDED (no real transition)", async () => {
-    findUniqueMock.mockResolvedValue({ status: "SUSPENDED" });
-    updateMock.mockResolvedValue({
-      id: "club-1",
-      name: "Padel Club",
-      status: "SUSPENDED",
-      updatedBy: "admin@example.com",
-      updatedAt: new Date("2026-01-01T00:00:00.000Z"),
-    });
-
-    await PATCH(
-      makePatchRequest({
-        clubId: "club-1",
-        status: "SUSPENDED",
-      }),
-    );
-
-    expect(dispatchMock).not.toHaveBeenCalled();
-  });
-
-  // The real gap reported: reactivating a suspended club only ever wrote
-  // Club.status — the owner, presumably refreshing/retrying after being
-  // locked out, had no live signal that they'd been let back in.
-  it("dispatches a CLUB_OPERATIONAL_READY notification to the owner when un-suspending (SUSPENDED -> anything else)", async () => {
-    findUniqueMock.mockResolvedValue({ status: "SUSPENDED" });
-    updateMock.mockResolvedValue({
-      id: "club-1",
-      name: "Padel Club",
-      status: "ACTIVE",
-      updatedBy: "admin@example.com",
-      updatedAt: new Date("2026-01-01T00:00:00.000Z"),
-    });
-    getClubOwnerMock.mockResolvedValue({
-      id: "user_owner",
-      displayName: "Owner Person",
-      photoURL: null,
-      email: "owner@example.com",
-    });
-
-    const response = await PATCH(
-      makePatchRequest({
-        clubId: "club-1",
-        status: "ACTIVE",
-      }),
-    );
-
-    expect(response.status).toBe(200);
-    expect(dispatchMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        type: "CLUB_OPERATIONAL_READY",
-        clubId: "club-1",
-        recipientId: "user_owner",
-        sendEmail: false,
-      }),
-    );
-  });
-
-  it("does not dispatch when transitioning between two non-SUSPENDED statuses", async () => {
-    findUniqueMock.mockResolvedValue({ status: "ACTIVE" });
-    updateMock.mockResolvedValue({
-      id: "club-1",
-      name: "Padel Club",
-      status: "INACTIVE",
-      updatedBy: "admin@example.com",
-      updatedAt: new Date("2026-01-01T00:00:00.000Z"),
-    });
-
-    await PATCH(
-      makePatchRequest({
-        clubId: "club-1",
-        status: "INACTIVE",
-      }),
-    );
-
-    expect(dispatchMock).not.toHaveBeenCalled();
   });
 });

@@ -7,6 +7,7 @@ import type { ClubStatus, Plan } from "@/core/clubs/types";
 export type AdminClubListItem = {
   id: string;
   name: string;
+  slug: string;
   status: ClubStatus;
   plan: Plan;
   courtLimit: number | null;

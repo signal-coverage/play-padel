@@ -9,12 +9,14 @@ const {
   updateManyMock,
   userProfileFindManyMock,
   reservationFindManyMock,
+  clubFindManyMock,
 } = vi.hoisted(() => ({
   findManyMock: vi.fn(),
   countMock: vi.fn(),
   updateManyMock: vi.fn(),
   userProfileFindManyMock: vi.fn(),
   reservationFindManyMock: vi.fn(),
+  clubFindManyMock: vi.fn(),
 }));
 
 vi.mock("@/infrastructure/db/client", () => ({
@@ -29,6 +31,9 @@ vi.mock("@/infrastructure/db/client", () => ({
     },
     reservation: {
       findMany: reservationFindManyMock,
+    },
+    club: {
+      findMany: clubFindManyMock,
     },
   },
 }));
@@ -65,6 +70,8 @@ function makeNotificationRow(overrides: Partial<Record<string, unknown>> = {}) {
 describe("listRecipientNotifications", () => {
   beforeEach(() => {
     findManyMock.mockReset();
+    clubFindManyMock.mockReset();
+    clubFindManyMock.mockResolvedValue([]);
   });
 
   it("queries notifications scoped to the recipient, newest first, capped at the given limit", async () => {
@@ -100,9 +107,38 @@ describe("listRecipientNotifications", () => {
       expect.objectContaining({
         id: "notif_1",
         clubId: null,
+        clubSlug: null,
         readAt: undefined,
       }),
     ]);
+  });
+
+  it("attaches each notification's owning club's slug, batch-resolved (not one query per row)", async () => {
+    findManyMock.mockResolvedValue([
+      makeNotificationRow({ id: "notif_1", clubId: "club_1" }),
+      makeNotificationRow({ id: "notif_2", clubId: "club_2" }),
+    ]);
+    clubFindManyMock.mockResolvedValue([
+      { id: "club_1", slug: "alpha-club" },
+      { id: "club_2", slug: "beta-club" },
+    ]);
+
+    const result = await listRecipientNotifications("user_1");
+
+    expect(clubFindManyMock).toHaveBeenCalledTimes(1);
+    expect(clubFindManyMock).toHaveBeenCalledWith({
+      where: { id: { in: ["club_1", "club_2"] } },
+      select: { id: true, slug: true },
+    });
+    expect(result.map((n) => n.clubSlug)).toEqual(["alpha-club", "beta-club"]);
+  });
+
+  it("never queries clubs at all when every notification is platform-wide (clubId null)", async () => {
+    findManyMock.mockResolvedValue([makeNotificationRow({ clubId: null })]);
+
+    await listRecipientNotifications("user_1");
+
+    expect(clubFindManyMock).not.toHaveBeenCalled();
   });
 });
 

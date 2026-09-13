@@ -13,7 +13,11 @@ vi.mock("mercadopago", () => ({
 }));
 
 import { MercadoPagoConfig } from "mercadopago";
-import { getPlatformMercadoPagoClient } from "./platformClient";
+import {
+  getPlatformMercadoPagoClient,
+  PLATFORM_CLIENT_MAX_RETRIES,
+  PLATFORM_CLIENT_TIMEOUT_MS,
+} from "./platformClient";
 
 afterEach(() => {
   vi.unstubAllEnvs();
@@ -37,6 +41,10 @@ describe("getPlatformMercadoPagoClient", () => {
     expect(client).toBeInstanceOf(MercadoPagoConfig);
     expect(configConstructorMock).toHaveBeenCalledWith({
       accessToken: "platform-access-token-abc",
+      options: {
+        timeout: PLATFORM_CLIENT_TIMEOUT_MS,
+        maxRetries: PLATFORM_CLIENT_MAX_RETRIES,
+      },
     });
   });
 
@@ -47,9 +55,23 @@ describe("getPlatformMercadoPagoClient", () => {
 
     expect(configConstructorMock).toHaveBeenCalledWith({
       accessToken: "another-platform-token-xyz",
+      options: {
+        timeout: PLATFORM_CLIENT_TIMEOUT_MS,
+        maxRetries: PLATFORM_CLIENT_MAX_RETRIES,
+      },
     });
     expect(configConstructorMock).not.toHaveBeenCalledWith(
       expect.objectContaining({ accessToken: "platform-access-token-abc" }),
     );
+  });
+
+  it("bounds the request timeout and retry count well below the SDK's 60s/3-retry defaults, so an MP outage can't hang an interactive request", () => {
+    vi.stubEnv("MERCADOPAGO_ACCESS_TOKEN", "platform-access-token-abc");
+
+    getPlatformMercadoPagoClient();
+
+    const [[config]] = configConstructorMock.mock.calls;
+    expect(config.options.timeout).toBeLessThanOrEqual(10000);
+    expect(config.options.maxRetries).toBeLessThanOrEqual(2);
   });
 });

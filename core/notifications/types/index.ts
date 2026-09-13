@@ -25,6 +25,13 @@ export type NotificationStatus = "PENDING" | "SENT" | "FAILED" | "SKIPPED";
 export interface Notification {
   id: string;
   clubId: string | null;
+  // The owning club's URL-safe slug (see prisma/schema.prisma's Club.slug
+  // doc comment) — resolved via a batch lookup at list time (see
+  // listRecipientNotifications), never persisted on the row itself. Null
+  // whenever clubId is null, or (rarely) if the club has since been
+  // deleted. This, never clubId, is what a notification's own deep-link
+  // href is built from (see NotificationsBell/utils.ts's getNotificationHref).
+  clubSlug: string | null;
   type: NotificationType;
   recipientId: string;
   recipientEmail: string;

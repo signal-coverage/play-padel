@@ -21,6 +21,9 @@ vi.mock("../MercadoPagoConnectionCard", () => ({
 vi.mock("../BankTransferAccountSettingsCard", () => ({
   BankTransferAccountSettingsCard: () => null,
 }));
+vi.mock("../ClubClosuresCard", () => ({
+  ClubClosuresCard: () => null,
+}));
 
 function renderTabs() {
   const queryClient = new QueryClient({
@@ -47,5 +50,16 @@ describe("ClubSettingsTabs", () => {
     expect(
       screen.queryByRole("tab", { name: /^basic information$/i }),
     ).not.toBeInTheDocument();
+  });
+
+  it('renders a "Closures" tab immediately after "Schedule"', () => {
+    renderTabs();
+
+    const tabs = screen.getAllByRole("tab").map((tab) => tab.textContent);
+    const scheduleIndex = tabs.findIndex((label) => label === "Schedule");
+    const closuresIndex = tabs.findIndex((label) => label === "Closures");
+
+    expect(scheduleIndex).toBeGreaterThanOrEqual(0);
+    expect(closuresIndex).toBe(scheduleIndex + 1);
   });
 });

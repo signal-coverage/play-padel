@@ -2,8 +2,8 @@ import type { ClubBrowseSummary } from "../../types";
 
 export type ClubListPanelProps = {
   clubs: ClubBrowseSummary[];
-  selectedClubId: string | null;
-  onSelectClub: (clubId: string) => void;
+  selectedClubSlug: string | null;
+  onSelectClub: (clubSlug: string) => void;
   isLoading: boolean;
   isError: boolean;
 };

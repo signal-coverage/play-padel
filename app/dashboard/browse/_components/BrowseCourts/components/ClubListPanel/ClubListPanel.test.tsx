@@ -53,6 +53,7 @@ function makeClub(
   return {
     id: "club_1",
     name: "Club Padel Norte",
+    slug: "club-padel-norte",
     email: "club@example.com",
     timezone: "America/Argentina/Buenos_Aires",
     currency: "ARS",
@@ -75,7 +76,7 @@ function renderPanel(clubs: ClubBrowseSummary[]) {
   return render(
     <ClubListPanel
       clubs={clubs}
-      selectedClubId={null}
+      selectedClubSlug={null}
       onSelectClub={() => {}}
       isLoading={false}
       isError={false}

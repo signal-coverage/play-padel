@@ -6,6 +6,7 @@
 export type AdminSearchClubResult = {
   id: string;
   name: string;
+  slug: string;
   email: string;
   status: string;
 };

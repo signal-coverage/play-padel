@@ -10,6 +10,7 @@ import {
   LandingFooter,
   LandingHeader,
   LandingHero,
+  LandingPricing,
   LandingTrusted,
 } from "@/app/_components";
 
@@ -41,6 +42,7 @@ export default async function HomePage() {
       <LandingTrusted />
       <LandingAbout />
       <LandingFeatures />
+      <LandingPricing />
       <LandingCtaBanner />
       <LandingFooter />
     </div>

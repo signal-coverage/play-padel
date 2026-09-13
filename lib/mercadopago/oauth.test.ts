@@ -124,6 +124,26 @@ describe("buildMercadoPagoAuthorizationUrl", () => {
       "https://auth.mercadopago.com/authorization?client_id=client-id-123",
     );
   });
+
+  it("builds its Mercado Pago client with a bounded timeout and retry budget instead of the SDK's 60s/3-retry defaults", () => {
+    getAuthorizationURLMock.mockReturnValue("https://auth.mercadopago.com/x");
+
+    buildMercadoPagoAuthorizationUrl("signed-state-value");
+
+    expect(configConstructorMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        options: expect.objectContaining({
+          timeout: expect.any(Number),
+          maxRetries: expect.any(Number),
+        }),
+      }),
+    );
+    const passedConfig = configConstructorMock.mock.calls[0]?.[0] as {
+      options: { timeout: number; maxRetries: number };
+    };
+    expect(passedConfig.options.timeout).toBeLessThanOrEqual(10000);
+    expect(passedConfig.options.maxRetries).toBeLessThanOrEqual(2);
+  });
 });
 
 describe("exchangeAuthorizationCode", () => {
@@ -168,11 +188,24 @@ describe("fetchMercadoPagoUserProfile", () => {
 
     const result = await fetchMercadoPagoUserProfile("club-own-access-token");
 
-    expect(configConstructorMock).toHaveBeenCalledWith({
-      accessToken: "club-own-access-token",
-    });
+    expect(configConstructorMock).toHaveBeenCalledWith(
+      expect.objectContaining({ accessToken: "club-own-access-token" }),
+    );
     expect(userGetMock).toHaveBeenCalled();
     expect(result).toEqual({ email: "owner@club.com", nickname: "clubowner" });
+  });
+
+  it("builds its Mercado Pago client with a bounded timeout and retry budget instead of the SDK's 60s/3-retry defaults", async () => {
+    userGetMock.mockResolvedValue({ email: null, nickname: null });
+
+    await fetchMercadoPagoUserProfile("club-own-access-token");
+
+    const passedConfig = configConstructorMock.mock.calls[0]?.[0] as {
+      options?: { timeout: number; maxRetries: number };
+    };
+    expect(passedConfig.options).toBeDefined();
+    expect(passedConfig.options!.timeout).toBeLessThanOrEqual(10000);
+    expect(passedConfig.options!.maxRetries).toBeLessThanOrEqual(2);
   });
 
   it("normalizes missing email/nickname to null", async () => {

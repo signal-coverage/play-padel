@@ -275,16 +275,30 @@ async function handleReservationPaymentTopic(
         await confirmReservationPayment(reservation.id);
       }
     } catch (err) {
-      // A duplicate webhook delivery for a payment we already recorded
-      // re-fetches the invoice as PAID and recordPayment's own ISSUED-only
-      // guard throws — that specific case is expected and safe to ack.
-      // Anything else here is a genuine failure (DB error, etc.) and must
-      // not be silently swallowed, so Mercado Pago retries the delivery.
+      // A duplicate webhook delivery for a payment we already fully
+      // processed (recorded AND confirmed) re-fetches the invoice as PAID
+      // and recordPayment's own ISSUED-only guard throws — that specific
+      // case is expected and safe to ack. But `invoice.status === "PAID"`
+      // alone is NOT sufficient proof of that: recordPayment flips the
+      // invoice to PAID and THEN this same try block goes on to call
+      // checkCourtClosureConflict/checkCourtConflict/confirmReservationPayment
+      // — if any of those throw, the invoice is already PAID even though the
+      // reservation was never confirmed. Re-fetching the reservation too and
+      // requiring it to already be CONFIRMED is what actually distinguishes
+      // "truly already processed" from "payment recorded, but something
+      // after it genuinely failed" — the latter must never be silently
+      // acked as success, or a captured payment could sit on an unconfirmed
+      // reservation forever with no alert.
       const freshInvoice = await getInvoiceByReservationId(reservation.id);
-      const alreadyProcessed = freshInvoice?.status === "PAID";
-      if (!alreadyProcessed) {
+      const freshReservation = await findReservationById(reservation.id);
+      const trulyAlreadyProcessed =
+        freshInvoice?.status === "PAID" &&
+        freshReservation?.status === "CONFIRMED";
+      if (!trulyAlreadyProcessed) {
         console.error(
-          "[mercadopago webhook] Failed to process approved payment:",
+          freshInvoice?.status === "PAID"
+            ? `[mercadopago webhook] Payment recorded for reservation ${reservation.id} but it never reached CONFIRMED (status: ${freshReservation?.status ?? "unknown"}) — needs urgent manual resolution via the owner Reservations page.`
+            : "[mercadopago webhook] Failed to process approved payment:",
           err,
         );
         return NextResponse.json(

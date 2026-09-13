@@ -104,4 +104,18 @@ describe("POST /api/player/reservations/[id]/cancel", () => {
     expect(body.reservation.status).toBe("CANCELLED");
     expect(cancelReservationMock).toHaveBeenCalledWith("res_1", "user_1");
   });
+
+  it("returns the app's standard {error} 500 JSON shape instead of throwing when cancelReservation rejects", async () => {
+    authMock.mockResolvedValue({ userId: "user_1" });
+    listReservationsByUserMock.mockResolvedValue([RESERVATION]);
+    canSelfCancelMock.mockReturnValue(true);
+    cancelReservationMock.mockRejectedValue(new Error("db unavailable"));
+
+    const { request, params } = makeRequest("res_1");
+    const response = await POST(request, { params });
+    const body = await response.json();
+
+    expect(response.status).toBe(500);
+    expect(typeof body.error).toBe("string");
+  });
 });

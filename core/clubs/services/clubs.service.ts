@@ -5,6 +5,7 @@ import {
   getClubOperationalStatus,
 } from "@/lib/mercadopago/operationalStatus";
 import { dispatch } from "@/lib/notifications/dispatcher";
+import { slugify } from "@/lib/slug";
 import type {
   Club,
   ClubStatus,
@@ -20,6 +21,7 @@ function toClub(row: ClubRow): Club {
   return {
     id: row.id,
     name: row.name,
+    slug: row.slug,
     legalName: row.legalName ?? undefined,
     taxId: row.taxId ?? undefined,
     email: row.email,
@@ -42,13 +44,37 @@ function toClub(row: ClubRow): Club {
   };
 }
 
+// Best-effort, non-race-proof check — same class of TOCTOU as
+// assertNoDuplicateCourtName below, but harmless here: a club is created at
+// most once per onboarding, never in a tight concurrent loop, so the DB's
+// own @unique constraint (the real backstop) failing on the rare
+// simultaneous-collision case is an acceptable, if ugly, outcome rather than
+// something worth a retry loop.
+async function generateUniqueClubSlug(name: string): Promise<string> {
+  const base = slugify(name) || "club";
+  let candidate = base;
+  let suffix = 2;
+  while (
+    await prisma.club.findFirst({
+      where: { slug: candidate },
+      select: { id: true },
+    })
+  ) {
+    candidate = `${base}-${suffix}`;
+    suffix += 1;
+  }
+  return candidate;
+}
+
 export async function createClub(
   input: CreateClubInput,
   createdBy: string,
 ): Promise<Club> {
+  const slug = await generateUniqueClubSlug(input.name);
   const row = await prisma.club.create({
     data: {
       name: input.name,
+      slug,
       legalName: input.legalName ?? null,
       taxId: input.taxId ?? null,
       email: input.email,
@@ -78,6 +104,18 @@ export async function createClub(
 export async function getClubById(id: string): Promise<Club | null> {
   const row = await prisma.club.findUnique({
     where: { id },
+  });
+  if (!row) return null;
+  return toClub(row);
+}
+
+// Resolves the real Club (and its internal id) from the URL-safe slug —
+// backs every user-facing lookup that must never expose a raw clubId in a
+// query param (Browse Courts, the admin club picker, notification
+// deep-links). See prisma/schema.prisma's Club.slug doc comment.
+export async function getClubBySlug(slug: string): Promise<Club | null> {
+  const row = await prisma.club.findUnique({
+    where: { slug },
   });
   if (!row) return null;
   return toClub(row);
@@ -261,6 +299,79 @@ export async function getClubOwner(clubId: string): Promise<{
 }
 
 /**
+ * Sets a club's status (used for the admin suspend/reactivate action — see
+ * app/api/admin/club-status/route.ts's PATCH and scripts/actions/
+ * set-club-status.ts, the two callers) and notifies the owner exactly when
+ * the transition crosses the SUSPENDED boundary in either direction: into
+ * SUSPENDED (an in-app-only lockout notice) or out of it to anything else
+ * (the same "your dashboard is unlocked" signal
+ * notifyClubOperationalIfNeeded uses for the equivalent un-suspend case).
+ * Any other status change (e.g. ACTIVE -> INACTIVE) sends nothing — neither
+ * one locks/unlocks the dashboard the way SUSPENDED does.
+ *
+ * Returns null (writes nothing) when the club doesn't exist, so both
+ * callers can render their own "not found" response instead of this
+ * function throwing.
+ */
+export async function setClubStatus(
+  clubId: string,
+  status: ClubStatus,
+  updatedBy: string,
+): Promise<Club | null> {
+  const existing = await prisma.club.findUnique({
+    where: { id: clubId },
+    select: { status: true },
+  });
+  if (!existing) return null;
+  const previousStatus = existing.status as ClubStatus;
+
+  const row = await prisma.club.update({
+    where: { id: clubId },
+    data: { status, updatedBy },
+  });
+
+  if (previousStatus !== "SUSPENDED" && status === "SUSPENDED") {
+    const owner = await getClubOwner(clubId);
+    if (owner) {
+      try {
+        await dispatch({
+          type: "CLUB_SUSPENDED",
+          clubId,
+          recipientId: owner.id,
+          recipientEmail: owner.email,
+          recipientName: owner.displayName,
+          subject: "Your club has been suspended",
+          html: "Your club has been suspended. Contact support for details.",
+          sendEmail: false,
+        });
+      } catch {
+        // notification failure must not affect the status update above
+      }
+    }
+  } else if (previousStatus === "SUSPENDED" && status !== "SUSPENDED") {
+    const owner = await getClubOwner(clubId);
+    if (owner) {
+      try {
+        await dispatch({
+          type: "CLUB_OPERATIONAL_READY",
+          clubId,
+          recipientId: owner.id,
+          recipientEmail: owner.email,
+          recipientName: owner.displayName,
+          subject: "Your dashboard is unlocked",
+          html: "Your club is no longer suspended — your dashboard is unlocked again.",
+          sendEmail: false,
+        });
+      } catch {
+        // notification failure must not affect the status update above
+      }
+    }
+  }
+
+  return toClub(row);
+}
+
+/**
  * Dispatches an in-app CLUB_OPERATIONAL_READY notification to the club owner
  * exactly once, the first time a club becomes fully operational
  * (admin-approved AND has some payout method connected). Sent from here
@@ -369,7 +480,7 @@ export async function listActiveClubs(): Promise<Club[]> {
 
 export type AdminClubListItem = Pick<
   Club,
-  "id" | "name" | "status" | "plan" | "courtLimit"
+  "id" | "name" | "slug" | "status" | "plan" | "courtLimit"
 > & {
   /**
    * True when the club has no Mercado Pago account at all, the account
@@ -419,6 +530,7 @@ export async function listAllClubs(): Promise<AdminClubListItem[]> {
     select: {
       id: true,
       name: true,
+      slug: true,
       status: true,
       plan: true,
       courtLimit: true,
@@ -444,6 +556,7 @@ export async function listAllClubs(): Promise<AdminClubListItem[]> {
     return {
       id: row.id,
       name: row.name,
+      slug: row.slug,
       status: row.status as ClubStatus,
       plan: row.plan as Plan,
       courtLimit: row.courtLimit,

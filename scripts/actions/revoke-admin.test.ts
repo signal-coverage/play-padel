@@ -1,13 +1,18 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-const { findUniqueMock, updateMock, disconnectMock, dispatchMock } = vi.hoisted(
-  () => ({
-    findUniqueMock: vi.fn(),
-    updateMock: vi.fn(),
-    disconnectMock: vi.fn(),
-    dispatchMock: vi.fn(),
-  }),
-);
+const {
+  findUniqueMock,
+  updateMock,
+  disconnectMock,
+  dispatchMock,
+  updateUserMetadataMock,
+} = vi.hoisted(() => ({
+  findUniqueMock: vi.fn(),
+  updateMock: vi.fn(),
+  disconnectMock: vi.fn(),
+  dispatchMock: vi.fn(),
+  updateUserMetadataMock: vi.fn(),
+}));
 
 vi.mock("../../infrastructure/db/client", () => ({
   prisma: {
@@ -23,6 +28,12 @@ vi.mock("../../lib/notifications/dispatcher", () => ({
   dispatch: dispatchMock,
 }));
 
+vi.mock("@clerk/nextjs/server", () => ({
+  clerkClient: async () => ({
+    users: { updateUserMetadata: updateUserMetadataMock },
+  }),
+}));
+
 import { revokeAdmin } from "./revoke-admin";
 
 beforeEach(() => {
@@ -31,6 +42,8 @@ beforeEach(() => {
   disconnectMock.mockReset();
   dispatchMock.mockReset();
   dispatchMock.mockResolvedValue(undefined);
+  updateUserMetadataMock.mockReset();
+  updateUserMetadataMock.mockResolvedValue(undefined);
 });
 
 describe("revokeAdmin", () => {
@@ -113,5 +126,33 @@ describe("revokeAdmin", () => {
     await revokeAdmin("nobody@example.com");
 
     expect(disconnectMock).toHaveBeenCalled();
+  });
+
+  it("also clears Clerk publicMetadata.isAdmin so both admin flags stay in sync", async () => {
+    findUniqueMock.mockResolvedValue({
+      id: "user_1",
+      displayName: "Jane Doe",
+      isAdmin: true,
+    });
+    updateMock.mockResolvedValue({});
+
+    await revokeAdmin("jane@example.com");
+
+    expect(updateUserMetadataMock).toHaveBeenCalledWith("user_1", {
+      publicMetadata: { isAdmin: false },
+    });
+  });
+
+  it("a Clerk metadata sync failure never blocks the DB revoke from having already happened", async () => {
+    findUniqueMock.mockResolvedValue({
+      id: "user_1",
+      displayName: "Jane Doe",
+      isAdmin: true,
+    });
+    updateMock.mockResolvedValue({});
+    updateUserMetadataMock.mockRejectedValue(new Error("Clerk API is down"));
+
+    await expect(revokeAdmin("jane@example.com")).resolves.not.toThrow();
+    expect(updateMock).toHaveBeenCalled();
   });
 });

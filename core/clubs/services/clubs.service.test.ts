@@ -6,6 +6,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 const {
   findManyMock,
   findFirstMock,
+  clubFindFirstMock,
   createMock,
   findUniqueMock,
   updateMock,
@@ -14,6 +15,7 @@ const {
 } = vi.hoisted(() => ({
   findManyMock: vi.fn(),
   findFirstMock: vi.fn(),
+  clubFindFirstMock: vi.fn(),
   createMock: vi.fn(),
   findUniqueMock: vi.fn(),
   updateMock: vi.fn(),
@@ -25,6 +27,7 @@ vi.mock("@/infrastructure/db/client", () => ({
   prisma: {
     club: {
       findMany: findManyMock,
+      findFirst: clubFindFirstMock,
       create: createMock,
       findUnique: findUniqueMock,
       update: updateMock,
@@ -74,6 +77,7 @@ import {
   approveClub,
   rejectClub,
   getClubOwner,
+  setClubStatus,
   notifyClubOperationalIfNeeded,
   MP_TOKEN_EXPIRY_WARNING_DAYS,
 } from "./clubs.service";
@@ -103,6 +107,7 @@ function makeClubRow(overrides: Partial<Record<string, unknown>> = {}) {
     updatedAt: new Date(),
     createdBy: "user_1",
     updatedBy: "user_1",
+    slug: "operational-club",
     ...overrides,
   };
 }
@@ -111,6 +116,47 @@ describe("createClub", () => {
   beforeEach(() => {
     createMock.mockReset();
     createMock.mockResolvedValue(makeClubRow());
+    clubFindFirstMock.mockReset();
+    clubFindFirstMock.mockResolvedValue(null);
+  });
+
+  it("generates a slug from the club's name", async () => {
+    await createClub(
+      {
+        name: "Alpha Club",
+        email: "club@example.com",
+        timezone: "America/Argentina/Buenos_Aires",
+        currency: "ARS",
+      },
+      "user_1",
+    );
+
+    expect(createMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ slug: "alpha-club" }),
+      }),
+    );
+  });
+
+  it("disambiguates the slug with a numeric suffix when it's already taken", async () => {
+    clubFindFirstMock.mockResolvedValueOnce({ id: "club_existing" });
+    clubFindFirstMock.mockResolvedValueOnce(null);
+
+    await createClub(
+      {
+        name: "Alpha Club",
+        email: "club2@example.com",
+        timezone: "America/Argentina/Buenos_Aires",
+        currency: "ARS",
+      },
+      "user_1",
+    );
+
+    expect(createMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ slug: "alpha-club-2" }),
+      }),
+    );
   });
 
   it("omits approvalStatus entirely when not provided, so the schema's own @default(APPROVED) applies", async () => {
@@ -600,6 +646,7 @@ describe("listAllClubs", () => {
       select: {
         id: true,
         name: true,
+        slug: true,
         status: true,
         plan: true,
         courtLimit: true,
@@ -833,6 +880,89 @@ describe("getClubOwner", () => {
     const owner = await getClubOwner("club_1");
 
     expect(owner).toBeNull();
+  });
+});
+
+// Shared by both app/api/admin/club-status/route.ts (the in-app admin UI)
+// and scripts/actions/set-club-status.ts (the equivalent npm run manage
+// action) — one place owns the suspend/reactivate transition + its
+// conditional owner notification instead of duplicating it in both callers.
+describe("setClubStatus", () => {
+  beforeEach(() => {
+    findUniqueMock.mockReset();
+    updateMock.mockReset();
+    findFirstMock.mockReset();
+    dispatchMock.mockReset();
+    dispatchMock.mockResolvedValue(undefined);
+  });
+
+  it("returns null without writing anything when the club doesn't exist", async () => {
+    findUniqueMock.mockResolvedValue(null);
+
+    const result = await setClubStatus("club_missing", "SUSPENDED", "admin_1");
+
+    expect(result).toBeNull();
+    expect(updateMock).not.toHaveBeenCalled();
+  });
+
+  it("updates the status and stamps updatedBy", async () => {
+    findUniqueMock.mockResolvedValue({ status: "ACTIVE" });
+    updateMock.mockResolvedValue(makeClubRow({ status: "SUSPENDED" }));
+
+    await setClubStatus("club_1", "SUSPENDED", "admin_1");
+
+    expect(updateMock).toHaveBeenCalledWith({
+      where: { id: "club_1" },
+      data: { status: "SUSPENDED", updatedBy: "admin_1" },
+    });
+  });
+
+  it("notifies the owner (in-app only) the moment a club transitions into SUSPENDED", async () => {
+    findUniqueMock.mockResolvedValue({ status: "ACTIVE" });
+    updateMock.mockResolvedValue(makeClubRow({ status: "SUSPENDED" }));
+    findFirstMock.mockResolvedValue({
+      id: "user_owner",
+      displayName: "Owner Person",
+      photoURL: null,
+      email: "owner@example.com",
+    });
+
+    await setClubStatus("club_1", "SUSPENDED", "admin_1");
+
+    expect(dispatchMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "CLUB_SUSPENDED",
+        clubId: "club_1",
+        recipientId: "user_owner",
+        sendEmail: false,
+      }),
+    );
+  });
+
+  it("notifies the owner when a club leaves SUSPENDED for any other status", async () => {
+    findUniqueMock.mockResolvedValue({ status: "SUSPENDED" });
+    updateMock.mockResolvedValue(makeClubRow({ status: "ACTIVE" }));
+    findFirstMock.mockResolvedValue({
+      id: "user_owner",
+      displayName: "Owner Person",
+      photoURL: null,
+      email: "owner@example.com",
+    });
+
+    await setClubStatus("club_1", "ACTIVE", "admin_1");
+
+    expect(dispatchMock).toHaveBeenCalledWith(
+      expect.objectContaining({ type: "CLUB_OPERATIONAL_READY" }),
+    );
+  });
+
+  it("sends no notification when the status change doesn't cross the SUSPENDED boundary", async () => {
+    findUniqueMock.mockResolvedValue({ status: "ACTIVE" });
+    updateMock.mockResolvedValue(makeClubRow({ status: "INACTIVE" }));
+
+    await setClubStatus("club_1", "INACTIVE", "admin_1");
+
+    expect(dispatchMock).not.toHaveBeenCalled();
   });
 });
 

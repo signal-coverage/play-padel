@@ -180,6 +180,41 @@ export async function issueInvoice(
   return toInvoice(row as InvoiceRow);
 }
 
+// Compensating action for a reservation/invoice creation flow that fails
+// partway through (e.g. app/api/player/reservations/route.ts: issueInvoice
+// or createCheckoutPreference throws after createInvoice already
+// succeeded) — without this, the invoice is left DRAFT/ISSUED and pointing
+// at a reservation that the same rollback path cancels, with nothing left
+// to ever revisit it. Mirrors issueInvoice's own not-found/status-guard
+// shape. Deliberately refuses to void a PAID invoice — voiding a real,
+// already-recorded payment is never the right response to an unrelated
+// failure and must go through an explicit refund flow instead.
+export async function voidInvoice(
+  clubId: string,
+  id: string,
+  voidedBy: string,
+): Promise<Invoice> {
+  const existing = await prisma.invoice.findFirst({
+    where: { id, clubId },
+  });
+  if (!existing) throw new Error("Invoice not found");
+  if (existing.status !== "DRAFT" && existing.status !== "ISSUED") {
+    throw new Error("Only DRAFT or ISSUED invoices can be voided");
+  }
+
+  const row = await prisma.invoice.update({
+    where: { id, clubId },
+    data: {
+      status: "VOID",
+      voidedAt: new Date(),
+      voidedBy,
+      updatedBy: voidedBy,
+    },
+    include: { payments: true },
+  });
+  return toInvoice(row as InvoiceRow);
+}
+
 export async function recordPayment(
   clubId: string,
   createdBy: string,
@@ -203,29 +238,53 @@ export async function recordPayment(
 
   const paidAt = new Date();
 
-  const [payment] = await prisma.$transaction([
-    prisma.payment.create({
-      data: {
-        clubId,
-        invoiceId: input.invoiceId,
-        method: input.method,
-        amount: roundedAmount,
-        currency: input.currency,
-        status: "COMPLETED",
-        reference: input.reference ?? null,
-        paidAt,
-        createdBy,
-      },
-    }),
-    prisma.invoice.update({
-      where: { id: input.invoiceId, clubId },
-      data: {
-        status: "PAID",
-        paidAt,
-        updatedBy: createdBy,
-      },
-    }),
-  ]);
+  // The findFirst above is a best-effort pre-check only — it runs outside
+  // any transaction, so two concurrent recordPayment calls for the same
+  // invoice can both read ISSUED and both pass it (TOCTOU). The real guard
+  // is this updateMany's own `status: "ISSUED"` clause, evaluated and
+  // applied atomically by Postgres inside this transaction: only the call
+  // that actually flips the row gets count === 1, so only it proceeds to
+  // create the Payment. A concurrent loser sees count === 0 and throws
+  // before ever creating a duplicate Payment row. The `payments_invoiceId_key`
+  // unique constraint (prisma/schema.prisma) is a second, DB-level backstop
+  // behind this for the same scenario — see its P2002 handling below.
+  let payment: PaymentRow;
+  try {
+    payment = await prisma.$transaction(async (tx) => {
+      const updateResult = await tx.invoice.updateMany({
+        where: { id: input.invoiceId, clubId, status: "ISSUED" },
+        data: {
+          status: "PAID",
+          paidAt,
+          updatedBy: createdBy,
+        },
+      });
+      if (updateResult.count === 0) {
+        throw new Error("Only ISSUED invoices can receive payments");
+      }
+      return tx.payment.create({
+        data: {
+          clubId,
+          invoiceId: input.invoiceId,
+          method: input.method,
+          amount: roundedAmount,
+          currency: input.currency,
+          status: "COMPLETED",
+          reference: input.reference ?? null,
+          paidAt,
+          createdBy,
+        },
+      });
+    });
+  } catch (e) {
+    if (
+      e instanceof Prisma.PrismaClientKnownRequestError &&
+      e.code === "P2002"
+    ) {
+      throw new Error("Only ISSUED invoices can receive payments");
+    }
+    throw e;
+  }
 
   logAudit({
     clubId,
