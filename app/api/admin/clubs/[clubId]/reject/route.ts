@@ -2,13 +2,17 @@ import { NextResponse, type NextRequest } from "next/server";
 import { rejectClub } from "@/core/clubs/services/clubs.service";
 import { requireAdminProfile } from "@/lib/auth/adminProfile";
 import { logAudit } from "@/core/audit/services/audit.service";
+import { withErrorHandling } from "@/lib/api/withErrorHandling";
 
 type RouteParams = { params: Promise<{ clubId: string }> };
 
 // Admin approval queue action (see app/dashboard/admin-approvals) — mirrors
 // .../approve/route.ts exactly, just the REJECTED transition/audit action
 // instead of APPROVED. Same 404/409 reasoning as that route.
-export async function POST(_request: NextRequest, { params }: RouteParams) {
+export const POST = withErrorHandling(async function POST(
+  _request: NextRequest,
+  { params }: RouteParams,
+) {
   const authResult = await requireAdminProfile();
   if (!authResult.ok) return authResult.response;
 
@@ -35,4 +39,4 @@ export async function POST(_request: NextRequest, { params }: RouteParams) {
   });
 
   return NextResponse.json({ ok: true });
-}
+});

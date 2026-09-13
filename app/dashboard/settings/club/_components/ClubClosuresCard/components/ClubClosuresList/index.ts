@@ -1,0 +1,1 @@
+export { ClubClosuresList } from "./ClubClosuresList";

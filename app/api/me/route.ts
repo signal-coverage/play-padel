@@ -3,6 +3,7 @@ import { auth } from "@clerk/nextjs/server";
 import { z } from "zod";
 import { prisma } from "@/infrastructure/db/client";
 import { requireAuthUser } from "@/lib/auth/requireAuthUser";
+import { withErrorHandling } from "@/lib/api/withErrorHandling";
 
 // Thin "who am I" lookup: the current Clerk user's own UserProfile.role,
 // clubId, padelCategory, preferredSide, dominantHand, createdAt. Queries Prisma
@@ -10,7 +11,7 @@ import { requireAuthUser } from "@/lib/auth/requireAuthUser";
 // through core/users, which is being migrated to the new owner|player
 // SystemRole enum concurrently — this route only reads/writes a few scalar
 // fields, so it isn't worth coupling to that in-flux module.
-export async function GET() {
+export const GET = withErrorHandling(async function GET() {
   const { userId } = await auth();
 
   if (!userId) {
@@ -31,7 +32,7 @@ export async function GET() {
   });
 
   return NextResponse.json({ profile });
-}
+});
 
 const updatePlayerStyleSchema = z.object({
   preferredSide: z.enum(["forehand", "backhand"]).optional(),
@@ -41,7 +42,7 @@ const updatePlayerStyleSchema = z.object({
 // Player-only self-service edit of their own play-style fields. Anyone
 // signed in may call this on their own profile — there is no owner/admin
 // path to edit someone else's profile through this route.
-export async function PATCH(request: Request) {
+export const PATCH = withErrorHandling(async function PATCH(request: Request) {
   const authResult = await requireAuthUser();
   if (!authResult.ok) return authResult.response;
   const { userId } = authResult;
@@ -62,4 +63,4 @@ export async function PATCH(request: Request) {
   });
 
   return NextResponse.json({ profile });
-}
+});

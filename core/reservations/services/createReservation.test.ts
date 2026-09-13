@@ -6,12 +6,14 @@ const {
   reservationFindFirstMock,
   courtClosureFindFirstMock,
   reservationCreateMock,
+  transactionMock,
 } = vi.hoisted(() => ({
   courtFindUniqueMock: vi.fn(),
   userFindUniqueMock: vi.fn(),
   reservationFindFirstMock: vi.fn(),
   courtClosureFindFirstMock: vi.fn(),
   reservationCreateMock: vi.fn(),
+  transactionMock: vi.fn(),
 }));
 
 vi.mock("@/infrastructure/db/client", () => ({
@@ -23,6 +25,7 @@ vi.mock("@/infrastructure/db/client", () => ({
       create: reservationCreateMock,
     },
     courtClosure: { findFirst: courtClosureFindFirstMock },
+    $transaction: transactionMock,
   },
 }));
 
@@ -31,6 +34,7 @@ vi.mock("@/core/audit/services/audit.service", () => ({
 }));
 
 import { Prisma } from "@/lib/generated/prisma/client";
+import { prisma } from "@/infrastructure/db/client";
 import { createReservation } from "@/core/reservations/services/reservations.service";
 
 // Real shape verified against the actual dev database (Postgres 23P01
@@ -67,6 +71,13 @@ beforeEach(() => {
   userFindUniqueMock.mockResolvedValue({ displayName: "Player One" });
   reservationFindFirstMock.mockResolvedValue(null);
   courtClosureFindFirstMock.mockResolvedValue(null);
+  // The real interactive transaction's `tx` client is just `prisma` itself
+  // here, so every mock above (courtClosureFindFirstMock,
+  // reservationCreateMock) is exercised exactly as in production — just
+  // without a real DB enforcing serializable isolation.
+  transactionMock.mockImplementation((cb: (tx: typeof prisma) => unknown) =>
+    cb(prisma),
+  );
   // Default create mock: echoes back whatever `data` createReservation built
   // (status, paymentExpiresAt, paymentMethod, etc.) on top of base row
   // fields — mirrors real Prisma behavior so tests can assert on computed
@@ -170,5 +181,47 @@ describe("createReservation — DB-level double-booking backstop", () => {
   it("leaves paymentMethod undefined for an instant (non-pending) reservation", async () => {
     const reservation = await createReservation("user-1", { ...INPUT });
     expect(reservation.paymentMethod).toBeUndefined();
+  });
+});
+
+// Closes the closure-vs-reservation TOCTOU within createReservation's own
+// check-then-write: the closure check and the reservation create now run
+// inside one serializable transaction (see reservations.service.ts), so a
+// concurrent createClosure that writes a conflicting CourtClosure row either
+// commits before this transaction's closure check sees it, or loses a
+// Postgres serialization conflict to it — never silently interleaves.
+describe("createReservation — closure-check/create atomicity", () => {
+  it("runs the closure check and the reservation write inside one serializable transaction", async () => {
+    await createReservation("user_1", INPUT);
+
+    expect(transactionMock).toHaveBeenCalledTimes(1);
+    expect(transactionMock).toHaveBeenCalledWith(
+      expect.any(Function),
+      expect.objectContaining({ isolationLevel: "Serializable" }),
+    );
+    expect(courtClosureFindFirstMock).toHaveBeenCalled();
+    expect(reservationCreateMock).toHaveBeenCalled();
+  });
+
+  it("does not create the reservation when the transaction's own closure check finds a conflict", async () => {
+    courtClosureFindFirstMock.mockResolvedValue({ reason: "Maintenance" });
+
+    await expect(createReservation("user_1", INPUT)).rejects.toThrow(
+      "This court is closed: Maintenance",
+    );
+    expect(reservationCreateMock).not.toHaveBeenCalled();
+  });
+
+  it("translates a serialization failure (Postgres could not prove the transaction was safe against a concurrent createClosure) into the same friendly conflict message", async () => {
+    transactionMock.mockImplementation(async () => {
+      throw new Prisma.PrismaClientKnownRequestError(
+        "Transaction failed due to a write conflict or a deadlock. Please retry your transaction",
+        { code: "P2034", clientVersion: "7.9.1" },
+      );
+    });
+
+    await expect(createReservation("user_1", INPUT)).rejects.toThrow(
+      "This slot is no longer available. Pick another time.",
+    );
   });
 });

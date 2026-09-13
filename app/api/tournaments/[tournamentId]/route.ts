@@ -1,10 +1,14 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { requireAuthUser } from "@/lib/auth/requireAuthUser";
 import { getTournamentDetailForPlayer } from "@/core/tournaments/services/tournaments.service";
+import { withErrorHandling } from "@/lib/api/withErrorHandling";
 
 type RouteParams = { params: Promise<{ tournamentId: string }> };
 
-export async function GET(_request: NextRequest, { params }: RouteParams) {
+export const GET = withErrorHandling(async function GET(
+  _request: NextRequest,
+  { params }: RouteParams,
+) {
   const authResult = await requireAuthUser();
   if (!authResult.ok) return authResult.response;
 
@@ -21,4 +25,4 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
   }
 
   return NextResponse.json({ tournament });
-}
+});

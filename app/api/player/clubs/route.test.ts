@@ -18,7 +18,7 @@ vi.mock("@/lib/mercadopago/operationalStatus", () => ({
 }));
 
 vi.mock("@/core/clubs/services/bankTransferAccount.service", () => ({
-  getClubBankTransferAccount: vi.fn(),
+  getClubBankTransferAccountsByClubIds: vi.fn(),
 }));
 
 vi.mock("@vercel/firewall", () => ({
@@ -30,7 +30,7 @@ import { checkRateLimit } from "@vercel/firewall";
 import { listActiveClubs } from "@/core/clubs/services/clubs.service";
 import { getClubsAvailability } from "@/core/courts/services/courts.service";
 import { getAvailablePaymentMethodsForClubs } from "@/lib/mercadopago/operationalStatus";
-import { getClubBankTransferAccount } from "@/core/clubs/services/bankTransferAccount.service";
+import { getClubBankTransferAccountsByClubIds } from "@/core/clubs/services/bankTransferAccount.service";
 import { GET } from "./route";
 
 const authMock = auth as unknown as ReturnType<typeof vi.fn>;
@@ -40,9 +40,8 @@ const getClubsAvailabilityMock = getClubsAvailability as ReturnType<
 >;
 const mockGetAvailablePaymentMethodsForClubs =
   getAvailablePaymentMethodsForClubs as ReturnType<typeof vi.fn>;
-const getClubBankTransferAccountMock = getClubBankTransferAccount as ReturnType<
-  typeof vi.fn
->;
+const getClubBankTransferAccountsByClubIdsMock =
+  getClubBankTransferAccountsByClubIds as ReturnType<typeof vi.fn>;
 const checkRateLimitMock = checkRateLimit as unknown as ReturnType<
   typeof vi.fn
 >;
@@ -58,11 +57,11 @@ describe("GET /api/player/clubs", () => {
     getClubsAvailabilityMock.mockReset();
     checkRateLimitMock.mockReset();
     mockGetAvailablePaymentMethodsForClubs.mockReset();
-    getClubBankTransferAccountMock.mockReset();
+    getClubBankTransferAccountsByClubIdsMock.mockReset();
     authMock.mockResolvedValue({ userId: "user_1" });
     checkRateLimitMock.mockResolvedValue({ rateLimited: false });
     mockGetAvailablePaymentMethodsForClubs.mockResolvedValue(new Map());
-    getClubBankTransferAccountMock.mockResolvedValue(null);
+    getClubBankTransferAccountsByClubIdsMock.mockResolvedValue(new Map());
   });
 
   it("returns 429 when the shared rate limit is exceeded", async () => {
@@ -142,16 +141,22 @@ describe("GET /api/player/clubs", () => {
     mockGetAvailablePaymentMethodsForClubs.mockResolvedValue(
       new Map([["club-1", ["MERCADOPAGO", "TRANSFER"]]]),
     );
-    getClubBankTransferAccountMock.mockResolvedValue({
-      bankName: "Banco Test",
-      cbu: "0000000000000000000000",
-      alias: "club.test.alias",
-    });
+    getClubBankTransferAccountsByClubIdsMock.mockResolvedValue(
+      new Map([
+        [
+          "club-1",
+          {
+            bankName: "Banco Test",
+            cbu: "0000000000000000000000",
+            alias: "club.test.alias",
+          },
+        ],
+      ]),
+    );
 
     const res = await GET(makeRequest("2026-09-15"));
     const body = await res.json();
 
-    expect(getClubBankTransferAccountMock).toHaveBeenCalledWith("club-1");
     expect(body.clubs[0].bankTransferInfo).toEqual({
       bankName: "Banco Test",
       cbu: "0000000000000000000000",
@@ -172,7 +177,38 @@ describe("GET /api/player/clubs", () => {
     const res = await GET(makeRequest("2026-09-15"));
     const body = await res.json();
 
-    expect(getClubBankTransferAccountMock).not.toHaveBeenCalled();
+    expect(getClubBankTransferAccountsByClubIdsMock).toHaveBeenCalledWith([]);
     expect(body.clubs[0].bankTransferInfo).toBeNull();
+  });
+
+  it("fetches bank-transfer accounts for every TRANSFER-eligible club via ONE batched call, never one findUnique-style call per club", async () => {
+    listActiveClubsMock.mockResolvedValue([
+      { id: "club-1", name: "Club One" },
+      { id: "club-2", name: "Club Two" },
+      { id: "club-3", name: "Club Three" },
+    ]);
+    getClubsAvailabilityMock.mockResolvedValue(
+      new Map([
+        ["club-1", { courtCount: 1, hasAvailabilityToday: true }],
+        ["club-2", { courtCount: 1, hasAvailabilityToday: true }],
+        ["club-3", { courtCount: 1, hasAvailabilityToday: true }],
+      ]),
+    );
+    mockGetAvailablePaymentMethodsForClubs.mockResolvedValue(
+      new Map([
+        ["club-1", ["TRANSFER"]],
+        ["club-2", ["MERCADOPAGO"]],
+        ["club-3", ["TRANSFER"]],
+      ]),
+    );
+    getClubBankTransferAccountsByClubIdsMock.mockResolvedValue(new Map());
+
+    await GET(makeRequest("2026-09-15"));
+
+    expect(getClubBankTransferAccountsByClubIdsMock).toHaveBeenCalledTimes(1);
+    expect(getClubBankTransferAccountsByClubIdsMock).toHaveBeenCalledWith([
+      "club-1",
+      "club-3",
+    ]);
   });
 });

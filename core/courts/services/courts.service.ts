@@ -420,6 +420,27 @@ export async function listClosuresByCourt(
   return rows.map(toCourtClosure);
 }
 
+// Aggregates closures across every court in the club (not scoped to a single
+// courtId, unlike listClosuresByCourt above) — backs Club Settings' "close
+// the whole club" tab, which fans out one closure per active court and needs
+// to show all of them back in one list rather than the owner having to open
+// each court's own Closures sheet individually. Each row still is its own
+// CourtClosure record; there is no separate "club closure" entity, so the
+// owning court's name is attached here purely for display.
+export async function listClosuresByClub(
+  clubId: string,
+): Promise<(CourtClosure & { courtName: string })[]> {
+  const rows = await prisma.courtClosure.findMany({
+    where: { court: { clubId } },
+    orderBy: { startsAt: "desc" },
+    include: { court: { select: { name: true } } },
+  });
+  return rows.map((row) => ({
+    ...toCourtClosure(row),
+    courtName: row.court.name,
+  }));
+}
+
 // Refuses to create a closure that overlaps any active reservation on this
 // court — the owner cancels/reschedules those manually first (existing
 // cancel-with-refund flow), then retries. No automatic cancellation here.
@@ -432,41 +453,75 @@ export async function createClosure(
   const startsAt = new Date(input.startsAt);
   const endsAt = new Date(input.endsAt);
 
-  const conflicts = await prisma.reservation.findMany({
-    where: {
-      courtId,
-      status: { in: [...ACTIVE_RESERVATION_STATUSES] },
-      scheduledStart: { lt: endsAt },
-      scheduledEnd: { gt: startsAt },
-      NOT: {
-        status: "SCHEDULED",
-        paymentExpiresAt: { lt: new Date() },
+  // The conflict check and the closure write run inside ONE serializable
+  // transaction — closing the TOCTOU between them (createReservation does
+  // the mirror-image check-then-write against THIS same table pair, see
+  // core/reservations/services/reservations.service.ts). Postgres's
+  // serializable isolation detects the cross-table write-skew anomaly this
+  // pair forms (each operation reads the other's table and writes its own):
+  // if a concurrent createReservation's transaction commits a conflicting
+  // reservation in between, this transaction either sees it (conflict check
+  // fails, below) or Postgres aborts one of the two with a serialization
+  // failure (caught below) — it can no longer silently interleave. This
+  // still doesn't make the two operations mutually exclusive in the sense of
+  // a single cross-table lock; it relies on Postgres's own predicate
+  // tracking for that guarantee.
+  let row;
+  try {
+    row = await prisma.$transaction(
+      async (tx) => {
+        const conflicts = await tx.reservation.findMany({
+          where: {
+            courtId,
+            status: { in: [...ACTIVE_RESERVATION_STATUSES] },
+            scheduledStart: { lt: endsAt },
+            scheduledEnd: { gt: startsAt },
+            NOT: {
+              status: "SCHEDULED",
+              paymentExpiresAt: { lt: new Date() },
+            },
+            // Only reservations that haven't already ended count as
+            // conflicts — otherwise a same-day closure ("close this court
+            // starting now") is spuriously rejected by a match that was
+            // played and finished earlier that same day.
+            AND: { scheduledEnd: { gt: new Date() } },
+          },
+          select: { scheduledStart: true, scheduledEnd: true },
+          orderBy: { scheduledStart: "asc" },
+        });
+
+        if (conflicts.length > 0) {
+          const list = conflicts
+            .map(
+              (c) =>
+                `${format(c.scheduledStart, "MMM d, HH:mm")}–${format(c.scheduledEnd, "HH:mm")}`,
+            )
+            .join(", ");
+          throw new Error(
+            `This closure overlaps ${conflicts.length} active reservation(s): ${list}. Cancel them first, then retry.`,
+          );
+        }
+
+        return tx.courtClosure.create({
+          data: { courtId, startsAt, endsAt, reason: input.reason, createdBy },
+        });
       },
-      // Only reservations that haven't already ended count as conflicts —
-      // otherwise a same-day closure ("close this court starting now") is
-      // spuriously rejected by a match that was played and finished earlier
-      // that same day.
-      AND: { scheduledEnd: { gt: new Date() } },
-    },
-    select: { scheduledStart: true, scheduledEnd: true },
-    orderBy: { scheduledStart: "asc" },
-  });
-
-  if (conflicts.length > 0) {
-    const list = conflicts
-      .map(
-        (c) =>
-          `${format(c.scheduledStart, "MMM d, HH:mm")}–${format(c.scheduledEnd, "HH:mm")}`,
-      )
-      .join(", ");
-    throw new Error(
-      `This closure overlaps ${conflicts.length} active reservation(s): ${list}. Cancel them first, then retry.`,
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
     );
+  } catch (err) {
+    if (
+      err instanceof Prisma.PrismaClientKnownRequestError &&
+      err.code === "P2034"
+    ) {
+      // Postgres could not prove this transaction was safe against a
+      // concurrent one (most likely createReservation's own transaction)
+      // and aborted it — the caller just needs to retry.
+      throw new Error(
+        "This closure conflicts with a reservation change made at the same time. Please retry.",
+      );
+    }
+    throw err;
   }
-
-  const row = await prisma.courtClosure.create({
-    data: { courtId, startsAt, endsAt, reason: input.reason, createdBy },
-  });
 
   const creator = await prisma.userProfile.findUnique({
     where: { id: createdBy },

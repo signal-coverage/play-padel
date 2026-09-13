@@ -10,10 +10,42 @@ import type { DispatchParams } from "@/core/notifications/types";
 // cached here — same "check process.env at call time" convention this file
 // already uses for RESEND_API_KEY) so a per-environment sender can be set
 // without a code change or redeploy — e.g. Resend's onboarding@resend.dev
-// for local/dev testing, until playpadel.app's domain is verified on Resend
-// (see https://resend.com/domains). Falls back to this default when unset,
-// so production keeps working unchanged until it sets its own override.
-const DEFAULT_FROM_ADDRESS = "noreply@playpadel.app";
+// for local/dev testing. play-padel.com.ar is verified on Resend (see
+// https://resend.com/domains), so this is the production default; falls
+// back to this default when the env var is unset.
+const DEFAULT_FROM_ADDRESS = "noreply@play-padel.com.ar";
+
+// A hang (not an error — a request that never settles) on Resend's side
+// must never be allowed to hang this function indefinitely: dispatch() is
+// awaited serially, per-row, inside cron sweep loops (see
+// app/api/cron/bank-transfer-hold-sweep/route.ts and
+// app/api/cron/notifications/route.ts), so an unbounded hang here can stall
+// an entire sweep until the platform kills it — before its own SystemJobLog
+// write ever runs. A few seconds is plenty for a transactional email send.
+const RESEND_SEND_TIMEOUT_MS = 8_000;
+
+/** Races `promise` against a timeout, rejecting with a clear message on expiry. */
+function withTimeout<T>(
+  promise: Promise<T>,
+  ms: number,
+  label: string,
+): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => {
+      reject(new Error(`${label} timed out after ${ms}ms`));
+    }, ms);
+    promise.then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      (err: unknown) => {
+        clearTimeout(timer);
+        reject(err as Error);
+      },
+    );
+  });
+}
 
 /**
  * Persist-then-send dispatcher.
@@ -67,13 +99,18 @@ export async function dispatch(params: DispatchParams): Promise<void> {
       return;
     }
 
-    // Step 4: send via Resend
-    const result = await getResendClient().emails.send({
-      from: process.env.RESEND_FROM_ADDRESS ?? DEFAULT_FROM_ADDRESS,
-      to: params.recipientEmail,
-      subject: params.subject,
-      html: params.html,
-    });
+    // Step 4: send via Resend, bounded so a hang becomes a caught, fast
+    // failure below instead of an unbounded await.
+    const result = await withTimeout(
+      getResendClient().emails.send({
+        from: process.env.RESEND_FROM_ADDRESS ?? DEFAULT_FROM_ADDRESS,
+        to: params.recipientEmail,
+        subject: params.subject,
+        html: params.html,
+      }),
+      RESEND_SEND_TIMEOUT_MS,
+      "Resend email send",
+    );
 
     if (result.error) {
       await updateNotificationStatus(notificationId, "FAILED", {

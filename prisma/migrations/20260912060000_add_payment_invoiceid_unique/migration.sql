@@ -1,0 +1,11 @@
+-- Backstops core/billing/services/billing.service.ts's recordPayment
+-- transactional guard against double-recording a payment for the same
+-- invoice. recordPayment is the ONLY code path that ever creates a Payment
+-- row, and it only ever records one full-amount capture per invoice (no
+-- partial payments) — so two Payment rows sharing an invoiceId can only
+-- mean the same capture was recorded twice. This unique index rejects that
+-- at the DB layer even if the application-level "status: ISSUED" guard
+-- inside recordPayment's own transaction is ever bypassed (e.g. a future
+-- code path that writes Payment rows directly).
+-- AlterTable
+CREATE UNIQUE INDEX "payments_invoiceId_key" ON "payments"("invoiceId");

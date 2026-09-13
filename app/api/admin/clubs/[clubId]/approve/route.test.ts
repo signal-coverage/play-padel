@@ -88,4 +88,15 @@ describe("POST /api/admin/clubs/[clubId]/approve", () => {
       entityId: "club_1",
     });
   });
+
+  it("returns the app's standard {error} 500 JSON shape instead of throwing when approveClub rejects", async () => {
+    approveClubMock.mockRejectedValue(new Error("db unavailable"));
+
+    const response = await POST(makeRequest(), makeParams("club_1"));
+    const body = await response.json();
+
+    expect(response.status).toBe(500);
+    expect(typeof body.error).toBe("string");
+    expect(logAuditMock).not.toHaveBeenCalled();
+  });
 });

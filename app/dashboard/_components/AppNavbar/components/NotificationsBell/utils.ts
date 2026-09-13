@@ -2,8 +2,11 @@ import type { NotificationType } from "@/core/notifications/types";
 
 /**
  * Where clicking a notification should take the user — derived purely from
- * its `type` (+ `clubId` for the one type that can use it), matching each
- * type's actual dispatch site rather than guessing:
+ * its `type` (+ `clubSlug` for the types that can use it — the owning
+ * club's URL-safe slug, batch-resolved server-side by
+ * listRecipientNotifications, never the raw clubId; see
+ * prisma/schema.prisma's Club.slug doc comment), matching each type's
+ * actual dispatch site rather than guessing:
  *
  * - Player-facing (reservations/membership payment): RESERVATION_REMINDER,
  *   RESERVATION_CANCELLED (core/reservations/services/reservations.service.ts),
@@ -55,13 +58,14 @@ import type { NotificationType } from "@/core/notifications/types";
  *   the player's own dashboard — there's no dedicated "my profile" page to
  *   deep-link into.
  * - RESERVATION_PAYMENT_HOLD_EXPIRED
- *   (app/api/cron/bank-transfer-hold-sweep/route.ts) -> the player's own My
+ *   (app/api/cron/bank-transfer-hold-sweep/route.ts,
+ *   app/api/cron/mercadopago-hold-sweep/route.ts) -> the player's own My
  *   Reservations list, same group as RESERVATION_CANCELLED/UPDATED — their
- *   bank-transfer hold lapsed and the slot was released.
+ *   bank-transfer or Mercado Pago hold lapsed and the slot was released.
  */
 export function getNotificationHref(
   type: NotificationType,
-  clubId: string | null,
+  clubSlug: string | null,
 ): string {
   switch (type) {
     case "RESERVATION_REMINDER":
@@ -71,7 +75,9 @@ export function getNotificationHref(
     case "RESERVATION_PAYMENT_HOLD_EXPIRED":
       return "/dashboard/my-reservations";
     case "WAITLIST_SLOT_AVAILABLE":
-      return clubId ? `/dashboard/browse?club=${clubId}` : "/dashboard/browse";
+      return clubSlug
+        ? `/dashboard/browse?club=${clubSlug}`
+        : "/dashboard/browse";
     case "CLUB_APPROVED":
     case "CLUB_REJECTED":
     case "CLUB_SUSPENDED":
@@ -80,8 +86,8 @@ export function getNotificationHref(
     case "PAYMENT_RECEIVED":
     case "MEMBERSHIP_CANCELLED":
     case "CLUB_UPDATED_BY_ADMIN":
-      return clubId
-        ? `/dashboard/settings/club?clubId=${clubId}`
+      return clubSlug
+        ? `/dashboard/settings/club?club=${clubSlug}`
         : "/dashboard/settings/club";
     case "CLUB_PENDING_APPROVAL":
       return "/dashboard/admin-approvals";

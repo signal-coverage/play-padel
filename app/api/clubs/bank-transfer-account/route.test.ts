@@ -110,6 +110,20 @@ describe("GET /api/clubs/bank-transfer-account", () => {
     expect(response.status).toBe(200);
     expect(body).toEqual({ account });
   });
+
+  it("returns the app's standard {error} 500 JSON shape instead of throwing when the lookup rejects", async () => {
+    requireOwnerClubMock.mockResolvedValue({
+      ok: true,
+      context: { userId: "user_1", clubId: "club_1" },
+    });
+    getClubBankTransferAccountMock.mockRejectedValue(new Error("db down"));
+
+    const response = await GET();
+    const body = await response.json();
+
+    expect(response.status).toBe(500);
+    expect(typeof body.error).toBe("string");
+  });
 });
 
 describe("PUT /api/clubs/bank-transfer-account", () => {

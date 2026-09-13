@@ -25,7 +25,7 @@ import type { ClubSort, ClubSortField } from "./utils";
 
 export function ClubListPanel({
   clubs,
-  selectedClubId,
+  selectedClubSlug,
   onSelectClub,
   isLoading,
   isError,
@@ -64,11 +64,11 @@ export function ClubListPanel({
         cell: (club) => (
           <button
             type="button"
-            onClick={() => onSelectClub(club.id)}
-            aria-pressed={club.id === selectedClubId}
+            onClick={() => onSelectClub(club.slug)}
+            aria-pressed={club.slug === selectedClubSlug}
             className={cn(
               "flex w-full items-center gap-2 rounded-sm p-2 text-left outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
-              club.id === selectedClubId && "bg-muted",
+              club.slug === selectedClubSlug && "bg-muted",
               !club.hasAvailabilityToday && "opacity-50",
             )}
           >
@@ -97,7 +97,7 @@ export function ClubListPanel({
         ),
       },
     ],
-    [selectedClubId, onSelectClub],
+    [selectedClubSlug, onSelectClub],
   );
 
   if (isError) {

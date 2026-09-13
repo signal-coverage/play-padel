@@ -18,6 +18,7 @@ import {
   SELF_CANCEL_CUTOFF_HOURS,
   ACTIVE_RESERVATION_STATUSES,
   PAYMENT_HOLD_MINUTES,
+  MP_HOLD_EXPIRY_ACTOR,
 } from "@/core/reservations/consts";
 import { dispatch } from "@/lib/notifications/dispatcher";
 import { ReservationCancelled } from "@/lib/email/templates/ReservationCancelled";
@@ -56,6 +57,60 @@ function toReservation(row: ReservationRow): Reservation {
   };
 }
 
+// Is this row a SCHEDULED Mercado Pago checkout hold whose PAYMENT_HOLD_MINUTES
+// window has already lapsed? Deliberately narrower than "any expired
+// SCHEDULED row": a TRANSFER hold has its own, longer-lived handling (see
+// bank-transfer-hold-sweep's cron) and must never be touched here, and an
+// already-terminal (CONFIRMED/CANCELLED/COMPLETED/NO_SHOW) row has nothing
+// left to expire.
+function isLapsedMercadoPagoHold(
+  row: Pick<ReservationRow, "status" | "paymentMethod" | "paymentExpiresAt">,
+): boolean {
+  return (
+    row.status === "SCHEDULED" &&
+    row.paymentMethod === "MERCADOPAGO" &&
+    row.paymentExpiresAt !== null &&
+    row.paymentExpiresAt.getTime() < Date.now()
+  );
+}
+
+/**
+ * Lazy-expiry mechanism for an abandoned/never-confirmed Mercado Pago
+ * checkout: a SCHEDULED hold whose 15-minute window lapsed without the
+ * webhook ever confirming payment used to linger as SCHEDULED forever (see
+ * the webhook route's own "by design" comment). Vercel Hobby's cron can only
+ * run once/day, so it can't be the primary sweep — instead, every read path
+ * that touches a reservation row (My Reservations, the owner's reservation
+ * list/detail, the SSE streams that wrap those same service calls) runs it
+ * through here first, transitioning it to CANCELLED with a system actor stamp
+ * the instant anyone looks at it past expiry. checkCourtConflict/
+ * checkUserOverlapConflict already excluded a lapsed-but-still-SCHEDULED hold
+ * from conflict checks, so this never changes slot availability — it only
+ * gives the row an actual terminal status instead of a permanently-stale one.
+ * A TRANSFER hold, or any row not currently a lapsed MP hold, passes through
+ * unchanged (no extra DB write).
+ */
+async function expireIfLapsedMercadoPagoHold(
+  row: ReservationRow,
+): Promise<ReservationRow> {
+  if (!isLapsedMercadoPagoHold(row)) return row;
+  return prisma.reservation.update({
+    where: { id: row.id },
+    data: {
+      status: "CANCELLED",
+      cancelledAt: new Date(),
+      cancelledBy: MP_HOLD_EXPIRY_ACTOR,
+      updatedBy: MP_HOLD_EXPIRY_ACTOR,
+    },
+  });
+}
+
+async function expireLapsedMercadoPagoHolds(
+  rows: ReservationRow[],
+): Promise<ReservationRow[]> {
+  return Promise.all(rows.map(expireIfLapsedMercadoPagoHold));
+}
+
 export async function listReservations(
   clubId: string,
   filters: ReservationFilters,
@@ -87,7 +142,8 @@ export async function listReservations(
     orderBy: { scheduledStart: "asc" },
   });
 
-  return rows.map(toReservation);
+  const expired = await expireLapsedMercadoPagoHolds(rows);
+  return expired.map(toReservation);
 }
 
 export async function getReservation(
@@ -97,7 +153,8 @@ export async function getReservation(
   const row = await prisma.reservation.findUnique({
     where: { id, clubId },
   });
-  return row ? toReservation(row) : null;
+  if (!row) return null;
+  return toReservation(await expireIfLapsedMercadoPagoHold(row));
 }
 
 /**
@@ -142,7 +199,8 @@ export async function listReservationsByClub(
     orderBy: { scheduledStart: "asc" },
   });
 
-  return rows.map(toReservation);
+  const expired = await expireLapsedMercadoPagoHolds(rows);
+  return expired.map(toReservation);
 }
 
 /**
@@ -203,7 +261,8 @@ export async function listReservationsByUser(
     orderBy: { scheduledStart: "asc" },
   });
 
-  return rows.map(toReservation);
+  const expired = await expireLapsedMercadoPagoHolds(rows);
+  return expired.map(toReservation);
 }
 
 // Detects a violation of the "reservations_no_overlapping_confirmed"
@@ -212,7 +271,7 @@ export async function listReservationsByUser(
 // driver adapter's own error wrapping rather than as one of Prisma's
 // standard P-codes; this exact shape was verified against the real dev
 // database (Prisma 7.9.1 + @prisma/adapter-neon), not guessed.
-function isConfirmedOverlapViolation(err: unknown): boolean {
+export function isConfirmedOverlapViolation(err: unknown): boolean {
   if (!(err instanceof Prisma.PrismaClientKnownRequestError)) return false;
   const cause = (
     err.meta as { driverAdapterError?: { cause?: { code?: string } } }
@@ -360,7 +419,7 @@ export async function createReservation(
   const scheduledStart = new Date(input.scheduledStart);
   const scheduledEnd = new Date(input.scheduledEnd);
 
-  const [courtConflict, userConflict, closureReason] = await Promise.all([
+  const [courtConflict, userConflict] = await Promise.all([
     checkCourtConflict({
       clubId: court.clubId,
       courtId: court.id,
@@ -369,11 +428,6 @@ export async function createReservation(
     }),
     checkUserOverlapConflict({
       userId: input.userId,
-      scheduledStart,
-      scheduledEnd,
-    }),
-    checkCourtClosureConflict({
-      courtId: court.id,
       scheduledStart,
       scheduledEnd,
     }),
@@ -387,9 +441,6 @@ export async function createReservation(
       "You already have a reservation at this time. Cancel it or pick a different slot.",
     );
   }
-  if (closureReason) {
-    throw new Error(`This court is closed: ${closureReason}`);
-  }
 
   const pendingPayment = opts?.pendingPayment ?? false;
   const holdMinutes = opts?.holdMinutes ?? PAYMENT_HOLD_MINUTES;
@@ -397,27 +448,64 @@ export async function createReservation(
   // MVP rule: instant confirmation, no owner-approval step (docs/reservation-flow.md).
   // Exception: a club that requires prepayment gets a SCHEDULED hold instead,
   // confirmed later by the Mercado Pago webhook (see Payments spec).
+  //
+  // The closure check and the reservation write run inside ONE serializable
+  // transaction — closing the TOCTOU between them (createClosure does the
+  // mirror-image check-then-write against THIS table, see
+  // core/courts/services/courts.service.ts's createClosure). Postgres's
+  // serializable isolation detects the cross-table write-skew anomaly this
+  // pair forms (each operation reads the other's table and writes its own):
+  // if a concurrent createClosure's transaction commits a conflicting
+  // closure in between, this transaction either sees it (closure check
+  // fails, below) or Postgres aborts one of the two with a serialization
+  // failure (caught below) — it can no longer silently interleave. This
+  // still doesn't make the two operations mutually exclusive in the sense of
+  // a single cross-table lock; it relies on Postgres's own predicate
+  // tracking for that guarantee. A courtConflict-style EXCLUDE constraint
+  // isn't available here (CourtClosure has no such constraint), which is why
+  // this needs the transaction instead of a cheaper DB-level backstop.
   let row;
   try {
-    row = await prisma.reservation.create({
-      data: {
-        clubId: court.clubId,
-        userId: input.userId,
-        userName: user.displayName,
-        courtId: court.id,
-        courtName: court.name,
-        status: pendingPayment ? "SCHEDULED" : "CONFIRMED",
-        scheduledStart,
-        scheduledEnd,
-        notes: input.notes ?? null,
-        paymentExpiresAt: pendingPayment
-          ? new Date(Date.now() + holdMinutes * 60_000)
-          : null,
-        paymentMethod: pendingPayment ? (opts?.paymentMethod ?? null) : null,
-        createdBy,
-        updatedBy: createdBy,
+    row = await prisma.$transaction(
+      async (tx) => {
+        const closure = await tx.courtClosure.findFirst({
+          where: {
+            courtId: court.id,
+            cancelledAt: null,
+            startsAt: { lt: scheduledEnd },
+            endsAt: { gt: scheduledStart },
+          },
+          select: { reason: true },
+          orderBy: { startsAt: "asc" },
+        });
+        if (closure) {
+          throw new Error(`This court is closed: ${closure.reason}`);
+        }
+
+        return tx.reservation.create({
+          data: {
+            clubId: court.clubId,
+            userId: input.userId,
+            userName: user.displayName,
+            courtId: court.id,
+            courtName: court.name,
+            status: pendingPayment ? "SCHEDULED" : "CONFIRMED",
+            scheduledStart,
+            scheduledEnd,
+            notes: input.notes ?? null,
+            paymentExpiresAt: pendingPayment
+              ? new Date(Date.now() + holdMinutes * 60_000)
+              : null,
+            paymentMethod: pendingPayment
+              ? (opts?.paymentMethod ?? null)
+              : null,
+            createdBy,
+            updatedBy: createdBy,
+          },
+        });
       },
-    });
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+    );
   } catch (err) {
     if (isConfirmedOverlapViolation(err)) {
       // checkCourtConflict above is a best-effort, non-race-proof check — two
@@ -426,6 +514,16 @@ export async function createReservation(
       // reservations (migration 20260905200000) is the real backstop; this
       // translates its failure into the same friendly message the
       // application-level check already gives for the common case.
+      throw new Error("This slot is no longer available. Pick another time.");
+    }
+    if (
+      err instanceof Prisma.PrismaClientKnownRequestError &&
+      err.code === "P2034"
+    ) {
+      // Postgres could not prove this transaction was safe against a
+      // concurrent one (most likely createClosure's own transaction) and
+      // aborted it — same friendly message as the other slot-conflict cases
+      // above; the caller just needs to retry the booking.
       throw new Error("This slot is no longer available. Pick another time.");
     }
     throw err;

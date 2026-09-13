@@ -175,6 +175,7 @@ describe("AdminSearchView", () => {
           {
             id: "club_1",
             name: "Padel Norte",
+            slug: "padel-norte",
             email: "norte@example.com",
             status: "ACTIVE",
           },
@@ -195,7 +196,7 @@ describe("AdminSearchView", () => {
     fireEvent.click(screen.getByText("Padel Norte"));
 
     expect(pushMock).toHaveBeenCalledWith(
-      "/dashboard/settings/club?clubId=club_1",
+      "/dashboard/settings/club?club=padel-norte",
     );
   });
 

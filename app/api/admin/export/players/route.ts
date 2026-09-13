@@ -3,6 +3,7 @@ import { format } from "date-fns";
 import { prisma } from "@/infrastructure/db/client";
 import { requireAdminProfile } from "@/lib/auth/adminProfile";
 import { toCsv } from "@/lib/csv/toCsv";
+import { withErrorHandling } from "@/lib/api/withErrorHandling";
 
 const HEADERS = [
   "id",
@@ -20,7 +21,7 @@ const HEADERS = [
 // padelCategory, preferredSide, dominantHand) plus createdAt, but
 // intentionally not scoped to status: "ACTIVE" like that route is, since an
 // admin export should cover every player record, not just active ones.
-export async function GET() {
+export const GET = withErrorHandling(async function GET() {
   const authResult = await requireAdminProfile();
   if (!authResult.ok) return authResult.response;
 
@@ -62,4 +63,4 @@ export async function GET() {
       "Content-Disposition": `attachment; filename="${filename}"`,
     },
   });
-}
+});

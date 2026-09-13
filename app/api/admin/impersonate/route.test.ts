@@ -156,4 +156,31 @@ describe("POST /api/admin/impersonate", () => {
     // Never leak the raw token anywhere in the response body.
     expect(JSON.stringify(body)).not.toMatch(/super-secret-token/);
   });
+
+  it("returns this app's standard {error} 500 JSON shape instead of throwing when Prisma rejects", async () => {
+    findUniqueMock.mockRejectedValue(new Error("connection reset"));
+
+    const response = await POST(makeRequest({ userId: TARGET_ID }));
+    const body = await response.json();
+
+    expect(response.status).toBe(500);
+    expect(typeof body.error).toBe("string");
+    expect(createActorTokenMock).not.toHaveBeenCalled();
+  });
+
+  it("returns this app's standard {error} 500 JSON shape instead of throwing when the Clerk actor-token call rejects", async () => {
+    findUniqueMock.mockResolvedValue({
+      id: TARGET_ID,
+      isAdmin: false,
+      displayName: "Target Player",
+    });
+    createActorTokenMock.mockRejectedValue(new Error("Clerk API down"));
+
+    const response = await POST(makeRequest({ userId: TARGET_ID }));
+    const body = await response.json();
+
+    expect(response.status).toBe(500);
+    expect(typeof body.error).toBe("string");
+    expect(logAuditMock).not.toHaveBeenCalled();
+  });
 });

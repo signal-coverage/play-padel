@@ -6,21 +6,22 @@ import {
 } from "@/core/clubs/services/bankTransferAccount.service";
 import { setClubBankTransferAccountSchema } from "@/core/clubs/schemas/bankTransferAccount.schema";
 import { notifyClubOperationalIfNeeded } from "@/core/clubs/services/clubs.service";
+import { withErrorHandling } from "@/lib/api/withErrorHandling";
 
 // Reads the caller's own club's manual bank-transfer payout details. Consumed
 // by the Club Settings "Bank Transfer" tab. `account` is `null` when the club
 // hasn't configured one yet — a normal, expected 200, not a 404.
-export async function GET() {
+export const GET = withErrorHandling(async function GET() {
   const authResult = await requireOwnerClub();
   if (!authResult.ok) return authResult.response;
 
   const account = await getClubBankTransferAccount(authResult.context.clubId);
   return NextResponse.json({ account });
-}
+});
 
 // Lets an owner set or update their club's manual bank-transfer payout
 // details. Mirrors the analogous PUT in ../operating-hours/route.ts.
-export async function PUT(request: NextRequest) {
+export const PUT = withErrorHandling(async function PUT(request: NextRequest) {
   const authResult = await requireOwnerClub();
   if (!authResult.ok) return authResult.response;
 
@@ -45,4 +46,4 @@ export async function PUT(request: NextRequest) {
   await notifyClubOperationalIfNeeded(authResult.context.clubId);
 
   return NextResponse.json({ account });
-}
+});

@@ -3,6 +3,7 @@ import { format } from "date-fns";
 import { prisma } from "@/infrastructure/db/client";
 import { requireAdminProfile } from "@/lib/auth/adminProfile";
 import { toCsv } from "@/lib/csv/toCsv";
+import { withErrorHandling } from "@/lib/api/withErrorHandling";
 
 const HEADERS = [
   "id",
@@ -23,7 +24,7 @@ const HEADERS = [
 // userName directly off the Reservation row (already denormalized there —
 // see toReservation) rather than joining Court/UserProfile again; the club's
 // name has no such denormalized column, so that one relation is included.
-export async function GET() {
+export const GET = withErrorHandling(async function GET() {
   const authResult = await requireAdminProfile();
   if (!authResult.ok) return authResult.response;
 
@@ -58,4 +59,4 @@ export async function GET() {
       "Content-Disposition": `attachment; filename="${filename}"`,
     },
   });
-}
+});

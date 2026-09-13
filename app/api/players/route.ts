@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/infrastructure/db/client";
 import { requireAuthUser } from "@/lib/auth/requireAuthUser";
+import { withErrorHandling } from "@/lib/api/withErrorHandling";
 
 // Public (to any signed-in user, any role) directory of every active
 // player — intentionally global, not scoped to a club. No pagination and
@@ -17,7 +18,7 @@ import { requireAuthUser } from "@/lib/auth/requireAuthUser";
 // player's contact details or admin status, even though the UI-level
 // `isAdmin` check that hides those actions is not itself a security
 // boundary.
-export async function GET() {
+export const GET = withErrorHandling(async function GET() {
   const authResult = await requireAuthUser();
   if (!authResult.ok) return authResult.response;
   const { userId } = authResult;
@@ -61,4 +62,4 @@ export async function GET() {
   }));
 
   return NextResponse.json({ players });
-}
+});

@@ -39,7 +39,13 @@ export function BrowseCourts() {
   // selection is shareable and survives a refresh. `defaultDate` keeps a
   // stable lazy "today" for as long as the URL doesn't already specify one,
   // matching the previous `useState(() => new Date())` behavior.
-  const [clubId, setClubId] = useQueryState("club", parseAsString);
+  //
+  // `club` holds the club's slug, never its raw internal id (see
+  // prisma/schema.prisma's Club.slug doc comment) — `currentClub` below
+  // resolves it back to the real Club record once `clubs` has loaded, and
+  // `clubId` is derived from that for the handful of call sites that
+  // genuinely need the real id (the availability fetch, booking).
+  const [clubSlug, setClubSlug] = useQueryState("club", parseAsString);
   const [courtId, setCourtId] = useQueryState("court", parseAsString);
   const [defaultDate] = useState(() => new Date());
   const [date, setDate] = useQueryState(
@@ -65,6 +71,8 @@ export function BrowseCourts() {
     isLoading: clubsLoading,
     isError: clubsError,
   } = useActiveClubs(date);
+  const currentClub = clubs?.find((c) => c.slug === clubSlug);
+  const clubId = currentClub?.id ?? null;
   const {
     data: courts,
     isLoading: availabilityLoading,
@@ -81,7 +89,6 @@ export function BrowseCourts() {
     setConfirmedTransferPending(false);
   });
 
-  const currentClub = clubs?.find((c) => c.id === clubId);
   const selectedCourt = (courts ?? []).find((c) => c.id === courtId) ?? null;
 
   // A court selected under one club shouldn't silently carry over once the
@@ -93,13 +100,13 @@ export function BrowseCourts() {
     }
   }, [courts, courtId, setCourtId]);
 
-  function handleSelectClub(id: string) {
-    setClubId(id);
+  function handleSelectClub(slug: string) {
+    setClubSlug(slug);
     setCourtId(null);
   }
 
   function handleBackToClubs() {
-    setClubId(null);
+    setClubSlug(null);
     setCourtId(null);
   }
 
@@ -191,7 +198,7 @@ export function BrowseCourts() {
   const clubListPanel = (
     <ClubListPanel
       clubs={clubs ?? []}
-      selectedClubId={clubId}
+      selectedClubSlug={clubSlug}
       onSelectClub={handleSelectClub}
       isLoading={clubsLoading}
       isError={clubsError}
@@ -243,8 +250,8 @@ export function BrowseCourts() {
 
       {isMobile ? (
         <div className="flex flex-col gap-3 lg:min-h-0 lg:flex-1">
-          {!clubId && clubListPanel}
-          {clubId && !courtId && (
+          {!clubSlug && clubListPanel}
+          {clubSlug && !courtId && (
             <div className="flex flex-col gap-3">
               <Button
                 type="button"
@@ -258,7 +265,7 @@ export function BrowseCourts() {
               {courtsPanel}
             </div>
           )}
-          {clubId && courtId && (
+          {clubSlug && courtId && (
             <div className="flex flex-col gap-3">
               <Button
                 type="button"

@@ -292,7 +292,7 @@ describe("POST /api/onboarding", () => {
     expect(response.status).toBe(409);
     const body = await response.json();
     expect(body.error).toBe(
-      "This club's email is already registered. Please contact hello@playpadel.com to resolve this.",
+      "This club's email is already registered. Please contact signal.coverage.lead@gmail.com to resolve this.",
     );
     expect(upsertMock).not.toHaveBeenCalled();
   });

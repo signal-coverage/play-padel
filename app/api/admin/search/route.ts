@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { prisma } from "@/infrastructure/db/client";
 import { requireAdminProfile } from "@/lib/auth/adminProfile";
+import { withErrorHandling } from "@/lib/api/withErrorHandling";
 
 // Caps each category's result set so a broad query (e.g. a single common
 // letter) can't return an unbounded number of rows — this is a quick support
@@ -12,7 +13,7 @@ const RESULT_LIMIT = 10;
 // app/dashboard/admin-search/_components/AdminSearchView). Every query below
 // is unscoped by clubId — an admin's view spans the whole platform, same as
 // app/api/admin/clubs and app/api/admin/metrics.
-export async function GET(request: NextRequest) {
+export const GET = withErrorHandling(async function GET(request: NextRequest) {
   const authResult = await requireAdminProfile();
   if (!authResult.ok) return authResult.response;
 
@@ -34,7 +35,7 @@ export async function GET(request: NextRequest) {
           { id: q },
         ],
       },
-      select: { id: true, name: true, email: true, status: true },
+      select: { id: true, name: true, slug: true, email: true, status: true },
       take: RESULT_LIMIT,
     }),
     prisma.userProfile.findMany({
@@ -90,4 +91,4 @@ export async function GET(request: NextRequest) {
       status: reservation.status,
     })),
   });
-}
+});

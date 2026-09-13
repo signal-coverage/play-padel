@@ -12,6 +12,15 @@ export const ACTIVE_RESERVATION_STATUSES: readonly ReservationStatus[] = [
 // before it's treated as lapsed. See docs: Payments spec, "Slot-hold-with-expiry".
 export const PAYMENT_HOLD_MINUTES = 15;
 
+// Actor stamp for a Mercado Pago hold that lapsed unpaid and was lazily
+// transitioned to CANCELLED by reservations.service.ts (rather than by a real
+// user action) — mirrors confirmReservationPayment's own
+// "system:mercadopago-webhook" convention. Used both by the lazy-expiry path
+// (triggered from any read: My Reservations, the owner's reservation list/
+// detail, the SSE stream) and by the once-daily mercadopago-hold-sweep cron's
+// backstop cleanup for a hold nobody ever read again.
+export const MP_HOLD_EXPIRY_ACTOR = "system:mp-hold-expiry";
+
 // How long an unpaid SCHEDULED bank-transfer reservation holds its slot
 // before it's treated as lapsed — longer than PAYMENT_HOLD_MINUTES because
 // confirming a transfer requires a human (the club owner) to notice a

@@ -112,7 +112,7 @@ describe("dispatch — sendEmail: false (in-app-only notification)", () => {
     process.env.RESEND_API_KEY = previousApiKey;
   });
 
-  it("sends from the default noreply@playpadel.app address when RESEND_FROM_ADDRESS isn't set", async () => {
+  it("sends from the default noreply@play-padel.com.ar address when RESEND_FROM_ADDRESS isn't set", async () => {
     const previousApiKey = process.env.RESEND_API_KEY;
     const previousFromAddress = process.env.RESEND_FROM_ADDRESS;
     process.env.RESEND_API_KEY = "test_key";
@@ -130,12 +130,46 @@ describe("dispatch — sendEmail: false (in-app-only notification)", () => {
     });
 
     expect(sendMock).toHaveBeenCalledWith(
-      expect.objectContaining({ from: "noreply@playpadel.app" }),
+      expect.objectContaining({ from: "noreply@play-padel.com.ar" }),
     );
 
     process.env.RESEND_API_KEY = previousApiKey;
     process.env.RESEND_FROM_ADDRESS = previousFromAddress;
   });
+
+  it("marks the row FAILED instead of hanging forever when the Resend call never resolves", async () => {
+    vi.useFakeTimers();
+    const previousApiKey = process.env.RESEND_API_KEY;
+    process.env.RESEND_API_KEY = "test_key";
+    // Simulate a network hang: a promise that never settles.
+    sendMock.mockReturnValue(new Promise(() => {}));
+
+    const dispatchPromise = dispatch({
+      type: "PAYMENT_CONFIRMED",
+      clubId: "club_1",
+      recipientId: "user_1",
+      recipientEmail: "user@example.com",
+      recipientName: "User",
+      subject: "subj",
+      html: "<p>html</p>",
+    });
+
+    // Advance past the internal send timeout so the hang resolves into a
+    // caught, fast failure instead of actually hanging this test.
+    await vi.advanceTimersByTimeAsync(30_000);
+    await dispatchPromise;
+
+    expect(updateNotificationStatusMock).toHaveBeenCalledWith(
+      "notif_1",
+      "FAILED",
+      expect.objectContaining({
+        failureReason: expect.stringMatching(/timed out/i),
+      }),
+    );
+
+    process.env.RESEND_API_KEY = previousApiKey;
+    vi.useRealTimers();
+  }, 10_000);
 
   // Read live from process.env on every dispatch (not cached at module load,
   // same convention this file already uses for RESEND_API_KEY) so a

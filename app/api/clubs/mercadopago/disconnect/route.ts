@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireOwnerClub } from "../../_lib/require-owner";
 import { prisma } from "@/infrastructure/db/client";
+import { withErrorHandling } from "@/lib/api/withErrorHandling";
 
 // Local-only "unlink" action. Mercado Pago exposes no API our app can call
 // to revoke a club's authorization on their side — that can only be done by
@@ -16,7 +17,7 @@ import { prisma } from "@/infrastructure/db/client";
 // `count: 0` instead of throwing Prisma's P2025 "record not found". That
 // makes "disconnect an already-disconnected club" a no-op success rather
 // than an error case, without needing a try/catch.
-export async function POST() {
+export const POST = withErrorHandling(async function POST() {
   const authResult = await requireOwnerClub();
   if (!authResult.ok) return authResult.response;
 
@@ -32,4 +33,4 @@ export async function POST() {
   });
 
   return NextResponse.json({ ok: true });
-}
+});

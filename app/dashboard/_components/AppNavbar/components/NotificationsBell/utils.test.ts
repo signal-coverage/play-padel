@@ -45,17 +45,17 @@ describe("getNotificationHref", () => {
       "CLUB_UPDATED_BY_ADMIN",
     ];
     for (const type of types) {
-      // The clubId query param is what actually matters here: an owner
+      // The club (slug) query param is what actually matters here: an owner
       // who's ALSO an admin (isAdmin is independent of role — see
       // prisma/schema.prisma's UserProfile.isAdmin comment) lands on
       // AdminClubSettingsView instead of the owner-only ClubSettingsTabs
-      // (see app/dashboard/settings/club/page.tsx), which needs ?clubId=
+      // (see app/dashboard/settings/club/page.tsx), which needs ?club=<slug>
       // to pre-select their club rather than dumping them on its picker
       // with nothing selected. A plain owner's ClubSettingsTabs branch
       // ignores the param and scopes to their own club regardless, so
       // adding it is never harmful there.
-      expect(getNotificationHref(type, "club_1")).toBe(
-        "/dashboard/settings/club?clubId=club_1",
+      expect(getNotificationHref(type, "club-a-slug")).toBe(
+        "/dashboard/settings/club?club=club-a-slug",
       );
     }
   });

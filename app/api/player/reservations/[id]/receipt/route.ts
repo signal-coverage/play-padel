@@ -6,12 +6,13 @@ import { listReservationsByUser } from "@/core/reservations/services/reservation
 import { getReceiptData } from "@/core/billing/services/billing.service";
 import { ReceiptDocument } from "@/lib/pdf/ReceiptDocument";
 import { requireAuthUser } from "@/lib/auth/requireAuthUser";
+import { withErrorHandling } from "@/lib/api/withErrorHandling";
 
 // Player-scoped receipt download, following the same ownership pattern as
 // the [id]/cancel route: there's no club-agnostic lookup by reservation id,
 // so ownership is confirmed via listReservationsByUser (already scoped to
 // the caller's own userId) rather than trusting the id from the URL alone.
-export async function GET(
+export const GET = withErrorHandling(async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
@@ -61,4 +62,4 @@ export async function GET(
       "Content-Disposition": `attachment; filename="receipt-${receiptData.invoiceNumber}.pdf"`,
     },
   });
-}
+});

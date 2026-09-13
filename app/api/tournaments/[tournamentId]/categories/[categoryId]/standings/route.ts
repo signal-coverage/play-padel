@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { requireAuthUser } from "@/lib/auth/requireAuthUser";
 import { getCategoryStandingsDetail } from "@/core/tournaments/services/standings.service";
+import { withErrorHandling } from "@/lib/api/withErrorHandling";
 
 type RouteParams = {
   params: Promise<{ tournamentId: string; categoryId: string }>;
@@ -10,7 +11,10 @@ type RouteParams = {
 // other player-facing tournament route (see the plan's "no home club"
 // reasoning). Groups/standings/matches + the knockout bracket (once it
 // exists) as plain data — no bracket graphic, per the plan.
-export async function GET(_request: NextRequest, { params }: RouteParams) {
+export const GET = withErrorHandling(async function GET(
+  _request: NextRequest,
+  { params }: RouteParams,
+) {
   const authResult = await requireAuthUser();
   if (!authResult.ok) return authResult.response;
 
@@ -21,4 +25,4 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
   }
 
   return NextResponse.json(detail);
-}
+});

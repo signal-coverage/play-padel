@@ -3,7 +3,7 @@ import { listActiveClubs } from "@/core/clubs/services/clubs.service";
 import { getClubsAvailability } from "@/core/courts/services/courts.service";
 import type { ClubBrowseSummary } from "@/app/dashboard/browse/_components/BrowseCourts/types";
 import { getAvailablePaymentMethodsForClubs } from "@/lib/mercadopago/operationalStatus";
-import { getClubBankTransferAccount } from "@/core/clubs/services/bankTransferAccount.service";
+import { getClubBankTransferAccountsByClubIds } from "@/core/clubs/services/bankTransferAccount.service";
 import { requireAuthUser } from "@/lib/auth/requireAuthUser";
 import { enforceRateLimit } from "@/lib/security/rateLimit";
 
@@ -44,35 +44,39 @@ export async function GET(request: NextRequest) {
     const paymentMethodsByClub = await getAvailablePaymentMethodsForClubs(
       activeClubs.map((club) => club.id),
     );
-    const clubs: ClubBrowseSummary[] = await Promise.all(
-      activeClubs.map(async (club) => {
-        const info = availability.get(club.id) ?? {
-          courtCount: 0,
-          hasAvailabilityToday: false,
-        };
-        const availablePaymentMethods = paymentMethodsByClub.get(club.id) ?? [];
-        // Per-club lookup only for clubs that actually offer transfer —
-        // acceptable since it only fires for a subset of clubs, unlike the
-        // always-run getAvailablePaymentMethodsForClubs batch above it.
-        const bankTransferAccount = availablePaymentMethods.includes("TRANSFER")
-          ? await getClubBankTransferAccount(club.id)
-          : null;
-        return {
-          ...club,
-          courtCount: info.courtCount,
-          hasAvailabilityToday: info.hasAvailabilityToday,
-          availablePaymentMethods,
-          bankTransferInfo: bankTransferAccount
-            ? {
-                bankName: bankTransferAccount.bankName,
-                cbu: bankTransferAccount.cbu,
-                alias: bankTransferAccount.alias ?? undefined,
-                whatsappNumber: club.whatsappNumber ?? "",
-              }
-            : null,
-        };
-      }),
-    );
+    // Single batched lookup for every TRANSFER-eligible club — never one
+    // getClubBankTransferAccount call per club in the loop below (that exact
+    // N+1 pattern was previously found and fixed here).
+    const transferEligibleClubIds = activeClubs
+      .filter((club) =>
+        (paymentMethodsByClub.get(club.id) ?? []).includes("TRANSFER"),
+      )
+      .map((club) => club.id);
+    const bankTransferAccountsByClub =
+      await getClubBankTransferAccountsByClubIds(transferEligibleClubIds);
+    const clubs: ClubBrowseSummary[] = activeClubs.map((club) => {
+      const info = availability.get(club.id) ?? {
+        courtCount: 0,
+        hasAvailabilityToday: false,
+      };
+      const availablePaymentMethods = paymentMethodsByClub.get(club.id) ?? [];
+      const bankTransferAccount =
+        bankTransferAccountsByClub.get(club.id) ?? null;
+      return {
+        ...club,
+        courtCount: info.courtCount,
+        hasAvailabilityToday: info.hasAvailabilityToday,
+        availablePaymentMethods,
+        bankTransferInfo: bankTransferAccount
+          ? {
+              bankName: bankTransferAccount.bankName,
+              cbu: bankTransferAccount.cbu,
+              alias: bankTransferAccount.alias ?? undefined,
+              whatsappNumber: club.whatsappNumber ?? "",
+            }
+          : null,
+      };
+    });
 
     return NextResponse.json({ clubs });
   } catch {

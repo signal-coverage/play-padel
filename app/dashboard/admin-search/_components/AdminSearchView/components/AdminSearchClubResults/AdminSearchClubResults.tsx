@@ -8,8 +8,10 @@ import type { AdminSearchClubResultsProps } from "./types";
 import type { AdminSearchClubResult } from "../../types";
 
 // Clickable (unlike the Player/Reservation result sections): routes the
-// admin to /dashboard/settings/club?clubId=<id> via onSelectClub, which
-// AdminSearchView wires to router.push. Same DataTable-driven
+// admin to /dashboard/settings/club?club=<slug> via onSelectClub, which
+// AdminSearchView wires to router.push. The slug (never the raw clubId)
+// is what ends up in the URL — see prisma/schema.prisma's Club.slug doc
+// comment. Same DataTable-driven
 // loading/empty/list handling as AdminClubList
 // (settings/club/_components/AdminClubSettingsView/components/AdminClubList) —
 // not reused directly across folders per this repo's SRP-per-folder
@@ -55,7 +57,7 @@ export function AdminSearchClubResults({
       isLoading={isLoading}
       loadingLabel="Searching clubs…"
       emptyState={<StatusBox>No clubs found.</StatusBox>}
-      onRowClick={(club) => onSelectClub(club.id)}
+      onRowClick={(club) => onSelectClub(club.slug)}
     />
   );
 }

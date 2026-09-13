@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { ease } from "@/lib/consts";
 
-const SUPPORT_EMAIL = "hello@playpadel.com";
+const SUPPORT_EMAIL = "signal.coverage.lead@gmail.com";
 
 export default function Error({
   error,
