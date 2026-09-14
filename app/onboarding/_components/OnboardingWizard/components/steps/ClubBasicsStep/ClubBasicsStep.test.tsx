@@ -3,7 +3,9 @@ import { describe, it, expect, afterEach } from "vitest";
 import { render, cleanup } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { useForm } from "react-hook-form";
+import { NextIntlClientProvider } from "next-intl";
 import type { OnboardingFormValues } from "@/app/onboarding/types";
+import messages from "@/messages/en.json";
 import { ClubBasicsStep } from "./ClubBasicsStep";
 
 // Harness mirrors PhoneField.test.tsx's own convention: a bare useForm host
@@ -33,12 +35,14 @@ function Harness() {
   });
 
   return (
-    <ClubBasicsStep
-      register={register}
-      control={control}
-      errors={errors}
-      shouldFocusHeading={false}
-    />
+    <NextIntlClientProvider locale="en" messages={messages}>
+      <ClubBasicsStep
+        register={register}
+        control={control}
+        errors={errors}
+        shouldFocusHeading={false}
+      />
+    </NextIntlClientProvider>
   );
 }
 

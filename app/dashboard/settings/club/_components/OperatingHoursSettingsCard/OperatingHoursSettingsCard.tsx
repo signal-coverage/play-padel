@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -11,6 +12,7 @@ import { availabilityRowsToEntries, buildAvailabilityRows } from "./utils";
 import { useClubOperatingHours, useSetClubOperatingHours } from "./hooks";
 
 export function OperatingHoursSettingsCard() {
+  const t = useTranslations("OperatingHoursSettingsCard");
   const { data: operatingHours, isLoading } = useClubOperatingHours();
   const setOperatingHours = useSetClubOperatingHours();
 
@@ -56,11 +58,10 @@ export function OperatingHoursSettingsCard() {
     <div className="flex flex-col gap-4">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight text-balance">
-          Schedule
+          {t("title")}
         </h1>
         <p className="text-sm text-muted-foreground mt-1 text-pretty">
-          Set the days and hours your club is open for players to book. New
-          courts default to these hours.
+          {t("description")}
         </p>
       </div>
 
@@ -73,7 +74,7 @@ export function OperatingHoursSettingsCard() {
           onClick={handleSave}
           disabled={setOperatingHours.isPending || !isAvailabilityValid}
         >
-          {setOperatingHours.isPending ? "Saving…" : "Save changes"}
+          {setOperatingHours.isPending ? t("saving") : t("saveChanges")}
         </Button>
       </div>
     </div>

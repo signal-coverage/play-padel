@@ -9,6 +9,8 @@ import {
 } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { NextIntlClientProvider } from "next-intl";
+import messages from "@/messages/en.json";
 
 // Mocked the same way CourtsView.test.tsx mocks it, so toast.success/error
 // calls made from the aggregate summary logic can be asserted on.
@@ -47,14 +49,16 @@ function renderSheet(
 
   render(
     <QueryClientProvider client={queryClient}>
-      <BulkEditCourtsSheet
-        open
-        onOpenChange={onOpenChange}
-        courtIds={["court_1", "court_2"]}
-        courtCount={2}
-        onSuccess={onSuccess}
-        {...overrides}
-      />
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <BulkEditCourtsSheet
+          open
+          onOpenChange={onOpenChange}
+          courtIds={["court_1", "court_2"]}
+          courtCount={2}
+          onSuccess={onSuccess}
+          {...overrides}
+        />
+      </NextIntlClientProvider>
     </QueryClientProvider>,
   );
 

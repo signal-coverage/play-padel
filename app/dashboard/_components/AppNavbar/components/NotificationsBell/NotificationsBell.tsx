@@ -5,6 +5,7 @@ import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
 import { formatDistanceToNow } from "date-fns";
 import { Bell } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { TennisBallIcon } from "@/components/TennisBallIcon";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,6 +23,7 @@ import {
 import { getNotificationHref } from "./utils";
 
 export function NotificationsBell() {
+  const t = useTranslations("NotificationsBell");
   const { data, isLoading } = useNotifications();
   const markAllAsRead = useMarkAllAsRead();
   const markAsRead = useMarkAsRead();
@@ -61,34 +63,34 @@ export function NotificationsBell() {
           <Button
             variant="outline"
             size="icon-lg"
-            title="Notifications"
+            title={t("tooltip")}
             className="rounded-full"
             onMouseEnter={handleBellHover}
           >
             <Bell className="h-4 w-4" />
-            <span className="sr-only">Notifications</span>
+            <span className="sr-only">{t("srLabel")}</span>
           </Button>
         </PopoverTrigger>
         <PopoverContent side="bottom" align="end" className="w-80 gap-0 p-0">
           <div className="flex items-center justify-between border-b border-border px-3 py-2">
-            <span className="text-sm font-medium">Notifications</span>
+            <span className="text-sm font-medium">{t("heading")}</span>
             <button
               type="button"
               disabled={unreadCount === 0}
               onClick={() => markAllAsRead.mutate()}
               className="text-xs text-muted-foreground hover:text-foreground disabled:pointer-events-none disabled:opacity-50"
             >
-              Mark all as read
+              {t("markAllAsRead")}
             </button>
           </div>
           <div className="max-h-80 overflow-y-auto">
             {isLoading ? (
               <StatusBox className="rounded-none border-none">
-                Loading…
+                {t("loading")}
               </StatusBox>
             ) : notifications.length === 0 ? (
               <StatusBox className="rounded-none border-none">
-                No notifications yet
+                {t("empty")}
               </StatusBox>
             ) : (
               notifications.map((notification) => (

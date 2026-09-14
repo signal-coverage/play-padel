@@ -16,6 +16,7 @@ const {
   grantAdminMock,
   reconcileAdminFlagsMock,
   applyMigrationsMock,
+  resetAllDataMock,
   BACK,
 } = vi.hoisted(() => ({
   askChoiceOrBackMock: vi.fn(),
@@ -30,6 +31,7 @@ const {
   grantAdminMock: vi.fn(),
   reconcileAdminFlagsMock: vi.fn(),
   applyMigrationsMock: vi.fn(),
+  resetAllDataMock: vi.fn(),
   BACK: Symbol("back"),
 }));
 
@@ -61,9 +63,13 @@ vi.mock("./actions/reconcile-admin-flags", () => ({
 vi.mock("./actions/apply-migrations", () => ({
   applyMigrations: applyMigrationsMock,
 }));
+vi.mock("./actions/reset-data", () => ({
+  resetAllData: resetAllDataMock,
+}));
 
 const ACTION_QUESTION = "What do you want to do?";
 const DB_QUESTION = "Which database do you want to target?";
+const RESET_DB_QUESTION = "Reset ALL data on which database?";
 
 // menu.ts keeps `activeEnvFile` as module-level state (deliberately, so it
 // survives across actions within one real `npm run manage` run) — which
@@ -87,6 +93,7 @@ beforeEach(async () => {
   grantAdminMock.mockReset().mockResolvedValue(undefined);
   reconcileAdminFlagsMock.mockReset().mockResolvedValue(undefined);
   applyMigrationsMock.mockReset().mockResolvedValue(undefined);
+  resetAllDataMock.mockReset().mockResolvedValue(undefined);
   askTextMock.mockResolvedValue("owner@club.com");
 
   ({ main } = await import("./menu"));
@@ -166,5 +173,39 @@ describe("main", () => {
 
     expect(applyMigrationsMock).toHaveBeenNthCalledWith(1, ".env.preview");
     expect(applyMigrationsMock).toHaveBeenNthCalledWith(2, ".env.prod");
+  });
+
+  it("re-asks which database on every reset-data call too, even after an earlier action already cached one — regression test for the bug where it silently reused the last-picked database instead of re-asking", async () => {
+    scriptAskChoiceOrBack({
+      [ACTION_QUESTION]: [
+        "reconcile-admin", // caches ".env.local" via loadEnv()
+        "reset-data",
+        "reset-data",
+        "exit",
+      ],
+      [DB_QUESTION]: [".env.local"],
+      [RESET_DB_QUESTION]: [".env.preview", ".env.prod"],
+    });
+
+    await main();
+
+    expect(resetAllDataMock).toHaveBeenNthCalledWith(1, ".env.preview");
+    expect(resetAllDataMock).toHaveBeenNthCalledWith(2, ".env.prod");
+    // Never silently answers reset-data's question from the cached
+    // loadEnv() pick — it must be asked, and asked again next time.
+    expect(
+      askChoiceOrBackMock.mock.calls.filter(([q]) => q === RESET_DB_QUESTION),
+    ).toHaveLength(2);
+  });
+
+  it("backs out of reset-data cleanly (no wipe call) when Esc is pressed on its database question", async () => {
+    scriptAskChoiceOrBack({
+      [ACTION_QUESTION]: ["reset-data", "exit"],
+      [RESET_DB_QUESTION]: [BACK],
+    });
+
+    await main();
+
+    expect(resetAllDataMock).not.toHaveBeenCalled();
   });
 });

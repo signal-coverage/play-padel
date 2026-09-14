@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import { ImageIcon } from "lucide-react";
 import { BouncingBall } from "@/components/BouncingBall";
 import { Button } from "@/components/ui/button";
@@ -16,6 +17,7 @@ export function PhotoField({
   onChange,
   onFileStaged,
 }: PhotoFieldProps) {
+  const t = useTranslations("PhotoField");
   const [error, setError] = useState<string | null>(null);
   const [stagedPreviewUrl, setStagedPreviewUrl] = useState<string | null>(null);
   const uploadPhoto = useUploadCourtPhoto();
@@ -53,9 +55,7 @@ export function PhotoField({
       const { photoUrl } = await uploadPhoto.mutateAsync({ courtId, file });
       onChange(photoUrl);
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Upload failed. Please try again.",
-      );
+      setError(err instanceof Error ? err.message : t("uploadFailed"));
     }
   }
 
@@ -97,12 +97,12 @@ export function PhotoField({
             uploadPhoto.isPending && "pointer-events-none opacity-50",
           )}
         >
-          <label htmlFor="court-photo-upload">Upload picture</label>
+          <label htmlFor="court-photo-upload">{t("uploadPicture")}</label>
         </Button>
         {uploadPhoto.isPending && (
           <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <BouncingBall size={14} amplitude={4} />
-            Uploading…
+            {t("uploading")}
           </span>
         )}
         <FieldError errors={error ? [{ message: error }] : []} />

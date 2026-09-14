@@ -4,6 +4,7 @@ import { forwardRef } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Shield, MoreHorizontal } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils/utils";
 import { useVisibleNavLinks, useOverflowNav } from "../../hooks";
 import type { VisibleNavLink } from "../../hooks";
@@ -17,6 +18,7 @@ export function MobileBottomNav({
   isAdmin = false,
   className,
 }: NavLinksProps) {
+  const t = useTranslations("AppNavbar");
   const visibleLinks = useVisibleNavLinks(role, isAdmin);
   const { items, adminItems } = partitionNavLinks(visibleLinks);
   // Same dynamic-overflow approach as desktop NavLinks (see its own doc
@@ -75,7 +77,7 @@ export function MobileBottomNav({
             <NavGroupMenu
               items={adminItems}
               active={adminItems.some((item) => item.active)}
-              label="Admin"
+              label={t("admin")}
               icon={Shield}
               variant="mobile"
             />
@@ -97,7 +99,7 @@ export function MobileBottomNav({
         <NavGroupMenu
           items={hiddenOverflowItems}
           active={hiddenOverflowItems.some((item) => item.active)}
-          label="More"
+          label={t("more")}
           icon={MoreHorizontal}
           variant="mobile"
         />
@@ -125,7 +127,7 @@ export function MobileBottomNav({
           <NavGroupMenu
             items={overflowCandidates}
             active={false}
-            label="More"
+            label={t("more")}
             icon={MoreHorizontal}
             variant="mobile"
           />
@@ -139,6 +141,7 @@ const MobileNavLink = forwardRef<
   HTMLAnchorElement,
   { item: VisibleNavLink; tabIndex?: number }
 >(function MobileNavLink({ item, tabIndex }, ref) {
+  const t = useTranslations("AppNavbar.navItems");
   const { active, badge } = item;
   return (
     <Link
@@ -172,7 +175,7 @@ const MobileNavLink = forwardRef<
             comment). */}
         {badge && <NavBadge label={badge} variant="dot" />}
       </span>
-      <span className="max-w-16 truncate">{item.title}</span>
+      <span className="max-w-16 truncate">{t(item.titleKey)}</span>
     </Link>
   );
 });

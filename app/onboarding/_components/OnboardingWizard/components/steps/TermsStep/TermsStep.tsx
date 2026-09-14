@@ -1,10 +1,10 @@
 import { useEffect, useRef } from "react";
 import { Controller } from "react-hook-form";
+import { useTranslations } from "next-intl";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { FieldError } from "@/components/ui/field";
 import { MutedPanel } from "@/components/MutedPanel";
-import { TERMS_AND_CONDITIONS_TEXT } from "@/app/onboarding/terms-content";
 import type { TermsStepProps } from "./types";
 
 export function TermsStep({
@@ -12,6 +12,7 @@ export function TermsStep({
   errors,
   shouldFocusHeading,
 }: TermsStepProps) {
+  const t = useTranslations("OnboardingWizard.steps.terms");
   const headingRef = useRef<HTMLHeadingElement>(null);
 
   useEffect(() => {
@@ -28,11 +29,9 @@ export function TermsStep({
           className="text-base font-semibold mb-0.5"
           tabIndex={-1}
         >
-          Terms and Conditions
+          {t("heading")}
         </h2>
-        <p className="text-sm text-muted-foreground">
-          Please review and accept before continuing.
-        </p>
+        <p className="text-sm text-muted-foreground">{t("subheading")}</p>
       </div>
 
       <MutedPanel
@@ -40,7 +39,7 @@ export function TermsStep({
         size="md"
         className="max-h-56 overflow-y-auto text-xs text-muted-foreground leading-relaxed whitespace-pre-line"
       >
-        {TERMS_AND_CONDITIONS_TEXT}
+        {t("content", { brand: "Play Padel" })}
       </MutedPanel>
 
       <Controller
@@ -57,7 +56,7 @@ export function TermsStep({
               htmlFor="confirmedAge"
               className="text-sm font-normal leading-snug"
             >
-              I confirm I am 18 years of age or older.
+              {t("confirmAge")}
             </Label>
           </div>
         )}
@@ -78,7 +77,7 @@ export function TermsStep({
               htmlFor="acceptedTerms"
               className="text-sm font-normal leading-snug"
             >
-              I agree to the Terms and Conditions.
+              {t("acceptTerms")}
             </Label>
           </div>
         )}

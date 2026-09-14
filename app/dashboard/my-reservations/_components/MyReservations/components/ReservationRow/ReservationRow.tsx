@@ -1,6 +1,7 @@
 "use client";
 
 import { Download, Eye } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ReservationStatusBadge } from "@/components/ReservationStatusBadge";
@@ -8,6 +9,7 @@ import { formatReservationDateTime } from "../../utils";
 import type { ReservationRowProps } from "./types";
 
 export function ReservationRow({ reservation, onCancel }: ReservationRowProps) {
+  const t = useTranslations("ReservationRow");
   return (
     <Card>
       <CardContent className="flex items-center justify-between gap-4 flex-wrap">
@@ -29,20 +31,24 @@ export function ReservationRow({ reservation, onCancel }: ReservationRowProps) {
                   href={`/api/player/reservations/${reservation.id}/ticket?preview=1`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  aria-label={`Preview ticket for ${reservation.courtName}`}
+                  aria-label={t("previewTicketFor", {
+                    courtName: reservation.courtName,
+                  })}
                 >
                   <Eye size={14} strokeWidth={2.25} />
-                  Preview ticket
+                  {t("previewTicket")}
                 </a>
               </Button>
               <Button variant="outline" size="sm" asChild>
                 <a
                   href={`/api/player/reservations/${reservation.id}/ticket`}
                   download
-                  aria-label={`Download ticket for ${reservation.courtName}`}
+                  aria-label={t("downloadTicketFor", {
+                    courtName: reservation.courtName,
+                  })}
                 >
                   <Download size={14} strokeWidth={2.25} />
-                  Download ticket
+                  {t("downloadTicket")}
                 </a>
               </Button>
             </>
@@ -52,10 +58,12 @@ export function ReservationRow({ reservation, onCancel }: ReservationRowProps) {
               <a
                 href={`/api/player/reservations/${reservation.id}/receipt`}
                 download
-                aria-label={`Download receipt for ${reservation.courtName}`}
+                aria-label={t("downloadReceiptFor", {
+                  courtName: reservation.courtName,
+                })}
               >
                 <Download size={14} strokeWidth={2.25} />
-                Receipt
+                {t("receipt")}
               </a>
             </Button>
           )}
@@ -63,10 +71,12 @@ export function ReservationRow({ reservation, onCancel }: ReservationRowProps) {
             <Button
               variant="destructive"
               size="sm"
-              aria-label={`Cancel reservation for ${reservation.courtName}`}
+              aria-label={t("cancelReservationFor", {
+                courtName: reservation.courtName,
+              })}
               onClick={onCancel}
             >
-              Cancel
+              {t("cancel")}
             </Button>
           )}
         </div>

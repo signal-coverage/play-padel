@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Input } from "@/components/ui/input";
 import { StatusBox } from "@/components/StatusBox";
 import { ADMIN_SEARCH_DEBOUNCE_MS } from "./consts";
@@ -19,6 +20,7 @@ import { AdminSearchReservationResults } from "./components/AdminSearchReservati
  * renders a distinct "start typing" state instead of calling the API at all.
  */
 export function AdminSearchView() {
+  const t = useTranslations("AdminSearchView");
   const router = useRouter();
   const [rawQuery, setRawQuery] = useState("");
   const debouncedQuery = useDebouncedValue(rawQuery, ADMIN_SEARCH_DEBOUNCE_MS);
@@ -29,29 +31,27 @@ export function AdminSearchView() {
     <div className="flex h-full min-h-0 flex-col gap-4">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight text-balance">
-          Search
+          {t("title")}
         </h1>
         <p className="mt-1 text-sm text-pretty text-muted-foreground">
-          Search across every club, player, and reservation on the platform.
+          {t("description")}
         </p>
       </div>
 
       <Input
-        placeholder="Search by name, email, or id…"
+        placeholder={t("searchPlaceholder")}
         value={rawQuery}
         onChange={(event) => setRawQuery(event.target.value)}
-        aria-label="Search"
+        aria-label={t("searchAriaLabel")}
       />
 
       {!trimmedQuery ? (
-        <StatusBox>
-          Start typing to search across clubs, players, and reservations.
-        </StatusBox>
+        <StatusBox>{t("emptyQueryState")}</StatusBox>
       ) : (
         <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto">
           <section className="flex flex-col gap-2">
             <h2 className="text-sm font-semibold text-muted-foreground">
-              Clubs
+              {t("clubsHeading")}
             </h2>
             <AdminSearchClubResults
               clubs={data?.clubs ?? []}
@@ -64,7 +64,7 @@ export function AdminSearchView() {
 
           <section className="flex flex-col gap-2">
             <h2 className="text-sm font-semibold text-muted-foreground">
-              Players
+              {t("playersHeading")}
             </h2>
             <AdminSearchPlayerResults
               players={data?.players ?? []}
@@ -74,7 +74,7 @@ export function AdminSearchView() {
 
           <section className="flex flex-col gap-2">
             <h2 className="text-sm font-semibold text-muted-foreground">
-              Reservations
+              {t("reservationsHeading")}
             </h2>
             <AdminSearchReservationResults
               reservations={data?.reservations ?? []}

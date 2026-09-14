@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { Controller } from "react-hook-form";
+import { useTranslations } from "next-intl";
 import {
   Field,
   FieldDescription,
@@ -26,6 +27,7 @@ export function PadelProfileStep({
   errors,
   shouldFocusHeading,
 }: PadelProfileStepProps) {
+  const t = useTranslations("OnboardingWizard.steps.padelProfile");
   const headingRef = useRef<HTMLHeadingElement>(null);
 
   useEffect(() => {
@@ -42,17 +44,14 @@ export function PadelProfileStep({
           className="text-base font-semibold mb-0.5"
           tabIndex={-1}
         >
-          Your padel style
+          {t("heading")}
         </h2>
-        <p className="text-sm text-muted-foreground">Tell us how you play.</p>
+        <p className="text-sm text-muted-foreground">{t("subheading")}</p>
       </div>
 
       <Field>
-        <FieldLabel htmlFor="padelCategory">Padel category</FieldLabel>
-        <FieldDescription>
-          Your skill-level ranking — Category 1 is the highest level, Category 8
-          is a beginner.
-        </FieldDescription>
+        <FieldLabel htmlFor="padelCategory">{t("category")}</FieldLabel>
+        <FieldDescription>{t("categoryDescription")}</FieldDescription>
         <Controller
           control={control}
           name="padelCategory"
@@ -80,8 +79,8 @@ export function PadelProfileStep({
       <SelectField
         control={control}
         name="preferredSide"
-        label="Preferred side"
-        placeholder="Not set yet"
+        label={t("preferredSide")}
+        placeholder={t("notSetYet")}
         options={PREFERRED_SIDE_OPTIONS}
         error={errors.preferredSide}
       />
@@ -89,8 +88,8 @@ export function PadelProfileStep({
       <SelectField
         control={control}
         name="dominantHand"
-        label="Dominant hand"
-        placeholder="Not set yet"
+        label={t("dominantHand")}
+        placeholder={t("notSetYet")}
         options={DOMINANT_HAND_OPTIONS}
         error={errors.dominantHand}
       />

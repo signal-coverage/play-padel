@@ -7,7 +7,8 @@ import { createPendingMembershipSubscription } from "@/core/billing/services/mem
 import { logAudit } from "@/core/audit/services/audit.service";
 import { notifyAllAdmins } from "@/lib/notifications/dispatcher";
 import type { Plan } from "@/core/clubs/types";
-import { onboardingFormSchema } from "@/app/onboarding/types";
+import { getTranslations } from "next-intl/server";
+import { buildOnboardingFormSchema } from "@/app/onboarding/types";
 import { requireAuthUser } from "@/lib/auth/requireAuthUser";
 import { checkBot } from "@/lib/security/botGuard";
 import { enforceRateLimit } from "@/lib/security/rateLimit";
@@ -44,7 +45,8 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json();
-  const parsed = onboardingFormSchema.safeParse(body);
+  const tValidation = await getTranslations("OnboardingValidation");
+  const parsed = buildOnboardingFormSchema(tValidation).safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
       { error: parsed.error.issues[0]?.message ?? "Invalid input" },

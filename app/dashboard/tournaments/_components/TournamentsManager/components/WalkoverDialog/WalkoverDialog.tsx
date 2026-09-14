@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import {
   Dialog,
   DialogContent,
@@ -22,14 +23,13 @@ export function WalkoverDialog({
   onConfirm,
   isSubmitting,
 }: WalkoverDialogProps) {
+  const t = useTranslations("WalkoverDialog");
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Record a walkover</DialogTitle>
-          <DialogDescription>
-            Which team wins by walkover? No score will be recorded.
-          </DialogDescription>
+          <DialogTitle>{t("title")}</DialogTitle>
+          <DialogDescription>{t("description")}</DialogDescription>
         </DialogHeader>
 
         <DialogFooter className="flex-col gap-2 sm:flex-col">
@@ -38,7 +38,7 @@ export function WalkoverDialog({
             disabled={isSubmitting}
             onClick={() => onConfirm(teamAId)}
           >
-            {teamALabel} wins
+            {t("teamWins", { teamLabel: teamALabel })}
           </Button>
           <Button
             type="button"
@@ -46,7 +46,7 @@ export function WalkoverDialog({
             disabled={isSubmitting}
             onClick={() => onConfirm(teamBId)}
           >
-            {teamBLabel} wins
+            {t("teamWins", { teamLabel: teamBLabel })}
           </Button>
         </DialogFooter>
       </DialogContent>

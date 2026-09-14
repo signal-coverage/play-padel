@@ -2,6 +2,8 @@
 import { describe, it, expect, afterEach } from "vitest";
 import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
+import { NextIntlClientProvider } from "next-intl";
+import messages from "@/messages/en.json";
 import { LatestPartnerCard } from "./LatestPartnerCard";
 import type { PartnerSummary } from "../../../../types";
 
@@ -20,35 +22,45 @@ const PARTNER: PartnerSummary = {
   phone: null,
 };
 
+function renderWithIntl(ui: React.ReactElement) {
+  return render(
+    <NextIntlClientProvider locale="en" messages={messages}>
+      {ui}
+    </NextIntlClientProvider>,
+  );
+}
+
 describe("LatestPartnerCard", () => {
   it("renders an empty state and no clickable card when partner is null", () => {
-    render(<LatestPartnerCard partner={null} />);
+    renderWithIntl(<LatestPartnerCard partner={null} />);
 
     expect(screen.queryByRole("button")).not.toBeInTheDocument();
     expect(screen.getByText(/no partners yet/i)).toBeInTheDocument();
   });
 
   it("renders the partner's name and times played together", () => {
-    render(<LatestPartnerCard partner={PARTNER} />);
+    renderWithIntl(<LatestPartnerCard partner={PARTNER} />);
 
     expect(screen.getByText("Sofía Martínez")).toBeInTheDocument();
     expect(screen.getByText(/played 5x/i)).toBeInTheDocument();
   });
 
   it("omits the win-rate prefix when coupleWinRate is not set (no match data yet)", () => {
-    render(<LatestPartnerCard partner={PARTNER} />);
+    renderWithIntl(<LatestPartnerCard partner={PARTNER} />);
 
     expect(screen.queryByText(/% WR/)).not.toBeInTheDocument();
   });
 
   it("shows the win-rate prefix when coupleWinRate is set", () => {
-    render(<LatestPartnerCard partner={{ ...PARTNER, coupleWinRate: 80 }} />);
+    renderWithIntl(
+      <LatestPartnerCard partner={{ ...PARTNER, coupleWinRate: 80 }} />,
+    );
 
     expect(screen.getByText(/80% WR/)).toBeInTheDocument();
   });
 
   it("opens the profile dialog with the real partner data on click", () => {
-    render(<LatestPartnerCard partner={PARTNER} />);
+    renderWithIntl(<LatestPartnerCard partner={PARTNER} />);
 
     fireEvent.click(screen.getByRole("button"));
 

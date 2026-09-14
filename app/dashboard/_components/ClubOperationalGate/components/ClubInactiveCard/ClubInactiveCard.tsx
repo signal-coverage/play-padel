@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { PlanSelectionModal } from "@/components/PlanSelectionModal";
 import { useReactivateMembershipSubscription } from "@/components/PlanSelectionModal/hooks";
 import { GateScreen } from "../GateScreen";
@@ -15,6 +16,7 @@ import { GateScreen } from "../GateScreen";
 // stays INACTIVE (so this gate keeps rendering underneath the modal) until
 // a real charge later confirms via the existing membership webhook path.
 export function ClubInactiveCard() {
+  const t = useTranslations("ClubInactiveCard");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const reactivate = useReactivateMembershipSubscription();
 
@@ -30,9 +32,9 @@ export function ClubInactiveCard() {
   return (
     <>
       <GateScreen
-        title="Renew your membership"
-        description="Your club membership isn't active. Renew it to keep managing courts and accepting reservations."
-        submitLabel={reactivate.isPending ? "Preparing…" : "Renew membership"}
+        title={t("title")}
+        description={t("description")}
+        submitLabel={t(reactivate.isPending ? "preparing" : "renewMembership")}
         submitDisabled={reactivate.isPending}
         onSubmit={handleRenew}
       >
@@ -40,7 +42,7 @@ export function ClubInactiveCard() {
           <p className="text-sm text-destructive">
             {reactivate.error instanceof Error
               ? reactivate.error.message
-              : "Something went wrong. Please try again."}
+              : t("genericError")}
           </p>
         ) : null}
       </GateScreen>

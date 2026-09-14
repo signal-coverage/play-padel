@@ -4,31 +4,35 @@ import Image from "next/image";
 import Link from "next/link";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { ArrowUpRight, ArrowDownRight } from "lucide-react";
-import { ABOUT_ITEMS, ease } from "./consts";
+import { useTranslations } from "next-intl";
+import { ease } from "./consts";
+import type { AboutItem } from "./types";
 import { CONTAINER } from "@/lib/consts";
 import { scrollToSection } from "@/lib/utils/scroll-to-section";
 import communityImage from "@/assets/images/people-playing-padle-tennis-inside.jpg";
 
 export function LandingAbout() {
+  const t = useTranslations("LandingAbout");
   const shouldReduce = useReducedMotion();
   const [activeIndex, setActiveIndex] = useState(1);
+  const aboutItems = t.raw("items") as AboutItem[];
 
   return (
     <section id="about" className={`${CONTAINER} py-12`}>
       <div className="flex flex-wrap items-start justify-between gap-6 mb-10">
         <h2 className="text-3xl md:text-[34px] font-bold leading-tight tracking-tight">
-          <span className="text-foreground">Built for Players and</span>
+          <span className="text-foreground">{t("heading.bold")}</span>
           <br />
-          <span className="text-muted-foreground">Clubs Who Want More</span>
+          <span className="text-muted-foreground">{t("heading.muted")}</span>
         </h2>
         <span className="inline-flex items-center bg-foreground text-background rounded-full px-4 py-2 text-[13px] font-semibold">
-          Booking, Simplified
+          {t("badge")}
         </span>
       </div>
 
       <div className="grid md:grid-cols-2 gap-10">
         <div className="border-t border-border">
-          {ABOUT_ITEMS.map((item, i) => {
+          {aboutItems.map((item, i) => {
             const isActive = activeIndex === i;
             return (
               <div key={item.title} className="border-b border-border">
@@ -83,7 +87,7 @@ export function LandingAbout() {
         >
           <Image
             src={communityImage}
-            alt="Players sharing a moment at the net after a match"
+            alt={t("imageAlt")}
             fill
             sizes="(min-width: 768px) 50vw, 100vw"
             className="object-cover outline outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10"
@@ -93,7 +97,7 @@ export function LandingAbout() {
             onClick={(e) => scrollToSection(e, "#appointment")}
             className="absolute left-5 bottom-5 inline-flex items-center gap-1.5 bg-white/90 backdrop-blur-sm text-neutral-900 rounded-full px-4 py-2 text-sm font-semibold hover:bg-white transition-colors"
           >
-            Learn More
+            {t("learnMore")}
             <ArrowUpRight size={15} strokeWidth={2.5} />
           </Link>
         </motion.div>

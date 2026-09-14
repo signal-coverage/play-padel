@@ -10,6 +10,8 @@ import {
 } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { NextIntlClientProvider } from "next-intl";
+import messages from "@/messages/en.json";
 import { PlayersDirectory } from "./PlayersDirectory";
 import { useAuth } from "@/hooks/use-auth";
 import type { AppUser } from "@/providers/auth-provider";
@@ -110,9 +112,11 @@ function renderDirectory(
   });
 
   render(
-    <QueryClientProvider client={queryClient}>
-      <PlayersDirectory />
-    </QueryClientProvider>,
+    <NextIntlClientProvider locale="en" messages={messages}>
+      <QueryClientProvider client={queryClient}>
+        <PlayersDirectory />
+      </QueryClientProvider>
+    </NextIntlClientProvider>,
   );
 
   return { fetchMock };

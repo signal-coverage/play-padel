@@ -2,6 +2,8 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
+import { NextIntlClientProvider } from "next-intl";
+import messages from "@/messages/en.json";
 
 const useOpenTournamentsMock = vi.fn();
 vi.mock("./hooks", () => ({
@@ -26,6 +28,14 @@ const TOURNAMENTS = [
   { id: "t2", name: "Summer Cup", clubName: "Club Sur" },
 ];
 
+function renderHub() {
+  return render(
+    <NextIntlClientProvider locale="en" messages={messages}>
+      <TournamentsHub />
+    </NextIntlClientProvider>,
+  );
+}
+
 describe("TournamentsHub", () => {
   it("shows a loading state", () => {
     useOpenTournamentsMock.mockReturnValue({
@@ -33,7 +43,7 @@ describe("TournamentsHub", () => {
       isLoading: true,
     });
 
-    render(<TournamentsHub />);
+    renderHub();
 
     expect(screen.getByText(/loading/i)).toBeInTheDocument();
   });
@@ -41,7 +51,7 @@ describe("TournamentsHub", () => {
   it("shows an empty state when nothing is open", () => {
     useOpenTournamentsMock.mockReturnValue({ data: [], isLoading: false });
 
-    render(<TournamentsHub />);
+    renderHub();
 
     expect(screen.getByText(/no tournaments/i)).toBeInTheDocument();
   });
@@ -52,7 +62,7 @@ describe("TournamentsHub", () => {
       isLoading: false,
     });
 
-    render(<TournamentsHub />);
+    renderHub();
 
     expect(screen.getByText("Spring Open")).toBeInTheDocument();
     expect(screen.getByText("Club Norte")).toBeInTheDocument();
@@ -66,7 +76,7 @@ describe("TournamentsHub", () => {
       isLoading: false,
     });
 
-    render(<TournamentsHub />);
+    renderHub();
 
     expect(screen.getByText("TournamentModal:closed")).toBeInTheDocument();
 

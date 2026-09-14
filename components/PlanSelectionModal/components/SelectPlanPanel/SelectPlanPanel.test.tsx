@@ -2,6 +2,8 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
+import { NextIntlClientProvider } from "next-intl";
+import messages from "@/messages/en.json";
 import { SelectPlanPanel } from "./SelectPlanPanel";
 
 afterEach(() => {
@@ -23,7 +25,11 @@ function renderPanel(
     onContinue: vi.fn(),
     ...overrides,
   };
-  render(<SelectPlanPanel {...props} />);
+  render(
+    <NextIntlClientProvider locale="en" messages={messages}>
+      <SelectPlanPanel {...props} />
+    </NextIntlClientProvider>,
+  );
   return props;
 }
 
@@ -50,17 +56,19 @@ describe("SelectPlanPanel", () => {
 
   it("renders nothing when there is no selected plan yet", () => {
     const { container } = render(
-      <SelectPlanPanel
-        selectedPlan={null}
-        billingCycle="monthly"
-        renewalMode="AUTO"
-        errorMessage={null}
-        isSubmitting={false}
-        onBillingCycleChange={vi.fn()}
-        onRenewalModeChange={vi.fn()}
-        onChangePlan={vi.fn()}
-        onContinue={vi.fn()}
-      />,
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <SelectPlanPanel
+          selectedPlan={null}
+          billingCycle="monthly"
+          renewalMode="AUTO"
+          errorMessage={null}
+          isSubmitting={false}
+          onBillingCycleChange={vi.fn()}
+          onRenewalModeChange={vi.fn()}
+          onChangePlan={vi.fn()}
+          onContinue={vi.fn()}
+        />
+      </NextIntlClientProvider>,
     );
 
     expect(container).toBeEmptyDOMElement();
@@ -68,34 +76,38 @@ describe("SelectPlanPanel", () => {
 
   it("shows the renewal-mode toggle for both monthly and annual billing", () => {
     const { rerender } = render(
-      <SelectPlanPanel
-        selectedPlan="BASIC"
-        billingCycle="monthly"
-        renewalMode="AUTO"
-        errorMessage={null}
-        isSubmitting={false}
-        onBillingCycleChange={vi.fn()}
-        onRenewalModeChange={vi.fn()}
-        onChangePlan={vi.fn()}
-        onContinue={vi.fn()}
-      />,
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <SelectPlanPanel
+          selectedPlan="BASIC"
+          billingCycle="monthly"
+          renewalMode="AUTO"
+          errorMessage={null}
+          isSubmitting={false}
+          onBillingCycleChange={vi.fn()}
+          onRenewalModeChange={vi.fn()}
+          onChangePlan={vi.fn()}
+          onContinue={vi.fn()}
+        />
+      </NextIntlClientProvider>,
     );
     expect(
       screen.getByRole("radiogroup", { name: /renewal mode/i }),
     ).toBeInTheDocument();
 
     rerender(
-      <SelectPlanPanel
-        selectedPlan="BASIC"
-        billingCycle="annual"
-        renewalMode="AUTO"
-        errorMessage={null}
-        isSubmitting={false}
-        onBillingCycleChange={vi.fn()}
-        onRenewalModeChange={vi.fn()}
-        onChangePlan={vi.fn()}
-        onContinue={vi.fn()}
-      />,
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <SelectPlanPanel
+          selectedPlan="BASIC"
+          billingCycle="annual"
+          renewalMode="AUTO"
+          errorMessage={null}
+          isSubmitting={false}
+          onBillingCycleChange={vi.fn()}
+          onRenewalModeChange={vi.fn()}
+          onChangePlan={vi.fn()}
+          onContinue={vi.fn()}
+        />
+      </NextIntlClientProvider>,
     );
     expect(
       screen.getByRole("radiogroup", { name: /renewal mode/i }),

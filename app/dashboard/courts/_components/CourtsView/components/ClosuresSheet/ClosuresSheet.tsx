@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import {
   Sheet,
@@ -28,6 +29,7 @@ export function ClosuresSheet({
   court,
   courts,
 }: ClosuresSheetProps) {
+  const t = useTranslations("ClosuresSheet");
   const courtId = court?.id ?? null;
   const { data: closures, isLoading } = useCourtClosures(open ? courtId : null);
   const createClosure = useCreateCourtClosure();
@@ -60,7 +62,13 @@ export function ClosuresSheet({
         createClosure.mutateAsync({ courtId: id, input }),
       ),
     );
-    const outcome = summarizeClosureFanOut(results);
+    const outcome = summarizeClosureFanOut(results, {
+      created: t("closureCreated"),
+      createdForCourts: (count) => t("closureCreatedForCourts", { count }),
+      failed: t("closureCreateFailed"),
+      partial: (succeeded, total, failed) =>
+        t("closurePartial", { succeeded, total, failed }),
+    });
 
     if (outcome.toastTone === "success") {
       toast.success(outcome.toastMessage);
@@ -89,11 +97,11 @@ export function ClosuresSheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent onPointerDownOutside={(e) => e.preventDefault()}>
         <SheetHeader>
-          <SheetTitle>Closures</SheetTitle>
+          <SheetTitle>{t("title")}</SheetTitle>
           <SheetDescription>
             {court
-              ? `Block ${court.name} for maintenance, events, or planned closures.`
-              : "Block this court for maintenance, events, or planned closures."}
+              ? t("descriptionForCourt", { name: court.name })
+              : t("description")}
           </SheetDescription>
         </SheetHeader>
 
@@ -105,7 +113,9 @@ export function ClosuresSheet({
           />
 
           {isLoading || !closures ? (
-            <p className="text-sm text-muted-foreground">Loading closures…</p>
+            <p className="text-sm text-muted-foreground">
+              {t("loadingClosures")}
+            </p>
           ) : (
             <ClosuresList
               closures={closures}
@@ -123,11 +133,11 @@ export function ClosuresSheet({
       <ConfirmDialog
         open={closurePendingCancellation !== null}
         onOpenChange={handleCancelDialogClose}
-        title="Cancel this closure?"
-        description="This will make the court bookable again for its blocked time range."
-        cancelLabel="Keep closure"
-        confirmLabel="Cancel closure"
-        pendingLabel="Cancelling…"
+        title={t("cancelTitle")}
+        description={t("cancelDescription")}
+        cancelLabel={t("keepClosure")}
+        confirmLabel={t("cancelClosure")}
+        pendingLabel={t("cancelling")}
         isPending={cancelClosure.isPending}
         onConfirm={handleConfirmCancel}
       />

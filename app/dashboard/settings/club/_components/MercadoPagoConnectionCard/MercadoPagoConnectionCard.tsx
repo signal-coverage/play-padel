@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import {
   Card,
@@ -25,12 +26,13 @@ import { DisconnectConfirmDialog } from "./components/DisconnectConfirmDialog";
 import { SwitchAccountConfirmDialog } from "./components/SwitchAccountConfirmDialog";
 
 export function MercadoPagoConnectionCard() {
+  const t = useTranslations("MercadoPagoConnectionCard");
   const [isDisconnectDialogOpen, setIsDisconnectDialogOpen] = useState(false);
   const [isSwitchAccountDialogOpen, setIsSwitchAccountDialogOpen] =
     useState(false);
   const { data: status, isLoading } = useMercadoPagoOperationalStatus();
   const disconnectMercadoPago = useDisconnectMercadoPago();
-  const copy = getMercadoPagoConnectionCopy(status);
+  const copy = getMercadoPagoConnectionCopy(status, t);
   const handleDisconnectDialogClose = useGuardedDialogClose(
     disconnectMercadoPago.isPending,
     () => setIsDisconnectDialogOpen(false),
@@ -39,12 +41,10 @@ export function MercadoPagoConnectionCard() {
   async function handleConfirmDisconnect() {
     try {
       await disconnectMercadoPago.mutateAsync();
-      toast.success("Mercado Pago unlinked.");
+      toast.success(t("unlinkSuccess"));
       setIsDisconnectDialogOpen(false);
     } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : "Could not unlink Mercado Pago.",
-      );
+      toast.error(err instanceof Error ? err.message : t("unlinkError"));
     }
   }
 
@@ -61,14 +61,14 @@ export function MercadoPagoConnectionCard() {
         <CardTitle className="flex items-center gap-2">
           <Image
             src={mercadoPagoLogoLight.default}
-            alt="Mercado Pago"
+            alt={t("logoAlt")}
             width={200}
             height={80}
             className="h-15 w-auto dark:hidden"
           />
           <Image
             src={mercadoPagoLogoDark.default}
-            alt="Mercado Pago"
+            alt={t("logoAlt")}
             width={200}
             height={80}
             className="hidden h-15 w-auto dark:block"
@@ -80,7 +80,7 @@ export function MercadoPagoConnectionCard() {
               <Badge variant={copy.badgeVariant}>{copy.badgeLabel}</Badge>
               {copy.accountLabel && (
                 <span className="text-sm text-muted-foreground">
-                  Account: {copy.accountLabel}
+                  {t("accountLabel", { label: copy.accountLabel })}
                 </span>
               )}
             </div>
@@ -113,7 +113,7 @@ export function MercadoPagoConnectionCard() {
             disabled={isLoading}
             onClick={() => setIsDisconnectDialogOpen(true)}
           >
-            Unlink
+            {t("unlink")}
           </Button>
         )}
       </CardFooter>

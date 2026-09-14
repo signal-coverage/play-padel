@@ -1,8 +1,9 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils/utils";
-import { COURT_FORM_STEP_LABELS } from "./consts";
+import { COURT_FORM_STEPS } from "./consts";
 import type { CourtFormStepIndicatorProps } from "./types";
 
 // Same numbered-circle + connecting-line visual language as
@@ -16,15 +17,16 @@ import type { CourtFormStepIndicatorProps } from "./types";
 export function CourtFormStepIndicator({
   current,
 }: CourtFormStepIndicatorProps) {
+  const t = useTranslations("CourtFormStepIndicator");
   return (
     <div className="mx-auto flex w-full max-w-sm items-center px-4 pb-4">
-      {COURT_FORM_STEP_LABELS.map((label, i) => {
+      {COURT_FORM_STEPS.map((step, i) => {
         const done = current > i;
         const active = current === i;
         return (
           <div
-            key={label}
-            data-step={label}
+            key={step.id}
+            data-step={step.id}
             className="flex flex-1 items-center last:flex-none"
             aria-current={active ? "step" : undefined}
           >
@@ -51,10 +53,10 @@ export function CourtFormStepIndicator({
                       : "text-muted-foreground",
                 )}
               >
-                {label}
+                {t(step.labelKey)}
               </span>
             </div>
-            {i < COURT_FORM_STEP_LABELS.length - 1 && (
+            {i < COURT_FORM_STEPS.length - 1 && (
               <div
                 className={cn(
                   "mx-2 mb-4 h-0.5 flex-1 rounded transition-colors duration-500 ease-out",

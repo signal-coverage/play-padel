@@ -8,13 +8,14 @@ import { track } from "@vercel/analytics";
 import { track as trackAmplitude } from "@amplitude/unified";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useAuth } from "@/hooks/use-auth";
 import { Card } from "@/components/ui/card";
 import { LogoBadge } from "@/components/LogoBadge";
 import { Button } from "@/components/ui/button";
 import { TIMEZONES } from "@/lib/consts";
 import {
-  onboardingFormSchema,
+  buildOnboardingFormSchema,
   STEP_FIELDS,
   PLAYER_FLOW,
   OWNER_FLOW,
@@ -32,6 +33,12 @@ import { UserTypeStep } from "./components/steps/UserTypeStep";
 import { stepVariants } from "./styles";
 
 export function OnboardingWizard() {
+  const t = useTranslations("OnboardingWizard");
+  const tValidation = useTranslations("OnboardingValidation");
+  // Rebuilt from the current locale's messages on every render — zod schema
+  // construction is cheap (no I/O), so there's no need to memoize this
+  // against tValidation's identity.
+  const onboardingFormSchema = buildOnboardingFormSchema(tValidation);
   const { user, signOut } = useAuth();
   const router = useRouter();
   const [stepIndex, setStepIndex] = useState(0);
@@ -223,14 +230,14 @@ export function OnboardingWizard() {
 
       if (!res.ok) {
         const body = await res.json().catch(() => null);
-        toast.error(body?.error ?? "Something went wrong. Please try again.");
+        toast.error(body?.error ?? t("toasts.genericError"));
         return;
       }
 
       if (data.userType === "owner") {
-        toast.success("Club created. Welcome to Play Padel.");
+        toast.success(t("toasts.clubCreated", { brand: "Play Padel" }));
       } else {
-        toast.success("You're all set. Welcome to Play Padel.");
+        toast.success(t("toasts.playerReady", { brand: "Play Padel" }));
       }
       track("signup_completed", { role: data.userType });
       trackAmplitude("signup_completed", { role: data.userType });
@@ -240,7 +247,7 @@ export function OnboardingWizard() {
       // against OnboardingLayout redirecting to /dashboard, forever.
       window.location.assign("/dashboard");
     } catch {
-      toast.error("Something went wrong. Please try again.");
+      toast.error(t("toasts.genericError"));
     }
   }
 
@@ -250,10 +257,10 @@ export function OnboardingWizard() {
         <div className="mb-6 text-center">
           <LogoBadge size="md" className="mb-3" />
           <h1 className="text-2xl font-bold text-foreground">
-            Set up your Play Padel account
+            {t("pageHeading", { brand: "Play Padel" })}
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            This takes about 2 minutes.
+            {t("pageSubheading")}
           </p>
         </div>
 
@@ -417,7 +424,7 @@ export function OnboardingWizard() {
                 variant="ghost"
                 onClick={stepIndex === 0 ? handleCancel : handleBack}
               >
-                {stepIndex === 0 ? "Cancel" : "Back"}
+                {stepIndex === 0 ? t("buttons.cancel") : t("buttons.back")}
               </Button>
 
               {!isLastStep ? (
@@ -426,7 +433,7 @@ export function OnboardingWizard() {
                   onClick={handleNext}
                   disabled={currentStepInvalid}
                 >
-                  Continue
+                  {t("buttons.continue")}
                 </Button>
               ) : (
                 <Button
@@ -434,10 +441,10 @@ export function OnboardingWizard() {
                   disabled={isSubmitting || currentStepInvalid}
                 >
                   {isSubmitting
-                    ? "Setting up…"
+                    ? t("buttons.submitting")
                     : watchedValues.userType === "owner"
-                      ? "Launch my club"
-                      : "Start playing"}
+                      ? t("buttons.launchClub")
+                      : t("buttons.startPlaying")}
                 </Button>
               )}
             </div>
@@ -449,7 +456,7 @@ export function OnboardingWizard() {
           aria-live="polite"
           className="text-center text-xs text-muted-foreground mt-4"
         >
-          Step {stepIndex + 1} of {flow.length}
+          {t("stepStatus", { current: stepIndex + 1, total: flow.length })}
         </p>
       </div>
     </div>

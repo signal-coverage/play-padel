@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useTranslations } from "next-intl";
 import {
   Sheet,
   SheetContent,
@@ -23,9 +24,9 @@ import {
 } from "@/components/ui/select";
 import { PADEL_CATEGORY_OPTIONS } from "@/app/onboarding/types";
 import {
-  DOMINANT_HAND_SELECT_OPTIONS,
-  playerEditFormSchema,
-  PREFERRED_SIDE_SELECT_OPTIONS,
+  buildDominantHandSelectOptions,
+  buildPlayerEditFormSchema,
+  buildPreferredSideSelectOptions,
 } from "./consts";
 import { formValuesToPatchInput, playerToFormValues } from "./utils";
 import type { PlayerEditFormValues, PlayerEditSheetProps } from "./types";
@@ -37,6 +38,8 @@ export function PlayerEditSheet({
   onSubmit,
   isSubmitting,
 }: PlayerEditSheetProps) {
+  const t = useTranslations("PlayerEditSheet");
+  const tValidation = useTranslations("PlayerEditValidation");
   const {
     register,
     handleSubmit,
@@ -45,7 +48,7 @@ export function PlayerEditSheet({
     setValue,
     formState: { errors, touchedFields, isSubmitted },
   } = useForm<PlayerEditFormValues>({
-    resolver: zodResolver(playerEditFormSchema),
+    resolver: zodResolver(buildPlayerEditFormSchema(tValidation)),
     defaultValues: playerToFormValues(player),
   });
 
@@ -83,13 +86,18 @@ export function PlayerEditSheet({
     onOpenChange(false);
   }
 
+  const preferredSideOptions = buildPreferredSideSelectOptions(t);
+  const dominantHandOptions = buildDominantHandSelectOptions(t);
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent onPointerDownOutside={(e) => e.preventDefault()}>
         <SheetHeader>
-          <SheetTitle>Edit player</SheetTitle>
+          <SheetTitle>{t("title")}</SheetTitle>
           <SheetDescription>
-            Update {player?.displayName ?? "this player"}&apos;s profile.
+            {t("description", {
+              name: player?.displayName ?? t("thisPlayer"),
+            })}
           </SheetDescription>
         </SheetHeader>
 
@@ -98,7 +106,9 @@ export function PlayerEditSheet({
           className="flex flex-1 flex-col gap-4 overflow-y-auto px-4"
         >
           <Field>
-            <FieldLabel htmlFor="player-display-name">Name *</FieldLabel>
+            <FieldLabel htmlFor="player-display-name">
+              {t("nameLabel")}
+            </FieldLabel>
             <Input
               id="player-display-name"
               {...register("displayName")}
@@ -111,7 +121,7 @@ export function PlayerEditSheet({
           </Field>
 
           <Field>
-            <FieldLabel htmlFor="player-email">Email *</FieldLabel>
+            <FieldLabel htmlFor="player-email">{t("emailLabel")}</FieldLabel>
             <Input
               id="player-email"
               type="email"
@@ -124,12 +134,14 @@ export function PlayerEditSheet({
           </Field>
 
           <Field>
-            <FieldLabel htmlFor="player-phone">Phone</FieldLabel>
+            <FieldLabel htmlFor="player-phone">{t("phoneLabel")}</FieldLabel>
             <Input id="player-phone" {...register("phone")} />
           </Field>
 
           <Field>
-            <FieldLabel htmlFor="player-padel-category">Category</FieldLabel>
+            <FieldLabel htmlFor="player-padel-category">
+              {t("categoryLabel")}
+            </FieldLabel>
             <Select
               value={padelCategory}
               onValueChange={(value) =>
@@ -151,7 +163,7 @@ export function PlayerEditSheet({
 
           <Field>
             <FieldLabel htmlFor="player-preferred-side">
-              Preferred side
+              {t("preferredSideLabel")}
             </FieldLabel>
             <Select
               value={preferredSide}
@@ -163,7 +175,7 @@ export function PlayerEditSheet({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {PREFERRED_SIDE_SELECT_OPTIONS.map((option) => (
+                {preferredSideOptions.map((option) => (
                   <SelectItem key={option.value} value={option.value}>
                     {option.label}
                   </SelectItem>
@@ -174,7 +186,7 @@ export function PlayerEditSheet({
 
           <Field>
             <FieldLabel htmlFor="player-dominant-hand">
-              Dominant hand
+              {t("dominantHandLabel")}
             </FieldLabel>
             <Select
               value={dominantHand}
@@ -186,7 +198,7 @@ export function PlayerEditSheet({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {DOMINANT_HAND_SELECT_OPTIONS.map((option) => (
+                {dominantHandOptions.map((option) => (
                   <SelectItem key={option.value} value={option.value}>
                     {option.label}
                   </SelectItem>
@@ -202,7 +214,7 @@ export function PlayerEditSheet({
             onClick={handleSubmit(submit)}
             disabled={isSubmitting}
           >
-            {isSubmitting ? "Saving…" : "Save changes"}
+            {isSubmitting ? t("saving") : t("saveChanges")}
           </Button>
         </SheetFooter>
       </SheetContent>

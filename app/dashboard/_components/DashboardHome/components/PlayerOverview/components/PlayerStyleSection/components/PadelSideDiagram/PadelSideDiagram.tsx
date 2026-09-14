@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils/utils";
 import {
   court,
@@ -9,6 +10,7 @@ import { getPreferredSideLabel } from "@/core/users/consts";
 import type { PadelSideDiagramProps } from "./types";
 
 export function PadelSideDiagram({ side, className }: PadelSideDiagramProps) {
+  const t = useTranslations("PadelSideDiagram");
   const image =
     side === null
       ? court
@@ -27,13 +29,15 @@ export function PadelSideDiagram({ side, className }: PadelSideDiagramProps) {
         src={image.default}
         alt={
           side === null
-            ? "Padel court diagram with no preferred side selected"
-            : `Padel court diagram highlighting the ${getPreferredSideLabel(side).toLowerCase()} side`
+            ? t("altNoSide")
+            : t("altWithSide", {
+                side: getPreferredSideLabel(side).toLowerCase(),
+              })
         }
         className="h-auto w-full"
       />
       <span className="absolute inset-x-3 bottom-3 truncate rounded bg-primary px-2 py-1 text-center font-mono text-xs font-bold tracking-widest text-primary-foreground uppercase">
-        Preferred: {getPreferredSideLabel(side)}
+        {t("preferredLabel", { side: getPreferredSideLabel(side) })}
       </span>
     </div>
   );

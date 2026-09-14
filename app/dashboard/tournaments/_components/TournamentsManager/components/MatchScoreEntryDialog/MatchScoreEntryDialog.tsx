@@ -2,6 +2,7 @@
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useTranslations } from "next-intl";
 import {
   Dialog,
   DialogContent,
@@ -14,8 +15,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Field, FieldLabel, FieldError } from "@/components/ui/field";
 import {
+  buildMatchScoreFormSchema,
   DEFAULT_VALUES,
-  matchScoreFormSchema,
   toMatchScoreSets,
 } from "./consts";
 import type { MatchScoreFormInput, MatchScoreFormValues } from "./consts";
@@ -35,6 +36,13 @@ export function MatchScoreEntryDialog({
   onSubmit,
   isSubmitting,
 }: MatchScoreEntryDialogProps) {
+  const t = useTranslations("MatchScoreEntryDialog");
+  const tValidation = useTranslations("MatchScoreEntryValidation");
+  // Rebuilt from the current locale's messages on every render — zod schema
+  // construction is cheap (no I/O), so there's no need to memoize this
+  // against tValidation's identity (same rationale as OnboardingWizard's own
+  // buildOnboardingFormSchema(tValidation) call).
+  const matchScoreFormSchema = buildMatchScoreFormSchema(tValidation);
   const {
     register,
     handleSubmit,
@@ -54,7 +62,7 @@ export function MatchScoreEntryDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Enter score</DialogTitle>
+          <DialogTitle>{t("title")}</DialogTitle>
           <DialogDescription>{matchLabel}</DialogDescription>
         </DialogHeader>
 
@@ -62,17 +70,17 @@ export function MatchScoreEntryDialog({
           {(
             [
               {
-                label: "Set 1",
+                label: t("set1"),
                 aKey: "set1TeamAGames",
                 bKey: "set1TeamBGames",
               },
               {
-                label: "Set 2",
+                label: t("set2"),
                 aKey: "set2TeamAGames",
                 bKey: "set2TeamBGames",
               },
               {
-                label: "Set 3 (if needed)",
+                label: t("set3"),
                 aKey: "set3TeamAGames",
                 bKey: "set3TeamBGames",
               },
@@ -82,7 +90,7 @@ export function MatchScoreEntryDialog({
               <p className="text-sm font-medium">{row.label}</p>
               <div className="flex items-center gap-2">
                 <Field>
-                  <FieldLabel htmlFor={row.aKey}>Team A games</FieldLabel>
+                  <FieldLabel htmlFor={row.aKey}>{t("teamAGames")}</FieldLabel>
                   <Input
                     id={row.aKey}
                     type="number"
@@ -91,7 +99,7 @@ export function MatchScoreEntryDialog({
                   />
                 </Field>
                 <Field>
-                  <FieldLabel htmlFor={row.bKey}>Team B games</FieldLabel>
+                  <FieldLabel htmlFor={row.bKey}>{t("teamBGames")}</FieldLabel>
                   <Input
                     id={row.bKey}
                     type="number"
@@ -106,7 +114,7 @@ export function MatchScoreEntryDialog({
 
           <DialogFooter>
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Saving…" : "Save score"}
+              {isSubmitting ? t("saving") : t("save")}
             </Button>
           </DialogFooter>
         </form>

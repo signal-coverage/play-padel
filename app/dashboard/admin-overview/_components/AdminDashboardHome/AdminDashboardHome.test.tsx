@@ -9,6 +9,8 @@ import {
 } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { NextIntlClientProvider } from "next-intl";
+import messages from "@/messages/en.json";
 import { AdminDashboardHome } from "./AdminDashboardHome";
 
 function renderWithClient(fetchMock: ReturnType<typeof vi.fn>) {
@@ -17,9 +19,11 @@ function renderWithClient(fetchMock: ReturnType<typeof vi.fn>) {
     defaultOptions: { queries: { retry: false } },
   });
   return render(
-    <QueryClientProvider client={queryClient}>
-      <AdminDashboardHome />
-    </QueryClientProvider>,
+    <NextIntlClientProvider locale="en" messages={messages}>
+      <QueryClientProvider client={queryClient}>
+        <AdminDashboardHome />
+      </QueryClientProvider>
+    </NextIntlClientProvider>,
   );
 }
 

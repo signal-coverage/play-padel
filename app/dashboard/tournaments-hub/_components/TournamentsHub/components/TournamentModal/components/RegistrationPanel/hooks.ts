@@ -1,14 +1,19 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import type { CategoryTeam } from "./types";
 
-async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
+async function fetchJson<T>(
+  url: string,
+  init: RequestInit | undefined,
+  fallbackErrorMessage: string,
+): Promise<T> {
   const res = await fetch(url, init);
   const body = await res.json().catch(() => null);
   if (!res.ok) {
-    throw new Error(body?.error ?? "Something went wrong. Please try again.");
+    throw new Error(body?.error ?? fallbackErrorMessage);
   }
   return body;
 }
@@ -17,11 +22,14 @@ export function useCategoryTeams(
   tournamentId: string | null,
   categoryId: string | null,
 ) {
+  const t = useTranslations("RegistrationPanelData");
   return useQuery({
     queryKey: ["tournaments", "player-teams", categoryId],
     queryFn: () =>
       fetchJson<{ teams: CategoryTeam[] }>(
         `/api/tournaments/${tournamentId}/categories/${categoryId}/teams`,
+        undefined,
+        t("genericError"),
       ).then((data) => data.teams),
     enabled: Boolean(tournamentId && categoryId),
   });
@@ -35,6 +43,7 @@ export function useCategoryTeams(
  * never swallowed.
  */
 export function useRegisterTeam(tournamentId: string, categoryId: string) {
+  const t = useTranslations("RegistrationPanelData");
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (partnerId: string) =>
@@ -45,6 +54,7 @@ export function useRegisterTeam(tournamentId: string, categoryId: string) {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ partnerId }),
         },
+        t("genericError"),
       ),
     onSuccess: () => {
       queryClient.invalidateQueries({
@@ -54,19 +64,21 @@ export function useRegisterTeam(tournamentId: string, categoryId: string) {
         queryKey: ["tournaments", "player-detail", tournamentId],
       });
       queryClient.invalidateQueries({ queryKey: ["tournaments", "open"] });
-      toast.success("You're registered!");
+      toast.success(t("registered"));
     },
     onError: (error: Error) => toast.error(error.message),
   });
 }
 
 export function useWithdrawTeam(tournamentId: string, categoryId: string) {
+  const t = useTranslations("RegistrationPanelData");
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (teamId: string) =>
       fetchJson<{ team: CategoryTeam }>(
         `/api/tournaments/${tournamentId}/teams/${teamId}/withdraw`,
         { method: "POST" },
+        t("genericError"),
       ),
     onSuccess: () => {
       queryClient.invalidateQueries({
@@ -76,7 +88,7 @@ export function useWithdrawTeam(tournamentId: string, categoryId: string) {
         queryKey: ["tournaments", "player-detail", tournamentId],
       });
       queryClient.invalidateQueries({ queryKey: ["tournaments", "open"] });
-      toast.success("Registration withdrawn");
+      toast.success(t("withdrawn"));
     },
     onError: (error: Error) => toast.error(error.message),
   });

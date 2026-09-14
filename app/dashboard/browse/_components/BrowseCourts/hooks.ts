@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import type { CourtColumn } from "@/components/CourtAvailabilityGrid";
 import {
@@ -17,22 +18,29 @@ import type {
   RawCourt,
 } from "./types";
 
-async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
+async function fetchJson<T>(
+  url: string,
+  init: RequestInit | undefined,
+  fallbackErrorMessage: string,
+): Promise<T> {
   const res = await fetch(url, init);
   const body = await res.json().catch(() => null);
   if (!res.ok) {
-    throw new Error(body?.error ?? "Something went wrong. Please try again.");
+    throw new Error(body?.error ?? fallbackErrorMessage);
   }
   return body as T;
 }
 
 export function useActiveClubs(date: Date) {
+  const t = useTranslations("BrowseCourtsData");
   const dateKey = toDateKey(date);
   return useQuery({
     queryKey: [...playerClubsQueryKey, dateKey],
     queryFn: () =>
       fetchJson<{ clubs: ClubBrowseSummary[] }>(
         `/api/player/clubs?date=${dateKey}`,
+        undefined,
+        t("genericError"),
       ).then((d) => d.clubs),
   });
 }
@@ -94,6 +102,7 @@ export function useClubAvailability(
   columnCount: number | undefined;
   rowCount: number | undefined;
 } {
+  const t = useTranslations("BrowseCourtsData");
   const dateKey = toDateKey(date);
   useClubAvailabilityStream(clubId, dateKey);
 
@@ -104,6 +113,8 @@ export function useClubAvailability(
     queryFn: () =>
       fetchJson<{ courts: RawCourt[] }>(
         `/api/player/clubs/${clubId}/availability?date=${dateKey}`,
+        undefined,
+        t("genericError"),
       ).then((d) => toCourtColumns(d.courts)),
     enabled: !!clubId,
     refetchInterval: LIVE_REFETCH_INTERVAL_MS,
@@ -138,14 +149,19 @@ export function useClubAvailability(
 }
 
 export function useBookSlot() {
+  const t = useTranslations("BrowseCourtsData");
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (input: BookSlotInput) =>
-      fetchJson("/api/player/reservations", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(input),
-      }),
+      fetchJson(
+        "/api/player/reservations",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(input),
+        },
+        t("genericError"),
+      ),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: playerClubAvailabilityBaseKey,
@@ -162,23 +178,28 @@ export function useBookSlot() {
 }
 
 export function useJoinWaitlist() {
+  const t = useTranslations("BrowseCourtsData");
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (input: JoinWaitlistInput) =>
-      fetchJson("/api/player/waitlist", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(input),
-      }),
+      fetchJson(
+        "/api/player/waitlist",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(input),
+        },
+        t("genericError"),
+      ),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: playerClubAvailabilityBaseKey,
       });
-      toast.success("We'll email you if this slot opens up.");
+      toast.success(t("joinWaitlistSuccess"));
     },
     onError: (error) => {
       toast.error(
-        error instanceof Error ? error.message : "Could not join the waitlist.",
+        error instanceof Error ? error.message : t("joinWaitlistError"),
       );
     },
   });

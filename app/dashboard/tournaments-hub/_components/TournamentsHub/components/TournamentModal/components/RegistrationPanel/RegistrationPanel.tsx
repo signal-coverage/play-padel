@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { PlayerPicker } from "@/components/PlayerPicker";
 import { RegisteredTeamsList } from "./components/RegisteredTeamsList";
@@ -20,6 +21,7 @@ export function RegistrationPanel({
   categoryId,
   viewerId,
 }: RegistrationPanelProps) {
+  const t = useTranslations("RegistrationPanel");
   const [partnerId, setPartnerId] = useState<string | null>(null);
   const { data: teams, isLoading } = useCategoryTeams(tournamentId, categoryId);
   const registerTeam = useRegisterTeam(tournamentId, categoryId);
@@ -44,13 +46,12 @@ export function RegistrationPanel({
       {myTeam ? (
         <div className="flex items-center justify-between gap-2 rounded-sm border p-3">
           <p className="text-sm">
-            You&apos;re registered with{" "}
-            <span className="font-medium">
-              {myTeam.player1Id === viewerId
-                ? myTeam.player2DisplayName
-                : myTeam.player1DisplayName}
-            </span>
-            .
+            {t("registeredWith", {
+              partnerName:
+                myTeam.player1Id === viewerId
+                  ? myTeam.player2DisplayName
+                  : myTeam.player1DisplayName,
+            })}
           </p>
           <Button
             type="button"
@@ -59,12 +60,12 @@ export function RegistrationPanel({
             disabled={withdrawTeam.isPending}
             onClick={() => withdrawTeam.mutate(myTeam.id)}
           >
-            {withdrawTeam.isPending ? "Withdrawing…" : "Withdraw"}
+            {withdrawTeam.isPending ? t("withdrawing") : t("withdraw")}
           </Button>
         </div>
       ) : (
         <div className="flex flex-col gap-2">
-          <p className="text-sm font-medium">Register with a partner</p>
+          <p className="text-sm font-medium">{t("registerWithPartner")}</p>
           <PlayerPicker
             selectedIds={partnerId ? [partnerId] : []}
             onChange={(ids) => setPartnerId(ids[0] ?? null)}
@@ -76,13 +77,13 @@ export function RegistrationPanel({
             disabled={!partnerId || registerTeam.isPending}
             onClick={handleRegister}
           >
-            {registerTeam.isPending ? "Registering…" : "Register"}
+            {registerTeam.isPending ? t("registering") : t("register")}
           </Button>
         </div>
       )}
 
       <div>
-        <p className="mb-2 text-sm font-medium">Registered teams</p>
+        <p className="mb-2 text-sm font-medium">{t("registeredTeams")}</p>
         <RegisteredTeamsList teams={activeTeams} isLoading={isLoading} />
       </div>
     </div>

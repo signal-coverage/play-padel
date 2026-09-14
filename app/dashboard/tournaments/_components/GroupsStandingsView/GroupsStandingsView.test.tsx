@@ -2,6 +2,8 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, cleanup } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
+import { NextIntlClientProvider } from "next-intl";
+import messages from "@/messages/en.json";
 
 vi.mock("./hooks", () => ({
   useCategoryStandingsDetail: vi.fn(),
@@ -16,6 +18,14 @@ const useCategoryStandingsDetailMock = useCategoryStandingsDetail as ReturnType<
 
 afterEach(cleanup);
 
+function renderView(props: React.ComponentProps<typeof GroupsStandingsView>) {
+  return render(
+    <NextIntlClientProvider locale="en" messages={messages}>
+      <GroupsStandingsView {...props} />
+    </NextIntlClientProvider>,
+  );
+}
+
 describe("GroupsStandingsView", () => {
   it("shows a loading state", () => {
     useCategoryStandingsDetailMock.mockReturnValue({
@@ -23,7 +33,7 @@ describe("GroupsStandingsView", () => {
       isLoading: true,
     });
 
-    render(<GroupsStandingsView tournamentId="t1" categoryId="c1" />);
+    renderView({ tournamentId: "t1", categoryId: "c1" });
 
     expect(screen.getByText(/loading/i)).toBeInTheDocument();
   });
@@ -73,7 +83,7 @@ describe("GroupsStandingsView", () => {
       },
     });
 
-    render(<GroupsStandingsView tournamentId="t1" categoryId="c1" />);
+    renderView({ tournamentId: "t1", categoryId: "c1" });
 
     expect(screen.getByText("Group A")).toBeInTheDocument();
     expect(screen.getByText("Alice / Ana vs Bob / Ben")).toBeInTheDocument();
@@ -118,7 +128,7 @@ describe("GroupsStandingsView", () => {
       },
     });
 
-    render(<GroupsStandingsView tournamentId="t1" categoryId="c1" />);
+    renderView({ tournamentId: "t1", categoryId: "c1" });
 
     expect(screen.getByText("Final")).toBeInTheDocument();
     expect(screen.getByText("Alice / Ana vs Bob / Ben")).toBeInTheDocument();

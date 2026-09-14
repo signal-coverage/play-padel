@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { UserRoundCog, Gift, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,6 +29,7 @@ function CourtLimitControl({
 }: {
   club: Pick<AdminClubListItem, "id" | "courtLimit">;
 }) {
+  const t = useTranslations("AdminClubSettingsView");
   const [value, setValue] = useState(
     club.courtLimit != null ? String(club.courtLimit) : "",
   );
@@ -41,7 +43,9 @@ function CourtLimitControl({
   return (
     <div className="flex items-end gap-2">
       <Field>
-        <FieldLabel htmlFor="admin-court-limit">Court limit</FieldLabel>
+        <FieldLabel htmlFor="admin-court-limit">
+          {t("courtLimitLabel")}
+        </FieldLabel>
         <Input
           id="admin-court-limit"
           type="number"
@@ -58,7 +62,7 @@ function CourtLimitControl({
         disabled={setCourtLimit.isPending}
         onClick={handleSave}
       >
-        {setCourtLimit.isPending ? "Saving…" : "Save limit"}
+        {setCourtLimit.isPending ? t("savingLimit") : t("saveLimit")}
       </Button>
     </div>
   );
@@ -81,6 +85,7 @@ function CourtLimitControl({
  * pushes further selection changes back into the URL.
  */
 export function AdminClubSettingsView() {
+  const t = useTranslations("AdminClubSettingsView");
   const { data: clubs = [], isLoading } = useAdminClubs();
   const searchParams = useSearchParams();
   const seedSlug = searchParams.get("club");
@@ -115,7 +120,7 @@ export function AdminClubSettingsView() {
     // surfaces that can trigger it require the same confirmation step.
     if (
       !window.confirm(
-        `Activate the FREE testing plan for "${selectedClub.name}"? This bypasses paid membership for this club.`,
+        t("activateFreePlanConfirm", { clubName: selectedClub.name }),
       )
     ) {
       return;
@@ -136,7 +141,7 @@ export function AdminClubSettingsView() {
         <Button variant="outline" size="sm" asChild>
           <a href="/api/admin/export/clubs" download>
             <Download size={14} strokeWidth={2.25} />
-            Export CSV
+            {t("exportCsv")}
           </a>
         </Button>
       </div>
@@ -183,8 +188,8 @@ export function AdminClubSettingsView() {
                     >
                       <Gift size={14} strokeWidth={2.25} />
                       {activateFreePlan.isPending
-                        ? "Activating…"
-                        : "Activate free plan"}
+                        ? t("activatingFreePlan")
+                        : t("activateFreePlan")}
                     </Button>
                   )}
                   {owner && (
@@ -199,8 +204,8 @@ export function AdminClubSettingsView() {
                     >
                       <UserRoundCog size={14} strokeWidth={2.25} />
                       {impersonateOwner.isPending
-                        ? "Signing in…"
-                        : "Impersonate owner"}
+                        ? t("signingIn")
+                        : t("impersonateOwner")}
                     </Button>
                   )}
                 </div>
@@ -208,7 +213,7 @@ export function AdminClubSettingsView() {
               <ClubSettingsView clubId={selectedClubId} />
             </div>
           ) : (
-            <StatusBox>Select a club to view its settings.</StatusBox>
+            <StatusBox>{t("selectClubPlaceholder")}</StatusBox>
           )}
         </div>
       </div>

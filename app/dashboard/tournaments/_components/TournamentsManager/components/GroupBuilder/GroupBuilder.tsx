@@ -1,10 +1,17 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { GroupBuilderProps } from "./types";
 
+// Deliberately NOT translated — this generates the actual `groupName` value
+// persisted for a manually-built group (see onSaveManual below), which must
+// stay byte-identical to the backend's own hardcoded English pattern for
+// automatically-generated groups (core/tournaments/services/groups.service.ts's
+// `Group ${String.fromCharCode(65 + groupIndex)}`) so manual and automatic
+// group naming stay consistent regardless of the owner's locale.
 function groupLabelFor(index: number): string {
   return `Group ${String.fromCharCode(65 + index)}`;
 }
@@ -29,6 +36,7 @@ export function GroupBuilder({
   onLock,
   isLocking,
 }: GroupBuilderProps) {
+  const t = useTranslations("GroupBuilder");
   const [assignments, setAssignments] = useState<Record<string, string>>({});
 
   const groupOptions = useMemo(
@@ -70,7 +78,7 @@ export function GroupBuilder({
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Groups</CardTitle>
+          <CardTitle>{t("groupsTitle")}</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
           {groups.map((group) => (
@@ -97,10 +105,10 @@ export function GroupBuilder({
             disabled={isLocked || isLocking}
           >
             {isLocked
-              ? "Groups locked"
+              ? t("groupsLocked")
               : isLocking
-                ? "Locking…"
-                : "Lock groups"}
+                ? t("locking")
+                : t("lockGroups")}
           </Button>
         </CardContent>
       </Card>
@@ -110,7 +118,7 @@ export function GroupBuilder({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Build groups</CardTitle>
+        <CardTitle>{t("buildGroupsTitle")}</CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
         <Button
@@ -119,17 +127,17 @@ export function GroupBuilder({
           disabled={isGeneratingAutomatic || teams.length === 0}
         >
           {isGeneratingAutomatic
-            ? "Generating…"
-            : "Generate groups automatically"}
+            ? t("generatingAutomatic")
+            : t("generateAutomatic")}
         </Button>
 
         <div className="flex flex-col gap-2">
           <p className="text-sm text-muted-foreground">
-            Or assign each team to a group manually:
+            {t("manualAssignHint")}
           </p>
           {teams.length === 0 && (
             <p className="text-sm text-muted-foreground">
-              No registered teams yet.
+              {t("noRegisteredTeams")}
             </p>
           )}
           {teams.map((team) => (
@@ -141,14 +149,16 @@ export function GroupBuilder({
                 {team.player1DisplayName} / {team.player2DisplayName}
               </span>
               <select
-                aria-label={`Group for ${team.player1DisplayName} / ${team.player2DisplayName}`}
+                aria-label={t("groupForTeamAriaLabel", {
+                  teamName: `${team.player1DisplayName} / ${team.player2DisplayName}`,
+                })}
                 className="rounded-sm border bg-background px-2 py-1 text-sm"
                 value={assignments[team.id] ?? ""}
                 onChange={(e) =>
                   handleAssignmentChange(team.id, e.target.value)
                 }
               >
-                <option value="">Unassigned</option>
+                <option value="">{t("unassignedOption")}</option>
                 {groupOptions.map((option) => (
                   <option key={option} value={option}>
                     {option}
@@ -163,7 +173,7 @@ export function GroupBuilder({
             onClick={handleSaveManual}
             disabled={!everyTeamAssigned || isSavingManual}
           >
-            {isSavingManual ? "Saving…" : "Save groups"}
+            {isSavingManual ? t("savingGroups") : t("saveGroups")}
           </Button>
         </div>
       </CardContent>

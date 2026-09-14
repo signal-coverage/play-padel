@@ -2,7 +2,9 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
+import { NextIntlClientProvider } from "next-intl";
 import { useAuth } from "@/hooks/use-auth";
+import messages from "@/messages/en.json";
 import { OnboardingWizard } from "./OnboardingWizard";
 
 vi.mock("@/hooks/use-auth", () => ({
@@ -37,7 +39,11 @@ function renderWizard(signOut: () => Promise<void> = vi.fn()) {
     refetchProfile: vi.fn(),
   });
 
-  render(<OnboardingWizard />);
+  render(
+    <NextIntlClientProvider locale="en" messages={messages}>
+      <OnboardingWizard />
+    </NextIntlClientProvider>,
+  );
 }
 
 afterEach(() => {

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import type { AdminSearchResults } from "./types";
 
 /**
@@ -21,10 +22,13 @@ export function useDebouncedValue<T>(value: T, delayMs: number): T {
   return debounced;
 }
 
-async function fetchAdminSearch(query: string): Promise<AdminSearchResults> {
+async function fetchAdminSearch(
+  query: string,
+  fallbackErrorMessage: string,
+): Promise<AdminSearchResults> {
   const res = await fetch(`/api/admin/search?q=${encodeURIComponent(query)}`);
   if (!res.ok) {
-    throw new Error("Failed to search");
+    throw new Error(fallbackErrorMessage);
   }
   return res.json();
 }
@@ -36,9 +40,10 @@ async function fetchAdminSearch(query: string): Promise<AdminSearchResults> {
  * though the route itself tolerates an empty `q` gracefully.
  */
 export function useAdminSearch(query: string) {
+  const t = useTranslations("AdminSearchViewData");
   return useQuery({
     queryKey: ["admin", "search", query],
-    queryFn: () => fetchAdminSearch(query),
+    queryFn: () => fetchAdminSearch(query, t("searchFailed")),
     enabled: query.length > 0,
   });
 }

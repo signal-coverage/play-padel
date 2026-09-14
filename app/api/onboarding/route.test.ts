@@ -1,4 +1,20 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import enMessages from "@/messages/en.json";
+
+// next-intl/server's getTranslations only works inside a real Next.js RSC
+// request (it needs the "react-server" bundler condition Vitest doesn't
+// set) — calling the real thing here throws "getTranslations is not
+// supported in Client Components". Stubbed with a plain lookup against the
+// REAL English message catalog instead of re-typed literals, so this can
+// never silently drift from what messages/en.json actually ships.
+vi.mock("next-intl/server", () => ({
+  getTranslations: vi
+    .fn()
+    .mockResolvedValue(
+      (key: string) =>
+        (enMessages.OnboardingValidation as Record<string, string>)[key] ?? key,
+    ),
+}));
 
 vi.mock("@clerk/nextjs/server", () => ({
   auth: vi.fn(),

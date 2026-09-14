@@ -2,10 +2,11 @@
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Field, FieldLabel, FieldError } from "@/components/ui/field";
-import { DEFAULT_VALUES, newClubClosureFormSchema } from "./consts";
+import { DEFAULT_VALUES, buildNewClubClosureFormSchema } from "./consts";
 import type {
   NewClubClosureFormValues,
   NewClubClosureFormProps,
@@ -15,13 +16,15 @@ export function NewClubClosureForm({
   onSubmit,
   isSubmitting,
 }: NewClubClosureFormProps) {
+  const t = useTranslations("NewClubClosureForm");
+  const tValidation = useTranslations("NewClubClosureFormValidation");
   const {
     register,
     handleSubmit,
     reset,
     formState: { errors },
   } = useForm<NewClubClosureFormValues>({
-    resolver: zodResolver(newClubClosureFormSchema),
+    resolver: zodResolver(buildNewClubClosureFormSchema(tValidation)),
     defaultValues: DEFAULT_VALUES,
   });
 
@@ -38,7 +41,9 @@ export function NewClubClosureForm({
       className="flex flex-col gap-4 rounded-sm border p-3"
     >
       <Field>
-        <FieldLabel htmlFor="club-closure-starts-at">Starts</FieldLabel>
+        <FieldLabel htmlFor="club-closure-starts-at">
+          {t("startsLabel")}
+        </FieldLabel>
         <Input
           id="club-closure-starts-at"
           type="datetime-local"
@@ -49,7 +54,7 @@ export function NewClubClosureForm({
       </Field>
 
       <Field>
-        <FieldLabel htmlFor="club-closure-ends-at">Ends</FieldLabel>
+        <FieldLabel htmlFor="club-closure-ends-at">{t("endsLabel")}</FieldLabel>
         <Input
           id="club-closure-ends-at"
           type="datetime-local"
@@ -60,10 +65,12 @@ export function NewClubClosureForm({
       </Field>
 
       <Field>
-        <FieldLabel htmlFor="club-closure-reason">Reason *</FieldLabel>
+        <FieldLabel htmlFor="club-closure-reason">
+          {t("reasonLabel")}
+        </FieldLabel>
         <Input
           id="club-closure-reason"
-          placeholder="Club rented for a private event"
+          placeholder={t("reasonPlaceholder")}
           {...register("reason")}
           aria-invalid={!!errors.reason}
         />
@@ -71,7 +78,7 @@ export function NewClubClosureForm({
       </Field>
 
       <Button type="submit" disabled={isSubmitting}>
-        {isSubmitting ? "Closing…" : "Close the club"}
+        {isSubmitting ? t("closing") : t("closeTheClub")}
       </Button>
     </form>
   );

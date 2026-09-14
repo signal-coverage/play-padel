@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import {
   CommandDialog,
   CommandEmpty,
@@ -26,6 +27,8 @@ import type { CommandPaletteProps } from "./types";
 // useOpenTournamentsStatus, the same hook the navbar itself calls, rather
 // than duplicating its fetch logic — see AppNavbar/hooks.ts).
 export function CommandPalette({ role }: CommandPaletteProps) {
+  const t = useTranslations("CommandPalette");
+  const tNav = useTranslations("AppNavbar.navItems");
   const router = useRouter();
   const [open, setOpen] = useState(false);
   useCommandPaletteShortcut(setOpen);
@@ -45,21 +48,21 @@ export function CommandPalette({ role }: CommandPaletteProps) {
     <CommandDialog
       open={open}
       onOpenChange={setOpen}
-      title="Command Palette"
-      description="Jump to a page in the dashboard"
+      title={t("title")}
+      description={t("description")}
     >
-      <CommandInput placeholder="Jump to a page..." />
+      <CommandInput placeholder={t("placeholder")} />
       <CommandList>
-        <CommandEmpty>No results found.</CommandEmpty>
-        <CommandGroup heading="Navigate">
+        <CommandEmpty>{t("noResults")}</CommandEmpty>
+        <CommandGroup heading={t("navigateGroup")}>
           {visibleItems.map((item) => (
             <CommandItem
               key={item.href}
-              value={item.title}
+              value={tNav(item.titleKey)}
               onSelect={() => handleSelect(item.href)}
             >
               <item.icon className="h-4 w-4" strokeWidth={1.5} />
-              {item.title}
+              {tNav(item.titleKey)}
             </CommandItem>
           ))}
         </CommandGroup>

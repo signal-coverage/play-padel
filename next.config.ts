@@ -1,6 +1,9 @@
 import { withSentryConfig } from "@sentry/nextjs";
 import { withBotId } from "botid/next/config";
+import createNextIntlPlugin from "next-intl/plugin";
 import type { NextConfig } from "next";
+
+const withNextIntl = createNextIntlPlugin();
 
 // Third-party hosts this app's own pages genuinely load, kept here (not
 // inlined into the policy string below) so the reasoning for each entry is
@@ -19,6 +22,16 @@ import type { NextConfig } from "next";
 //   - api2.amplitude.com: @amplitude/unified ships as a bundled module (no
 //     external <script> tag), but still calls out to Amplitude's ingestion
 //     API directly over fetch/XHR.
+//   - sr-client-cfg.amplitude.com: Session Replay's remote-config fetch (see
+//     instrumentation-client.ts's `sessionReplay` option) — a DIFFERENT host
+//     from the ingestion API above. Missing this produced a real, visible
+//     console error ("Failed to generate joined config: No remote config
+//     received"), not just a silent feature gap: node_modules/@amplitude/
+//     analytics-core's RemoteConfigClient hits
+//     https://sr-client-cfg.amplitude.com/config/<key> directly.
+//   - api-sr.amplitude.com: Session Replay's OWN event/recording upload
+//     endpoint — also separate from api2.amplitude.com (see
+//     node_modules/@amplitude/session-replay-browser's SESSION_REPLAY_SERVER_URL).
 //   - *.sentry.io: defensive — normal error/session reporting already goes
 //     through the same-origin /monitoring tunnel (see the Sentry config
 //     below), but not every Sentry SDK feature is guaranteed to use it.
@@ -27,6 +40,15 @@ import type { NextConfig } from "next";
 // fonts.googleapis.com/fonts.gstatic.com to allow.
 const CLERK_FRONTEND_API_HOST = "clerk.play-padel-zeta.vercel.app";
 
+// Dev-only: React's development build calls eval() for a few debugging
+// features (reconstructing component stacks from a different environment,
+// etc.) — see the exact warning this works around at
+// https://react.dev/link/strict-mode-warnings. React's production build
+// never calls eval() at all, so 'unsafe-eval' must never leak into a
+// production CSP — that would be a real regression of this policy's actual
+// protection, not just a dev convenience.
+const IS_DEV = process.env.NODE_ENV !== "production";
+
 const CONTENT_SECURITY_POLICY = [
   "default-src 'self'",
   // 'unsafe-inline' is required for Next.js's own inline bootstrap scripts —
@@ -34,12 +56,18 @@ const CONTENT_SECURITY_POLICY = [
   // nonce injection via middleware). It still blocks any externally-hosted
   // script that isn't explicitly allow-listed below, which is the bulk of
   // real-world script-injection XSS.
-  `script-src 'self' 'unsafe-inline' https://*.clerk.accounts.dev https://${CLERK_FRONTEND_API_HOST} https://challenges.cloudflare.com https://sdk.mercadopago.com`,
+  `script-src 'self' 'unsafe-inline'${IS_DEV ? " 'unsafe-eval'" : ""} https://*.clerk.accounts.dev https://${CLERK_FRONTEND_API_HOST} https://challenges.cloudflare.com https://sdk.mercadopago.com`,
   "style-src 'self' 'unsafe-inline'",
   `img-src 'self' data: blob: https://images.unsplash.com https://i.pravatar.cc https://picsum.photos https://img.clerk.com https://*.mercadopago.com https://http2.mlstatic.com`,
   "font-src 'self' data:",
-  `connect-src 'self' https://*.clerk.accounts.dev https://${CLERK_FRONTEND_API_HOST} https://api.mercadopago.com https://api2.amplitude.com https://*.sentry.io https://*.ingest.sentry.io https://challenges.cloudflare.com`,
+  `connect-src 'self' https://*.clerk.accounts.dev https://${CLERK_FRONTEND_API_HOST} https://api.mercadopago.com https://api2.amplitude.com https://sr-client-cfg.amplitude.com https://api-sr.amplitude.com https://*.sentry.io https://*.ingest.sentry.io https://challenges.cloudflare.com`,
   "frame-src 'self' https://challenges.cloudflare.com https://*.mercadopago.com",
+  // Session Replay compresses event batches inside a Web Worker spawned
+  // from a blob: URL (see node_modules/@amplitude/session-replay-browser's
+  // event-compressor.js) — worker-src has no fallback to connect-src, only
+  // to child-src then default-src, and default-src 'self' alone doesn't
+  // cover blob:, so this needs its own explicit entry.
+  "worker-src 'self' blob:",
   "frame-ancestors 'self'",
   "form-action 'self'",
   "base-uri 'self'",
@@ -106,40 +134,42 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default withSentryConfig(withBotId(nextConfig), {
-  // For all available options, see:
-  // https://www.npmjs.com/package/@sentry/webpack-plugin#options
+export default withNextIntl(
+  withSentryConfig(withBotId(nextConfig), {
+    // For all available options, see:
+    // https://www.npmjs.com/package/@sentry/webpack-plugin#options
 
-  org: "signal-coverage",
+    org: "signal-coverage",
 
-  project: "javascript-nextjs",
+    project: "javascript-nextjs",
 
-  // Only print logs for uploading source maps in CI
-  silent: !process.env.CI,
+    // Only print logs for uploading source maps in CI
+    silent: !process.env.CI,
 
-  // For all available options, see:
-  // https://docs.sentry.io/platforms/javascript/guides/nextjs/manual-setup/
+    // For all available options, see:
+    // https://docs.sentry.io/platforms/javascript/guides/nextjs/manual-setup/
 
-  // Upload a larger set of source maps for prettier stack traces (increases build time)
-  widenClientFileUpload: true,
+    // Upload a larger set of source maps for prettier stack traces (increases build time)
+    widenClientFileUpload: true,
 
-  // Route browser requests to Sentry through a Next.js rewrite to circumvent ad-blockers.
-  // This can increase your server load as well as your hosting bill.
-  // Note: Check that the configured route will not match with your Next.js middleware, otherwise reporting of client-
-  // side errors will fail.
-  tunnelRoute: "/monitoring",
+    // Route browser requests to Sentry through a Next.js rewrite to circumvent ad-blockers.
+    // This can increase your server load as well as your hosting bill.
+    // Note: Check that the configured route will not match with your Next.js middleware, otherwise reporting of client-
+    // side errors will fail.
+    tunnelRoute: "/monitoring",
 
-  webpack: {
-    // Enables automatic instrumentation of Vercel Cron Monitors. (Does not yet work with App Router route handlers.)
-    // See the following for more information:
-    // https://docs.sentry.io/product/crons/
-    // https://vercel.com/docs/cron-jobs
-    automaticVercelMonitors: true,
+    webpack: {
+      // Enables automatic instrumentation of Vercel Cron Monitors. (Does not yet work with App Router route handlers.)
+      // See the following for more information:
+      // https://docs.sentry.io/product/crons/
+      // https://vercel.com/docs/cron-jobs
+      automaticVercelMonitors: true,
 
-    // Tree-shaking options for reducing bundle size
-    treeshake: {
-      // Automatically tree-shake Sentry logger statements to reduce bundle size
-      removeDebugLogging: true,
+      // Tree-shaking options for reducing bundle size
+      treeshake: {
+        // Automatically tree-shake Sentry logger statements to reduce bundle size
+        removeDebugLogging: true,
+      },
     },
-  },
-});
+  }),
+);

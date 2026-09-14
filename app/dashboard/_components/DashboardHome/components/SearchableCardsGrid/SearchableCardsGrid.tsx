@@ -1,6 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils/utils";
 import { HeroCard } from "../HeroCard";
@@ -18,10 +19,11 @@ export function SearchableCardsGrid({
   onClearSearch,
   className,
 }: SearchableCardsGridProps) {
+  const t = useTranslations("SearchableCardsGrid");
   const normalizedQuery = query.trim().toLowerCase();
   const isFiltering = normalizedQuery.length > 0;
   const matches = SEARCHABLE_CARDS.filter((card) =>
-    card.title.toLowerCase().includes(normalizedQuery),
+    t(card.key).toLowerCase().includes(normalizedQuery),
   );
 
   const [filteredScrollRef, filteredCanScrollMore] =
@@ -76,9 +78,9 @@ export function SearchableCardsGrid({
               className,
             )}
           >
-            <p>No cards match &ldquo;{query}&rdquo;.</p>
+            <p>{t("noMatches", { query })}</p>
             <Button variant="link" size="sm" onClick={onClearSearch}>
-              Clear search
+              {t("clearSearch")}
             </Button>
           </motion.div>
         )

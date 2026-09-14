@@ -2,6 +2,8 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, cleanup, act } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
+import { NextIntlClientProvider } from "next-intl";
+import messages from "@/messages/en.json";
 import { ClosuresList } from "./ClosuresList";
 import type { CourtClosure } from "@/core/courts/types";
 
@@ -29,11 +31,13 @@ describe("ClosuresList", () => {
 
     const closure = makeClosure();
     render(
-      <ClosuresList
-        closures={[closure]}
-        onCancel={vi.fn()}
-        cancellingClosureId={null}
-      />,
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <ClosuresList
+          closures={[closure]}
+          onCancel={vi.fn()}
+          cancellingClosureId={null}
+        />
+      </NextIntlClientProvider>,
     );
 
     expect(screen.getByText("Active")).toBeInTheDocument();

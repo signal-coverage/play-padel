@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useAuth } from "@/hooks/use-auth";
 import { useClerk } from "@clerk/nextjs";
 import {
@@ -19,6 +20,7 @@ import { getInitials } from "../../utils";
 import { useClubOperationalCause } from "../../hooks";
 
 export function UserMenu() {
+  const t = useTranslations("UserMenu");
   const { user, signOut } = useAuth();
   const { openUserProfile } = useClerk();
   const router = useRouter();
@@ -84,7 +86,7 @@ export function UserMenu() {
           className="cursor-pointer py-2 rounded-sm"
         >
           <User className="h-4 w-4 text-muted-foreground" strokeWidth={1.5} />
-          Account Settings
+          {t("accountSettings")}
         </DropdownMenuItem>
         {canManageClubSettings && (
           <DropdownMenuItem asChild className="cursor-pointer py-2 rounded-sm">
@@ -93,7 +95,7 @@ export function UserMenu() {
                 className="h-4 w-4 text-muted-foreground"
                 strokeWidth={1.5}
               />
-              Club Settings
+              {t("clubSettings")}
             </Link>
           </DropdownMenuItem>
         )}
@@ -103,7 +105,7 @@ export function UserMenu() {
               className="h-4 w-4 text-muted-foreground"
               strokeWidth={1.5}
             />
-            Help
+            {t("help")}
           </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
@@ -112,7 +114,7 @@ export function UserMenu() {
           className="cursor-pointer py-2 rounded-sm"
         >
           <LogOut className="h-4 w-4 text-muted-foreground" strokeWidth={1.5} />
-          Sign out
+          {t("signOut")}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

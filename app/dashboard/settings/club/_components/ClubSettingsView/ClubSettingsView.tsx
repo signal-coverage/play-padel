@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Field, FieldLabel, FieldError } from "@/components/ui/field";
@@ -10,12 +11,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { PhoneField } from "@/components/PhoneField";
 import { useCountryProvinceCityFields } from "@/components/CountryProvinceCityFields";
 import { TabColumnsLayout } from "@/components/TabColumnsLayout";
-import { clubSettingsFormSchema } from "./consts";
+import { buildClubSettingsFormSchema } from "./consts";
 import { clubToFormValues } from "./utils";
 import { useCurrentClub, useUpdateClub } from "./hooks";
 import type { ClubSettingsFormValues, ClubSettingsViewProps } from "./types";
 
 export function ClubSettingsView({ clubId }: ClubSettingsViewProps = {}) {
+  const t = useTranslations("ClubSettingsView");
+  const tValidation = useTranslations("ClubSettingsValidation");
   const { data: club, isLoading } = useCurrentClub(clubId);
   const updateClub = useUpdateClub(clubId);
 
@@ -26,7 +29,7 @@ export function ClubSettingsView({ clubId }: ClubSettingsViewProps = {}) {
     control,
     formState: { errors },
   } = useForm<ClubSettingsFormValues>({
-    resolver: zodResolver(clubSettingsFormSchema),
+    resolver: zodResolver(buildClubSettingsFormSchema(tValidation)),
     defaultValues: clubToFormValues(club),
   });
 
@@ -88,18 +91,18 @@ export function ClubSettingsView({ clubId }: ClubSettingsViewProps = {}) {
         <>
           <div>
             <h1 className="text-2xl font-semibold tracking-tight text-balance">
-              Basic information
+              {t("basicInfoTitle")}
             </h1>
             <p className="text-sm text-muted-foreground mt-1 text-pretty">
-              Manage your club&apos;s profile and business details.
+              {t("basicInfoDescription")}
             </p>
           </div>
 
           <Field>
-            <FieldLabel htmlFor="club-name">Name *</FieldLabel>
+            <FieldLabel htmlFor="club-name">{t("nameLabel")}</FieldLabel>
             <Input
               id="club-name"
-              placeholder="Club Padel Norte"
+              placeholder={t("namePlaceholder")}
               {...register("name")}
               aria-invalid={!!errors.name}
             />
@@ -107,11 +110,11 @@ export function ClubSettingsView({ clubId }: ClubSettingsViewProps = {}) {
           </Field>
 
           <Field>
-            <FieldLabel htmlFor="club-email">Email *</FieldLabel>
+            <FieldLabel htmlFor="club-email">{t("emailLabel")}</FieldLabel>
             <Input
               id="club-email"
               type="email"
-              placeholder="contact@club.com"
+              placeholder={t("emailPlaceholder")}
               {...register("email")}
               aria-invalid={!!errors.email}
             />
@@ -136,7 +139,7 @@ export function ClubSettingsView({ clubId }: ClubSettingsViewProps = {}) {
                 errors={errors}
                 phoneFieldName="whatsappNumber"
                 countryFieldName="whatsappCountry"
-                label="WhatsApp (for payment receipts)"
+                label={t("whatsappLabel")}
               />
             </div>
           </div>
@@ -149,10 +152,12 @@ export function ClubSettingsView({ clubId }: ClubSettingsViewProps = {}) {
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex-1">
               <Field>
-                <FieldLabel htmlFor="club-zip-code">Zip code</FieldLabel>
+                <FieldLabel htmlFor="club-zip-code">
+                  {t("zipCodeLabel")}
+                </FieldLabel>
                 <Input
                   id="club-zip-code"
-                  placeholder="1642"
+                  placeholder={t("zipCodePlaceholder")}
                   {...register("zipCode")}
                   aria-invalid={!!errors.zipCode}
                 />
@@ -161,10 +166,12 @@ export function ClubSettingsView({ clubId }: ClubSettingsViewProps = {}) {
             </div>
             <div className="flex-1">
               <Field>
-                <FieldLabel htmlFor="club-address">Address</FieldLabel>
+                <FieldLabel htmlFor="club-address">
+                  {t("addressLabel")}
+                </FieldLabel>
                 <Input
                   id="club-address"
-                  placeholder="Av. Corrientes 1234"
+                  placeholder={t("addressPlaceholder")}
                   {...register("address")}
                   aria-invalid={!!errors.address}
                 />
@@ -180,28 +187,30 @@ export function ClubSettingsView({ clubId }: ClubSettingsViewProps = {}) {
         <>
           <div>
             <h1 className="text-2xl font-semibold tracking-tight text-balance">
-              Legal information
+              {t("legalInfoTitle")}
             </h1>
             <p className="text-sm text-muted-foreground mt-1 text-pretty">
-              Used for invoices and tax documents.
+              {t("legalInfoDescription")}
             </p>
           </div>
 
           <Field>
-            <FieldLabel htmlFor="club-legal-name">Legal name</FieldLabel>
+            <FieldLabel htmlFor="club-legal-name">
+              {t("legalNameLabel")}
+            </FieldLabel>
             <Input
               id="club-legal-name"
-              placeholder="Club Padel Norte S.A."
+              placeholder={t("legalNamePlaceholder")}
               {...register("legalName")}
             />
             <FieldError errors={[errors.legalName]} />
           </Field>
 
           <Field>
-            <FieldLabel htmlFor="club-tax-id">Tax ID</FieldLabel>
+            <FieldLabel htmlFor="club-tax-id">{t("taxIdLabel")}</FieldLabel>
             <Input
               id="club-tax-id"
-              placeholder="30-12345678-9"
+              placeholder={t("taxIdPlaceholder")}
               {...register("taxId")}
             />
             <FieldError errors={[errors.taxId]} />
@@ -211,7 +220,7 @@ export function ClubSettingsView({ clubId }: ClubSettingsViewProps = {}) {
 
       <div>
         <Button type="submit" disabled={updateClub.isPending}>
-          {updateClub.isPending ? "Saving…" : "Save changes"}
+          {updateClub.isPending ? t("saving") : t("saveChanges")}
         </Button>
       </div>
     </form>

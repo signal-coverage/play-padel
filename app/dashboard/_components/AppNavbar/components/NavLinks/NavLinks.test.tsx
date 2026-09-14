@@ -9,6 +9,8 @@ import {
 } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { NextIntlClientProvider } from "next-intl";
+import messages from "@/messages/en.json";
 import { NavLinks } from "./NavLinks";
 import type { SystemRole } from "@/providers/auth-provider";
 
@@ -28,9 +30,11 @@ function renderNavLinks(
   });
 
   render(
-    <QueryClientProvider client={queryClient}>
-      <NavLinks role={role} isAdmin={isAdmin} />
-    </QueryClientProvider>,
+    <NextIntlClientProvider locale="en" messages={messages}>
+      <QueryClientProvider client={queryClient}>
+        <NavLinks role={role} isAdmin={isAdmin} />
+      </QueryClientProvider>
+    </NextIntlClientProvider>,
   );
 }
 

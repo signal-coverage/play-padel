@@ -2,11 +2,12 @@
 
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Field, FieldLabel, FieldError } from "@/components/ui/field";
 import { Switch } from "@/components/ui/switch";
-import { DEFAULT_VALUES, newClosureFormSchema } from "./consts";
+import { DEFAULT_VALUES, buildNewClosureFormSchema } from "./consts";
 import type { NewClosureFormValues, NewClosureFormProps } from "./types";
 
 export function NewClosureForm({
@@ -14,6 +15,8 @@ export function NewClosureForm({
   isSubmitting,
   showApplyToAllCourts,
 }: NewClosureFormProps) {
+  const t = useTranslations("NewClosureForm");
+  const tValidation = useTranslations("NewClosureFormValidation");
   const {
     register,
     handleSubmit,
@@ -22,7 +25,7 @@ export function NewClosureForm({
     setValue,
     formState: { errors },
   } = useForm<NewClosureFormValues>({
-    resolver: zodResolver(newClosureFormSchema),
+    resolver: zodResolver(buildNewClosureFormSchema(tValidation)),
     defaultValues: DEFAULT_VALUES,
   });
 
@@ -41,7 +44,7 @@ export function NewClosureForm({
       className="flex flex-col gap-4 rounded-sm border p-3"
     >
       <Field>
-        <FieldLabel htmlFor="closure-starts-at">Starts</FieldLabel>
+        <FieldLabel htmlFor="closure-starts-at">{t("starts")}</FieldLabel>
         <Input
           id="closure-starts-at"
           type="datetime-local"
@@ -52,7 +55,7 @@ export function NewClosureForm({
       </Field>
 
       <Field>
-        <FieldLabel htmlFor="closure-ends-at">Ends</FieldLabel>
+        <FieldLabel htmlFor="closure-ends-at">{t("ends")}</FieldLabel>
         <Input
           id="closure-ends-at"
           type="datetime-local"
@@ -63,10 +66,10 @@ export function NewClosureForm({
       </Field>
 
       <Field>
-        <FieldLabel htmlFor="closure-reason">Reason *</FieldLabel>
+        <FieldLabel htmlFor="closure-reason">{t("reasonLabel")}</FieldLabel>
         <Input
           id="closure-reason"
-          placeholder="Court resurfacing"
+          placeholder={t("reasonPlaceholder")}
           {...register("reason")}
           aria-invalid={!!errors.reason}
         />
@@ -76,7 +79,7 @@ export function NewClosureForm({
       {showApplyToAllCourts && (
         <Field orientation="horizontal">
           <FieldLabel htmlFor="closure-apply-all">
-            Apply to all courts
+            {t("applyToAllCourts")}
           </FieldLabel>
           <Switch
             id="closure-apply-all"
@@ -87,7 +90,7 @@ export function NewClosureForm({
       )}
 
       <Button type="submit" disabled={isSubmitting}>
-        {isSubmitting ? "Creating…" : "Create closure"}
+        {isSubmitting ? t("creating") : t("createClosure")}
       </Button>
     </form>
   );

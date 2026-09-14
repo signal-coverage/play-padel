@@ -3,6 +3,8 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, waitFor, cleanup } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { NextIntlClientProvider } from "next-intl";
+import messages from "@/messages/en.json";
 import { ClubOperationalGate } from "./ClubOperationalGate";
 import type { ClubOperationalStatusResponse } from "./types";
 
@@ -63,11 +65,13 @@ function renderGate(
   });
 
   render(
-    <QueryClientProvider client={queryClient}>
-      <ClubOperationalGate>
-        <button type="button">Create court</button>
-      </ClubOperationalGate>
-    </QueryClientProvider>,
+    <NextIntlClientProvider locale="en" messages={messages}>
+      <QueryClientProvider client={queryClient}>
+        <ClubOperationalGate>
+          <button type="button">Create court</button>
+        </ClubOperationalGate>
+      </QueryClientProvider>
+    </NextIntlClientProvider>,
   );
 
   return fetchMock;
@@ -113,11 +117,13 @@ describe("ClubOperationalGate", () => {
     });
 
     render(
-      <QueryClientProvider client={queryClient}>
-        <ClubOperationalGate>
-          <button type="button">Create court</button>
-        </ClubOperationalGate>
-      </QueryClientProvider>,
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <QueryClientProvider client={queryClient}>
+          <ClubOperationalGate>
+            <button type="button">Create court</button>
+          </ClubOperationalGate>
+        </QueryClientProvider>
+      </NextIntlClientProvider>,
     );
 
     expect(

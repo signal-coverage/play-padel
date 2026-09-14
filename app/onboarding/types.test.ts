@@ -1,5 +1,14 @@
 import { describe, it, expect } from "vitest";
-import { onboardingFormSchema } from "./types";
+import enMessages from "@/messages/en.json";
+import { buildOnboardingFormSchema } from "./types";
+
+// Built from the REAL English message catalog (not re-typed literals) so
+// this test can never silently drift from what actually ships — if
+// messages/en.json's OnboardingValidation.invalidWhatsappNumber ever
+// changes, this test's expectations change with it automatically.
+const t = (key: string): string =>
+  (enMessages.OnboardingValidation as Record<string, string>)[key] ?? key;
+const onboardingFormSchema = buildOnboardingFormSchema(t);
 
 // Base valid "owner" payload — every required owner field filled with a
 // realistic value, so each test only needs to override `whatsappNumber`.

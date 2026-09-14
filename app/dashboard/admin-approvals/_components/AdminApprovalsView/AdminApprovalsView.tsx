@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { DataTable } from "@/components/DataTable";
 import { StatusBox } from "@/components/StatusBox";
 import { Button } from "@/components/ui/button";
@@ -21,6 +22,7 @@ import type { PendingClub } from "./types";
  * ClubInactiveCard/CourtsView elsewhere in this codebase.
  */
 export function AdminApprovalsView() {
+  const t = useTranslations("AdminApprovalsView");
   const { data: clubs, isLoading } = usePendingClubs();
   const approve = useApproveClub();
   const reject = useRejectClub();
@@ -29,7 +31,7 @@ export function AdminApprovalsView() {
   const columns: DataTableColumn<PendingClub>[] = [
     {
       key: "club",
-      header: "Club",
+      header: t("clubColumn"),
       cell: (club) => (
         <div className="flex flex-col gap-1 py-0.5">
           <div className="flex items-center gap-1.5">
@@ -39,7 +41,7 @@ export function AdminApprovalsView() {
               // (BouncingBall — see components/ui/sonner.tsx's toast icons),
               // recolored per severity and always bouncing, rather than a
               // generic icon set.
-              <span title="Another club already has this email or address — check before approving.">
+              <span title={t("duplicateWarning")}>
                 <BouncingBall
                   size={14}
                   amplitude={4}
@@ -74,7 +76,7 @@ export function AdminApprovalsView() {
               onClick={() => approve.mutate(club.id)}
               disabled={isApprovingThis}
             >
-              {isApprovingThis ? "Approving…" : "Approve"}
+              {isApprovingThis ? t("approving") : t("approve")}
             </Button>
             <Button
               size="sm"
@@ -82,7 +84,7 @@ export function AdminApprovalsView() {
               onClick={() => setRejectTarget(club)}
               disabled={isApprovingThis}
             >
-              Reject
+              {t("reject")}
             </Button>
           </div>
         );
@@ -106,11 +108,10 @@ export function AdminApprovalsView() {
     <div className="flex h-full min-h-0 flex-col gap-4">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight text-balance">
-          Approvals
+          {t("title")}
         </h1>
         <p className="mt-1 text-sm text-pretty text-muted-foreground">
-          Clubs from onboarding wait here until an admin approves them — until
-          then they can&apos;t accept real reservations.
+          {t("description")}
         </p>
       </div>
 
@@ -119,8 +120,8 @@ export function AdminApprovalsView() {
         rows={clubs ?? []}
         rowKey={(club) => club.id}
         isLoading={isLoading}
-        loadingLabel="Loading pending clubs…"
-        emptyState={<StatusBox>No clubs are waiting for approval.</StatusBox>}
+        loadingLabel={t("loading")}
+        emptyState={<StatusBox>{t("emptyState")}</StatusBox>}
       />
 
       <RejectConfirmDialog

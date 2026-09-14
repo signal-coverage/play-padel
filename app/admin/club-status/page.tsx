@@ -8,6 +8,7 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -30,25 +31,33 @@ type Club = {
   updatedAt: string;
 };
 
-const STATUS_OPTIONS: { value: ClubStatus; label: string }[] = [
-  { value: "ACTIVE", label: "Active" },
-  { value: "INACTIVE", label: "Inactive" },
-  { value: "SUSPENDED", label: "Suspended" },
-  { value: "DISABLED", label: "Disabled" },
+// Iteration order for the status dropdown — each value's translated label is
+// resolved against messages/*.json's "ClubStatusAdminPage.statusOptions"
+// namespace inside the component (see STATUS_VALUES below).
+const STATUS_VALUES: ClubStatus[] = [
+  "ACTIVE",
+  "INACTIVE",
+  "SUSPENDED",
+  "DISABLED",
 ];
-
-const GENERIC_ERROR = "Something went wrong. Please try again.";
 
 // Mirrors the body?.error ?? fallback extraction convention already used by
 // CourtsView/hooks.ts's fetchJson helper, kept as a small standalone helper
 // (rather than that exact generic fetchJson) per this repo's SRP-per-folder
-// convention.
-async function extractErrorMessage(res: Response): Promise<string> {
+// convention. `fallback` is the caller's own translated generic-error
+// string, since this plain helper can't call useTranslations() itself (see
+// AuditLogsView/utils.ts's getActionLabel for the same pattern).
+async function extractErrorMessage(
+  res: Response,
+  fallback: string,
+): Promise<string> {
   const body = await res.json().catch(() => null);
-  return body?.error ?? GENERIC_ERROR;
+  return body?.error ?? fallback;
 }
 
 export default function ClubStatusAdminPage() {
+  const t = useTranslations("ClubStatusAdminPage");
+  const genericError = t("genericError");
   const [clubId, setClubId] = useState("");
   const [club, setClub] = useState<Club | null>(null);
   const [selectedStatus, setSelectedStatus] = useState<ClubStatus | "">("");
@@ -59,6 +68,13 @@ export default function ClubStatusAdminPage() {
   const [savePending, setSavePending] = useState(false);
   const [activateFreePlanPending, setActivateFreePlanPending] = useState(false);
 
+  const statusLabels: Record<ClubStatus, string> = {
+    ACTIVE: t("statusOptions.active"),
+    INACTIVE: t("statusOptions.inactive"),
+    SUSPENDED: t("statusOptions.suspended"),
+    DISABLED: t("statusOptions.disabled"),
+  };
+
   async function handleLookup() {
     setLookupPending(true);
     setLookupError(null);
@@ -67,14 +83,14 @@ export default function ClubStatusAdminPage() {
         `/api/admin/club-status?clubId=${encodeURIComponent(clubId)}`,
       );
       if (!res.ok) {
-        throw new Error(await extractErrorMessage(res));
+        throw new Error(await extractErrorMessage(res, genericError));
       }
       const data: { club: Club } = await res.json();
       setClub(data.club);
       setSelectedStatus(data.club.status);
     } catch (err) {
       setClub(null);
-      setLookupError(err instanceof Error ? err.message : GENERIC_ERROR);
+      setLookupError(err instanceof Error ? err.message : genericError);
     } finally {
       setLookupPending(false);
     }
@@ -94,14 +110,14 @@ export default function ClubStatusAdminPage() {
         }),
       });
       if (!res.ok) {
-        throw new Error(await extractErrorMessage(res));
+        throw new Error(await extractErrorMessage(res, genericError));
       }
       const data: { club: Club } = await res.json();
       setClub(data.club);
       setSelectedStatus(data.club.status);
-      toast.success("Club status updated");
+      toast.success(t("clubStatusUpdated"));
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : GENERIC_ERROR);
+      toast.error(err instanceof Error ? err.message : genericError);
     } finally {
       setSavePending(false);
     }
@@ -120,9 +136,7 @@ export default function ClubStatusAdminPage() {
   async function handleActivateFreePlan() {
     if (!club) return;
     if (
-      !window.confirm(
-        `Activate the FREE testing plan for "${club.name}"? This bypasses paid membership for this club.`,
-      )
+      !window.confirm(t("activateFreePlanConfirm", { clubName: club.name }))
     ) {
       return;
     }
@@ -134,11 +148,11 @@ export default function ClubStatusAdminPage() {
         body: JSON.stringify({ clubId: club.id }),
       });
       if (!res.ok) {
-        throw new Error(await extractErrorMessage(res));
+        throw new Error(await extractErrorMessage(res, genericError));
       }
-      toast.success("Free plan activated for testing");
+      toast.success(t("freePlanActivated"));
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : GENERIC_ERROR);
+      toast.error(err instanceof Error ? err.message : genericError);
     } finally {
       setActivateFreePlanPending(false);
     }
@@ -148,11 +162,11 @@ export default function ClubStatusAdminPage() {
     <div className="mx-auto flex max-w-lg flex-col gap-6 p-6">
       <Card>
         <CardHeader>
-          <CardTitle>Club status admin</CardTitle>
+          <CardTitle>{t("title")}</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
           <div className="flex flex-col gap-1">
-            <Label htmlFor="club-id">Club ID</Label>
+            <Label htmlFor="club-id">{t("clubIdLabel")}</Label>
             <Input
               id="club-id"
               value={clubId}
@@ -162,7 +176,7 @@ export default function ClubStatusAdminPage() {
 
           <div>
             <Button onClick={handleLookup} disabled={lookupPending || !clubId}>
-              {lookupPending ? "Looking up…" : "Look up"}
+              {lookupPending ? t("lookingUp") : t("lookUp")}
             </Button>
           </div>
 
@@ -179,14 +193,17 @@ export default function ClubStatusAdminPage() {
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
             <p className="text-sm text-muted-foreground">
-              Current status: {club.status}
+              {t("currentStatus", { status: statusLabels[club.status] })}
             </p>
             <p className="text-sm text-muted-foreground">
-              Last updated by {club.updatedBy ?? "—"} at {club.updatedAt}
+              {t("lastUpdatedBy", {
+                updatedBy: club.updatedBy ?? "—",
+                updatedAt: club.updatedAt,
+              })}
             </p>
 
             <div className="flex flex-col gap-1">
-              <Label htmlFor="new-status">New status</Label>
+              <Label htmlFor="new-status">{t("newStatusLabel")}</Label>
               <Select
                 value={selectedStatus}
                 onValueChange={(value) =>
@@ -197,9 +214,9 @@ export default function ClubStatusAdminPage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {STATUS_OPTIONS.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
+                  {STATUS_VALUES.map((value) => (
+                    <SelectItem key={value} value={value}>
+                      {statusLabels[value]}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -207,12 +224,12 @@ export default function ClubStatusAdminPage() {
             </div>
 
             <div className="flex flex-col gap-1">
-              <Label htmlFor="updated-by">Updated by</Label>
+              <Label htmlFor="updated-by">{t("updatedByLabel")}</Label>
               <Input
                 id="updated-by"
                 value={updatedByInput}
                 onChange={(e) => setUpdatedByInput(e.target.value)}
-                placeholder="your@email.com"
+                placeholder={t("updatedByPlaceholder")}
               />
             </div>
 
@@ -221,7 +238,7 @@ export default function ClubStatusAdminPage() {
                 onClick={handleSave}
                 disabled={savePending || !updatedByInput.trim()}
               >
-                {savePending ? "Saving…" : "Save"}
+                {savePending ? t("saving") : t("save")}
               </Button>
             </div>
 
@@ -232,8 +249,8 @@ export default function ClubStatusAdminPage() {
                 disabled={activateFreePlanPending}
               >
                 {activateFreePlanPending
-                  ? "Activating…"
-                  : "Activate free membership (testing)"}
+                  ? t("activatingFreePlan")
+                  : t("activateFreePlan")}
               </Button>
             </div>
           </CardContent>

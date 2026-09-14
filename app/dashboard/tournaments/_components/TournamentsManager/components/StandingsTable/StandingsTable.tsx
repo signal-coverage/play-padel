@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import {
   Table,
   TableBody,
@@ -12,22 +13,20 @@ import type { StandingsTableProps } from "./types";
  * graphic, per the plan. Rows arrive pre-sorted by standingsCalculator's own
  * tie-break order. */
 export function StandingsTable({ rows, teamLabels }: StandingsTableProps) {
+  const t = useTranslations("StandingsTable");
+
   if (rows.length === 0) {
-    return (
-      <p className="text-sm text-muted-foreground">
-        No standings yet — matches haven&apos;t been played.
-      </p>
-    );
+    return <p className="text-sm text-muted-foreground">{t("emptyState")}</p>;
   }
 
   return (
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>Team</TableHead>
-          <TableHead className="text-right">Wins</TableHead>
-          <TableHead className="text-right">Set Diff</TableHead>
-          <TableHead className="text-right">Game Diff</TableHead>
+          <TableHead>{t("team")}</TableHead>
+          <TableHead className="text-right">{t("wins")}</TableHead>
+          <TableHead className="text-right">{t("setDiff")}</TableHead>
+          <TableHead className="text-right">{t("gameDiff")}</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>

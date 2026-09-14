@@ -1,8 +1,10 @@
+import { useTranslations } from "next-intl";
 import { COURT_WALL_TYPE_OPTIONS } from "./consts";
 import { getWallTypeOptionClassName } from "./styles";
 import type { WallTypeFieldProps } from "./types";
 
 export function WallTypeField({ name, value, onChange }: WallTypeFieldProps) {
+  const t = useTranslations("WallTypeField");
   return (
     <div className="flex flex-wrap gap-2">
       {COURT_WALL_TYPE_OPTIONS.map((option) => (
@@ -18,7 +20,7 @@ export function WallTypeField({ name, value, onChange }: WallTypeFieldProps) {
             onChange={() => onChange(option.value)}
             className="sr-only"
           />
-          {option.label}
+          {t(option.labelKey)}
         </label>
       ))}
     </div>

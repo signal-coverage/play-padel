@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import {
   Sheet,
@@ -20,7 +21,7 @@ import { useUpdateCourt } from "../../hooks";
 import { SurfaceField } from "../CourtFormSheet/components/SurfaceField";
 import { CourtTypeField } from "../CourtFormSheet/components/CourtTypeField";
 import { ColorField } from "../CourtFormSheet/components/ColorField";
-import { DEFAULT_VALUES, bulkEditFormSchema } from "./consts";
+import { DEFAULT_VALUES, buildBulkEditFormSchema } from "./consts";
 import type { UpdateCourtInput } from "@/core/courts/types";
 import type { BulkEditCourtsSheetProps, BulkEditFormValues } from "./types";
 
@@ -31,11 +32,13 @@ export function BulkEditCourtsSheet({
   courtCount,
   onSuccess,
 }: BulkEditCourtsSheetProps) {
+  const t = useTranslations("BulkEditCourtsSheet");
+  const tValidation = useTranslations("BulkEditCourtsValidation");
   const updateCourt = useUpdateCourt();
 
   const { register, handleSubmit, reset, control, setValue } =
     useForm<BulkEditFormValues>({
-      resolver: zodResolver(bulkEditFormSchema),
+      resolver: zodResolver(buildBulkEditFormSchema(tValidation)),
       defaultValues: DEFAULT_VALUES,
     });
 
@@ -88,7 +91,7 @@ export function BulkEditCourtsSheet({
     };
 
     if (Object.keys(input).length === 0) {
-      toast.error("Select at least one field to change");
+      toast.error(t("selectAtLeastOneField"));
       return;
     }
 
@@ -106,18 +109,22 @@ export function BulkEditCourtsSheet({
     );
 
     if (failures.length === 0) {
-      toast.success(`Updated ${courtIds.length} courts`);
+      toast.success(t("updatedCourts", { count: courtIds.length }));
       onSuccess();
       onOpenChange(false);
     } else if (failures.length === courtIds.length) {
       toast.error(
         failures[0].reason instanceof Error
           ? failures[0].reason.message
-          : "Failed to update courts",
+          : t("updateFailed"),
       );
     } else {
       toast.error(
-        `Updated ${courtIds.length - failures.length} of ${courtIds.length} courts. ${failures.length} failed.`,
+        t("partialUpdate", {
+          updated: courtIds.length - failures.length,
+          total: courtIds.length,
+          failed: failures.length,
+        }),
       );
     }
   }
@@ -126,9 +133,9 @@ export function BulkEditCourtsSheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent onPointerDownOutside={(e) => e.preventDefault()}>
         <SheetHeader>
-          <SheetTitle>Bulk edit courts</SheetTitle>
+          <SheetTitle>{t("title")}</SheetTitle>
           <SheetDescription>
-            Editing {courtCount} courts. Only checked fields will be changed.
+            {t("description", { count: courtCount })}
           </SheetDescription>
         </SheetHeader>
 
@@ -149,7 +156,7 @@ export function BulkEditCourtsSheet({
                 htmlFor="bulk-surface-enabled"
                 className="text-sm font-medium"
               >
-                Surface
+                {t("surface")}
               </label>
             </div>
             <fieldset disabled={!surfaceEnabled} className="contents">
@@ -174,7 +181,7 @@ export function BulkEditCourtsSheet({
                 htmlFor="bulk-indoor-enabled"
                 className="text-sm font-medium"
               >
-                Court type
+                {t("courtType")}
               </label>
             </div>
             <fieldset disabled={!indoorEnabled} className="contents">
@@ -199,7 +206,7 @@ export function BulkEditCourtsSheet({
                 htmlFor="bulk-color-enabled"
                 className="text-sm font-medium"
               >
-                Color
+                {t("color")}
               </label>
             </div>
             <fieldset disabled={!colorEnabled} className="contents">
@@ -215,7 +222,7 @@ export function BulkEditCourtsSheet({
             <div className="flex items-center gap-2">
               <Checkbox
                 id="bulk-slot-duration-enabled"
-                aria-label="Minimum shift"
+                aria-label={t("minShift")}
                 checked={slotDurationEnabled}
                 onCheckedChange={(checked) =>
                   setValue("slotDurationMinutes.enabled", Boolean(checked))
@@ -225,7 +232,7 @@ export function BulkEditCourtsSheet({
                 htmlFor="bulk-slot-duration-input"
                 className="text-sm font-medium"
               >
-                Minimum shift
+                {t("minShift")}
               </label>
             </div>
             <Input
@@ -242,7 +249,7 @@ export function BulkEditCourtsSheet({
             <div className="flex items-center gap-2">
               <Checkbox
                 id="bulk-reservation-fee-enabled"
-                aria-label="Reservation fee"
+                aria-label={t("reservationFee")}
                 checked={reservationFeeEnabled}
                 onCheckedChange={(checked) =>
                   setValue("reservationFee.enabled", Boolean(checked))
@@ -252,7 +259,7 @@ export function BulkEditCourtsSheet({
                 htmlFor="bulk-reservation-fee-input"
                 className="text-sm font-medium"
               >
-                Reservation fee
+                {t("reservationFee")}
               </label>
             </div>
             <Input
@@ -267,7 +274,7 @@ export function BulkEditCourtsSheet({
             <div className="flex items-center gap-2">
               <Checkbox
                 id="bulk-court-price-enabled"
-                aria-label="Court price"
+                aria-label={t("courtPrice")}
                 checked={courtPriceEnabled}
                 onCheckedChange={(checked) =>
                   setValue("courtPrice.enabled", Boolean(checked))
@@ -277,7 +284,7 @@ export function BulkEditCourtsSheet({
                 htmlFor="bulk-court-price-input"
                 className="text-sm font-medium"
               >
-                Court price
+                {t("courtPrice")}
               </label>
             </div>
             <Input
@@ -292,7 +299,7 @@ export function BulkEditCourtsSheet({
             <div className="flex items-center gap-2">
               <Checkbox
                 id="bulk-active-enabled"
-                aria-label="Active"
+                aria-label={t("active")}
                 checked={activeEnabled}
                 onCheckedChange={(checked) =>
                   setValue("active.enabled", Boolean(checked))
@@ -302,7 +309,7 @@ export function BulkEditCourtsSheet({
                 htmlFor="bulk-active-switch"
                 className="text-sm font-medium"
               >
-                Active
+                {t("active")}
               </label>
             </div>
             <Switch
@@ -320,7 +327,7 @@ export function BulkEditCourtsSheet({
             onClick={handleSubmit(submit)}
             disabled={updateCourt.isPending}
           >
-            {updateCourt.isPending ? "Saving…" : "Apply changes"}
+            {updateCourt.isPending ? t("saving") : t("applyChanges")}
           </Button>
         </SheetFooter>
       </SheetContent>

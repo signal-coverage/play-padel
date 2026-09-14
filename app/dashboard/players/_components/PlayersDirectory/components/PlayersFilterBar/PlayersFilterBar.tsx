@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import { SortDirectionButton } from "@/components/SortDirectionButton";
 import { SearchInput } from "@/components/SearchInput";
 import {
@@ -8,10 +9,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  CATEGORY_FILTER_OPTIONS,
-  DOMINANT_HAND_FILTER_OPTIONS,
-  PREFERRED_SIDE_FILTER_OPTIONS,
-  SORT_FIELD_OPTIONS,
+  buildCategoryFilterOptions,
+  buildDominantHandFilterOptions,
+  buildPreferredSideFilterOptions,
+  buildSortFieldOptions,
 } from "../../consts";
 import type { PlayerFilters, PlayerSortField } from "../../types";
 import type { PlayersFilterBarProps } from "./types";
@@ -24,6 +25,8 @@ export function PlayersFilterBar({
   sort,
   onSortChange,
 }: PlayersFilterBarProps) {
+  const t = useTranslations("PlayersFilterBar");
+
   function updateFilter<K extends keyof PlayerFilters>(
     key: K,
     value: PlayerFilters[K],
@@ -31,12 +34,17 @@ export function PlayersFilterBar({
     onFiltersChange({ ...filters, [key]: value });
   }
 
+  const categoryOptions = buildCategoryFilterOptions(t);
+  const preferredSideOptions = buildPreferredSideFilterOptions(t);
+  const dominantHandOptions = buildDominantHandFilterOptions(t);
+  const sortFieldOptions = buildSortFieldOptions(t);
+
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
       <SearchInput
         value={query}
         onChange={onQueryChange}
-        placeholder="Search players by name..."
+        placeholder={t("searchPlaceholder")}
         className="sm:w-64"
       />
 
@@ -47,10 +55,10 @@ export function PlayersFilterBar({
         }
       >
         <SelectTrigger className="sm:w-40">
-          <SelectValue placeholder="Category" />
+          <SelectValue placeholder={t("category")} />
         </SelectTrigger>
         <SelectContent>
-          {CATEGORY_FILTER_OPTIONS.map((option) => (
+          {categoryOptions.map((option) => (
             <SelectItem key={option.value} value={option.value}>
               {option.label}
             </SelectItem>
@@ -65,10 +73,10 @@ export function PlayersFilterBar({
         }
       >
         <SelectTrigger className="sm:w-40">
-          <SelectValue placeholder="Preferred side" />
+          <SelectValue placeholder={t("preferredSide")} />
         </SelectTrigger>
         <SelectContent>
-          {PREFERRED_SIDE_FILTER_OPTIONS.map((option) => (
+          {preferredSideOptions.map((option) => (
             <SelectItem key={option.value} value={option.value}>
               {option.label}
             </SelectItem>
@@ -83,10 +91,10 @@ export function PlayersFilterBar({
         }
       >
         <SelectTrigger className="sm:w-40">
-          <SelectValue placeholder="Dominant hand" />
+          <SelectValue placeholder={t("dominantHand")} />
         </SelectTrigger>
         <SelectContent>
-          {DOMINANT_HAND_FILTER_OPTIONS.map((option) => (
+          {dominantHandOptions.map((option) => (
             <SelectItem key={option.value} value={option.value}>
               {option.label}
             </SelectItem>
@@ -102,10 +110,10 @@ export function PlayersFilterBar({
           }
         >
           <SelectTrigger className="sm:w-40">
-            <SelectValue placeholder="Sort by" />
+            <SelectValue placeholder={t("sortBy")} />
           </SelectTrigger>
           <SelectContent>
-            {SORT_FIELD_OPTIONS.map((option) => (
+            {sortFieldOptions.map((option) => (
               <SelectItem key={option.value} value={option.value}>
                 {option.label}
               </SelectItem>

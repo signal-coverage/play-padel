@@ -2,6 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { QueryClient } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { PENDING_CLUBS_QUERY_KEY } from "./consts";
 import type { PendingClub } from "./types";
@@ -10,11 +11,15 @@ import type { PendingClub } from "./types";
 // per this repo's SRP-per-folder convention, each component folder is an
 // independent module (same idiom as PaymentActivationScreen/hooks.ts's own
 // copy of this helper).
-async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
+async function fetchJson<T>(
+  url: string,
+  fallbackErrorMessage: string,
+  init?: RequestInit,
+): Promise<T> {
   const res = await fetch(url, init);
   if (!res.ok) {
     const body = await res.json().catch(() => null);
-    throw new Error(body?.error ?? "Something went wrong. Please try again.");
+    throw new Error(body?.error ?? fallbackErrorMessage);
   }
   return res.json();
 }
@@ -22,12 +27,14 @@ async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
 // GET /api/admin/clubs/pending — the admin approval queue (see
 // prisma/schema.prisma's Club.approvalStatus).
 export function usePendingClubs() {
+  const t = useTranslations("AdminApprovalsViewData");
   return useQuery({
     queryKey: PENDING_CLUBS_QUERY_KEY,
     queryFn: () =>
-      fetchJson<{ clubs: PendingClub[] }>("/api/admin/clubs/pending").then(
-        (data) => data.clubs,
-      ),
+      fetchJson<{ clubs: PendingClub[] }>(
+        "/api/admin/clubs/pending",
+        t("genericError"),
+      ).then((data) => data.clubs),
   });
 }
 
@@ -46,37 +53,41 @@ function removeFromPendingClubsCache(queryClient: QueryClient, clubId: string) {
   queryClient.invalidateQueries({ queryKey: PENDING_CLUBS_QUERY_KEY });
 }
 
-function toErrorMessage(err: unknown): string {
-  return err instanceof Error
-    ? err.message
-    : "Something went wrong. Please try again.";
+function toErrorMessage(err: unknown, fallback: string): string {
+  return err instanceof Error ? err.message : fallback;
 }
 
 // POST /api/admin/clubs/[clubId]/approve.
 export function useApproveClub() {
+  const t = useTranslations("AdminApprovalsViewData");
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (clubId: string) =>
-      fetchJson(`/api/admin/clubs/${clubId}/approve`, { method: "POST" }),
+      fetchJson(`/api/admin/clubs/${clubId}/approve`, t("genericError"), {
+        method: "POST",
+      }),
     onSuccess: (_data, clubId) => {
       removeFromPendingClubsCache(queryClient, clubId);
-      toast.success("Club approved");
+      toast.success(t("clubApproved"));
     },
-    onError: (err) => toast.error(toErrorMessage(err)),
+    onError: (err) => toast.error(toErrorMessage(err, t("genericError"))),
   });
 }
 
 // POST /api/admin/clubs/[clubId]/reject — same cache handling as
 // useApproveClub above.
 export function useRejectClub() {
+  const t = useTranslations("AdminApprovalsViewData");
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (clubId: string) =>
-      fetchJson(`/api/admin/clubs/${clubId}/reject`, { method: "POST" }),
+      fetchJson(`/api/admin/clubs/${clubId}/reject`, t("genericError"), {
+        method: "POST",
+      }),
     onSuccess: (_data, clubId) => {
       removeFromPendingClubsCache(queryClient, clubId);
-      toast.success("Club rejected");
+      toast.success(t("clubRejected"));
     },
-    onError: (err) => toast.error(toErrorMessage(err)),
+    onError: (err) => toast.error(toErrorMessage(err, t("genericError"))),
   });
 }

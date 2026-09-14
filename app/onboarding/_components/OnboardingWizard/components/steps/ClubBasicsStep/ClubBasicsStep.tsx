@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { Building2, Mail } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { useCountryProvinceCityFields } from "@/components/CountryProvinceCityFields";
@@ -12,6 +13,7 @@ export function ClubBasicsStep({
   errors,
   shouldFocusHeading,
 }: ClubBasicsStepProps) {
+  const t = useTranslations("OnboardingWizard.steps.clubBasics");
   const headingRef = useRef<HTMLHeadingElement>(null);
 
   useEffect(() => {
@@ -31,20 +33,18 @@ export function ClubBasicsStep({
           className="text-base font-semibold mb-0.5"
           tabIndex={-1}
         >
-          Tell us about your club
+          {t("heading")}
         </h2>
-        <p className="text-sm text-muted-foreground">
-          Primary contact information and location players will see.
-        </p>
+        <p className="text-sm text-muted-foreground">{t("subheading")}</p>
       </div>
       <Field>
-        <FieldLabel htmlFor="name">Club name *</FieldLabel>
+        <FieldLabel htmlFor="name">{t("clubName")}</FieldLabel>
         <div className="relative">
           <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
             id="name"
             className="pl-9"
-            placeholder="Riverside Padel Club"
+            placeholder={t("clubNamePlaceholder")}
             {...register("name")}
             aria-invalid={!!errors.name}
           />
@@ -53,14 +53,14 @@ export function ClubBasicsStep({
       </Field>
 
       <Field>
-        <FieldLabel htmlFor="email">Contact email *</FieldLabel>
+        <FieldLabel htmlFor="email">{t("contactEmail")}</FieldLabel>
         <div className="relative">
           <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
             id="email"
             type="email"
             className="pl-9"
-            placeholder="contact@riversidepadel.com"
+            placeholder={t("contactEmailPlaceholder")}
             {...register("email")}
             aria-invalid={!!errors.email}
           />
@@ -82,7 +82,7 @@ export function ClubBasicsStep({
             errors={errors}
             phoneFieldName="whatsappNumber"
             countryFieldName="whatsappCountry"
-            label="WhatsApp (for payment receipts) *"
+            label={t("whatsappLabel")}
           />
         </div>
       </div>
@@ -95,10 +95,10 @@ export function ClubBasicsStep({
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="flex-1">
           <Field>
-            <FieldLabel htmlFor="zipCode">Zip code</FieldLabel>
+            <FieldLabel htmlFor="zipCode">{t("zipCode")}</FieldLabel>
             <Input
               id="zipCode"
-              placeholder="1642"
+              placeholder={t("zipCodePlaceholder")}
               {...register("zipCode")}
               aria-invalid={!!errors.zipCode}
             />
@@ -107,10 +107,10 @@ export function ClubBasicsStep({
         </div>
         <div className="flex-1">
           <Field>
-            <FieldLabel htmlFor="address">Address *</FieldLabel>
+            <FieldLabel htmlFor="address">{t("address")}</FieldLabel>
             <Input
               id="address"
-              placeholder="Av. Corrientes 1234"
+              placeholder={t("addressPlaceholder")}
               {...register("address")}
               aria-invalid={!!errors.address}
             />

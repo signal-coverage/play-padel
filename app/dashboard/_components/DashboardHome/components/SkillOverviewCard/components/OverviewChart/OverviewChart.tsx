@@ -1,16 +1,17 @@
 import { BarChart3 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Bar, BarChart, Cell, XAxis } from "recharts";
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
+  type ChartConfig,
 } from "@/components/ui/chart";
 import {
   EmptyDescription,
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
-import { OVERVIEW_CHART_CONFIG } from "../../consts";
 import type { OverviewChartProps } from "./types";
 
 export function OverviewChart({
@@ -19,24 +20,29 @@ export function OverviewChart({
   caption,
   emptyMessage,
 }: OverviewChartProps) {
+  const t = useTranslations("OverviewChart");
+
   if (!hasActivity) {
     return (
       <div className="flex h-20 flex-col items-center justify-center gap-2 text-center">
         <EmptyMedia variant="icon" className="mb-0 size-8 rounded-full">
           <BarChart3 className="size-4" />
         </EmptyMedia>
-        <EmptyTitle className="text-xs">No patterns yet</EmptyTitle>
+        <EmptyTitle className="text-xs">{t("noPatternsYet")}</EmptyTitle>
         <EmptyDescription className="text-xs">{emptyMessage}</EmptyDescription>
       </div>
     );
   }
 
+  const chartConfig: ChartConfig = {
+    total: { label: t("bookingsLabel"), color: "var(--chart-1)" },
+  };
   const peak = Math.max(...chartData.map((day) => day.total));
 
   return (
     <div className="flex flex-col gap-2">
       <ChartContainer
-        config={OVERVIEW_CHART_CONFIG}
+        config={chartConfig}
         className="h-28 w-full @min-[768px]:h-20"
       >
         <BarChart accessibilityLayer data={chartData}>

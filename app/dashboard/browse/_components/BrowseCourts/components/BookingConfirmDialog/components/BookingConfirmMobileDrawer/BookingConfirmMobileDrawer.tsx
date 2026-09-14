@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import {
   Drawer,
   DrawerContent,
@@ -34,15 +35,16 @@ export function BookingConfirmMobileDrawer({
   bankTransferInfo,
   confirmedTransferPending,
 }: BookingConfirmDialogProps) {
+  const t = useTranslations("BookingConfirmDialog");
   const paymentState = getBookingPaymentState(price);
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent onPointerDownOutside={(e) => e.preventDefault()}>
         <DrawerHeader>
-          <DrawerTitle>Confirm reservation</DrawerTitle>
+          <DrawerTitle>{t("title")}</DrawerTitle>
           <DrawerDescription className="sr-only">
-            Review your reservation details and confirm.
+            {t("description")}
           </DrawerDescription>
         </DrawerHeader>
 
@@ -63,26 +65,32 @@ export function BookingConfirmMobileDrawer({
           )}
 
           <p className="text-xs text-muted-foreground">
-            {getBookingConfirmMessage(paymentState, currency, selectedMethod)}
+            {getBookingConfirmMessage(
+              paymentState,
+              currency,
+              selectedMethod,
+              t,
+            )}
           </p>
 
           {selectedMethod === "TRANSFER" && bankTransferInfo && (
             <div className="flex flex-col gap-1 rounded-sm border bg-muted/40 p-3 text-xs">
               <p>
-                <span className="font-medium">Bank:</span>{" "}
+                <span className="font-medium">{t("bank")}</span>{" "}
                 {bankTransferInfo.bankName}
               </p>
               <p>
-                <span className="font-medium">CBU:</span> {bankTransferInfo.cbu}
+                <span className="font-medium">{t("cbu")}</span>{" "}
+                {bankTransferInfo.cbu}
               </p>
               {bankTransferInfo.alias && (
                 <p>
-                  <span className="font-medium">Alias:</span>{" "}
+                  <span className="font-medium">{t("alias")}</span>{" "}
                   {bankTransferInfo.alias}
                 </p>
               )}
               <p>
-                <span className="font-medium">WhatsApp:</span>{" "}
+                <span className="font-medium">{t("whatsapp")}</span>{" "}
                 {bankTransferInfo.whatsappNumber}
               </p>
             </div>

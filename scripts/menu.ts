@@ -38,7 +38,6 @@ import {
   cancelAndExit,
   intro,
   log,
-  note,
   outro,
 } from "./lib/prompt";
 import { describeTarget } from "./lib/style";
@@ -268,31 +267,25 @@ async function runApplyMigrations(): Promise<boolean> {
 }
 
 async function runResetData(): Promise<boolean> {
-  if (!(await loadEnv())) return false;
-  const { listResettableTables, wipeAllData } =
-    await import("./actions/reset-data");
-
-  const tables = await listResettableTables();
-  if (tables.length === 0) {
-    log.warn("No tables found — nothing to reset.");
-    return true;
-  }
-
-  note(
-    tables.map((name) => `- ${name}`).join("\n"),
-    `${tables.length} table(s) would be wiped (all rows, sequences reset to 1)`,
+  // Deliberately NOT loadEnv() — same reasoning as apply-migrations just
+  // above: this is the one other action that must NEVER silently reuse
+  // whichever database an earlier, unrelated action in this run happened
+  // to load. That was a real bug — this used to call loadEnv() like every
+  // read/write action, so once a database had been picked once this run,
+  // every later "Reset all data" ran against it directly with no new
+  // question and no visible warning. Always asking fresh here, and letting
+  // resetAllData() (scripts/actions/reset-data.ts) run the actual wipe in
+  // its own subprocess per call, is what makes a different answer each
+  // time actually take effect (loadEnv()'s cached Prisma client couldn't
+  // do that even if this DID re-ask).
+  const envFile = await askChoiceOrBack(
+    "Reset ALL data on which database?",
+    ENV_FILES,
   );
+  if (envFile === BACK) return false;
 
-  const confirmed = await askConfirm(
-    "This permanently deletes ALL rows in ALL tables above — cannot be undone. Continue?",
-    false,
-  );
-  if (!confirmed) {
-    log.warn("Cancelled — nothing was touched.");
-    return true;
-  }
-
-  await wipeAllData(tables);
+  const { resetAllData } = await import("./actions/reset-data");
+  await resetAllData(envFile);
   return true;
 }
 

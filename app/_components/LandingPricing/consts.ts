@@ -12,7 +12,5 @@ export { PLAN_ORDER } from "@/components/PlanSelectionModal/consts";
 export { formatCurrency } from "@/lib/utils/planPricing";
 export { ease } from "@/lib/consts/animation";
 
-// Local section copy — only used by LandingPricing itself.
-export const SECTION_HEADING = "Simple, Transparent Pricing";
-export const SECTION_SUBHEADING =
-  "Pick the plan that fits your club today, and upgrade any time as you grow.";
+// Section copy (heading/subheading/"per month" suffix) now lives in
+// messages/*.json under the "LandingPricing" namespace.

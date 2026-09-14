@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import {
   Dialog,
   DialogContent,
@@ -27,6 +28,7 @@ export function TournamentModal({
   tournamentId,
   onOpenChange,
 }: TournamentModalProps) {
+  const t = useTranslations("TournamentModal");
   const { user } = useAuth();
   const { data: tournament, isLoading } = useTournamentDetail(tournamentId);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
@@ -53,7 +55,9 @@ export function TournamentModal({
   return (
     <Dialog open={Boolean(tournamentId)} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl">
-        {isLoading && <p className="text-sm text-muted-foreground">Loading…</p>}
+        {isLoading && (
+          <p className="text-sm text-muted-foreground">{t("loading")}</p>
+        )}
 
         {tournament && (
           <>

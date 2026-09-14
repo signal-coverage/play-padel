@@ -1,13 +1,17 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import type { PlayerTournamentDetail } from "./types";
 
-async function fetchJson<T>(url: string): Promise<T> {
+async function fetchJson<T>(
+  url: string,
+  fallbackErrorMessage: string,
+): Promise<T> {
   const res = await fetch(url);
   if (!res.ok) {
     const body = await res.json().catch(() => null);
-    throw new Error(body?.error ?? "Something went wrong. Please try again.");
+    throw new Error(body?.error ?? fallbackErrorMessage);
   }
   return res.json();
 }
@@ -18,11 +22,13 @@ async function fetchJson<T>(url: string): Promise<T> {
  * other player tournament route.
  */
 export function useTournamentDetail(tournamentId: string | null) {
+  const t = useTranslations("TournamentModalData");
   return useQuery({
     queryKey: ["tournaments", "player-detail", tournamentId],
     queryFn: () =>
       fetchJson<{ tournament: PlayerTournamentDetail }>(
         `/api/tournaments/${tournamentId}`,
+        t("genericError"),
       ).then((data) => data.tournament),
     enabled: Boolean(tournamentId),
   });

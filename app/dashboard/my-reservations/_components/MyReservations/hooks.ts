@@ -1,15 +1,20 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { myReservationsBaseKey, myReservationsQueryKey } from "./consts";
 import { hasPendingPaymentHold, toPlayerReservation } from "./utils";
 import type { RawPlayerReservation } from "./types";
 
-async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
+async function fetchJson<T>(
+  url: string,
+  init: RequestInit | undefined,
+  fallbackErrorMessage: string,
+): Promise<T> {
   const res = await fetch(url, init);
   const body = await res.json().catch(() => null);
   if (!res.ok) {
-    throw new Error(body?.error ?? "Something went wrong. Please try again.");
+    throw new Error(body?.error ?? fallbackErrorMessage);
   }
   return body as T;
 }
@@ -24,11 +29,14 @@ async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
 const PENDING_HOLD_REFETCH_INTERVAL_MS = 5_000;
 
 export function useMyReservations(includePast: boolean) {
+  const t = useTranslations("MyReservationsData");
   return useQuery({
     queryKey: myReservationsQueryKey(includePast),
     queryFn: () =>
       fetchJson<{ reservations: RawPlayerReservation[] }>(
         `/api/player/reservations?includePast=${includePast}`,
+        undefined,
+        t("genericError"),
       ).then((d) => d.reservations.map(toPlayerReservation)),
     refetchInterval: (query) =>
       hasPendingPaymentHold(query.state.data)
@@ -38,10 +46,15 @@ export function useMyReservations(includePast: boolean) {
 }
 
 export function useCancelReservation() {
+  const t = useTranslations("MyReservationsData");
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) =>
-      fetchJson(`/api/player/reservations/${id}/cancel`, { method: "POST" }),
+      fetchJson(
+        `/api/player/reservations/${id}/cancel`,
+        { method: "POST" },
+        t("genericError"),
+      ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: myReservationsBaseKey });
     },

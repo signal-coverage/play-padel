@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { PlayerPicker } from "@/components/PlayerPicker";
 import { MAX_RESERVATION_PARTNERS } from "@/core/reservations/consts";
 import type { PartnerPickerProps } from "./types";
@@ -19,10 +20,11 @@ export function PartnerPicker({
   onChange,
   excludeUserId,
 }: PartnerPickerProps) {
+  const t = useTranslations("PartnerPicker");
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center justify-between">
-        <p className="text-sm font-medium">Playing with (optional)</p>
+        <p className="text-sm font-medium">{t("playingWith")}</p>
         <span className="text-xs text-muted-foreground">
           {selectedIds.length}/{MAX_RESERVATION_PARTNERS}
         </span>

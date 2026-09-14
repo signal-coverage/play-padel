@@ -1,20 +1,25 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { AUDIT_LOGS_PAGE_SIZE } from "./consts";
 import { toAuditLogRecord } from "./utils";
 import type { AuditLogFiltersState, RawAuditLogRecord } from "./types";
 
-async function fetchJson<T>(url: string): Promise<T> {
+async function fetchJson<T>(
+  url: string,
+  fallbackErrorMessage: string,
+): Promise<T> {
   const res = await fetch(url);
   const body = await res.json().catch(() => null);
   if (!res.ok) {
-    throw new Error(body?.error ?? "Something went wrong. Please try again.");
+    throw new Error(body?.error ?? fallbackErrorMessage);
   }
   return body as T;
 }
 
 export function useAuditLogs(filters: AuditLogFiltersState) {
+  const t = useTranslations("AuditLogsViewData");
   const params = new URLSearchParams();
   if (filters.entity) params.set("entity", filters.entity);
   if (filters.action) params.set("action", filters.action);
@@ -29,6 +34,7 @@ export function useAuditLogs(filters: AuditLogFiltersState) {
       // view rather than the owner-scoped app/api/clubs/audit-logs route.
       fetchJson<{ logs: RawAuditLogRecord[]; total: number }>(
         `/api/admin/audit-logs?${params.toString()}`,
+        t("genericError"),
       ).then((data) => ({
         logs: data.logs.map(toAuditLogRecord),
         total: data.total,

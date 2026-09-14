@@ -1,8 +1,10 @@
+import { useTranslations } from "next-intl";
 import { COURT_NET_TYPE_OPTIONS } from "./consts";
 import { getNetTypeOptionClassName } from "./styles";
 import type { NetTypeFieldProps } from "./types";
 
 export function NetTypeField({ name, value, onChange }: NetTypeFieldProps) {
+  const t = useTranslations("NetTypeField");
   return (
     <div className="flex flex-wrap gap-2">
       {COURT_NET_TYPE_OPTIONS.map((option) => (
@@ -18,7 +20,7 @@ export function NetTypeField({ name, value, onChange }: NetTypeFieldProps) {
             onChange={() => onChange(option.value)}
             className="sr-only"
           />
-          {option.label}
+          {t(option.labelKey)}
         </label>
       ))}
     </div>

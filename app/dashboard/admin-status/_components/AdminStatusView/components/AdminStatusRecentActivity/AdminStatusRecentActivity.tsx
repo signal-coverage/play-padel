@@ -1,22 +1,15 @@
 import { useMemo, useState } from "react";
 import { format } from "date-fns";
+import { useTranslations } from "next-intl";
 import { DataTable } from "@/components/DataTable";
 import { StatusBox } from "@/components/StatusBox";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { JOB_LABELS } from "../../consts";
+import { getJobLabel } from "../../utils";
 import { SystemJobErrorDialog } from "./components/SystemJobErrorDialog";
 import type { DataTableColumn } from "@/components/DataTable";
 import type { SystemJobLogRecord } from "../../types";
 import type { AdminStatusRecentActivityProps } from "./types";
-
-/** Falls back to the raw job name for any value outside the known set —
- * `SystemJobLog.name` is a plain string column, not an enum, so this stays
- * resilient to a stray/legacy value rather than throwing (mirrors
- * AuditLogsView/utils.ts's getActionLabel). */
-function getJobLabel(name: string): string {
-  return (JOB_LABELS as Record<string, string>)[name] ?? name;
-}
 
 /**
  * The last ~50 SystemJobLog entries across every job, newest first (see
@@ -26,6 +19,8 @@ export function AdminStatusRecentActivity({
   entries,
   isLoading,
 }: AdminStatusRecentActivityProps) {
+  const t = useTranslations("AdminStatusRecentActivity");
+  const tJobLabels = useTranslations("SystemJobLabels");
   // The row whose error is currently open in the detail modal — a single
   // piece of "which one" state (same pattern as RejectConfirmDialog's own
   // `target`), rather than one Dialog instance mounted per row.
@@ -37,38 +32,38 @@ export function AdminStatusRecentActivity({
     () => [
       {
         key: "when",
-        header: "When",
+        header: t("when"),
         className: "whitespace-nowrap tabular-nums text-muted-foreground",
         cell: (entry) => format(entry.createdAt, "MMM d, HH:mm:ss"),
         loadingCell: <Skeleton className="h-4 w-28" />,
       },
       {
         key: "job",
-        header: "Job",
-        cell: (entry) => getJobLabel(entry.name),
+        header: t("job"),
+        cell: (entry) => getJobLabel(entry.name, tJobLabels),
         loadingCell: <Skeleton className="h-4 w-40" />,
       },
       {
         key: "kind",
-        header: "Kind",
-        cell: (entry) => (entry.kind === "CRON" ? "Cron" : "Webhook"),
+        header: t("kind"),
+        cell: (entry) => (entry.kind === "CRON" ? t("cron") : t("webhook")),
         loadingCell: <Skeleton className="h-4 w-16" />,
       },
       {
         key: "status",
-        header: "Status",
+        header: t("status"),
         cell: (entry) => (
           <Badge
             variant={entry.status === "SUCCESS" ? "success" : "destructive"}
           >
-            {entry.status === "SUCCESS" ? "Success" : "Failure"}
+            {entry.status === "SUCCESS" ? t("success") : t("failure")}
           </Badge>
         ),
         loadingCell: <Skeleton className="h-5 w-20 rounded-full" />,
       },
       {
         key: "error",
-        header: "Error",
+        header: t("error"),
         className: "max-w-xs text-muted-foreground",
         // Always clickable when there IS an error, regardless of length —
         // `truncate` alone (the old behavior) made a long error impossible
@@ -90,7 +85,7 @@ export function AdminStatusRecentActivity({
         loadingCell: <Skeleton className="h-4 w-32" />,
       },
     ],
-    [],
+    [t, tJobLabels],
   );
 
   return (
@@ -110,8 +105,8 @@ export function AdminStatusRecentActivity({
         rows={entries}
         rowKey={(entry) => entry.id}
         isLoading={isLoading}
-        loadingLabel="Loading recent activity…"
-        emptyState={<StatusBox>No system job activity recorded yet.</StatusBox>}
+        loadingLabel={t("loading")}
+        emptyState={<StatusBox>{t("emptyState")}</StatusBox>}
       />
 
       <SystemJobErrorDialog
@@ -119,7 +114,9 @@ export function AdminStatusRecentActivity({
         onOpenChange={(open) => {
           if (!open) setSelectedEntry(null);
         }}
-        jobLabel={selectedEntry ? getJobLabel(selectedEntry.name) : ""}
+        jobLabel={
+          selectedEntry ? getJobLabel(selectedEntry.name, tJobLabels) : ""
+        }
         when={
           selectedEntry
             ? format(selectedEntry.createdAt, "MMM d, HH:mm:ss")

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 import { useAuth } from "@/hooks/use-auth";
 import type { AdminOnlyGuardProps } from "./types";
 
@@ -25,6 +26,7 @@ import type { AdminOnlyGuardProps } from "./types";
  * directly.
  */
 export function AdminOnlyGuard({ children }: AdminOnlyGuardProps) {
+  const t = useTranslations("AdminOnlyGuard");
   const { user, profileLoading, refetchProfile } = useAuth();
   const router = useRouter();
   // Distinct from `profileLoading` (which only reflects the FIRST /api/me
@@ -48,10 +50,10 @@ export function AdminOnlyGuard({ children }: AdminOnlyGuardProps) {
     if (!rechecked || profileLoading || hasRedirected.current) return;
     if (user?.isAdmin !== true) {
       hasRedirected.current = true;
-      toast.error("You no longer have admin access.");
+      toast.error(t("accessRevoked"));
       router.replace("/dashboard");
     }
-  }, [rechecked, profileLoading, user, router]);
+  }, [rechecked, profileLoading, user, router, t]);
 
   if (profileLoading || !rechecked || user?.isAdmin !== true) return null;
 

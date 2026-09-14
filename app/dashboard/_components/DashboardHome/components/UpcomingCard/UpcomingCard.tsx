@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import { DashboardBentoCard } from "@/components/DashboardBentoCard";
 import { cn } from "@/lib/utils/utils";
 import type { SystemRole } from "@/providers/auth-provider";
@@ -11,9 +12,10 @@ export function UpcomingCard({
   role: SystemRole;
   className?: string;
 }) {
+  const t = useTranslations("UpcomingCard");
   return (
     <DashboardBentoCard
-      title="Upcoming"
+      title={t("title")}
       animationDelay="380ms"
       className={cn("shrink-0 overflow-visible px-3", className)}
       contentClassName="flex flex-1 flex-col overflow-y-auto"

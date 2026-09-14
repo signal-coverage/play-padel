@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useMyReservations } from "@/app/dashboard/my-reservations/_components/MyReservations/hooks";
 import { getWeeklyCounts } from "../../../../utils";
 import { PLAYER_SESSION_RANGE_WEEKS } from "../../consts";
@@ -12,6 +13,7 @@ const ACTIVE_WEEKS_TONE_THRESHOLDS = { good: 70, watch: 40 };
 const HALF_RANGE_WEEKS = PLAYER_SESSION_RANGE_WEEKS / 2;
 
 export function PlayerSessionLoad() {
+  const t = useTranslations("PlayerSessionLoad");
   const { data: history = [] } = useMyReservations(true);
   const nonCancelled = history.filter((r) => r.status !== "CANCELLED");
 
@@ -38,10 +40,13 @@ export function PlayerSessionLoad() {
     <SessionLoadGauge
       percent={percent}
       tone={tone}
-      caption={`${activeWeeks}/${PLAYER_SESSION_RANGE_WEEKS} weeks active`}
+      caption={t("caption", {
+        activeWeeks,
+        totalWeeks: PLAYER_SESSION_RANGE_WEEKS,
+      })}
       trend={trend}
       hasData={nonCancelled.length > 0}
-      emptyMessage="Book a few matches and we'll start tracking your session load here."
+      emptyMessage={t("emptyMessage")}
     />
   );
 }

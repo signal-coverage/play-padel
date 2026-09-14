@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import { isSameMonth } from "date-fns";
+import { useTranslations } from "next-intl";
 import { useMyReservations } from "@/app/dashboard/my-reservations/_components/MyReservations/hooks";
 import { useAuth } from "@/hooks/use-auth";
 import { HeroShell } from "../HeroShell";
@@ -13,19 +14,16 @@ import {
 } from "../../utils";
 
 export function PlayerHero({ className }: { className?: string }) {
+  const t = useTranslations("PlayerHero");
   const { user } = useAuth();
   const { data: upcoming = [] } = useMyReservations(false);
   const { data: history = [] } = useMyReservations(true);
 
   const isEmpty = upcoming.length === 0;
 
-  const heading = isEmpty
-    ? "You don't have any matches booked yet"
-    : "Ready for your next match?";
-  const subheading = isEmpty
-    ? "Find a court and lock in your first session."
-    : undefined;
-  const ctaLabel = isEmpty ? "Browse Courts" : undefined;
+  const heading = isEmpty ? t("emptyHeading") : t("readyHeading");
+  const subheading = isEmpty ? t("emptySubheading") : undefined;
+  const ctaLabel = isEmpty ? t("browseCourts") : undefined;
 
   let children: ReactNode;
   if (!isEmpty) {
@@ -37,13 +35,13 @@ export function PlayerHero({ className }: { className?: string }) {
     const hoursPlayed = getHoursPlayed(nonCancelled);
     children = (
       <>
-        <StatPill label="Upcoming" value={String(upcoming.length)} />
-        <StatPill label="This Month" value={String(thisMonth.length)} />
-        <StatPill label="Favorite Court" value={favoriteCourt} />
-        <StatPill label="Hours Played" value={`${hoursPlayed}h`} />
+        <StatPill label={t("upcoming")} value={String(upcoming.length)} />
+        <StatPill label={t("thisMonth")} value={String(thisMonth.length)} />
+        <StatPill label={t("favoriteCourt")} value={favoriteCourt} />
+        <StatPill label={t("hoursPlayed")} value={`${hoursPlayed}h`} />
         {user?.createdAt && (
           <StatPill
-            label="Member Since"
+            label={t("memberSince")}
             value={getMemberSinceLabel(user.createdAt)}
           />
         )}

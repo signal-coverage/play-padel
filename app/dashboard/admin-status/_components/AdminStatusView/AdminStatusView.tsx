@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useSystemStatus } from "./hooks";
 import { AdminStatusSummary } from "./components/AdminStatusSummary";
 import { AdminStatusRecentActivity } from "./components/AdminStatusRecentActivity";
@@ -11,24 +12,22 @@ import { AdminStatusRecentActivity } from "./components/AdminStatusRecentActivit
  * page there was zero infrastructure tracking that at all.
  */
 export function AdminStatusView() {
+  const t = useTranslations("AdminStatusView");
   const { data, isLoading, isError } = useSystemStatus();
 
   return (
     <div className="flex h-full min-h-0 min-w-0 flex-col gap-6">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight text-balance">
-          System Status
+          {t("title")}
         </h1>
         <p className="mt-1 text-sm text-pretty text-muted-foreground">
-          Whether each cron job and webhook receiver is actually running and
-          succeeding.
+          {t("description")}
         </p>
       </div>
 
       {isError ? (
-        <p className="text-sm text-destructive">
-          Could not load system status. Try again later.
-        </p>
+        <p className="text-sm text-destructive">{t("loadError")}</p>
       ) : (
         <>
           <AdminStatusSummary
@@ -38,7 +37,7 @@ export function AdminStatusView() {
 
           <div className="flex min-h-0 flex-1 flex-col gap-2">
             <h2 className="text-sm font-semibold text-muted-foreground">
-              Recent activity
+              {t("recentActivity")}
             </h2>
             <AdminStatusRecentActivity
               entries={data?.recent ?? []}

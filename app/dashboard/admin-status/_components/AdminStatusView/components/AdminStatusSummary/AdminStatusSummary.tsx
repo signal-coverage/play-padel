@@ -1,9 +1,11 @@
 import { useMemo } from "react";
 import { format } from "date-fns";
+import { useTranslations } from "next-intl";
 import { DataTable } from "@/components/DataTable";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { JOB_LABELS, KNOWN_SYSTEM_JOBS } from "../../consts";
+import { KNOWN_SYSTEM_JOBS } from "../../consts";
+import { getJobLabel } from "../../utils";
 import type { DataTableColumn } from "@/components/DataTable";
 import type { SystemJobLogRecord } from "../../types";
 import type { AdminStatusSummaryProps } from "./types";
@@ -25,27 +27,30 @@ export function AdminStatusSummary({
   summary,
   isLoading,
 }: AdminStatusSummaryProps) {
+  const t = useTranslations("AdminStatusSummary");
+  const tJobLabels = useTranslations("SystemJobLabels");
+
   const rows: SummaryRow[] = useMemo(
     () =>
       KNOWN_SYSTEM_JOBS.map(({ name }) => ({
         name,
-        label: JOB_LABELS[name],
+        label: getJobLabel(name, tJobLabels),
         latest: summary[name] ?? null,
       })),
-    [summary],
+    [summary, tJobLabels],
   );
 
   const columns: DataTableColumn<SummaryRow>[] = useMemo(
     () => [
       {
         key: "job",
-        header: "Job",
+        header: t("job"),
         cell: (row) => row.label,
         loadingCell: <Skeleton className="h-4 w-40" />,
       },
       {
         key: "lastRun",
-        header: "Last run",
+        header: t("lastRun"),
         className: "whitespace-nowrap tabular-nums text-muted-foreground",
         cell: (row) =>
           row.latest ? format(row.latest.finishedAt, "MMM d, HH:mm") : "—",
@@ -53,7 +58,7 @@ export function AdminStatusSummary({
       },
       {
         key: "status",
-        header: "Status",
+        header: t("status"),
         cell: (row) =>
           row.latest ? (
             <Badge
@@ -61,15 +66,15 @@ export function AdminStatusSummary({
                 row.latest.status === "SUCCESS" ? "success" : "destructive"
               }
             >
-              {row.latest.status === "SUCCESS" ? "Success" : "Failure"}
+              {row.latest.status === "SUCCESS" ? t("success") : t("failure")}
             </Badge>
           ) : (
-            <Badge variant="outline">Never run</Badge>
+            <Badge variant="outline">{t("neverRun")}</Badge>
           ),
         loadingCell: <Skeleton className="h-5 w-20 rounded-full" />,
       },
     ],
-    [],
+    [t],
   );
 
   return (
@@ -78,7 +83,7 @@ export function AdminStatusSummary({
       rows={rows}
       rowKey={(row) => row.name}
       isLoading={isLoading}
-      loadingLabel="Loading system status…"
+      loadingLabel={t("loading")}
       loadingRowCount={KNOWN_SYSTEM_JOBS.length}
       emptyState={null}
     />

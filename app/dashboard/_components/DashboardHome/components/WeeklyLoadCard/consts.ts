@@ -1,11 +1,15 @@
-export const WEEKDAY_LABELS = [
-  "Mon",
-  "Tue",
-  "Wed",
-  "Thu",
-  "Fri",
-  "Sat",
-  "Sun",
+// Stable identifiers (never rendered directly) — components look these up
+// under the shared "Weekday" translation namespace's "short"/"full" keys
+// (see OwnerWeeklyLoad.tsx/PlayerWeeklyLoad.tsx) to get locale-appropriate
+// display text instead.
+export const WEEKDAY_KEYS = [
+  "mon",
+  "tue",
+  "wed",
+  "thu",
+  "fri",
+  "sat",
+  "sun",
 ] as const;
 
 /** Owner: sum booking volume per weekday over the trailing 4 weeks. */

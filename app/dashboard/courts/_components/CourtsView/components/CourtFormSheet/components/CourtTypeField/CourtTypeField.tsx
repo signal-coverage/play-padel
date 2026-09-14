@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import { COURT_TYPE_OPTIONS } from "./consts";
 import { getCourtTypeOptionClassName } from "./styles";
 import type { CourtTypeFieldProps } from "./types";
@@ -7,11 +8,12 @@ export function CourtTypeField({
   indoor,
   onChange,
 }: CourtTypeFieldProps) {
+  const t = useTranslations("CourtLabels");
   return (
     <div className="flex gap-2">
-      {COURT_TYPE_OPTIONS.map(({ value, label, Icon }) => (
+      {COURT_TYPE_OPTIONS.map(({ value, labelKey, Icon }) => (
         <label
-          key={label}
+          key={labelKey}
           className={getCourtTypeOptionClassName(indoor === value)}
         >
           <input
@@ -22,7 +24,7 @@ export function CourtTypeField({
             className="sr-only"
           />
           <Icon className="size-5" aria-hidden="true" />
-          {label}
+          {t(labelKey)}
         </label>
       ))}
     </div>

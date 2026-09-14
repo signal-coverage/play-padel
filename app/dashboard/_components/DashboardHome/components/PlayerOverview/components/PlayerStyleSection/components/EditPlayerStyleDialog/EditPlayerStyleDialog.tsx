@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Pencil } from "lucide-react";
+import { useTranslations } from "next-intl";
 import {
   Dialog,
   DialogContent,
@@ -28,6 +29,7 @@ import { useUpdatePlayerStyle } from "../../../../hooks";
 import type { DominantHand, PreferredSide } from "@/core/users/types";
 
 export function EditPlayerStyleDialog() {
+  const t = useTranslations("EditPlayerStyleDialog");
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [preferredSide, setPreferredSide] = useState<PreferredSide | undefined>(
@@ -61,14 +63,14 @@ export function EditPlayerStyleDialog() {
           variant="default"
           size="icon-xs"
           className="rounded-full shadow-card"
-          aria-label="Edit play style"
+          aria-label={t("editPlayStyle")}
         >
           <Pencil className="size-3" />
         </Button>
       </DialogTrigger>
       <DialogContent onPointerDownOutside={(e) => e.preventDefault()}>
         <DialogHeader>
-          <DialogTitle>Edit play style</DialogTitle>
+          <DialogTitle>{t("editPlayStyle")}</DialogTitle>
         </DialogHeader>
         <div className="flex flex-col gap-3">
           <div className="flex flex-col gap-1">
@@ -76,14 +78,14 @@ export function EditPlayerStyleDialog() {
               htmlFor="preferred-side"
               className="text-xs text-muted-foreground"
             >
-              Preferred side
+              {t("preferredSide")}
             </Label>
             <Select
               value={preferredSide}
               onValueChange={(v) => setPreferredSide(v as PreferredSide)}
             >
               <SelectTrigger id="preferred-side">
-                <SelectValue placeholder="Not set yet" />
+                <SelectValue placeholder={t("notSetYet")} />
               </SelectTrigger>
               <SelectContent>
                 {PREFERRED_SIDE_OPTIONS.map((option) => (
@@ -99,14 +101,14 @@ export function EditPlayerStyleDialog() {
               htmlFor="dominant-hand"
               className="text-xs text-muted-foreground"
             >
-              Dominant hand
+              {t("dominantHand")}
             </Label>
             <Select
               value={dominantHand}
               onValueChange={(v) => setDominantHand(v as DominantHand)}
             >
               <SelectTrigger id="dominant-hand">
-                <SelectValue placeholder="Not set yet" />
+                <SelectValue placeholder={t("notSetYet")} />
               </SelectTrigger>
               <SelectContent>
                 {DOMINANT_HAND_OPTIONS.map((option) => (
@@ -120,7 +122,7 @@ export function EditPlayerStyleDialog() {
         </div>
         <DialogFooter>
           <Button onClick={handleSave} disabled={isPending}>
-            Save
+            {t("save")}
           </Button>
         </DialogFooter>
       </DialogContent>

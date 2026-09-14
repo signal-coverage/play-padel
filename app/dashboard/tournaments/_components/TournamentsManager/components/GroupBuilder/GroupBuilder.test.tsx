@@ -3,10 +3,20 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent, cleanup } from "@testing-library/react";
 import { afterEach } from "vitest";
 import "@testing-library/jest-dom/vitest";
+import { NextIntlClientProvider } from "next-intl";
+import messages from "@/messages/en.json";
 import { GroupBuilder } from "./GroupBuilder";
 import type { CategoryGroup, CategoryTeam } from "../../types";
 
 afterEach(cleanup);
+
+function renderBuilder(props: React.ComponentProps<typeof GroupBuilder>) {
+  return render(
+    <NextIntlClientProvider locale="en" messages={messages}>
+      <GroupBuilder {...props} />
+    </NextIntlClientProvider>,
+  );
+}
 
 const TEAMS: CategoryTeam[] = [
   {
@@ -41,7 +51,7 @@ function baseProps() {
 describe("GroupBuilder", () => {
   it("calls onGenerateAutomatic when clicking the automatic button", () => {
     const props = baseProps();
-    render(<GroupBuilder {...props} />);
+    renderBuilder(props);
 
     fireEvent.click(
       screen.getByRole("button", { name: /generate groups automatically/i }),
@@ -52,7 +62,7 @@ describe("GroupBuilder", () => {
 
   it("disables Save groups until every team has an assignment", () => {
     const props = baseProps();
-    render(<GroupBuilder {...props} />);
+    renderBuilder(props);
 
     const saveButton = screen.getByRole("button", { name: /save groups/i });
     expect(saveButton).toBeDisabled();
@@ -70,7 +80,7 @@ describe("GroupBuilder", () => {
 
   it("calls onSaveManual with teams grouped by their selected group name", () => {
     const props = baseProps();
-    render(<GroupBuilder {...props} />);
+    renderBuilder(props);
 
     fireEvent.change(screen.getByLabelText(/group for alice \/ ana/i), {
       target: { value: "Group A" },
@@ -90,7 +100,7 @@ describe("GroupBuilder", () => {
     props.groups = [
       { id: "group_1", name: "Group A", position: 0, teamIds: ["t1", "t2"] },
     ];
-    render(<GroupBuilder {...props} />);
+    renderBuilder(props);
 
     expect(screen.getByText("Group A")).toBeInTheDocument();
     expect(screen.getByText("Alice / Ana")).toBeInTheDocument();
@@ -109,7 +119,7 @@ describe("GroupBuilder", () => {
       { id: "group_1", name: "Group A", position: 0, teamIds: ["t1"] },
     ];
     props.isLocked = true;
-    render(<GroupBuilder {...props} />);
+    renderBuilder(props);
 
     expect(
       screen.getByRole("button", { name: /groups locked/i }),

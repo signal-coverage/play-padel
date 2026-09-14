@@ -8,6 +8,8 @@ import {
   waitFor,
 } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
+import { NextIntlClientProvider } from "next-intl";
+import messages from "@/messages/en.json";
 import { PlayerEditSheet } from "./PlayerEditSheet";
 import type { PlayerListItem } from "../../types";
 
@@ -37,14 +39,16 @@ function renderSheet(
   const onSubmit = vi.fn().mockResolvedValue(undefined);
 
   render(
-    <PlayerEditSheet
-      open
-      onOpenChange={onOpenChange}
-      player={PLAYER}
-      onSubmit={onSubmit}
-      isSubmitting={false}
-      {...overrides}
-    />,
+    <NextIntlClientProvider locale="en" messages={messages}>
+      <PlayerEditSheet
+        open
+        onOpenChange={onOpenChange}
+        player={PLAYER}
+        onSubmit={onSubmit}
+        isSubmitting={false}
+        {...overrides}
+      />
+    </NextIntlClientProvider>,
   );
 
   return { onOpenChange, onSubmit };

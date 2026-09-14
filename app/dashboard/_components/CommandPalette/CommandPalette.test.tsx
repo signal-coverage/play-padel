@@ -9,6 +9,8 @@ import {
 } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { NextIntlClientProvider } from "next-intl";
+import messages from "@/messages/en.json";
 import { CommandPalette } from "./CommandPalette";
 import type { SystemRole } from "@/providers/auth-provider";
 
@@ -42,9 +44,11 @@ function renderCommandPalette(
   });
 
   render(
-    <QueryClientProvider client={queryClient}>
-      <CommandPalette role={role} />
-    </QueryClientProvider>,
+    <NextIntlClientProvider locale="en" messages={messages}>
+      <QueryClientProvider client={queryClient}>
+        <CommandPalette role={role} />
+      </QueryClientProvider>
+    </NextIntlClientProvider>,
   );
 
   // The dialog starts closed (controlled `open` state) — open it via the
