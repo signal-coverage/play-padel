@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useQueryState, parseAsString } from "nuqs";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { useReducedMotion } from "framer-motion";
 import { track } from "@vercel/analytics";
@@ -35,6 +36,7 @@ import { parseAsLocalDate } from "./utils";
 import type { SelectedSlot } from "./types";
 
 export function BrowseCourts() {
+  const t = useTranslations("BrowseCourts");
   // Synced to the URL (`?club=`, `?court=`, `?date=`) so the current browse
   // selection is shareable and survives a refresh. `defaultDate` keeps a
   // stable lazy "today" for as long as the URL doesn't already specify one,
@@ -119,7 +121,7 @@ export function BrowseCourts() {
     // until we actually know the club's real currency, so the dialog never
     // silently falls back to a wrong-currency default for a real payment.
     if (!currentClub) {
-      toast.error("Still loading club details, try again in a moment.");
+      toast.error(t("clubStillLoading"));
       return;
     }
     const court = courts?.find((c) => c.id === courtId);
@@ -170,16 +172,14 @@ export function BrowseCourts() {
         getBookingPaymentState(selected.price).kind === "pay-now";
 
       if (isTransferPending) {
-        toast.success(
-          "Slot held for 60 minutes — send your transfer and message the club.",
-        );
+        toast.success(t("transferPending"));
         track("booking_pending_transfer");
         trackAmplitude("booking_pending_transfer");
         setConfirmedTransferPending(true);
         return;
       }
 
-      toast.success("Reservation confirmed.");
+      toast.success(t("reservationConfirmed"));
       track("booking_confirmed");
       trackAmplitude("booking_confirmed");
       if (!shouldReduceMotion) {
@@ -189,9 +189,7 @@ export function BrowseCourts() {
       setPartnerIds([]);
       setSelectedPaymentMethod(null);
     } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : "Could not book this slot.",
-      );
+      toast.error(err instanceof Error ? err.message : t("bookingError"));
     }
   }
 
@@ -234,10 +232,8 @@ export function BrowseCourts() {
   return (
     <div className="flex flex-col gap-6 lg:h-full">
       <div className="shrink-0">
-        <h1 className="text-2xl font-semibold tracking-tight">Browse Courts</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Pick a club, then a court, then a free slot to reserve.
-        </p>
+        <h1 className="text-2xl font-semibold tracking-tight">{t("title")}</h1>
+        <p className="text-sm text-muted-foreground mt-1">{t("description")}</p>
       </div>
 
       <div className="w-full max-w-56 shrink-0">
@@ -260,7 +256,7 @@ export function BrowseCourts() {
                 className="w-fit"
                 onClick={handleBackToClubs}
               >
-                <ArrowLeft /> Back to clubs
+                <ArrowLeft /> {t("backToClubs")}
               </Button>
               {courtsPanel}
             </div>
@@ -274,7 +270,7 @@ export function BrowseCourts() {
                 className="w-fit"
                 onClick={() => setCourtId(null)}
               >
-                <ArrowLeft /> Back to courts
+                <ArrowLeft /> {t("backToCourts")}
               </Button>
               {schedulePanel}
             </div>

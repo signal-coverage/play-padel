@@ -9,6 +9,8 @@ import {
 } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { NextIntlClientProvider } from "next-intl";
+import messages from "@/messages/en.json";
 import { ClubSettingsView } from "./ClubSettingsView";
 
 const { toastMock } = vi.hoisted(() => ({
@@ -85,9 +87,11 @@ function renderView(
   });
 
   const utils = render(
-    <QueryClientProvider client={queryClient}>
-      <ClubSettingsView {...props} />
-    </QueryClientProvider>,
+    <NextIntlClientProvider locale="en" messages={messages}>
+      <QueryClientProvider client={queryClient}>
+        <ClubSettingsView {...props} />
+      </QueryClientProvider>
+    </NextIntlClientProvider>,
   );
 
   return { ...utils, fetchMock, queryClient };
@@ -218,9 +222,11 @@ describe("ClubSettingsView", () => {
       });
 
       const { rerender } = render(
-        <QueryClientProvider client={queryClient}>
-          <ClubSettingsView clubId="club_a" />
-        </QueryClientProvider>,
+        <NextIntlClientProvider locale="en" messages={messages}>
+          <QueryClientProvider client={queryClient}>
+            <ClubSettingsView clubId="club_a" />
+          </QueryClientProvider>
+        </NextIntlClientProvider>,
       );
 
       await waitFor(() =>
@@ -228,9 +234,11 @@ describe("ClubSettingsView", () => {
       );
 
       rerender(
-        <QueryClientProvider client={queryClient}>
-          <ClubSettingsView clubId="club_b" />
-        </QueryClientProvider>,
+        <NextIntlClientProvider locale="en" messages={messages}>
+          <QueryClientProvider client={queryClient}>
+            <ClubSettingsView clubId="club_b" />
+          </QueryClientProvider>
+        </NextIntlClientProvider>,
       );
 
       await waitFor(() =>

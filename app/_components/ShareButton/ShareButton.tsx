@@ -2,15 +2,18 @@
 
 import { Share2 } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
-import { SHARE_DATA } from "./consts";
+import { SHARE_URL } from "./consts";
 
 export function ShareButton() {
+  const t = useTranslations("ShareButton");
+
   async function handleShare() {
     const shareData = {
-      ...SHARE_DATA,
-      url:
-        typeof window !== "undefined" ? window.location.href : SHARE_DATA.url,
+      title: "Play Padel",
+      text: t("shareText"),
+      url: typeof window !== "undefined" ? window.location.href : SHARE_URL,
     };
 
     if (typeof navigator !== "undefined" && navigator.share) {
@@ -18,7 +21,7 @@ export function ShareButton() {
         await navigator.share(shareData);
       } catch (error) {
         if ((error as Error)?.name !== "AbortError") {
-          toast.error("Couldn't share this page. Try again.");
+          toast.error(t("shareErrorGeneric"));
         }
       }
       return;
@@ -26,9 +29,9 @@ export function ShareButton() {
 
     try {
       await navigator.clipboard.writeText(shareData.url);
-      toast.success("Link copied to clipboard");
+      toast.success(t("linkCopied"));
     } catch {
-      toast.error("Couldn't copy the link. Try again.");
+      toast.error(t("copyError"));
     }
   }
 
@@ -41,7 +44,7 @@ export function ShareButton() {
       className="gap-1.5 text-white/45 hover:bg-white/10 hover:text-white/80"
     >
       <Share2 size={14} strokeWidth={2.25} />
-      Share
+      {t("share")}
     </Button>
   );
 }

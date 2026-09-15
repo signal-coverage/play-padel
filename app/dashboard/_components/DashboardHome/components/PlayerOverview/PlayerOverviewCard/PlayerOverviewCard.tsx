@@ -1,12 +1,14 @@
+import { useTranslations } from "next-intl";
 import { DashboardBentoCard } from "@/components/DashboardBentoCard";
 import { cn } from "@/lib/utils/utils";
 import { PlayerOverviewContent } from "../PlayerOverviewContent";
 import type { PlayerOverviewCardProps } from "./types";
 
 export function PlayerOverviewCard({ className }: PlayerOverviewCardProps) {
+  const t = useTranslations("PlayerOverviewCard");
   return (
     <DashboardBentoCard
-      title="Player Overview"
+      title={t("title")}
       animationDelay="180ms"
       className={cn(
         "flex h-full w-70 shrink-0 flex-col gap-4 overflow-hidden",

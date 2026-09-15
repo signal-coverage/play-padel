@@ -9,6 +9,8 @@ import {
 } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { NextIntlClientProvider } from "next-intl";
+import messages from "@/messages/en.json";
 import { ClubClosuresCard } from "./ClubClosuresCard";
 
 const toastSuccess = vi.fn();
@@ -95,9 +97,11 @@ function renderCard({
   });
 
   const utils = render(
-    <QueryClientProvider client={queryClient}>
-      <ClubClosuresCard />
-    </QueryClientProvider>,
+    <NextIntlClientProvider locale="en" messages={messages}>
+      <QueryClientProvider client={queryClient}>
+        <ClubClosuresCard />
+      </QueryClientProvider>
+    </NextIntlClientProvider>,
   );
 
   return { ...utils, fetchMock, queryClient };

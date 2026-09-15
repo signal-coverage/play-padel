@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { BouncingBall } from "@/components/BouncingBall";
 import { DataTable } from "@/components/DataTable";
 import { Badge } from "@/components/ui/badge";
@@ -21,12 +22,18 @@ export function AdminClubList({
   selectedClubId,
   onSelectClub,
 }: AdminClubListProps) {
+  const t = useTranslations("AdminClubList");
+  const healthIssueMessages = {
+    mpTokenIssue: t("mpTokenIssue"),
+    membershipPastDue: t("membershipPastDue"),
+    noOperatingHours: t("noOperatingHours"),
+  };
   const columns: DataTableColumn<AdminClubListItem>[] = [
     {
       key: "club",
-      header: "Club",
+      header: t("columnHeader"),
       cell: (club) => {
-        const healthWarning = getClubHealthWarning(club);
+        const healthWarning = getClubHealthWarning(club, healthIssueMessages);
         return (
           <div className="flex flex-col gap-1 py-0.5">
             <span className="font-medium">{club.name}</span>
@@ -40,7 +47,7 @@ export function AdminClubList({
                   variant="outline"
                   className="border-warning text-warning"
                 >
-                  Free
+                  {t("freeBadge")}
                 </Badge>
               )}
               {healthWarning && (
@@ -61,7 +68,10 @@ export function AdminClubList({
     },
   ];
 
-  const clubsNeedingAttention = countClubsNeedingAttention(clubs);
+  const clubsNeedingAttention = countClubsNeedingAttention(
+    clubs,
+    healthIssueMessages,
+  );
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-2">
@@ -74,8 +84,8 @@ export function AdminClubList({
             stroke="color-mix(in oklch, var(--destructive) 70%, black)"
           />
           {clubsNeedingAttention === 1
-            ? "1 club needs attention"
-            : `${clubsNeedingAttention} clubs need attention`}
+            ? t("needsAttentionOne")
+            : t("needsAttentionMany", { count: clubsNeedingAttention })}
         </p>
       )}
 
@@ -93,8 +103,8 @@ export function AdminClubList({
         rows={clubs}
         rowKey={(club) => club.id}
         isLoading={isLoading}
-        loadingLabel="Loading clubs…"
-        emptyState={<StatusBox>No clubs found.</StatusBox>}
+        loadingLabel={t("loadingClubs")}
+        emptyState={<StatusBox>{t("noClubsFound")}</StatusBox>}
         onRowClick={(club) => onSelectClub(club.id)}
         isRowSelected={(club) => club.id === selectedClubId}
       />

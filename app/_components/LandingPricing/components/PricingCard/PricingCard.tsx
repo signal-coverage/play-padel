@@ -1,4 +1,5 @@
 import { Check } from "lucide-react";
+import { useTranslations } from "next-intl";
 import {
   PLAN_DETAILS,
   PLAN_EMPHASIS,
@@ -14,6 +15,7 @@ import type { PricingCardProps } from "./types";
 // card has no selection state, so it always renders at full emphasis
 // instead of switching between a "selected" and a muted variant.
 export function PricingCard({ plan }: PricingCardProps) {
+  const t = useTranslations("LandingPricing");
   const details = PLAN_DETAILS[plan];
   const emphasis = PLAN_EMPHASIS[plan];
   const Icon = PLAN_ICONS[plan];
@@ -36,7 +38,11 @@ export function PricingCard({ plan }: PricingCardProps) {
         </div>
 
         <div>
-          <p className="text-lg font-bold text-foreground">{plan}</p>
+          {/* h3: nested under LandingPricing's own h2 ("Simple, Transparent
+              Pricing") — each tier is a genuine subsection of that heading,
+              not just styled text, so a heading tag is the correct
+              (and SEO-relevant) semantic here rather than a <p>. */}
+          <h3 className="text-lg font-bold text-foreground">{plan}</h3>
           <p className="mt-1 text-sm text-muted-foreground">
             {details.tagline}
           </p>
@@ -47,7 +53,7 @@ export function PricingCard({ plan }: PricingCardProps) {
             <p className="text-3xl font-bold text-foreground">
               {formatCurrency(details.monthlyPrice as number)}{" "}
               <span className="text-sm font-normal text-muted-foreground">
-                / month
+                {t("perMonth")}
               </span>
             </p>
           ) : (

@@ -37,8 +37,11 @@ export async function logSystemJob(params: LogSystemJobParams): Promise<void> {
       await notifyAllAdmins({
         type: "SYSTEM_JOB_FAILED",
         clubId: null,
-        subject: "A background job failed",
-        html: `Job ${params.kind}/${params.name} failed: ${params.errorMessage ?? "unknown error"}.`,
+        params: {
+          kind: params.kind,
+          name: params.name,
+          errorMessage: params.errorMessage ?? "unknown error",
+        },
         sendEmail: false,
       });
     } catch (err) {

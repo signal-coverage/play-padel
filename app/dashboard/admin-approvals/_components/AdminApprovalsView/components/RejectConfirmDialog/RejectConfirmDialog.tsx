@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import type { RejectConfirmDialogProps } from "./types";
 
@@ -15,15 +16,16 @@ export function RejectConfirmDialog({
   isSubmitting,
   onConfirm,
 }: RejectConfirmDialogProps) {
+  const t = useTranslations("RejectConfirmDialog");
   return (
     <ConfirmDialog
       open={open}
       onOpenChange={onOpenChange}
-      title="Reject this club?"
+      title={t("title")}
       description={target ? `${target.name} · ${target.email}` : undefined}
-      cancelLabel="Keep pending"
-      confirmLabel="Reject club"
-      pendingLabel="Rejecting…"
+      cancelLabel={t("cancelLabel")}
+      confirmLabel={t("confirmLabel")}
+      pendingLabel={t("pendingLabel")}
       isPending={isSubmitting}
       onConfirm={onConfirm}
     />

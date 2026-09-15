@@ -2,9 +2,20 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
+import { NextIntlClientProvider } from "next-intl";
+import messages from "@/messages/en.json";
 import { SystemJobErrorDialog } from "./SystemJobErrorDialog";
+import type { ComponentProps } from "react";
 
 const LONG_ERROR = "boom: ".repeat(200);
+
+function renderDialog(props: ComponentProps<typeof SystemJobErrorDialog>) {
+  return render(
+    <NextIntlClientProvider locale="en" messages={messages}>
+      <SystemJobErrorDialog {...props} />
+    </NextIntlClientProvider>,
+  );
+}
 
 afterEach(() => {
   cleanup();
@@ -13,29 +24,25 @@ afterEach(() => {
 
 describe("SystemJobErrorDialog", () => {
   it("renders nothing when closed", () => {
-    render(
-      <SystemJobErrorDialog
-        open={false}
-        onOpenChange={vi.fn()}
-        jobLabel="Clerk webhook"
-        when="Sep 10, 12:00:00"
-        errorMessage="Something failed"
-      />,
-    );
+    renderDialog({
+      open: false,
+      onOpenChange: vi.fn(),
+      jobLabel: "Clerk webhook",
+      when: "Sep 10, 12:00:00",
+      errorMessage: "Something failed",
+    });
 
     expect(screen.queryByText("Error details")).not.toBeInTheDocument();
   });
 
   it("shows the job label, timestamp, and the complete error message when open", () => {
-    render(
-      <SystemJobErrorDialog
-        open
-        onOpenChange={vi.fn()}
-        jobLabel="Clerk webhook"
-        when="Sep 10, 12:00:00"
-        errorMessage={LONG_ERROR}
-      />,
-    );
+    renderDialog({
+      open: true,
+      onOpenChange: vi.fn(),
+      jobLabel: "Clerk webhook",
+      when: "Sep 10, 12:00:00",
+      errorMessage: LONG_ERROR,
+    });
 
     expect(screen.getByText("Error details")).toBeInTheDocument();
     expect(
@@ -53,15 +60,13 @@ describe("SystemJobErrorDialog", () => {
     const writeText = vi.fn().mockResolvedValue(undefined);
     Object.assign(navigator, { clipboard: { writeText } });
 
-    render(
-      <SystemJobErrorDialog
-        open
-        onOpenChange={vi.fn()}
-        jobLabel="Clerk webhook"
-        when="Sep 10, 12:00:00"
-        errorMessage="Signature verification failed"
-      />,
-    );
+    renderDialog({
+      open: true,
+      onOpenChange: vi.fn(),
+      jobLabel: "Clerk webhook",
+      when: "Sep 10, 12:00:00",
+      errorMessage: "Signature verification failed",
+    });
 
     fireEvent.click(screen.getByRole("button", { name: /copy/i }));
 
@@ -73,15 +78,13 @@ describe("SystemJobErrorDialog", () => {
 
   it("calls onOpenChange(false) when Close is clicked", () => {
     const onOpenChange = vi.fn();
-    render(
-      <SystemJobErrorDialog
-        open
-        onOpenChange={onOpenChange}
-        jobLabel="Clerk webhook"
-        when="Sep 10, 12:00:00"
-        errorMessage="Signature verification failed"
-      />,
-    );
+    renderDialog({
+      open: true,
+      onOpenChange,
+      jobLabel: "Clerk webhook",
+      when: "Sep 10, 12:00:00",
+      errorMessage: "Signature verification failed",
+    });
 
     fireEvent.click(screen.getByRole("button", { name: /^close$/i }));
 
@@ -93,15 +96,13 @@ describe("SystemJobErrorDialog", () => {
       clipboard: { writeText: vi.fn().mockRejectedValue(new Error("nope")) },
     });
 
-    render(
-      <SystemJobErrorDialog
-        open
-        onOpenChange={vi.fn()}
-        jobLabel="Clerk webhook"
-        when="Sep 10, 12:00:00"
-        errorMessage="Signature verification failed"
-      />,
-    );
+    renderDialog({
+      open: true,
+      onOpenChange: vi.fn(),
+      jobLabel: "Clerk webhook",
+      when: "Sep 10, 12:00:00",
+      errorMessage: "Signature verification failed",
+    });
 
     expect(() => {
       fireEvent.click(screen.getByRole("button", { name: /copy/i }));

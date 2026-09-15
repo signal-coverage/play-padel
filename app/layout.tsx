@@ -1,15 +1,17 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Public_Sans, JetBrains_Mono, Space_Grotesk } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import { ui } from "@clerk/ui";
+import { NextIntlClientProvider } from "next-intl";
 import { AuthProvider } from "@/providers/auth-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { SuccessCelebrationPortal } from "@/components/SuccessCelebration";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ThemeFavicon } from "@/components/theme-favicon";
 import { LocatorSetup } from "@/components/locator-setup";
+import { getUserLocale } from "@/i18n/locale";
 import "./globals.css";
 
 const publicSans = Public_Sans({
@@ -43,6 +45,10 @@ const structuredData = {
   description: APP_DESCRIPTION,
   applicationCategory: "SportsApplication",
   url: APP_URL,
+  // Cookie-based i18n (see i18n/request.ts) — the same URL renders in
+  // either language, so this lists both rather than pointing at separate
+  // localized URLs the way a `sameAs`/`workTranslation` pair normally would.
+  inLanguage: ["en", "es"],
   offers: {
     "@type": "Offer",
     category: "SaaS",
@@ -51,25 +57,44 @@ const structuredData = {
 
 export const metadata: Metadata = {
   metadataBase: new URL(APP_URL),
-  title: APP_NAME,
+  title: {
+    default: `${APP_NAME} — Book Padel Courts Online`,
+    // Lets a future non-landing route (e.g. a club's public profile page)
+    // set its own <title> while keeping "Play Padel" attached, without
+    // every route having to repeat the brand name itself.
+    template: `%s | ${APP_NAME}`,
+  },
   description: APP_DESCRIPTION,
   applicationName: APP_NAME,
   appleWebApp: {
     title: APP_NAME,
   },
   manifest: "/light/site.webmanifest",
+  alternates: {
+    canonical: APP_URL,
+  },
   openGraph: {
     title: APP_NAME,
     description: APP_DESCRIPTION,
     siteName: APP_NAME,
-    images: ["/light/logo.png"],
+    url: APP_URL,
     type: "website",
+    locale: "en_US",
+    // Cookie-based, not URL-based — see i18n/request.ts — so there's no
+    // second URL to list here for Spanish; this just tells crawlers the
+    // page can also render in es.
+    alternateLocale: ["es_AR"],
+    // No `images` here — app/opengraph-image.tsx (the file-convention
+    // route) generates a real 1200x630 branded card and Next wires up the
+    // og:image tags for it automatically; listing a second, smaller image
+    // here would only add a redundant, lower-quality fallback.
   },
   twitter: {
-    card: "summary",
+    // large-image card to match the 1200x630 image opengraph-image.tsx
+    // generates — "summary"'s small thumbnail undersells a real card.
+    card: "summary_large_image",
     title: APP_NAME,
     description: APP_DESCRIPTION,
-    images: ["/light/logo.png"],
   },
   icons: {
     icon: [
@@ -96,14 +121,26 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+// Separate from `metadata` per the App Router's own split (viewport-related
+// tags can't be part of `metadata` since Next 14) — themeColor matches the
+// landing page's pinned light theme background (see app/globals.css's
+// `.theme-light` tokens), so the browser chrome/status bar on mobile reads
+// as part of the page instead of defaulting to plain white or black.
+export const viewport: Viewport = {
+  themeColor: "#ffffff",
+  colorScheme: "light",
+};
+
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const locale = await getUserLocale();
+
   return (
     <html
-      lang="en"
+      lang={locale}
       className={`${publicSans.variable} ${jetbrainsMono.variable} ${spaceGrotesk.variable} antialiased`}
       suppressHydrationWarning
     >
@@ -124,7 +161,9 @@ export default function RootLayout({
             enableSystem={false}
           >
             <ThemeFavicon />
-            <AuthProvider>{children}</AuthProvider>
+            <NextIntlClientProvider>
+              <AuthProvider>{children}</AuthProvider>
+            </NextIntlClientProvider>
             <Toaster position="bottom-right" />
             <SuccessCelebrationPortal />
           </ThemeProvider>

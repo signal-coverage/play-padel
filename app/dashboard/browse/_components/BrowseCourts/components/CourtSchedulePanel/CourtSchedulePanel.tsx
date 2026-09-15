@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { CourtAvailabilityGrid } from "@/components/CourtAvailabilityGrid";
 import { StatusBox } from "@/components/StatusBox";
 import type { CourtSchedulePanelProps } from "./types";
@@ -15,6 +16,11 @@ export function CourtSchedulePanel({
   isError,
   rowCount,
 }: CourtSchedulePanelProps) {
+  const t = useTranslations("CourtSchedulePanel");
+  // Reuses ClubCourtsPanel's "Sort by" translation below so the invisible
+  // spacer row (see comment further down) keeps matching that column's real
+  // label width in every locale, not just English.
+  const tSortBy = useTranslations("ClubCourtsPanel");
   // Check `isLoading` before `selectedCourt`: on a shared `?court=` URL the
   // court list is still being fetched (so `selectedCourt` is briefly null)
   // and the panel must show the grid's own loading skeleton, not this
@@ -39,12 +45,12 @@ export function CourtSchedulePanel({
         className="invisible hidden flex-col gap-1.5 lg:flex"
         aria-hidden="true"
       >
-        <span className="text-xs font-medium">Sort by</span>
+        <span className="text-xs font-medium">{tSortBy("sortBy")}</span>
         <div className="h-8" />
       </div>
       {showEmptyMessage ? (
         <StatusBox className="flex min-h-0 flex-1 flex-col items-center justify-center">
-          Select a court to see its schedule.
+          {t("selectCourtPrompt")}
         </StatusBox>
       ) : (
         <div className="min-h-0 flex-1 lg:-mt-3">

@@ -1,9 +1,11 @@
+import { useTranslations } from "next-intl";
 import { COURT_COLOR_OPTIONS } from "./consts";
 import { CUSTOM_SWATCH_BACKGROUND, getColorSwatchClassName } from "./styles";
 import { isPresetColor } from "./utils";
 import type { ColorFieldProps } from "./types";
 
 export function ColorField({ name, value, onChange }: ColorFieldProps) {
+  const t = useTranslations("ColorField");
   const isCustom = !isPresetColor(value);
 
   return (
@@ -15,7 +17,7 @@ export function ColorField({ name, value, onChange }: ColorFieldProps) {
             !isCustom && value === option.value,
           )}
           style={{ background: option.value }}
-          title={option.label}
+          title={t(option.labelKey)}
         >
           <input
             type="radio"
@@ -25,14 +27,14 @@ export function ColorField({ name, value, onChange }: ColorFieldProps) {
             onChange={() => onChange(option.value)}
             className="sr-only"
           />
-          <span className="sr-only">{option.label}</span>
+          <span className="sr-only">{t(option.labelKey)}</span>
         </label>
       ))}
 
       <label
         className={getColorSwatchClassName(isCustom)}
         style={{ background: isCustom ? value : CUSTOM_SWATCH_BACKGROUND }}
-        title="Custom color"
+        title={t("customColor")}
       >
         <input
           type="color"
@@ -40,7 +42,7 @@ export function ColorField({ name, value, onChange }: ColorFieldProps) {
           onChange={(event) => onChange(event.target.value)}
           className="sr-only"
         />
-        <span className="sr-only">Custom color</span>
+        <span className="sr-only">{t("customColor")}</span>
       </label>
     </div>
   );

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import type { CreateClosureInput } from "@/core/courts/types";
 import type { RawClubClosure } from "./types";
@@ -13,22 +14,29 @@ const ACTIVE_COURT_IDS_QUERY_KEY = [
   "active-ids",
 ] as const;
 
-async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
+async function fetchJson<T>(
+  url: string,
+  init: RequestInit | undefined,
+  fallbackErrorMessage: string,
+): Promise<T> {
   const res = await fetch(url, init);
   if (!res.ok) {
     const body = await res.json().catch(() => null);
-    throw new Error(body?.error ?? "Something went wrong. Please try again.");
+    throw new Error(body?.error ?? fallbackErrorMessage);
   }
   return res.json();
 }
 
 export function useClubClosures() {
+  const t = useTranslations("ClubClosuresCardData");
   return useQuery({
     queryKey: CLUB_CLOSURES_QUERY_KEY,
     queryFn: () =>
-      fetchJson<{ closures: RawClubClosure[] }>("/api/clubs/closures").then(
-        (data) => data.closures.map(toClubClosure),
-      ),
+      fetchJson<{ closures: RawClubClosure[] }>(
+        "/api/clubs/closures",
+        undefined,
+        t("genericError"),
+      ).then((data) => data.closures.map(toClubClosure)),
   });
 }
 
@@ -38,12 +46,15 @@ export function useClubClosures() {
 // full management table. Only the ids are needed here, to fan the closure
 // creation mutation out over every one of them.
 export function useActiveCourtIds() {
+  const t = useTranslations("ClubClosuresCardData");
   return useQuery({
     queryKey: ACTIVE_COURT_IDS_QUERY_KEY,
     queryFn: () =>
-      fetchJson<{ courts: { id: string }[] }>("/api/clubs/courts").then(
-        (data) => data.courts.map((court) => court.id),
-      ),
+      fetchJson<{ courts: { id: string }[] }>(
+        "/api/clubs/courts",
+        undefined,
+        t("genericError"),
+      ).then((data) => data.courts.map((court) => court.id)),
   });
 }
 
@@ -52,6 +63,7 @@ export function useActiveCourtIds() {
 // court via Promise.allSettled and aggregates the per-court outcomes into
 // one summary toast itself (see core/courts/utils/closureFanOut.ts).
 export function useCreateClubClosure() {
+  const t = useTranslations("ClubClosuresCardData");
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({
@@ -68,6 +80,7 @@ export function useCreateClubClosure() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(input),
         },
+        t("genericError"),
       ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: CLUB_CLOSURES_QUERY_KEY });
@@ -81,6 +94,7 @@ export function useCreateClubClosure() {
 // "club closure" entity to cancel instead) — this hook only differs from
 // useCancelCourtClosure in which query key it invalidates on success.
 export function useCancelClubClosure() {
+  const t = useTranslations("ClubClosuresCardData");
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({
@@ -93,10 +107,11 @@ export function useCancelClubClosure() {
       fetchJson<{ closure: RawClubClosure }>(
         `/api/clubs/courts/${courtId}/closures/${closureId}/cancel`,
         { method: "POST" },
+        t("genericError"),
       ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: CLUB_CLOSURES_QUERY_KEY });
-      toast.success("Closure cancelled");
+      toast.success(t("closureCancelled"));
     },
     onError: (error: Error) => toast.error(error.message),
   });

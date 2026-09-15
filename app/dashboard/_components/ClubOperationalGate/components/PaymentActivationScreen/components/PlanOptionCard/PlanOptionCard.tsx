@@ -2,6 +2,7 @@
 
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Check } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils/utils";
 import {
@@ -68,6 +69,7 @@ export function PlanOptionCard({
   index,
   ref,
 }: PlanOptionCardProps) {
+  const t = useTranslations("PlanOptionCard");
   const shouldReduce = useReducedMotion();
   const details = PLAN_DETAILS[plan];
   const emphasis = PLAN_EMPHASIS[plan];
@@ -155,7 +157,7 @@ export function PlanOptionCard({
                 }
                 className="absolute top-6 right-6 inline-flex w-fit items-center rounded-full bg-success/10 px-2.5 py-1 text-xs font-medium text-success"
               >
-                Save {savingsMonths} months
+                {t("saveMonths", { months: savingsMonths })}
               </motion.span>
             )}
           </AnimatePresence>
@@ -174,7 +176,7 @@ export function PlanOptionCard({
             <p className="text-lg font-bold text-foreground">{plan}</p>
             {plan === "PRO" && (
               <span className="inline-flex items-center rounded-full bg-warning/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-warning">
-                Most Popular
+                {t("mostPopular")}
               </span>
             )}
           </div>
@@ -195,7 +197,7 @@ export function PlanOptionCard({
                     <p className="text-3xl font-bold text-foreground">
                       {formatCurrency(displayedMonthlyPrice as number)}{" "}
                       <span className="text-sm font-normal text-muted-foreground">
-                        / month
+                        {t("perMonth")}
                       </span>
                     </p>
                     {isAnnual && (
@@ -203,8 +205,9 @@ export function PlanOptionCard({
                         <span className="line-through">
                           {formatCurrency(details.monthlyPrice as number)}
                         </span>{" "}
-                        {formatCurrency(details.annualPrice as number)} billed
-                        annually
+                        {t("billedAnnually", {
+                          price: formatCurrency(details.annualPrice as number),
+                        })}
                       </p>
                     )}
                   </>

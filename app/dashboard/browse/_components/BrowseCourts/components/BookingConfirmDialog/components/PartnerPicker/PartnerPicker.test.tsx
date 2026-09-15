@@ -9,6 +9,8 @@ import {
 } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { NextIntlClientProvider } from "next-intl";
+import messages from "@/messages/en.json";
 import { PartnerPicker } from "./PartnerPicker";
 
 afterEach(() => {
@@ -39,12 +41,14 @@ function renderPicker(
   const onChange = vi.fn();
   render(
     <QueryClientProvider client={queryClient}>
-      <PartnerPicker
-        selectedIds={[]}
-        onChange={onChange}
-        excludeUserId="me"
-        {...overrides}
-      />
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <PartnerPicker
+          selectedIds={[]}
+          onChange={onChange}
+          excludeUserId="me"
+          {...overrides}
+        />
+      </NextIntlClientProvider>
     </QueryClientProvider>,
   );
   return { onChange };
@@ -136,7 +140,13 @@ describe("PartnerPicker", () => {
     });
     render(
       <QueryClientProvider client={queryClient}>
-        <PartnerPicker selectedIds={[]} onChange={vi.fn()} excludeUserId="me" />
+        <NextIntlClientProvider locale="en" messages={messages}>
+          <PartnerPicker
+            selectedIds={[]}
+            onChange={vi.fn()}
+            excludeUserId="me"
+          />
+        </NextIntlClientProvider>
       </QueryClientProvider>,
     );
 

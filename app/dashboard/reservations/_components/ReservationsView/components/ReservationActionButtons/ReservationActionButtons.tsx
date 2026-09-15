@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { GuardedActionButton } from "@/components/GuardedActionButton";
 import type { ReservationActionButtonsProps } from "./types";
 
@@ -23,6 +24,7 @@ export function ReservationActionButtons({
   size = "default",
   showConfirmTransfer = false,
 }: ReservationActionButtonsProps) {
+  const t = useTranslations("ReservationActionButtons");
   return (
     <>
       {showConfirmTransfer && (
@@ -33,7 +35,7 @@ export function ReservationActionButtons({
           isPending={isPending}
           onClick={() => onAction(reservationId, "confirmTransfer")}
         >
-          Confirm transfer
+          {t("confirmTransfer")}
         </GuardedActionButton>
       )}
       <GuardedActionButton
@@ -43,7 +45,7 @@ export function ReservationActionButtons({
         isPending={isPending}
         onClick={() => onAction(reservationId, "complete")}
       >
-        Complete
+        {t("complete")}
       </GuardedActionButton>
       <GuardedActionButton
         type="button"
@@ -52,7 +54,7 @@ export function ReservationActionButtons({
         isPending={isPending}
         onClick={() => onAction(reservationId, "noShow")}
       >
-        No-show
+        {t("noShow")}
       </GuardedActionButton>
       <GuardedActionButton
         type="button"
@@ -61,7 +63,7 @@ export function ReservationActionButtons({
         isPending={isPending}
         onClick={() => onAction(reservationId, "cancel")}
       >
-        Cancel
+        {t("cancel")}
       </GuardedActionButton>
     </>
   );

@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import { DataTable } from "@/components/DataTable";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -21,10 +22,11 @@ export function AdminSearchClubResults({
   isLoading,
   onSelectClub,
 }: AdminSearchClubResultsProps) {
+  const t = useTranslations("AdminSearchClubResults");
   const columns: DataTableColumn<AdminSearchClubResult>[] = [
     {
       key: "club",
-      header: "Club",
+      header: t("clubColumn"),
       cell: (club) => (
         <div className="flex flex-col gap-1 py-0.5">
           <span className="font-medium">{club.name}</span>
@@ -35,7 +37,7 @@ export function AdminSearchClubResults({
     },
     {
       key: "status",
-      header: "Status",
+      header: t("statusColumn"),
       cell: (club) => (
         <Badge
           variant={
@@ -55,8 +57,8 @@ export function AdminSearchClubResults({
       rows={clubs}
       rowKey={(club) => club.id}
       isLoading={isLoading}
-      loadingLabel="Searching clubs…"
-      emptyState={<StatusBox>No clubs found.</StatusBox>}
+      loadingLabel={t("loading")}
+      emptyState={<StatusBox>{t("emptyState")}</StatusBox>}
       onRowClick={(club) => onSelectClub(club.slug)}
     />
   );

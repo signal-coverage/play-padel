@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import { DataTable } from "@/components/DataTable";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatusBox } from "@/components/StatusBox";
@@ -12,10 +13,11 @@ export function AdminSearchPlayerResults({
   players,
   isLoading,
 }: AdminSearchPlayerResultsProps) {
+  const t = useTranslations("AdminSearchPlayerResults");
   const columns: DataTableColumn<AdminSearchPlayerResult>[] = [
     {
       key: "player",
-      header: "Player",
+      header: t("playerColumn"),
       cell: (player) => (
         <div className="flex flex-col gap-1 py-0.5">
           <span className="font-medium">{player.displayName}</span>
@@ -32,8 +34,8 @@ export function AdminSearchPlayerResults({
       rows={players}
       rowKey={(player) => player.id}
       isLoading={isLoading}
-      loadingLabel="Searching players…"
-      emptyState={<StatusBox>No players found.</StatusBox>}
+      loadingLabel={t("loading")}
+      emptyState={<StatusBox>{t("emptyState")}</StatusBox>}
     />
   );
 }

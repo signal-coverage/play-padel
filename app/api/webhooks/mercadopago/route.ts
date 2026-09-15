@@ -260,8 +260,7 @@ async function handleReservationPaymentTopic(
               recipientId: owner.id,
               recipientEmail: owner.email,
               recipientName: owner.displayName,
-              subject: "A paid reservation could not be confirmed",
-              html: "A player's payment was received, but their slot now overlaps another reservation. Please resolve this manually.",
+              params: { variant: "overlap" },
               sendEmail: false,
             });
           }

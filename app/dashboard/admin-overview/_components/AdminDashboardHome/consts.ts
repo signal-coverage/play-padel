@@ -2,18 +2,25 @@ import type { AdminMetrics } from "./types";
 
 // Single source of truth for which AdminMetrics field backs which card, its
 // label, and its staggered fade-up entrance delay (this dashboard's existing
-// convention — see DashboardBentoCard's animationDelay prop).
+// convention — see DashboardBentoCard's animationDelay prop). `labelKey`
+// (not a raw label) is looked up via the caller's own
+// useTranslations("AdminDashboardHome") — this is a plain const, not a
+// component, so it can't call useTranslations itself.
 export const ADMIN_METRIC_CARDS: {
   key: keyof AdminMetrics;
-  label: string;
+  labelKey: string;
   animationDelay: string;
 }[] = [
-  { key: "totalClubs", label: "Total Clubs", animationDelay: "0ms" },
-  { key: "totalCourts", label: "Total Courts", animationDelay: "80ms" },
-  { key: "totalPlayers", label: "Total Players", animationDelay: "160ms" },
+  { key: "totalClubs", labelKey: "totalClubs", animationDelay: "0ms" },
+  { key: "totalCourts", labelKey: "totalCourts", animationDelay: "80ms" },
+  {
+    key: "totalPlayers",
+    labelKey: "totalPlayers",
+    animationDelay: "160ms",
+  },
   {
     key: "totalReservations",
-    label: "Reservations Booked",
+    labelKey: "reservationsBooked",
     animationDelay: "240ms",
   },
 ];
@@ -24,9 +31,9 @@ export const ADMIN_METRIC_CARDS: {
 // number.
 export const CLUB_BREAKDOWN_ROWS: {
   key: "activeClubs" | "inactiveClubs" | "pendingApprovalClubs";
-  label: string;
+  labelKey: string;
 }[] = [
-  { key: "activeClubs", label: "Active" },
-  { key: "inactiveClubs", label: "Inactive" },
-  { key: "pendingApprovalClubs", label: "Pending approval" },
+  { key: "activeClubs", labelKey: "active" },
+  { key: "inactiveClubs", labelKey: "inactive" },
+  { key: "pendingApprovalClubs", labelKey: "pendingApproval" },
 ];

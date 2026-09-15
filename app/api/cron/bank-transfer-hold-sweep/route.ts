@@ -1,9 +1,6 @@
 import { NextResponse } from "next/server";
-import * as React from "react";
-import { render } from "@react-email/render";
 import { prisma } from "@/infrastructure/db/client";
 import { dispatch } from "@/lib/notifications/dispatcher";
-import { BankTransferHoldExpired } from "@/lib/email/templates/BankTransferHoldExpired";
 import { logSystemJob } from "@/core/systemJobs/services/systemJobs.service";
 
 // Triggered by Vercel Cron (see vercel.json). Not a Clerk session — proxy.ts
@@ -69,22 +66,18 @@ async function runSweep(startedAt: Date): Promise<NextResponse> {
       });
       const userName = user?.displayName ?? reservation.userName;
 
-      const html = await render(
-        React.createElement(BankTransferHoldExpired, {
-          userName,
-          courtName: reservation.courtName,
-          scheduledStart: reservation.scheduledStart,
-        }),
-      );
-
       await dispatch({
         type: "RESERVATION_PAYMENT_HOLD_EXPIRED",
         clubId: null,
         recipientId: reservation.userId,
         recipientEmail: user?.email ?? null,
         recipientName: userName,
-        subject: "Your reservation hold expired",
-        html,
+        params: {
+          variant: "bankTransfer",
+          userName,
+          courtName: reservation.courtName,
+          scheduledStart: reservation.scheduledStart.toISOString(),
+        },
       });
 
       await prisma.reservation.update({

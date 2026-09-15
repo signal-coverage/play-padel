@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Check, Copy } from "lucide-react";
+import { useTranslations } from "next-intl";
 import {
   Dialog,
   DialogContent,
@@ -28,6 +29,7 @@ export function SystemJobErrorDialog({
   when,
   errorMessage,
 }: SystemJobErrorDialogProps) {
+  const t = useTranslations("SystemJobErrorDialog");
   const [copied, setCopied] = useState(false);
 
   async function handleCopy() {
@@ -49,7 +51,7 @@ export function SystemJobErrorDialog({
         className="flex h-112 max-w-[calc(100%-2rem)] flex-col sm:max-w-xl"
       >
         <DialogHeader>
-          <DialogTitle>Error details</DialogTitle>
+          <DialogTitle>{t("title")}</DialogTitle>
           <p className="text-sm text-muted-foreground">
             {jobLabel} · {when}
           </p>
@@ -70,10 +72,10 @@ export function SystemJobErrorDialog({
             className="gap-1.5"
           >
             {copied ? <Check size={14} /> : <Copy size={14} />}
-            {copied ? "Copied" : "Copy"}
+            {copied ? t("copied") : t("copy")}
           </Button>
           <Button type="button" onClick={() => onOpenChange(false)}>
-            Close
+            {t("close")}
           </Button>
         </DialogFooter>
       </DialogContent>

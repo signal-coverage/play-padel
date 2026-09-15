@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { format } from "date-fns";
+import { useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { StatusBox } from "@/components/StatusBox";
@@ -19,6 +20,7 @@ export function ClosuresList({
   onCancel,
   cancellingClosureId,
 }: ClosuresListProps) {
+  const t = useTranslations("ClosuresList");
   const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
@@ -27,7 +29,7 @@ export function ClosuresList({
   }, []);
 
   if (closures.length === 0) {
-    return <StatusBox className="p-4">No closures yet.</StatusBox>;
+    return <StatusBox className="p-4">{t("noClosures")}</StatusBox>;
   }
 
   return (
@@ -54,7 +56,7 @@ export function ClosuresList({
                 isCancelled ? "outline" : isPast ? "secondary" : "default"
               }
             >
-              {isCancelled ? "Cancelled" : isPast ? "Past" : "Active"}
+              {isCancelled ? t("cancelled") : isPast ? t("past") : t("active")}
             </Badge>
             {isActive && (
               <Button
@@ -64,7 +66,9 @@ export function ClosuresList({
                 disabled={cancellingClosureId === closure.id}
                 onClick={() => onCancel(closure.id)}
               >
-                {cancellingClosureId === closure.id ? "Cancelling…" : "Cancel"}
+                {cancellingClosureId === closure.id
+                  ? t("cancelling")
+                  : t("cancel")}
               </Button>
             )}
           </div>

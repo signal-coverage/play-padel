@@ -4,6 +4,8 @@ import { render, cleanup } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { useForm } from "react-hook-form";
 import type { Path } from "react-hook-form";
+import { NextIntlClientProvider } from "next-intl";
+import messages from "@/messages/en.json";
 import { PhoneField } from "./PhoneField";
 import type { PhoneFieldValues } from "./types";
 
@@ -49,7 +51,11 @@ function Harness({
 }
 
 function renderPhoneField(overrides: HarnessOverrides = {}) {
-  return render(<Harness {...overrides} />);
+  return render(
+    <NextIntlClientProvider locale="en" messages={messages}>
+      <Harness {...overrides} />
+    </NextIntlClientProvider>,
+  );
 }
 
 describe("PhoneField", () => {

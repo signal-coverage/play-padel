@@ -10,6 +10,8 @@ import {
 } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { NextIntlClientProvider } from "next-intl";
+import messages from "@/messages/en.json";
 import { BankTransferAccountSettingsCard } from "./BankTransferAccountSettingsCard";
 import type { ClubBankTransferAccount } from "./types";
 
@@ -51,9 +53,11 @@ function renderCard(
   });
 
   const utils = render(
-    <QueryClientProvider client={queryClient}>
-      <BankTransferAccountSettingsCard {...props} />
-    </QueryClientProvider>,
+    <NextIntlClientProvider locale="en" messages={messages}>
+      <QueryClientProvider client={queryClient}>
+        <BankTransferAccountSettingsCard {...props} />
+      </QueryClientProvider>
+    </NextIntlClientProvider>,
   );
 
   return { ...utils, fetchMock, queryClient };

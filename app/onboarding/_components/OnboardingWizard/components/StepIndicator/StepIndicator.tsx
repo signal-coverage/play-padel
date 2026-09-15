@@ -1,12 +1,13 @@
 import { Check } from "lucide-react";
-import { STEP_META } from "../../consts";
+import { useTranslations } from "next-intl";
 import type { StepIndicatorProps } from "./types";
 
 export function StepIndicator({ flow, current }: StepIndicatorProps) {
+  const t = useTranslations("OnboardingWizard.stepIndicator");
+
   return (
     <div className="flex items-center w-full mb-8">
       {flow.map((key, i) => {
-        const meta = STEP_META[key];
         const done = current > i;
         const active = current === i;
         return (
@@ -38,7 +39,7 @@ export function StepIndicator({ flow, current }: StepIndicatorProps) {
                       : "text-muted-foreground",
                 ].join(" ")}
               >
-                {meta.label}
+                {t(key)}
               </span>
             </div>
             {i < flow.length - 1 && (

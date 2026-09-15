@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import { CircleDollarSign } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/utils/currency";
@@ -7,15 +8,17 @@ export function BookingConfirmPriceTag({
   paymentState,
   currency,
 }: BookingConfirmPriceTagProps) {
+  const t = useTranslations("BookingConfirmDialog");
+
   if (paymentState.kind === "price-missing") {
-    return <Badge variant="destructive">Price not set</Badge>;
+    return <Badge variant="destructive">{t("priceNotSet")}</Badge>;
   }
 
   if (paymentState.kind === "free") {
     return (
       <Badge variant="success">
         <CircleDollarSign aria-hidden="true" />
-        Free
+        {t("freeBadge")}
       </Badge>
     );
   }
@@ -24,7 +27,7 @@ export function BookingConfirmPriceTag({
     <Badge variant="default">
       <CircleDollarSign aria-hidden="true" />
       {formatCurrency(paymentState.price, currency)}
-      <span className="font-normal opacity-80">· Pay now</span>
+      <span className="font-normal opacity-80">· {t("payNowBadge")}</span>
     </Badge>
   );
 }

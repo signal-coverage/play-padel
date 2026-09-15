@@ -2,6 +2,8 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, waitFor, cleanup } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
+import { NextIntlClientProvider } from "next-intl";
+import messages from "@/messages/en.json";
 import { AdminOnlyGuard } from "./AdminOnlyGuard";
 import { useAuth } from "@/hooks/use-auth";
 import type { AppUser } from "@/providers/auth-provider";
@@ -70,9 +72,11 @@ describe("AdminOnlyGuard", () => {
     mockAuth({ isAdmin: false }, { profileLoading: true });
 
     const { container } = render(
-      <AdminOnlyGuard>
-        <div>Admin page content</div>
-      </AdminOnlyGuard>,
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <AdminOnlyGuard>
+          <div>Admin page content</div>
+        </AdminOnlyGuard>
+      </NextIntlClientProvider>,
     );
 
     expect(container).toBeEmptyDOMElement();
@@ -82,9 +86,11 @@ describe("AdminOnlyGuard", () => {
     const refetchProfile = mockAuth({ role: "player", isAdmin: true });
 
     render(
-      <AdminOnlyGuard>
-        <div>Admin page content</div>
-      </AdminOnlyGuard>,
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <AdminOnlyGuard>
+          <div>Admin page content</div>
+        </AdminOnlyGuard>
+      </NextIntlClientProvider>,
     );
 
     expect(refetchProfile).toHaveBeenCalled();
@@ -95,9 +101,11 @@ describe("AdminOnlyGuard", () => {
     mockAuth({ role: "owner", isAdmin: false });
 
     render(
-      <AdminOnlyGuard>
-        <div>Admin page content</div>
-      </AdminOnlyGuard>,
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <AdminOnlyGuard>
+          <div>Admin page content</div>
+        </AdminOnlyGuard>
+      </NextIntlClientProvider>,
     );
 
     await waitFor(() => expect(replaceMock).toHaveBeenCalledWith("/dashboard"));
@@ -108,9 +116,11 @@ describe("AdminOnlyGuard", () => {
     mockAuth({ role: "player", isAdmin: false });
 
     render(
-      <AdminOnlyGuard>
-        <div>Admin page content</div>
-      </AdminOnlyGuard>,
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <AdminOnlyGuard>
+          <div>Admin page content</div>
+        </AdminOnlyGuard>
+      </NextIntlClientProvider>,
     );
 
     await waitFor(() => expect(replaceMock).toHaveBeenCalledWith("/dashboard"));
@@ -121,9 +131,11 @@ describe("AdminOnlyGuard", () => {
     mockAuth({ role: "player", isAdmin: true });
 
     render(
-      <AdminOnlyGuard>
-        <div>Admin page content</div>
-      </AdminOnlyGuard>,
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <AdminOnlyGuard>
+          <div>Admin page content</div>
+        </AdminOnlyGuard>
+      </NextIntlClientProvider>,
     );
 
     expect(await screen.findByText("Admin page content")).toBeInTheDocument();
@@ -134,9 +146,11 @@ describe("AdminOnlyGuard", () => {
     mockAuth({ role: "player", isAdmin: false });
 
     render(
-      <AdminOnlyGuard>
-        <div>Admin page content</div>
-      </AdminOnlyGuard>,
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <AdminOnlyGuard>
+          <div>Admin page content</div>
+        </AdminOnlyGuard>
+      </NextIntlClientProvider>,
     );
 
     await waitFor(() => expect(replaceMock).toHaveBeenCalledWith("/dashboard"));
@@ -167,9 +181,11 @@ describe("AdminOnlyGuard", () => {
     }));
 
     render(
-      <AdminOnlyGuard>
-        <div>Admin page content</div>
-      </AdminOnlyGuard>,
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <AdminOnlyGuard>
+          <div>Admin page content</div>
+        </AdminOnlyGuard>
+      </NextIntlClientProvider>,
     );
 
     await waitFor(() => expect(replaceMock).toHaveBeenCalledWith("/dashboard"));

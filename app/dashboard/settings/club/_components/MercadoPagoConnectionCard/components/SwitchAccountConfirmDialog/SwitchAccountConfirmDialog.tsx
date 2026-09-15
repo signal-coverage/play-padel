@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import type { SwitchAccountConfirmDialogProps } from "./types";
 
@@ -19,15 +20,16 @@ export function SwitchAccountConfirmDialog({
   onOpenChange,
   onConfirm,
 }: SwitchAccountConfirmDialogProps) {
+  const t = useTranslations("SwitchAccountConfirmDialog");
   return (
     <ConfirmDialog
       open={open}
       onOpenChange={onOpenChange}
-      title="Switch Mercado Pago account?"
-      description="To connect a different Mercado Pago account, first log out of Mercado Pago in this browser (or continue in a private/incognito window). Otherwise, continuing will just reconnect the same account that's already linked."
-      cancelLabel="Cancel"
-      confirmLabel="Continue"
-      pendingLabel="Redirecting…"
+      title={t("title")}
+      description={t("description")}
+      cancelLabel={t("cancelLabel")}
+      confirmLabel={t("confirmLabel")}
+      pendingLabel={t("pendingLabel")}
       isPending={false}
       variant="default"
       onConfirm={onConfirm}

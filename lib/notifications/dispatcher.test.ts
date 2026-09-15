@@ -5,17 +5,23 @@ const {
   updateNotificationStatusMock,
   sendMock,
   listAdminRecipientsMock,
+  getUserProfileMock,
 } = vi.hoisted(() => ({
   createNotificationMock: vi.fn(),
   updateNotificationStatusMock: vi.fn(),
   sendMock: vi.fn(),
   listAdminRecipientsMock: vi.fn(),
+  getUserProfileMock: vi.fn(),
 }));
 
 vi.mock("@/core/notifications/services/notifications.service", () => ({
   createNotification: createNotificationMock,
   updateNotificationStatus: updateNotificationStatusMock,
   listAdminRecipients: listAdminRecipientsMock,
+}));
+
+vi.mock("@/core/users/services/users.service", () => ({
+  getUserProfile: getUserProfileMock,
 }));
 
 vi.mock("@/lib/email/resend", () => ({
@@ -26,11 +32,124 @@ vi.mock("@/lib/email/resend", () => ({
 
 import { dispatch, notifyAllAdmins } from "./dispatcher";
 
+describe("dispatch — locale resolution", () => {
+  beforeEach(() => {
+    createNotificationMock.mockReset();
+    updateNotificationStatusMock.mockReset();
+    sendMock.mockReset();
+    getUserProfileMock.mockReset();
+    createNotificationMock.mockResolvedValue({
+      id: "notif_1",
+      clubId: null,
+      type: "CLUB_APPROVED",
+      recipientId: "user_1",
+      recipientEmail: "user@example.com",
+      title: "subj",
+      message: "<p>html</p>",
+      status: "PENDING",
+      createdAt: new Date(),
+    });
+  });
+
+  // The whole point of storing this: notifications.service.ts's
+  // hydrateLiveContent re-renders title/message from these SAME raw params
+  // on every later read, in whatever locale the viewer is using AT THAT
+  // MOMENT — not the recipientLocale resolved here at dispatch time. If
+  // this ever silently stops being forwarded, a notification would go back
+  // to being frozen in whatever language it was dispatched in forever.
+  it("persists the raw params alongside the resolved title/message, so the notification can be re-rendered live in a different locale later", async () => {
+    getUserProfileMock.mockResolvedValue({ locale: "en" });
+
+    await dispatch({
+      type: "CLUB_APPROVED",
+      clubId: "club_1",
+      recipientId: "user_1",
+      recipientEmail: "user@example.com",
+      recipientName: "User",
+      params: { clubName: "Alpha Club" },
+      sendEmail: false,
+    });
+
+    expect(createNotificationMock).toHaveBeenCalledWith(
+      expect.objectContaining({ params: { clubName: "Alpha Club" } }),
+    );
+  });
+
+  it("renders content in the recipient's own English locale", async () => {
+    getUserProfileMock.mockResolvedValue({ locale: "en" });
+
+    await dispatch({
+      type: "CLUB_APPROVED",
+      clubId: "club_1",
+      recipientId: "user_1",
+      recipientEmail: "user@example.com",
+      recipientName: "User",
+      params: {},
+      sendEmail: false,
+    });
+
+    expect(getUserProfileMock).toHaveBeenCalledWith("user_1");
+    expect(createNotificationMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: "Your club has been approved",
+        message: expect.stringContaining(
+          "Your club is now approved and can accept reservations.",
+        ),
+      }),
+    );
+  });
+
+  it("renders content in the recipient's own Spanish locale", async () => {
+    getUserProfileMock.mockResolvedValue({ locale: "es" });
+
+    await dispatch({
+      type: "CLUB_APPROVED",
+      clubId: "club_1",
+      recipientId: "user_1",
+      recipientEmail: "user@example.com",
+      recipientName: "User",
+      params: {},
+      sendEmail: false,
+    });
+
+    expect(createNotificationMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: "Tu club fue aprobado",
+        message: expect.stringContaining(
+          "Tu club ya está aprobado y puede aceptar reservas.",
+        ),
+      }),
+    );
+  });
+
+  it("falls back to DEFAULT_LOCALE (es) when the recipient has no UserProfile", async () => {
+    getUserProfileMock.mockResolvedValue(null);
+
+    await dispatch({
+      type: "CLUB_APPROVED",
+      clubId: "club_1",
+      recipientId: "user_missing",
+      recipientEmail: "user@example.com",
+      recipientName: "User",
+      params: {},
+      sendEmail: false,
+    });
+
+    expect(createNotificationMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: "Tu club fue aprobado",
+      }),
+    );
+  });
+});
+
 describe("dispatch — sendEmail: false (in-app-only notification)", () => {
   beforeEach(() => {
     createNotificationMock.mockReset();
     updateNotificationStatusMock.mockReset();
     sendMock.mockReset();
+    getUserProfileMock.mockReset();
+    getUserProfileMock.mockResolvedValue({ locale: "en" });
     createNotificationMock.mockResolvedValue({
       id: "notif_1",
       clubId: null,
@@ -51,8 +170,7 @@ describe("dispatch — sendEmail: false (in-app-only notification)", () => {
       recipientId: "user_1",
       recipientEmail: "user@example.com",
       recipientName: "User",
-      subject: "subj",
-      html: "<p>html</p>",
+      params: { kind: "CRON", name: "test", errorMessage: "boom" },
       sendEmail: false,
     });
 
@@ -70,8 +188,7 @@ describe("dispatch — sendEmail: false (in-app-only notification)", () => {
       recipientId: "user_1",
       recipientEmail: null,
       recipientName: "User",
-      subject: "subj",
-      html: "<p>html</p>",
+      params: { kind: "CRON", name: "test", errorMessage: "boom" },
       sendEmail: false,
     });
 
@@ -98,8 +215,12 @@ describe("dispatch — sendEmail: false (in-app-only notification)", () => {
       recipientId: "user_1",
       recipientEmail: "user@example.com",
       recipientName: "User",
-      subject: "subj",
-      html: "<p>html</p>",
+      params: {
+        userName: "User",
+        invoiceNumber: 1,
+        total: 100,
+        currency: "USD",
+      },
     });
 
     expect(sendMock).toHaveBeenCalledTimes(1);
@@ -125,8 +246,12 @@ describe("dispatch — sendEmail: false (in-app-only notification)", () => {
       recipientId: "user_1",
       recipientEmail: "user@example.com",
       recipientName: "User",
-      subject: "subj",
-      html: "<p>html</p>",
+      params: {
+        userName: "User",
+        invoiceNumber: 1,
+        total: 100,
+        currency: "USD",
+      },
     });
 
     expect(sendMock).toHaveBeenCalledWith(
@@ -150,8 +275,12 @@ describe("dispatch — sendEmail: false (in-app-only notification)", () => {
       recipientId: "user_1",
       recipientEmail: "user@example.com",
       recipientName: "User",
-      subject: "subj",
-      html: "<p>html</p>",
+      params: {
+        userName: "User",
+        invoiceNumber: 1,
+        total: 100,
+        currency: "USD",
+      },
     });
 
     // Advance past the internal send timeout so the hang resolves into a
@@ -189,8 +318,12 @@ describe("dispatch — sendEmail: false (in-app-only notification)", () => {
       recipientId: "user_1",
       recipientEmail: "user@example.com",
       recipientName: "User",
-      subject: "subj",
-      html: "<p>html</p>",
+      params: {
+        userName: "User",
+        invoiceNumber: 1,
+        total: 100,
+        currency: "USD",
+      },
     });
 
     expect(sendMock).toHaveBeenCalledWith(
@@ -208,6 +341,8 @@ describe("notifyAllAdmins", () => {
     updateNotificationStatusMock.mockReset();
     sendMock.mockReset();
     listAdminRecipientsMock.mockReset();
+    getUserProfileMock.mockReset();
+    getUserProfileMock.mockResolvedValue({ locale: "en" });
     createNotificationMock.mockImplementation(
       async (data: { recipientId: string }) => ({
         id: `notif_${data.recipientId}`,
@@ -232,8 +367,7 @@ describe("notifyAllAdmins", () => {
     await notifyAllAdmins({
       type: "CLUB_PENDING_APPROVAL",
       clubId: "club_1",
-      subject: "New club pending approval",
-      html: "<p>html</p>",
+      params: { clubName: "New Club" },
       sendEmail: false,
     });
 
@@ -245,8 +379,8 @@ describe("notifyAllAdmins", () => {
         type: "CLUB_PENDING_APPROVAL",
         recipientId: "admin_1",
         recipientEmail: "admin1@example.com",
-        title: "New club pending approval",
-        message: "<p>html</p>",
+        title: "A new club is pending approval",
+        message: expect.stringContaining("New Club"),
       }),
     );
     expect(createNotificationMock).toHaveBeenCalledWith(
@@ -255,8 +389,8 @@ describe("notifyAllAdmins", () => {
         type: "CLUB_PENDING_APPROVAL",
         recipientId: "admin_2",
         recipientEmail: "admin2@example.com",
-        title: "New club pending approval",
-        message: "<p>html</p>",
+        title: "A new club is pending approval",
+        message: expect.stringContaining("New Club"),
       }),
     );
     // sendEmail: false was passed through to each dispatch call, so Resend
@@ -278,8 +412,7 @@ describe("notifyAllAdmins", () => {
     await notifyAllAdmins({
       type: "SYSTEM_JOB_FAILED",
       clubId: null,
-      subject: "Job failed",
-      html: "<p>html</p>",
+      params: { kind: "CRON", name: "test", errorMessage: "boom" },
     });
 
     expect(createNotificationMock).not.toHaveBeenCalled();
@@ -315,8 +448,7 @@ describe("notifyAllAdmins", () => {
     await notifyAllAdmins({
       type: "SYSTEM_JOB_FAILED",
       clubId: null,
-      subject: "Job failed",
-      html: "<p>html</p>",
+      params: { kind: "CRON", name: "test", errorMessage: "boom" },
     });
 
     expect(maxConcurrentCalls).toBe(2);

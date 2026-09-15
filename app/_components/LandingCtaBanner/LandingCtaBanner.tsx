@@ -2,11 +2,13 @@
 import Link from "next/link";
 import Image from "next/image";
 import { motion, useReducedMotion } from "framer-motion";
+import { useTranslations } from "next-intl";
 import { ease, bannerImage } from "./consts";
 import { CONTAINER } from "@/lib/consts";
 import { ArrowUpRight } from "lucide-react";
 
 export function LandingCtaBanner() {
+  const t = useTranslations("LandingCtaBanner");
   const shouldReduce = useReducedMotion();
 
   return (
@@ -34,9 +36,9 @@ export function LandingCtaBanner() {
           viewport={{ once: true }}
           transition={{ duration: 0.5, delay: 0.06, ease }}
         >
-          Ready to Book
+          {t("heading.line1")}
           <br />
-          Your Next Match?
+          {t("heading.line2")}
         </motion.h2>
 
         <motion.p
@@ -46,9 +48,7 @@ export function LandingCtaBanner() {
           viewport={{ once: true }}
           transition={{ duration: 0.5, delay: 0.12, ease }}
         >
-          Find a club, check real-time availability, and reserve your court in
-          minutes — or bring your own club onto Play Padel and manage it all
-          from one dashboard.
+          {t("description", { brand: "Play Padel" })}
         </motion.p>
 
         <motion.div
@@ -62,14 +62,14 @@ export function LandingCtaBanner() {
             href="/signup"
             className="inline-flex items-center gap-2 items-center bg-accent text-accent-foreground rounded-full px-7 py-3.5 text-[15px] font-semibold hover:-translate-y-0.5 hover:shadow-xl transition-all duration-200"
           >
-            Get Started
+            {t("ctaPrimary")}
             <ArrowUpRight size={15} strokeWidth={2.5} />
           </Link>
           <Link
             href="/signup"
             className="text-sm font-medium text-white/75 hover:text-white border-b border-white/30 hover:border-white/60 transition-colors duration-200"
           >
-            Own a club? List it here
+            {t("ctaSecondary")}
           </Link>
         </motion.div>
       </motion.div>

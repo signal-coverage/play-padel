@@ -2,6 +2,8 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, fireEvent, cleanup } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
+import { NextIntlClientProvider } from "next-intl";
+import messages from "@/messages/en.json";
 import { GroupMatchesList } from "./GroupMatchesList";
 import type { GroupMatch } from "../../types";
 
@@ -9,16 +11,22 @@ afterEach(cleanup);
 
 const TEAM_LABELS = { t1: "Alice / Ana", t2: "Bob / Ben" };
 
+function renderList(props: React.ComponentProps<typeof GroupMatchesList>) {
+  return render(
+    <NextIntlClientProvider locale="en" messages={messages}>
+      <GroupMatchesList {...props} />
+    </NextIntlClientProvider>,
+  );
+}
+
 describe("GroupMatchesList", () => {
   it("shows an empty state with no matches", () => {
-    render(
-      <GroupMatchesList
-        matches={[]}
-        teamLabels={TEAM_LABELS}
-        onEnterScore={vi.fn()}
-        onRecordWalkover={vi.fn()}
-      />,
-    );
+    renderList({
+      matches: [],
+      teamLabels: TEAM_LABELS,
+      onEnterScore: vi.fn(),
+      onRecordWalkover: vi.fn(),
+    });
     expect(screen.getByText(/no matches yet/i)).toBeInTheDocument();
   });
 
@@ -31,14 +39,12 @@ describe("GroupMatchesList", () => {
       teamBId: "t2",
       status: "SCHEDULED",
     };
-    render(
-      <GroupMatchesList
-        matches={[match]}
-        teamLabels={TEAM_LABELS}
-        onEnterScore={onEnterScore}
-        onRecordWalkover={onRecordWalkover}
-      />,
-    );
+    renderList({
+      matches: [match],
+      teamLabels: TEAM_LABELS,
+      onEnterScore,
+      onRecordWalkover,
+    });
 
     expect(screen.getByText("Alice / Ana vs Bob / Ben")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /enter score/i }));
@@ -49,22 +55,20 @@ describe("GroupMatchesList", () => {
   });
 
   it("hides action buttons and shows the winner for a decided match", () => {
-    render(
-      <GroupMatchesList
-        matches={[
-          {
-            id: "match_1",
-            teamAId: "t1",
-            teamBId: "t2",
-            status: "COMPLETED",
-            winnerTeamId: "t1",
-          },
-        ]}
-        teamLabels={TEAM_LABELS}
-        onEnterScore={vi.fn()}
-        onRecordWalkover={vi.fn()}
-      />,
-    );
+    renderList({
+      matches: [
+        {
+          id: "match_1",
+          teamAId: "t1",
+          teamBId: "t2",
+          status: "COMPLETED",
+          winnerTeamId: "t1",
+        },
+      ],
+      teamLabels: TEAM_LABELS,
+      onEnterScore: vi.fn(),
+      onRecordWalkover: vi.fn(),
+    });
 
     expect(
       screen.queryByRole("button", { name: /enter score/i }),
@@ -73,15 +77,13 @@ describe("GroupMatchesList", () => {
   });
 
   it("never shows action buttons in readOnly mode, even for a scheduled match", () => {
-    render(
-      <GroupMatchesList
-        matches={[
-          { id: "match_1", teamAId: "t1", teamBId: "t2", status: "SCHEDULED" },
-        ]}
-        teamLabels={TEAM_LABELS}
-        readOnly
-      />,
-    );
+    renderList({
+      matches: [
+        { id: "match_1", teamAId: "t1", teamBId: "t2", status: "SCHEDULED" },
+      ],
+      teamLabels: TEAM_LABELS,
+      readOnly: true,
+    });
 
     expect(
       screen.queryByRole("button", { name: /enter score/i }),

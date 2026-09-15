@@ -2,7 +2,6 @@ import {
   DAY_LABELS,
   DEFAULT_SLOT_DURATION_MINUTES,
 } from "@/core/courts/consts";
-import { COURT_SURFACE_OPTIONS } from "./components/CourtFormSheet/components/SurfaceField/consts";
 import type { AvailabilityEntry, CourtClosure } from "@/core/courts/types";
 import type {
   AvailabilityDayRow,
@@ -34,16 +33,23 @@ export function courtToFormValues(
   };
 }
 
-export function surfaceLabel(surface?: string): string {
+// `t` comes from the caller's own useTranslations("CourtLabels") result
+// (surfaceLabel/indoorLabel are plain utils, not components, so they can't
+// call useTranslations themselves) — keys: concrete, carpet, indoor, outdoor.
+export function surfaceLabel(
+  surface: string | undefined,
+  t: (key: string) => string,
+): string {
   if (!surface || surface.trim().length === 0) return "—";
-  return (
-    COURT_SURFACE_OPTIONS.find((option) => option.value === surface)?.label ??
-    surface
-  );
+  if (surface !== "concrete" && surface !== "carpet") return surface;
+  return t(surface);
 }
 
-export function indoorLabel(indoor: boolean): string {
-  return indoor ? "Indoor" : "Outdoor";
+export function indoorLabel(
+  indoor: boolean,
+  t: (key: string) => string,
+): string {
+  return indoor ? t("indoor") : t("outdoor");
 }
 
 /** Builds the 7-row weekly editor state from whatever entries the server has

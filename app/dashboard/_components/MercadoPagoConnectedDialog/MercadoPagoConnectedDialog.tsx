@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import {
   Dialog,
   DialogContent,
@@ -21,20 +22,17 @@ export function MercadoPagoConnectedDialog({
   open,
   onOpenChange,
 }: MercadoPagoConnectedDialogProps) {
+  const t = useTranslations("MercadoPagoConnectedDialog");
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Mercado Pago connected!</DialogTitle>
-          <DialogDescription>
-            Players can now pay for reservations through your Mercado Pago
-            account. You can also add your bank account details below to offer
-            bank transfer as an alternative payment method — this is entirely
-            optional.
-          </DialogDescription>
+          <DialogTitle>{t("title")}</DialogTitle>
+          <DialogDescription>{t("description")}</DialogDescription>
         </DialogHeader>
         <BankTransferAccountSettingsCard
-          submitLabel="Save and continue"
+          submitLabel={t("submitLabel")}
           allowSkip
           onDone={() => onOpenChange(false)}
         />

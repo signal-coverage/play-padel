@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import { useTranslations } from "next-intl";
 import { CalendarClock, CalendarOff, Pencil, Trash2 } from "lucide-react";
 import { ColorSwatch } from "@/components/ColorSwatch";
 import { CourtPhotoPreview } from "@/components/CourtPhotoPreview";
@@ -35,6 +36,8 @@ export function CourtsTable({
   onToggleSelectAll,
   className,
 }: CourtsTableProps) {
+  const t = useTranslations("CourtsTable");
+  const tLabels = useTranslations("CourtLabels");
   const allSelected = courts.length > 0 && selectedIds.size === courts.length;
 
   const columns: DataTableColumn<CourtRecord>[] = useMemo(
@@ -45,21 +48,21 @@ export function CourtsTable({
           <Checkbox
             checked={allSelected}
             onCheckedChange={onToggleSelectAll}
-            aria-label="Select all courts"
+            aria-label={t("selectAll")}
           />
         ),
         cell: (court) => (
           <Checkbox
             checked={selectedIds.has(court.id)}
             onCheckedChange={() => onToggleSelect(court.id)}
-            aria-label={`Select ${court.name}`}
+            aria-label={t("selectOne", { name: court.name })}
           />
         ),
         loadingCell: <Skeleton className="h-4 w-4" />,
       },
       {
         key: "name",
-        header: "Name",
+        header: t("name"),
         className: "font-medium",
         cell: (court) => (
           <span className="flex items-center gap-2">
@@ -71,10 +74,10 @@ export function CourtsTable({
       },
       {
         key: "surface",
-        header: "Surface",
+        header: t("surface"),
         cell: (court) => (
           <span className="flex items-center gap-1.5">
-            {surfaceLabel(court.surface)}
+            {surfaceLabel(court.surface, tLabels)}
             <SurfacePreview surface={court.surface} color={court.color} />
           </span>
         ),
@@ -82,7 +85,7 @@ export function CourtsTable({
       },
       {
         key: "preview",
-        header: "Preview",
+        header: t("preview"),
         cell: (court) => (
           <CourtPhotoPreview
             photoUrl={court.photoUrl}
@@ -94,13 +97,13 @@ export function CourtsTable({
       },
       {
         key: "type",
-        header: "Type",
-        cell: (court) => indoorLabel(court.indoor),
+        header: t("type"),
+        cell: (court) => indoorLabel(court.indoor, tLabels),
         loadingCell: <Skeleton className="h-4 w-16" />,
       },
       {
         key: "reservationFee",
-        header: "Reservation fee",
+        header: t("reservationFee"),
         cell: (court) =>
           court.reservationFee !== undefined
             ? formatCourtPrice(court.reservationFee)
@@ -109,7 +112,7 @@ export function CourtsTable({
       },
       {
         key: "courtPrice",
-        header: "Court price",
+        header: t("courtPrice"),
         cell: (court) =>
           court.courtPrice !== undefined
             ? formatCourtPrice(court.courtPrice)
@@ -118,23 +121,24 @@ export function CourtsTable({
       },
       {
         key: "minShift",
-        header: "Minimum shift",
-        cell: (court) => `${court.slotDurationMinutes} min`,
+        header: t("minShift"),
+        cell: (court) =>
+          t("minShiftValue", { minutes: court.slotDurationMinutes }),
         loadingCell: <Skeleton className="h-4 w-16" />,
       },
       {
         key: "status",
-        header: "Status",
+        header: t("status"),
         cell: (court) => (
           <Badge variant={court.active ? "default" : "secondary"}>
-            {court.active ? "Active" : "Inactive"}
+            {court.active ? t("active") : t("inactive")}
           </Badge>
         ),
         loadingCell: <Skeleton className="h-5 w-16 rounded-full" />,
       },
       {
         key: "actions",
-        header: "Actions",
+        header: t("actions"),
         headerClassName: "text-right",
         className: "text-right",
         cell: (court) => (
@@ -145,13 +149,13 @@ export function CourtsTable({
                   type="button"
                   variant="ghost"
                   size="icon"
-                  aria-label={`Edit availability for ${court.name}`}
+                  aria-label={t("editAvailabilityFor", { name: court.name })}
                   onClick={() => onEditAvailability(court)}
                 >
                   <CalendarClock />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>Edit availability</TooltipContent>
+              <TooltipContent>{t("editAvailability")}</TooltipContent>
             </Tooltip>
 
             <Tooltip>
@@ -160,13 +164,13 @@ export function CourtsTable({
                   type="button"
                   variant="ghost"
                   size="icon"
-                  aria-label={`Manage closures for ${court.name}`}
+                  aria-label={t("manageClosuresFor", { name: court.name })}
                   onClick={() => onEditClosures(court)}
                 >
                   <CalendarOff />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>Manage closures</TooltipContent>
+              <TooltipContent>{t("manageClosures")}</TooltipContent>
             </Tooltip>
 
             <Tooltip>
@@ -175,13 +179,13 @@ export function CourtsTable({
                   type="button"
                   variant="ghost"
                   size="icon"
-                  aria-label={`Edit ${court.name}`}
+                  aria-label={t("editFor", { name: court.name })}
                   onClick={() => onEdit(court)}
                 >
                   <Pencil />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>Edit court</TooltipContent>
+              <TooltipContent>{t("editCourt")}</TooltipContent>
             </Tooltip>
 
             <Tooltip>
@@ -190,14 +194,14 @@ export function CourtsTable({
                   type="button"
                   variant="ghost"
                   size="icon"
-                  aria-label={`Deactivate ${court.name}`}
+                  aria-label={t("deactivateFor", { name: court.name })}
                   disabled={!court.active || deletingCourtId === court.id}
                   onClick={() => onDelete(court)}
                 >
                   <Trash2 />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>Deactivate court</TooltipContent>
+              <TooltipContent>{t("deactivateCourt")}</TooltipContent>
             </Tooltip>
           </div>
         ),
@@ -212,6 +216,8 @@ export function CourtsTable({
       },
     ],
     [
+      t,
+      tLabels,
       onEdit,
       onEditAvailability,
       onEditClosures,
@@ -231,7 +237,7 @@ export function CourtsTable({
       rows={courts}
       rowKey={(court) => court.id}
       isLoading={isLoading}
-      loadingLabel="Loading courts…"
+      loadingLabel={t("loading")}
       emptyState={<CourtsEmptyState />}
       isRowSelected={(court) => selectedIds.has(court.id)}
     />

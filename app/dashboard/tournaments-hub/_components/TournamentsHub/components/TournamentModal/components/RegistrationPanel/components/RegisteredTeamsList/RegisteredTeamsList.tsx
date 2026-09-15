@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import type { RegisteredTeamsListProps } from "./types";
 
 /**
@@ -10,14 +11,14 @@ export function RegisteredTeamsList({
   teams,
   isLoading,
 }: RegisteredTeamsListProps) {
+  const t = useTranslations("RegisteredTeamsList");
+
   if (isLoading) {
-    return <p className="text-xs text-muted-foreground">Loading teams…</p>;
+    return <p className="text-xs text-muted-foreground">{t("loading")}</p>;
   }
 
   if (teams.length === 0) {
-    return (
-      <p className="text-xs text-muted-foreground">No teams registered yet.</p>
-    );
+    return <p className="text-xs text-muted-foreground">{t("emptyState")}</p>;
   }
 
   return (

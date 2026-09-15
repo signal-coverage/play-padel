@@ -1,4 +1,5 @@
 import { CalendarClock } from "lucide-react";
+import { useTranslations } from "next-intl";
 import {
   EmptyDescription,
   EmptyMedia,
@@ -6,14 +7,15 @@ import {
 } from "@/components/ui/empty";
 
 export function UpcomingListEmpty() {
+  const t = useTranslations("UpcomingListEmpty");
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-2 py-10 text-center">
       <EmptyMedia variant="icon" className="size-9 rounded-full">
         <CalendarClock className="size-5" />
       </EmptyMedia>
-      <EmptyTitle>No upcoming reservations</EmptyTitle>
+      <EmptyTitle>{t("title")}</EmptyTitle>
       <EmptyDescription className="text-xs">
-        Booked courts will show up here.
+        {t("description")}
       </EmptyDescription>
     </div>
   );

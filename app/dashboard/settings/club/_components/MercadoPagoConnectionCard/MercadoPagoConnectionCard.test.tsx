@@ -9,6 +9,8 @@ import {
 } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { NextIntlClientProvider } from "next-intl";
+import messages from "@/messages/en.json";
 
 // next/image's default loader calls out to Next's build-time image
 // optimization config, which doesn't exist under Vitest — swap it for a
@@ -49,9 +51,11 @@ function renderCard(
   });
 
   render(
-    <QueryClientProvider client={queryClient}>
-      <MercadoPagoConnectionCard />
-    </QueryClientProvider>,
+    <NextIntlClientProvider locale="en" messages={messages}>
+      <QueryClientProvider client={queryClient}>
+        <MercadoPagoConnectionCard />
+      </QueryClientProvider>
+    </NextIntlClientProvider>,
   );
 
   return { fetchMock, queryClient };

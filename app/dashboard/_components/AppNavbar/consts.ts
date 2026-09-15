@@ -17,7 +17,11 @@ import {
 import type { SystemRole } from "@/providers/auth-provider";
 
 export type NavItem = {
-  title: string;
+  // Looked up under the "AppNavbar.navItems" translation namespace by every
+  // renderer (NavLinks/MobileBottomNav/NavGroupMenu/CommandPalette) — never
+  // rendered directly, so it stays a stable English identifier regardless of
+  // locale.
+  titleKey: string;
   href: string;
   icon: LucideIcon;
   roles: SystemRole[];
@@ -70,26 +74,26 @@ export type NavItem = {
 
 export const navItems: NavItem[] = [
   {
-    title: "Dashboard",
+    titleKey: "dashboard",
     href: "/dashboard",
     icon: LayoutDashboard,
     roles: ["owner", "player"],
     essential: true,
   },
   {
-    title: "Courts",
+    titleKey: "courts",
     href: "/dashboard/courts",
     icon: LayoutGrid,
     roles: ["owner"],
   },
   {
-    title: "Reservations",
+    titleKey: "reservations",
     href: "/dashboard/reservations",
     icon: CalendarClock,
     roles: ["owner"],
   },
   {
-    title: "Club Settings",
+    titleKey: "clubSettings",
     href: "/dashboard/settings/club",
     icon: Settings2,
     roles: ["owner"],
@@ -106,7 +110,7 @@ export const navItems: NavItem[] = [
     // admin who's also a player/owner keeps their own normal dashboard, and
     // reaches the platform overview from the Admin dropdown instead — same
     // adminOnly narrowing pattern as every other item in this group.
-    title: "Overview",
+    titleKey: "overview",
     href: "/dashboard/admin-overview",
     icon: Gauge,
     roles: ["owner", "player"],
@@ -119,7 +123,7 @@ export const navItems: NavItem[] = [
     // and hidden from every non-admin, including owners. `roles` lists both
     // so an admin with either role passes the role gate; `adminOnly` is
     // what actually restricts visibility (see getVisibleNavItems).
-    title: "Audit Log",
+    titleKey: "auditLog",
     href: "/dashboard/audit-logs",
     icon: ScrollText,
     roles: ["owner", "player"],
@@ -132,7 +136,7 @@ export const navItems: NavItem[] = [
     // adminOnly narrowing pattern as Audit Log directly above: visible to
     // any admin regardless of role, hidden from every non-admin including
     // owners.
-    title: "Search",
+    titleKey: "search",
     href: "/dashboard/admin-search",
     icon: Search,
     roles: ["owner", "player"],
@@ -145,7 +149,7 @@ export const navItems: NavItem[] = [
     // same adminOnly narrowing pattern as Audit Log/Search directly above:
     // visible to any admin regardless of role, hidden from every non-admin
     // including owners.
-    title: "System Status",
+    titleKey: "systemStatus",
     href: "/dashboard/admin-status",
     icon: Activity,
     roles: ["owner", "player"],
@@ -158,7 +162,7 @@ export const navItems: NavItem[] = [
     // adminOnly narrowing pattern as Audit Log/Search/System Status directly
     // above: visible to any admin regardless of role, hidden from every
     // non-admin including owners.
-    title: "Approvals",
+    titleKey: "approvals",
     href: "/dashboard/admin-approvals",
     icon: ClipboardCheck,
     roles: ["owner", "player"],
@@ -166,19 +170,19 @@ export const navItems: NavItem[] = [
     group: "admin",
   },
   {
-    title: "Browse Courts",
+    titleKey: "browseCourts",
     href: "/dashboard/browse",
     icon: Compass,
     roles: ["player"],
   },
   {
-    title: "My Reservations",
+    titleKey: "myReservations",
     href: "/dashboard/my-reservations",
     icon: CalendarCheck,
     roles: ["player"],
   },
   {
-    title: "Players",
+    titleKey: "players",
     href: "/dashboard/players",
     icon: Users,
     roles: ["player"],
@@ -189,7 +193,7 @@ export const navItems: NavItem[] = [
     // player has an active team in one (both cases folded into
     // GET /api/tournaments/open's existing "any open" result — see
     // useOpenTournamentsStatus in ./hooks).
-    title: "Tournaments",
+    titleKey: "tournaments",
     href: "/dashboard/tournaments-hub",
     icon: Trophy,
     roles: ["player"],

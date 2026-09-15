@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { format } from "date-fns";
 import { X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { useCancelReservation } from "@/app/dashboard/my-reservations/_components/MyReservations/hooks";
 import { CancelConfirmDialog } from "@/app/dashboard/my-reservations/_components/MyReservations/components/CancelConfirmDialog";
@@ -11,7 +12,11 @@ import { groupUpcomingByDay } from "../../utils";
 import type { UpcomingItem } from "../../types";
 
 export function UpcomingListItems({ items }: { items: UpcomingItem[] }) {
-  const groups = groupUpcomingByDay(items);
+  const t = useTranslations("UpcomingListItems");
+  const groups = groupUpcomingByDay(items, {
+    today: t("today"),
+    tomorrow: t("tomorrow"),
+  });
   const [cancelTarget, setCancelTarget] = useState<CancelTarget | null>(null);
   const cancelReservation = useCancelReservation();
 
@@ -35,14 +40,16 @@ export function UpcomingListItems({ items }: { items: UpcomingItem[] }) {
                   {item.notes ? ` • ${item.notes}` : ""}
                 </p>
                 {item.userName && (
-                  <p className="mt-0.5 label-mono">Booked by {item.userName}</p>
+                  <p className="mt-0.5 label-mono">
+                    {t("bookedBy", { name: item.userName })}
+                  </p>
                 )}
               </div>
               {item.canSelfCancel && (
                 <Button
                   variant="ghost"
                   size="icon-sm"
-                  aria-label="Cancel reservation"
+                  aria-label={t("cancelReservation")}
                   onClick={() =>
                     setCancelTarget({
                       id: item.id,

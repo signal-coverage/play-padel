@@ -3,9 +3,11 @@
 import { useEffect } from "react";
 import { SignUp, useAuth } from "@clerk/nextjs";
 import { motion } from "framer-motion";
+import { useTranslations } from "next-intl";
 import { clerkAppearance } from "@/app/(auth)/_components/clerk-appearance";
 
 export function SignupView() {
+  const t = useTranslations("Signup");
   const { isLoaded, isSignedIn } = useAuth();
 
   // Doesn't wait on `fallbackRedirectUrl`'s own client-side router
@@ -35,10 +37,10 @@ export function SignupView() {
     >
       <div className="mb-4 text-center">
         <h1 className="text-[26px] font-bold text-foreground tracking-tight">
-          Create your account
+          {t("heading")}
         </h1>
         <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
-          Get started with Play Padel today.
+          {t("subheading", { brand: "Play Padel" })}
         </p>
       </div>
 

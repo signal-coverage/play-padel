@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useTheme } from "next-themes";
 import { useAuth } from "@/hooks/use-auth";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { LocaleSwitcher } from "@/components/LocaleSwitcher";
 import { NavLinks } from "./components/NavLinks";
 import { NotificationsBell } from "./components/NotificationsBell";
 import { UserMenu } from "./components/UserMenu";
@@ -19,21 +20,27 @@ export function AppNavbar() {
     resolvedTheme === "dark" ? "/dark/logo.png" : "/light/logo.svg";
 
   return (
+    // Deliberately left-aligned (logo, then nav immediately after it),
+    // NOT centered — that centered treatment belongs to the marketing
+    // LandingHeader, not this app-shell navbar; a dashboard nav
+    // conventionally sits flush next to the logo, with actions pinned to
+    // the far right.
+    //
+    // flex-1 (not just min-w-0) on both this group AND NavLinks itself
+    // below is load-bearing, not cosmetic: NavLinks' own internal
+    // nav-overflow-container (see hooks.ts's useOverflowNav) is flex-1
+    // too, and only ever has REAL, viewport-stable space to claim if
+    // everything between it and <header>'s justify-between row is also
+    // stretched to the header's true available width — otherwise this
+    // whole chain sizes to its own content instead. That's harmless
+    // while every item still fits, but once anything collapses into
+    // "More", the row's rendered width shrinks to match its now-smaller
+    // content, which never grows back even on a much wider resize —
+    // there's no longer anything forcing it wider, since nothing is
+    // being externally squeezed anymore. See AppNavbar.test.tsx.
     <header className="flex items-center justify-between gap-4 border-b border-border bg-background px-6 py-4 md:px-6">
       <CommandPalette role={role} />
 
-      {/* flex-1 (not just min-w-0) on both this group AND NavLinks itself
-          below is load-bearing, not cosmetic: NavLinks' own internal
-          nav-overflow-container (see hooks.ts's useOverflowNav) is flex-1
-          too, and only ever has REAL, viewport-stable space to claim if
-          everything between it and <header>'s justify-between row is also
-          stretched to the header's true available width — otherwise this
-          whole chain sizes to its own content instead. That's harmless
-          while every item still fits, but once anything collapses into
-          "More", the row's rendered width shrinks to match its now-smaller
-          content, which never grows back even on a much wider resize —
-          there's no longer anything forcing it wider, since nothing is
-          being externally squeezed anymore. See AppNavbar.test.tsx. */}
       <div className="flex min-w-0 flex-1 items-center gap-8">
         <Link
           href="/dashboard"
@@ -51,6 +58,7 @@ export function AppNavbar() {
       </div>
 
       <div className="flex shrink-0 items-center gap-3">
+        <LocaleSwitcher />
         <ThemeToggle />
         <NotificationsBell />
         <UserMenu />

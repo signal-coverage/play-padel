@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { CLUB_OPERATIONAL_STATUS_QUERY_KEY } from "@/app/dashboard/_components/ClubOperationalGate/consts";
 import type { ClubBankTransferAccount } from "./types";
@@ -10,21 +11,28 @@ const BANK_TRANSFER_ACCOUNT_QUERY_KEY = [
   "settings",
 ] as const;
 
-async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
+async function fetchJson<T>(
+  url: string,
+  init: RequestInit | undefined,
+  fallbackErrorMessage: string,
+): Promise<T> {
   const res = await fetch(url, init);
   if (!res.ok) {
     const body = await res.json().catch(() => null);
-    throw new Error(body?.error ?? "Something went wrong. Please try again.");
+    throw new Error(body?.error ?? fallbackErrorMessage);
   }
   return res.json();
 }
 
 export function useClubBankTransferAccount() {
+  const t = useTranslations("BankTransferAccountSettingsCardData");
   return useQuery({
     queryKey: BANK_TRANSFER_ACCOUNT_QUERY_KEY,
     queryFn: () =>
       fetchJson<{ account: ClubBankTransferAccount | null }>(
         "/api/clubs/bank-transfer-account",
+        undefined,
+        t("genericError"),
       ).then((data) => data.account),
   });
 }
@@ -37,6 +45,7 @@ export type SetBankTransferAccountInput = {
 };
 
 export function useSetClubBankTransferAccount() {
+  const t = useTranslations("BankTransferAccountSettingsCardData");
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (input: SetBankTransferAccountInput) =>
@@ -47,6 +56,7 @@ export function useSetClubBankTransferAccount() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(input),
         },
+        t("genericError"),
       ),
     onSuccess: (data) => {
       queryClient.setQueryData(BANK_TRANSFER_ACCOUNT_QUERY_KEY, data.account);
@@ -59,7 +69,7 @@ export function useSetClubBankTransferAccount() {
       queryClient.invalidateQueries({
         queryKey: CLUB_OPERATIONAL_STATUS_QUERY_KEY,
       });
-      toast.success("Bank transfer account saved");
+      toast.success(t("saved"));
     },
     onError: (error: Error) => toast.error(error.message),
   });

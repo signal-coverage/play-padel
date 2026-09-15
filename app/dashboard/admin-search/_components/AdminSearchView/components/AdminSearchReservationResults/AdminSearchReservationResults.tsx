@@ -1,4 +1,5 @@
 import { format } from "date-fns";
+import { useTranslations } from "next-intl";
 import { DataTable } from "@/components/DataTable";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -14,10 +15,11 @@ export function AdminSearchReservationResults({
   reservations,
   isLoading,
 }: AdminSearchReservationResultsProps) {
+  const t = useTranslations("AdminSearchReservationResults");
   const columns: DataTableColumn<AdminSearchReservationResult>[] = [
     {
       key: "reservation",
-      header: "Reservation",
+      header: t("reservationColumn"),
       cell: (reservation) => (
         <div className="flex flex-col gap-1 py-0.5">
           <span className="font-medium">{reservation.courtName}</span>
@@ -34,7 +36,7 @@ export function AdminSearchReservationResults({
     },
     {
       key: "status",
-      header: "Status",
+      header: t("statusColumn"),
       cell: (reservation) => (
         <Badge variant="outline">{reservation.status}</Badge>
       ),
@@ -48,8 +50,8 @@ export function AdminSearchReservationResults({
       rows={reservations}
       rowKey={(reservation) => reservation.id}
       isLoading={isLoading}
-      loadingLabel="Searching reservations…"
-      emptyState={<StatusBox>No reservations found.</StatusBox>}
+      loadingLabel={t("loading")}
+      emptyState={<StatusBox>{t("emptyState")}</StatusBox>}
     />
   );
 }

@@ -8,18 +8,28 @@ export const DEFAULT_VALUES: NewClosureFormValues = {
   applyToAllCourts: false,
 };
 
-export const newClosureFormSchema = z
-  .object({
-    startsAt: z.string().min(1, "Start is required"),
-    endsAt: z.string().min(1, "End is required"),
-    reason: z.string().min(1, "Reason is required"),
-    applyToAllCourts: z.boolean(),
-  })
-  .refine((data) => new Date(data.endsAt) > new Date(data.startsAt), {
-    message: "End must be after start",
-    path: ["endsAt"],
-  })
-  .refine((data) => new Date(data.endsAt) > new Date(), {
-    message: "Closure must not be entirely in the past",
-    path: ["endsAt"],
-  });
+// Every user-facing validation message lives in the messages/*.json
+// "NewClosureFormValidation" namespace, not as a literal here — this schema
+// is built once per render, so it can't call useTranslations() itself.
+// NewClosureForm.tsx builds it via buildNewClosureFormSchema(t), passing its
+// own useTranslations('NewClosureFormValidation') result — same factory
+// pattern as app/onboarding/types.ts's buildOnboardingFormSchema.
+export type NewClosureValidationT = (key: string) => string;
+
+export function buildNewClosureFormSchema(t: NewClosureValidationT) {
+  return z
+    .object({
+      startsAt: z.string().min(1, t("startRequired")),
+      endsAt: z.string().min(1, t("endRequired")),
+      reason: z.string().min(1, t("reasonRequired")),
+      applyToAllCourts: z.boolean(),
+    })
+    .refine((data) => new Date(data.endsAt) > new Date(data.startsAt), {
+      message: t("endMustBeAfterStart"),
+      path: ["endsAt"],
+    })
+    .refine((data) => new Date(data.endsAt) > new Date(), {
+      message: t("closureNotInPast"),
+      path: ["endsAt"],
+    });
+}

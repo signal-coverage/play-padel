@@ -1,4 +1,5 @@
 import { ChevronRight } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { PlayerProfileCard } from "@/components/PlayerProfileCard";
@@ -10,13 +11,13 @@ import { getInitials } from "@/lib/utils/initials";
 import type { LatestPartnerCardProps } from "./types";
 
 export function LatestPartnerCard({ partner }: LatestPartnerCardProps) {
+  const t = useTranslations("LatestPartnerCard");
+  const tOptions = useTranslations("UserOptionLabels");
+
   if (!partner) {
     return (
       <div className="flex w-full items-center gap-3 rounded-sm border border-dashed border-border bg-muted/20 p-3 text-left">
-        <p className="text-xs text-muted-foreground">
-          No partners yet — tag a co-player when you book a court to see them
-          here.
-        </p>
+        <p className="text-xs text-muted-foreground">{t("emptyState")}</p>
       </div>
     );
   }
@@ -39,16 +40,17 @@ export function LatestPartnerCard({ partner }: LatestPartnerCardProps) {
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-semibold">{partner.name}</p>
             <p className="truncate text-xs text-muted-foreground">
-              {getPadelCategoryLabel(partner.padelCategory)} •{" "}
-              {getPreferredSideLabel(partner.preferredSide)}
+              {getPadelCategoryLabel(partner.padelCategory, tOptions)} •{" "}
+              {getPreferredSideLabel(partner.preferredSide, tOptions)}
             </p>
             <p className="truncate text-xs text-muted-foreground">
               {partner.coupleWinRate !== undefined && (
                 <span className="font-medium text-foreground">
-                  {partner.coupleWinRate}% WR •{" "}
+                  {t("winRatePrefix", { percent: partner.coupleWinRate })}
+                  {" • "}
                 </span>
               )}
-              Played {partner.timesPlayedTogether}x
+              {t("playedTimes", { count: partner.timesPlayedTogether })}
             </p>
           </div>
           <ChevronRight

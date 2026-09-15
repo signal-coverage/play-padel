@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ChevronDown } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils/utils";
 import type { NavGroupMenuProps } from "./types";
 
@@ -29,6 +30,7 @@ export function NavGroupMenu({
   icon: Icon,
   variant = "desktop",
 }: NavGroupMenuProps) {
+  const t = useTranslations("AppNavbar.navItems");
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -113,7 +115,7 @@ export function NavGroupMenu({
                 className="h-4 w-4 text-muted-foreground"
                 strokeWidth={1.5}
               />
-              {item.title}
+              {t(item.titleKey)}
             </Link>
           ))}
         </div>

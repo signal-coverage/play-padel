@@ -7,6 +7,7 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import type { Slot } from "@/components/CourtAvailabilityGrid";
 import { dateKey, toReservationRecord, toSlot } from "./utils";
@@ -18,22 +19,29 @@ import type {
   ReservationRecord,
 } from "./types";
 
-async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
+async function fetchJson<T>(
+  url: string,
+  init: RequestInit | undefined,
+  fallbackErrorMessage: string,
+): Promise<T> {
   const res = await fetch(url, init);
   if (!res.ok) {
     const body = await res.json().catch(() => null);
-    throw new Error(body?.error ?? "Something went wrong. Please try again.");
+    throw new Error(body?.error ?? fallbackErrorMessage);
   }
   return res.json();
 }
 
 export function useActiveCourts() {
+  const t = useTranslations("ReservationsViewData");
   return useQuery({
     queryKey: ["courts", "active"],
     queryFn: () =>
-      fetchJson<{ courts: CourtSummary[] }>("/api/clubs/courts").then(
-        (data) => data.courts,
-      ),
+      fetchJson<{ courts: CourtSummary[] }>(
+        "/api/clubs/courts",
+        undefined,
+        t("genericError"),
+      ).then((data) => data.courts),
   });
 }
 
@@ -42,6 +50,7 @@ export function useActiveCourts() {
 const LIVE_REFETCH_INTERVAL_MS = 15_000;
 
 export function useCourtSlotsQueries(courtIds: string[], date: Date) {
+  const t = useTranslations("ReservationsViewData");
   const key = dateKey(date);
   return useQueries({
     queries: courtIds.map((courtId) => ({
@@ -49,6 +58,8 @@ export function useCourtSlotsQueries(courtIds: string[], date: Date) {
       queryFn: (): Promise<Slot[]> =>
         fetchJson<{ slots: RawSlot[] }>(
           `/api/clubs/courts/${courtId}/slots?date=${key}`,
+          undefined,
+          t("genericError"),
         ).then((data) => data.slots.map(toSlot)),
       refetchInterval: LIVE_REFETCH_INTERVAL_MS,
     })),
@@ -86,6 +97,7 @@ function useReservationsStream(key: string) {
 }
 
 export function useDayReservations(date: Date) {
+  const t = useTranslations("ReservationsViewData");
   const key = dateKey(date);
   useReservationsStream(key);
 
@@ -94,24 +106,31 @@ export function useDayReservations(date: Date) {
     queryFn: (): Promise<ReservationRecord[]> =>
       fetchJson<{ reservations: RawReservation[] }>(
         `/api/clubs/reservations?date=${key}`,
+        undefined,
+        t("genericError"),
       ).then((data) => data.reservations.map(toReservationRecord)),
     refetchInterval: LIVE_REFETCH_INTERVAL_MS,
   });
 }
 
 export function useReservationAction() {
+  const t = useTranslations("ReservationsViewData");
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ reservationId, action }: ReservationActionInput) =>
-      fetchJson(`/api/clubs/reservations/${reservationId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action }),
-      }),
+      fetchJson(
+        `/api/clubs/reservations/${reservationId}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action }),
+        },
+        t("genericError"),
+      ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["reservations"] });
       queryClient.invalidateQueries({ queryKey: ["court-slots"] });
-      toast.success("Reservation updated");
+      toast.success(t("reservationUpdated"));
     },
     onError: (error: Error) => toast.error(error.message),
   });

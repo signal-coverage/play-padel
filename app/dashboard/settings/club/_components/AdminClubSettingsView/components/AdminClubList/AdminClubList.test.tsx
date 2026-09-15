@@ -1,9 +1,20 @@
 // @vitest-environment jsdom
+import type * as React from "react";
 import { describe, it, expect, afterEach, vi } from "vitest";
 import { render, screen, cleanup } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
+import { NextIntlClientProvider } from "next-intl";
+import messages from "@/messages/en.json";
 import { AdminClubList } from "./AdminClubList";
 import type { AdminClubListItem } from "../../types";
+
+function renderWithIntl(ui: React.ReactElement) {
+  return render(
+    <NextIntlClientProvider locale="en" messages={messages}>
+      {ui}
+    </NextIntlClientProvider>,
+  );
+}
 
 class ResizeObserverStub {
   observe() {}
@@ -32,7 +43,7 @@ afterEach(() => {
 describe("AdminClubList health indicator", () => {
   it("renders no warning icon for a club with no health issues", () => {
     vi.stubGlobal("ResizeObserver", ResizeObserverStub);
-    render(
+    renderWithIntl(
       <AdminClubList
         clubs={[CLUB_A]}
         isLoading={false}
@@ -52,7 +63,7 @@ describe("AdminClubList health indicator", () => {
       id: "club_2",
       membershipPastDue: true,
     };
-    render(
+    renderWithIntl(
       <AdminClubList
         clubs={[club]}
         isLoading={false}
@@ -72,7 +83,7 @@ describe("AdminClubList health indicator", () => {
       membershipPastDue: true,
       noOperatingHours: true,
     };
-    render(
+    renderWithIntl(
       <AdminClubList
         clubs={[club]}
         isLoading={false}
@@ -91,7 +102,7 @@ describe("AdminClubList health indicator", () => {
 describe("AdminClubList health summary", () => {
   it("renders no summary line when no club needs attention", () => {
     vi.stubGlobal("ResizeObserver", ResizeObserverStub);
-    render(
+    renderWithIntl(
       <AdminClubList
         clubs={[CLUB_A]}
         isLoading={false}
@@ -115,7 +126,7 @@ describe("AdminClubList health summary", () => {
       id: "club_3",
       noOperatingHours: true,
     };
-    render(
+    renderWithIntl(
       <AdminClubList
         clubs={[healthyClub, flaggedClubB, flaggedClubC]}
         isLoading={false}
@@ -130,7 +141,7 @@ describe("AdminClubList health summary", () => {
 describe("AdminClubList free-plan badge", () => {
   it("does not render a Free badge for a club whose membership subscription isn't FREE", () => {
     vi.stubGlobal("ResizeObserver", ResizeObserverStub);
-    render(
+    renderWithIntl(
       <AdminClubList
         clubs={[CLUB_A]}
         isLoading={false}
@@ -153,7 +164,7 @@ describe("AdminClubList free-plan badge", () => {
       plan: "BASIC",
       isFreePlan: true,
     };
-    render(
+    renderWithIntl(
       <AdminClubList
         clubs={[freeClub]}
         isLoading={false}
@@ -170,7 +181,7 @@ describe("AdminClubList free-plan badge", () => {
 describe("AdminClubList mobile height", () => {
   it("gives the table extra minimum height on mobile with a trailing spacer, while leaving desktop sizing untouched", () => {
     vi.stubGlobal("ResizeObserver", ResizeObserverStub);
-    render(
+    renderWithIntl(
       <AdminClubList
         clubs={[CLUB_A]}
         isLoading={false}

@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { Download, Pencil, Trash2, UserRoundCog } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -24,7 +25,7 @@ import {
   useUpdatePlayer,
   useImpersonatePlayer,
 } from "./hooks";
-import { STATIC_PLAYER_COLUMNS } from "./consts";
+import { buildStaticPlayerColumns } from "./consts";
 import { filterPlayers, sortPlayers } from "./utils";
 import { PlayersFilterBar } from "./components/PlayersFilterBar";
 import { PlayerEditSheet } from "./components/PlayerEditSheet";
@@ -45,6 +46,8 @@ const DEFAULT_FILTERS: PlayerFilters = {
 const DEFAULT_SORT: PlayerSort = { field: "name", direction: "asc" };
 
 export function PlayersDirectory() {
+  const t = useTranslations("PlayersDirectory");
+  const tOptions = useTranslations("UserOptionLabels");
   const { user } = useAuth();
   const isAdmin = user?.isAdmin === true;
 
@@ -96,7 +99,7 @@ export function PlayersDirectory() {
     () => [
       {
         key: "player",
-        header: "Player",
+        header: t("player"),
         cell: (player) => (
           <button
             type="button"
@@ -123,14 +126,14 @@ export function PlayersDirectory() {
                 // you", not status info, so it should stand out rather
                 // than blend in.
                 <Badge className="shrink-0 border-transparent bg-accent text-accent-foreground">
-                  You
+                  {t("you")}
                 </Badge>
               )}
             </span>
           </button>
         ),
       },
-      ...STATIC_PLAYER_COLUMNS,
+      ...buildStaticPlayerColumns(t, tOptions),
       ...(isAdmin
         ? [
             {
@@ -139,16 +142,16 @@ export function PlayersDirectory() {
               // route's own comment), so this column only ever exists
               // inside this same isAdmin-gated block.
               key: "role",
-              header: "Role",
+              header: t("role"),
               cell: (player: PlayerListItem) => (
                 <Badge variant={player.isAdmin ? "default" : "outline"}>
-                  {player.isAdmin ? "Admin" : "Player"}
+                  {player.isAdmin ? t("admin") : t("player")}
                 </Badge>
               ),
             },
             {
               key: "actions",
-              header: "Actions",
+              header: t("actions"),
               headerClassName: "text-right",
               className: "text-right",
               cell: (player: PlayerListItem) => {
@@ -174,13 +177,15 @@ export function PlayersDirectory() {
                           type="button"
                           variant="ghost"
                           size="icon"
-                          aria-label={`Edit ${player.displayName}`}
+                          aria-label={t("editFor", {
+                            name: player.displayName,
+                          })}
                           onClick={() => setEditingPlayer(player)}
                         >
                           <Pencil />
                         </Button>
                       </TooltipTrigger>
-                      <TooltipContent>Edit player</TooltipContent>
+                      <TooltipContent>{t("editPlayer")}</TooltipContent>
                     </Tooltip>
 
                     <Tooltip>
@@ -209,7 +214,9 @@ export function PlayersDirectory() {
                             type="button"
                             variant="ghost"
                             size="icon"
-                            aria-label={`Delete ${player.displayName}`}
+                            aria-label={t("deleteFor", {
+                              name: player.displayName,
+                            })}
                             disabled={isSelf}
                             onClick={() => setDeletingPlayer(player)}
                           >
@@ -218,9 +225,7 @@ export function PlayersDirectory() {
                         </span>
                       </TooltipTrigger>
                       <TooltipContent>
-                        {isSelf
-                          ? "You can't delete your own account"
-                          : "Delete player"}
+                        {isSelf ? t("cantDeleteSelf") : t("deletePlayer")}
                       </TooltipContent>
                     </Tooltip>
 
@@ -237,7 +242,9 @@ export function PlayersDirectory() {
                             type="button"
                             variant="ghost"
                             size="icon"
-                            aria-label={`Impersonate ${player.displayName}`}
+                            aria-label={t("impersonateFor", {
+                              name: player.displayName,
+                            })}
                             disabled={impersonateDisabled}
                             onClick={() =>
                               impersonatePlayer.mutate({ userId: player.id })
@@ -249,10 +256,10 @@ export function PlayersDirectory() {
                       </TooltipTrigger>
                       <TooltipContent>
                         {isSelf
-                          ? "You can't impersonate yourself"
+                          ? t("cantImpersonateSelf")
                           : player.isAdmin
-                            ? "Can't impersonate another admin"
-                            : "Sign in as this player"}
+                            ? t("cantImpersonateAdmin")
+                            : t("signInAsPlayer")}
                       </TooltipContent>
                     </Tooltip>
                   </div>
@@ -262,7 +269,7 @@ export function PlayersDirectory() {
           ]
         : []),
     ],
-    [isAdmin, impersonatePlayer, user?.id],
+    [t, tOptions, isAdmin, impersonatePlayer, user?.id],
   );
 
   return (
@@ -289,14 +296,14 @@ export function PlayersDirectory() {
           <Button variant="outline" size="sm" asChild className="self-start">
             <a href="/api/admin/export/players" download>
               <Download size={14} strokeWidth={2.25} />
-              Export CSV
+              {t("exportCsv")}
             </a>
           </Button>
         )}
       </div>
 
       {isError ? (
-        <StatusBox>Could not load players. Try again later.</StatusBox>
+        <StatusBox>{t("loadError")}</StatusBox>
       ) : (
         <DataTable
           // main (DashboardShell.tsx) is overflow-y-auto (whole-page scroll)
@@ -316,8 +323,8 @@ export function PlayersDirectory() {
           rows={visiblePlayers}
           rowKey={(player) => player.id}
           isLoading={isLoading}
-          loadingLabel="Loading players…"
-          emptyState={<StatusBox>No players match your filters.</StatusBox>}
+          loadingLabel={t("loading")}
+          emptyState={<StatusBox>{t("emptyFiltered")}</StatusBox>}
         />
       )}
 
@@ -360,14 +367,14 @@ export function PlayersDirectory() {
       <ConfirmDialog
         open={Boolean(deletingPlayer)}
         onOpenChange={handleDeleteDialogClose}
-        title="Delete player?"
+        title={t("deleteTitle")}
         description={
           deletingPlayer
-            ? `"${deletingPlayer.displayName}" will be anonymized and removed from the directory. This can't be undone.`
+            ? t("deleteDescription", { name: deletingPlayer.displayName })
             : undefined
         }
-        confirmLabel="Delete"
-        pendingLabel="Deleting…"
+        confirmLabel={t("deleteConfirm")}
+        pendingLabel={t("deletePending")}
         isPending={deletePlayer.isPending}
         onConfirm={confirmDelete}
       />

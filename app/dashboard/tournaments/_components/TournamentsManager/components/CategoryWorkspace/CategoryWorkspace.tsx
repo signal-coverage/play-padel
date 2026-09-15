@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { isGroupStageComplete } from "@/core/tournaments/services/groupStageStatus";
 import {
@@ -45,6 +46,7 @@ export function CategoryWorkspace({
   tournamentId,
   category,
 }: CategoryWorkspaceProps) {
+  const t = useTranslations("CategoryWorkspace");
   const { data: teams = [] } = useCategoryTeams(tournamentId, category.id);
   const { data: groups = [] } = useCategoryGroups(tournamentId, category.id);
   const setGroups = useSetGroups(tournamentId, category.id);
@@ -168,7 +170,7 @@ export function CategoryWorkspace({
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <h3 className="mb-2 text-sm font-semibold">Matches</h3>
+              <h3 className="mb-2 text-sm font-semibold">{t("matches")}</h3>
               <GroupMatchesList
                 matches={matches}
                 teamLabels={teamLabels}
@@ -177,7 +179,7 @@ export function CategoryWorkspace({
               />
             </div>
             <div>
-              <h3 className="mb-2 text-sm font-semibold">Standings</h3>
+              <h3 className="mb-2 text-sm font-semibold">{t("standings")}</h3>
               <StandingsTable rows={standings} teamLabels={teamLabels} />
             </div>
           </div>
@@ -192,13 +194,12 @@ export function CategoryWorkspace({
             disabled={!canGenerateKnockout || generateKnockoutBracket.isPending}
           >
             {generateKnockoutBracket.isPending
-              ? "Generating…"
-              : "Generate Knockout Bracket"}
+              ? t("generating")
+              : t("generateKnockoutBracket")}
           </Button>
           {!groupStageComplete && (
             <p className="mt-1 text-sm text-muted-foreground">
-              Every group match must be decided before the bracket can be
-              generated.
+              {t("groupStageIncomplete")}
             </p>
           )}
         </div>
@@ -206,7 +207,7 @@ export function CategoryWorkspace({
 
       {hasKnockoutStarted && (
         <div>
-          <h3 className="mb-2 text-sm font-semibold">Knockout bracket</h3>
+          <h3 className="mb-2 text-sm font-semibold">{t("knockoutBracket")}</h3>
           <KnockoutRoundsList
             matches={knockoutMatches}
             teamLabels={teamLabels}
@@ -240,9 +241,13 @@ export function CategoryWorkspace({
           open={walkoverDialogMatch !== null}
           onOpenChange={(open) => !open && setWalkoverDialogMatch(null)}
           teamAId={walkoverDialogMatch.teamAId ?? ""}
-          teamALabel={teamLabels[walkoverDialogMatch.teamAId ?? ""] ?? "Team A"}
+          teamALabel={
+            teamLabels[walkoverDialogMatch.teamAId ?? ""] ?? t("teamAFallback")
+          }
           teamBId={walkoverDialogMatch.teamBId ?? ""}
-          teamBLabel={teamLabels[walkoverDialogMatch.teamBId ?? ""] ?? "Team B"}
+          teamBLabel={
+            teamLabels[walkoverDialogMatch.teamBId ?? ""] ?? t("teamBFallback")
+          }
           isSubmitting={recordWalkover.isPending}
           onConfirm={async (winningTeamId) => {
             await recordWalkover.mutateAsync({
@@ -279,11 +284,13 @@ export function CategoryWorkspace({
           onOpenChange={(open) => !open && setKnockoutWalkoverDialogMatch(null)}
           teamAId={knockoutWalkoverDialogMatch.teamAId ?? ""}
           teamALabel={
-            teamLabels[knockoutWalkoverDialogMatch.teamAId ?? ""] ?? "Team A"
+            teamLabels[knockoutWalkoverDialogMatch.teamAId ?? ""] ??
+            t("teamAFallback")
           }
           teamBId={knockoutWalkoverDialogMatch.teamBId ?? ""}
           teamBLabel={
-            teamLabels[knockoutWalkoverDialogMatch.teamBId ?? ""] ?? "Team B"
+            teamLabels[knockoutWalkoverDialogMatch.teamBId ?? ""] ??
+            t("teamBFallback")
           }
           isSubmitting={recordKnockoutWalkover.isPending}
           onConfirm={async (winningTeamId) => {

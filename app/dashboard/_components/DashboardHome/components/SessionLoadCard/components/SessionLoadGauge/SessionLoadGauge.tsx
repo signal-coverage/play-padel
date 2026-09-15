@@ -1,4 +1,5 @@
 import { ArrowDownRight, ArrowUpRight, Gauge } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
 import {
   EmptyDescription,
@@ -12,12 +13,6 @@ const TONE_BADGE_VARIANT = {
   good: "success",
   watch: "warning",
   bad: "destructive",
-} as const;
-
-const TONE_LABEL = {
-  good: "Good",
-  watch: "Watch",
-  bad: "Needs attention",
 } as const;
 
 const TONE_RING_CLASS = {
@@ -34,13 +29,20 @@ export function SessionLoadGauge({
   hasData,
   emptyMessage,
 }: SessionLoadGaugeProps) {
+  const t = useTranslations("SessionLoadGauge");
+  const TONE_LABEL = {
+    good: t("toneGood"),
+    watch: t("toneWatch"),
+    bad: t("toneBad"),
+  } as const;
+
   if (!hasData) {
     return (
       <div className="flex h-40 flex-col items-center justify-center gap-2 text-center">
         <EmptyMedia variant="icon" className="mb-0 size-8 rounded-full">
           <Gauge className="size-4" />
         </EmptyMedia>
-        <EmptyTitle className="text-xs">No sessions yet</EmptyTitle>
+        <EmptyTitle className="text-xs">{t("noSessionsYet")}</EmptyTitle>
         <EmptyDescription className="text-xs">{emptyMessage}</EmptyDescription>
       </div>
     );
@@ -89,7 +91,7 @@ export function SessionLoadGauge({
             ) : (
               <ArrowDownRight className="size-3.5" />
             )}
-            {trend.text}
+            {t("vsPreviousPeriod", { delta: trend.delta })}
           </span>
         )}
       </div>

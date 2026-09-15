@@ -1,5 +1,7 @@
 import { toZonedTime, fromZonedTime } from "date-fns-tz";
 import { prisma } from "@/infrastructure/db/client";
+import { getUserLocale } from "@/i18n/locale";
+import { resolveNotificationContent } from "@/lib/notifications/content";
 import type {
   Notification,
   NotificationType,
@@ -32,6 +34,11 @@ function toNotification(
     recipientEmail: row.recipientEmail,
     title: row.title,
     message: row.message,
+    // Prisma's Json column type-checks as Prisma.JsonValue — narrowed here
+    // the same way row.type/row.status are, since every row this app ever
+    // writes stores a plain flat object (see createNotification below) or
+    // nothing at all, never an array/primitive/nested structure.
+    params: (row.params as Record<string, string | number> | null) ?? null,
     status: row.status as NotificationStatus,
     failureReason: row.failureReason ?? undefined,
     sentAt: row.sentAt ?? undefined,
@@ -47,6 +54,11 @@ export interface CreateNotificationData {
   recipientEmail: string;
   title: string;
   message: string;
+  // Stored alongside the baked title/message (never instead of them — see
+  // prisma/schema.prisma's Notification.params doc comment) so this
+  // notification's title/message can be re-rendered live in whatever
+  // locale the viewer is CURRENTLY using, on every later read.
+  params: Record<string, string | number>;
 }
 
 export async function createNotification(
@@ -60,6 +72,7 @@ export async function createNotification(
       recipientEmail: data.recipientEmail,
       title: data.title,
       message: data.message,
+      params: data.params,
       status: "PENDING",
     },
   });
@@ -177,6 +190,34 @@ export async function getPendingReservationReminders(
   return results;
 }
 
+// Re-resolves title/message for every notification that has `params`
+// stored, in the CURRENT request's locale (see i18n/locale.ts's
+// getUserLocale) — so switching the LocaleSwitcher immediately changes how
+// every notification reads, not just the app's own static UI copy. A row
+// with `params: null` (dispatched before this column existed, or genuinely
+// has nothing to re-render from) is left exactly as originally baked —
+// there's nothing here to regenerate it from.
+async function hydrateLiveContent(
+  notifications: Notification[],
+): Promise<Notification[]> {
+  if (notifications.every((n) => n.params == null)) return notifications;
+
+  const locale = await getUserLocale();
+
+  return Promise.all(
+    notifications.map(async (notification) => {
+      if (notification.params == null) return notification;
+
+      const { subject, html } = await resolveNotificationContent(
+        notification.type,
+        locale,
+        notification.params,
+      );
+      return { ...notification, title: subject, message: html };
+    }),
+  );
+}
+
 export interface NotificationFilters {
   type?: NotificationType;
   status?: NotificationStatus;
@@ -229,7 +270,9 @@ export async function listNotifications(
     // but this admin/owner listing doesn't build any club-scoped deep-link
     // href from its results — `clubSlug` is left null rather than adding an
     // unused extra query.
-    notifications: rows.map((row) => toNotification(row)),
+    notifications: await hydrateLiveContent(
+      rows.map((row) => toNotification(row)),
+    ),
     total,
     page,
     pageSize,
@@ -264,10 +307,12 @@ export async function listRecipientNotifications(
     for (const club of clubs) clubSlugById.set(club.id, club.slug);
   }
 
-  return rows.map((row) =>
-    toNotification(
-      row,
-      row.clubId ? (clubSlugById.get(row.clubId) ?? null) : null,
+  return hydrateLiveContent(
+    rows.map((row) =>
+      toNotification(
+        row,
+        row.clubId ? (clubSlugById.get(row.clubId) ?? null) : null,
+      ),
     ),
   );
 }

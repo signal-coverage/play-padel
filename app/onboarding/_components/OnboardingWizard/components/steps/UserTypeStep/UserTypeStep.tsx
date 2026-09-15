@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { Building2, User } from "lucide-react";
 import { Controller } from "react-hook-form";
+import { useTranslations } from "next-intl";
 import { OptionCard } from "@/app/onboarding/_components/OptionCard";
 import { FieldError } from "@/components/ui/field";
 import type { UserTypeStepProps } from "./types";
@@ -10,6 +11,7 @@ export function UserTypeStep({
   errors,
   shouldFocusHeading,
 }: UserTypeStepProps) {
+  const t = useTranslations("OnboardingWizard.steps.userType");
   const headingRef = useRef<HTMLHeadingElement>(null);
 
   useEffect(() => {
@@ -26,11 +28,9 @@ export function UserTypeStep({
           className="text-base font-semibold mb-0.5"
           tabIndex={-1}
         >
-          Welcome to Play Padel
+          {t("heading", { brand: "Play Padel" })}
         </h2>
-        <p className="text-sm text-muted-foreground">
-          Tell us how you&apos;ll be using it.
-        </p>
+        <p className="text-sm text-muted-foreground">{t("subheading")}</p>
       </div>
 
       <Controller
@@ -40,15 +40,15 @@ export function UserTypeStep({
           <div className="flex flex-col gap-3">
             <OptionCard
               icon={User}
-              title="I'm a player"
-              description="Browse clubs and reserve free courts."
+              title={t("player.title")}
+              description={t("player.description")}
               selected={field.value === "player"}
               onClick={() => field.onChange("player")}
             />
             <OptionCard
               icon={Building2}
-              title="I'm a club owner"
-              description="Manage courts and availability for my club."
+              title={t("owner.title")}
+              description={t("owner.description")}
               selected={field.value === "owner"}
               onClick={() => field.onChange("owner")}
             />

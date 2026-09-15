@@ -2,13 +2,15 @@
 import { describe, it, expect, afterEach } from "vitest";
 import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
+import { NextIntlClientProvider } from "next-intl";
 import { ScrollText, Activity, Shield } from "lucide-react";
+import messages from "@/messages/en.json";
 import { NavGroupMenu } from "./NavGroupMenu";
 import type { VisibleNavLink } from "../../hooks";
 
 const ITEMS: VisibleNavLink[] = [
   {
-    title: "Audit Log",
+    titleKey: "auditLog",
     href: "/dashboard/audit-logs",
     icon: ScrollText,
     roles: ["owner", "player"],
@@ -18,7 +20,7 @@ const ITEMS: VisibleNavLink[] = [
     viaAdminWidening: false,
   },
   {
-    title: "System Status",
+    titleKey: "systemStatus",
     href: "/dashboard/admin-status",
     icon: Activity,
     roles: ["owner", "player"],
@@ -29,13 +31,21 @@ const ITEMS: VisibleNavLink[] = [
   },
 ];
 
+function renderWithIntl(ui: React.ReactElement) {
+  return render(
+    <NextIntlClientProvider locale="en" messages={messages}>
+      {ui}
+    </NextIntlClientProvider>,
+  );
+}
+
 describe("NavGroupMenu", () => {
   afterEach(() => {
     cleanup();
   });
 
   it("shows the given label as a trigger and none of the grouped item titles until opened", () => {
-    render(
+    renderWithIntl(
       <NavGroupMenu items={ITEMS} active={false} label="Admin" icon={Shield} />,
     );
 
@@ -45,7 +55,7 @@ describe("NavGroupMenu", () => {
   });
 
   it("reveals every grouped item as a link to its own href once the trigger is clicked", async () => {
-    render(
+    renderWithIntl(
       <NavGroupMenu items={ITEMS} active={false} label="Admin" icon={Shield} />,
     );
 
@@ -63,7 +73,7 @@ describe("NavGroupMenu", () => {
   });
 
   it("renders the mobile variant's trigger with the same accessible label", () => {
-    render(
+    renderWithIntl(
       <NavGroupMenu
         items={ITEMS}
         active={false}
@@ -77,14 +87,14 @@ describe("NavGroupMenu", () => {
   });
 
   it("renders whatever label it's given (e.g. More), not a hardcoded one", () => {
-    render(<NavGroupMenu items={ITEMS} active={false} label="More" />);
+    renderWithIntl(<NavGroupMenu items={ITEMS} active={false} label="More" />);
 
     expect(screen.getByText("More")).toBeInTheDocument();
     expect(screen.queryByText("Admin")).not.toBeInTheDocument();
   });
 
   it("closes when clicking outside the menu", () => {
-    render(
+    renderWithIntl(
       <div>
         <NavGroupMenu
           items={ITEMS}
@@ -109,7 +119,7 @@ describe("NavGroupMenu", () => {
   });
 
   it("does not close when clicking inside the menu itself", () => {
-    render(
+    renderWithIntl(
       <NavGroupMenu items={ITEMS} active={false} label="Admin" icon={Shield} />,
     );
 
@@ -123,7 +133,7 @@ describe("NavGroupMenu", () => {
   });
 
   it("closes on Escape and returns focus to the trigger button", () => {
-    render(
+    renderWithIntl(
       <NavGroupMenu items={ITEMS} active={false} label="Admin" icon={Shield} />,
     );
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { useGuardedDialogClose } from "@/hooks/use-guarded-dialog-close";
@@ -16,6 +17,7 @@ import {
 } from "./hooks";
 
 export function ClubClosuresCard() {
+  const t = useTranslations("ClubClosuresCard");
   const { data: activeCourtIds } = useActiveCourtIds();
   const { data: closures, isLoading: isLoadingClosures } = useClubClosures();
   const createClosure = useCreateClubClosure();
@@ -34,7 +36,7 @@ export function ClubClosuresCard() {
   ): Promise<boolean> {
     const courtIds = activeCourtIds ?? [];
     if (courtIds.length === 0) {
-      toast.error("Add at least one active court before closing the club");
+      toast.error(t("noActiveCourts"));
       return false;
     }
 
@@ -47,7 +49,13 @@ export function ClubClosuresCard() {
     const results = await Promise.allSettled(
       courtIds.map((courtId) => createClosure.mutateAsync({ courtId, input })),
     );
-    const outcome = summarizeClosureFanOut(results);
+    const outcome = summarizeClosureFanOut(results, {
+      created: t("closureCreated"),
+      createdForCourts: (count) => t("closureCreatedForCourts", { count }),
+      failed: t("closureCreateFailed"),
+      partial: (succeeded, total, failed) =>
+        t("closurePartial", { succeeded, total, failed }),
+    });
 
     if (outcome.toastTone === "success") {
       toast.success(outcome.toastMessage);
@@ -82,12 +90,10 @@ export function ClubClosuresCard() {
     <div className="flex flex-col gap-4">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight text-balance">
-          Closures
+          {t("title")}
         </h1>
         <p className="text-sm text-muted-foreground mt-1 text-pretty">
-          Block every court at once when the whole complex is rented out for an
-          event. It lifts automatically once it ends — no need to come back and
-          reopen anything.
+          {t("description")}
         </p>
       </div>
 
@@ -100,7 +106,9 @@ export function ClubClosuresCard() {
 
       <div className="max-w-lg">
         {isLoadingClosures || !closures ? (
-          <p className="text-sm text-muted-foreground">Loading closures…</p>
+          <p className="text-sm text-muted-foreground">
+            {t("loadingClosures")}
+          </p>
         ) : (
           <ClubClosuresList
             closures={closures}
@@ -117,11 +125,11 @@ export function ClubClosuresCard() {
       <ConfirmDialog
         open={closurePendingCancellation !== null}
         onOpenChange={handleCancelDialogClose}
-        title="Cancel this closure?"
-        description="This will make the court bookable again for its blocked time range."
-        cancelLabel="Keep closure"
-        confirmLabel="Cancel closure"
-        pendingLabel="Cancelling…"
+        title={t("cancelTitle")}
+        description={t("cancelDescription")}
+        cancelLabel={t("keepClosure")}
+        confirmLabel={t("cancelClosure")}
+        pendingLabel={t("cancelling")}
         isPending={cancelClosure.isPending}
         onConfirm={handleConfirmCancel}
       />

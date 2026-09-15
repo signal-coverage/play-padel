@@ -1,32 +1,40 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { playersQueryKey } from "./consts";
 import type { PlayerListItem, PlayerPatchInput } from "./types";
 
-async function fetchPlayers(): Promise<PlayerListItem[]> {
+async function fetchPlayers(
+  fallbackErrorMessage: string,
+): Promise<PlayerListItem[]> {
   const res = await fetch("/api/players");
   const body = await res.json().catch(() => null);
   if (!res.ok) {
-    throw new Error(body?.error ?? "Could not load players.");
+    throw new Error(body?.error ?? fallbackErrorMessage);
   }
   return body.players;
 }
 
-async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
+async function fetchJson<T>(
+  url: string,
+  init: RequestInit | undefined,
+  fallbackErrorMessage: string,
+): Promise<T> {
   const res = await fetch(url, init);
   const body = await res.json().catch(() => null);
   if (!res.ok) {
-    throw new Error(body?.error ?? "Something went wrong. Please try again.");
+    throw new Error(body?.error ?? fallbackErrorMessage);
   }
   return body;
 }
 
 export function usePlayers() {
+  const t = useTranslations("PlayersDirectoryData");
   return useQuery({
     queryKey: playersQueryKey,
-    queryFn: fetchPlayers,
+    queryFn: () => fetchPlayers(t("loadError")),
   });
 }
 
@@ -35,6 +43,7 @@ export function usePlayers() {
 // matching this codebase's existing mutation-hook convention (see
 // CourtsView/hooks.ts's useUpdateCourt).
 export function useUpdatePlayer() {
+  const t = useTranslations("PlayersDirectoryData");
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({
@@ -44,14 +53,18 @@ export function useUpdatePlayer() {
       userId: string;
       input: PlayerPatchInput;
     }) =>
-      fetchJson<{ player: PlayerListItem }>(`/api/admin/players/${userId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(input),
-      }),
+      fetchJson<{ player: PlayerListItem }>(
+        `/api/admin/players/${userId}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(input),
+        },
+        t("genericError"),
+      ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: playersQueryKey });
-      toast.success("Player updated");
+      toast.success(t("playerUpdated"));
     },
     onError: (error: Error) => toast.error(error.message),
   });
@@ -60,15 +73,18 @@ export function useUpdatePlayer() {
 // Admin-only delete — see app/api/admin/players/[userId]/route.ts's DELETE
 // handler, which anonymizes the player row rather than hard-deleting it.
 export function useDeletePlayer() {
+  const t = useTranslations("PlayersDirectoryData");
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ userId }: { userId: string }) =>
-      fetchJson<{ ok: true }>(`/api/admin/players/${userId}`, {
-        method: "DELETE",
-      }),
+      fetchJson<{ ok: true }>(
+        `/api/admin/players/${userId}`,
+        { method: "DELETE" },
+        t("genericError"),
+      ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: playersQueryKey });
-      toast.success("Player removed");
+      toast.success(t("playerRemoved"));
     },
     onError: (error: Error) => toast.error(error.message),
   });
@@ -80,13 +96,18 @@ export function useDeletePlayer() {
 // intact. No cache invalidation needed: impersonating a player doesn't
 // change any player data.
 export function useImpersonatePlayer() {
+  const t = useTranslations("PlayersDirectoryData");
   return useMutation({
     mutationFn: ({ userId }: { userId: string }) =>
-      fetchJson<{ url: string }>("/api/admin/impersonate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId }),
-      }),
+      fetchJson<{ url: string }>(
+        "/api/admin/impersonate",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId }),
+        },
+        t("genericError"),
+      ),
     onSuccess: ({ url }) => {
       window.open(url, "_blank");
     },

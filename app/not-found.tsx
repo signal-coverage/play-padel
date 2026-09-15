@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { LogoBadge } from "@/components/LogoBadge";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
@@ -13,6 +14,7 @@ import notFoundImage from "@/assets/images/404.jpg";
 const SUPPORT_EMAIL = "signal.coverage.lead@gmail.com";
 
 export default function NotFound() {
+  const t = useTranslations("NotFound");
   const shouldReduce = useReducedMotion();
   const { user, loading } = useAuth();
   const isSignedIn = !loading && !!user;
@@ -52,13 +54,13 @@ export default function NotFound() {
           404
         </p>
         <h1 className="mt-3 text-[clamp(26px,3.5vw,36px)] font-bold tracking-[-0.02em] text-foreground">
-          Off the court
+          {t("heading")}
         </h1>
         <p className="mt-4 max-w-sm text-[15px] leading-[1.75] text-muted-foreground">
-          The page you&apos;re looking for doesn&apos;t exist or has moved.
+          {t("description")}
         </p>
         <p className="mt-2 text-[15px] text-muted-foreground">
-          Need help?{" "}
+          {t("needHelp")}{" "}
           <a
             href={`mailto:${SUPPORT_EMAIL}`}
             className="font-medium text-primary underline-offset-4 hover:underline"
@@ -73,7 +75,7 @@ export default function NotFound() {
           className="mt-10 w-fit gap-2 rounded-full px-6"
         >
           <Link href={isSignedIn ? "/dashboard" : "/"}>
-            {isSignedIn ? "Back to dashboard" : "Back to home"}
+            {isSignedIn ? t("backToDashboard") : t("backToHome")}
             <ArrowRight className="h-4 w-4" strokeWidth={2} />
           </Link>
         </Button>

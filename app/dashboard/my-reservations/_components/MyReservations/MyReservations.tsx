@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -14,6 +15,7 @@ import { LOADING_SKELETON_ROW_COUNT } from "./consts";
 import type { CancelTarget } from "./types";
 
 export function MyReservations() {
+  const t = useTranslations("MyReservations");
   const [includePast, setIncludePast] = useState(false);
   const [cancelTarget, setCancelTarget] = useState<CancelTarget | null>(null);
   const shouldReduceMotion = useReducedMotion();
@@ -31,25 +33,21 @@ export function MyReservations() {
   // fact (see the loading/empty content below, which stays as the
   // visual-only presentation).
   const statusMessage = isLoading
-    ? "Loading your reservations…"
+    ? t("loadingStatus")
     : !reservations || reservations.length === 0
       ? includePast
-        ? "You have no reservations yet."
-        : "You have no upcoming reservations."
-      : `${reservations.length} reservation${reservations.length === 1 ? "" : "s"} loaded.`;
+        ? t("noneYetStatus")
+        : t("noUpcomingStatus")
+      : t("loadedStatus", { count: reservations.length });
 
   async function handleConfirmCancel() {
     if (!cancelTarget) return;
     try {
       await cancelReservation.mutateAsync(cancelTarget.id);
-      toast.success("Reservation cancelled.");
+      toast.success(t("cancelSuccess"));
       setCancelTarget(null);
     } catch (err) {
-      toast.error(
-        err instanceof Error
-          ? err.message
-          : "Could not cancel this reservation.",
-      );
+      toast.error(err instanceof Error ? err.message : t("cancelError"));
     }
   }
 
@@ -61,12 +59,10 @@ export function MyReservations() {
       <div className="flex shrink-0 items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">
-            My Reservations
+            {t("title")}
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {includePast
-              ? "All your reservations, including past and cancelled ones."
-              : "Your upcoming reservations."}
+            {includePast ? t("descriptionAll") : t("descriptionUpcoming")}
           </p>
         </div>
         <Button
@@ -75,7 +71,7 @@ export function MyReservations() {
           aria-pressed={includePast}
           onClick={() => setIncludePast((v) => !v)}
         >
-          {includePast ? "Show upcoming only" : "Show past reservations"}
+          {includePast ? t("showUpcomingOnly") : t("showPastReservations")}
         </Button>
       </div>
 
@@ -117,9 +113,7 @@ export function MyReservations() {
               transition={{ duration: 0.15 }}
               className="text-sm text-muted-foreground"
             >
-              {includePast
-                ? "You have no reservations yet."
-                : "You have no upcoming reservations. Go browse courts to book one."}
+              {includePast ? t("noneYetStatus") : t("emptyUpcomingHint")}
             </motion.p>
           ) : (
             <motion.div

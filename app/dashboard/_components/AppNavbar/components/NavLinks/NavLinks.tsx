@@ -4,6 +4,7 @@ import { forwardRef } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Shield, MoreHorizontal } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils/utils";
 import { useVisibleNavLinks, useOverflowNav } from "../../hooks";
 import type { VisibleNavLink } from "../../hooks";
@@ -13,6 +14,7 @@ import { NavGroupMenu } from "../NavGroupMenu";
 import type { NavLinksProps } from "./types";
 
 export function NavLinks({ role, isAdmin = false, className }: NavLinksProps) {
+  const t = useTranslations("AppNavbar");
   const visibleLinks = useVisibleNavLinks(role, isAdmin);
   const { items, adminItems } = partitionNavLinks(visibleLinks);
   // Dashboard (the only `essential` item today) always stays visible — it's
@@ -68,7 +70,7 @@ export function NavLinks({ role, isAdmin = false, className }: NavLinksProps) {
           <NavGroupMenu
             items={hiddenOverflowItems}
             active={hiddenOverflowItems.some((item) => item.active)}
-            label="More"
+            label={t("more")}
             icon={MoreHorizontal}
           />
         )}
@@ -108,7 +110,7 @@ export function NavLinks({ role, isAdmin = false, className }: NavLinksProps) {
           <NavGroupMenu
             items={overflowCandidates}
             active={false}
-            label="More"
+            label={t("more")}
             icon={MoreHorizontal}
           />
         </div>
@@ -118,7 +120,7 @@ export function NavLinks({ role, isAdmin = false, className }: NavLinksProps) {
         <NavGroupMenu
           items={adminItems}
           active={adminItems.some((item) => item.active)}
-          label="Admin"
+          label={t("admin")}
           icon={Shield}
         />
       )}
@@ -130,6 +132,7 @@ const NavLinkPill = forwardRef<
   HTMLAnchorElement,
   { item: VisibleNavLink; tabIndex?: number }
 >(function NavLinkPill({ item, tabIndex }, ref) {
+  const t = useTranslations("AppNavbar.navItems");
   const { active, badge } = item;
   return (
     <Link
@@ -152,7 +155,7 @@ const NavLinkPill = forwardRef<
         />
       )}
       <span className="relative inline-flex items-center">
-        {item.title}
+        {t(item.titleKey)}
         {badge && <NavBadge label={badge} />}
       </span>
     </Link>

@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
+import type { MembershipStatusValue } from "@/core/billing/services/membership.service";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -12,7 +14,6 @@ import { MercadoPagoConnectionCard } from "@/app/dashboard/settings/club/_compon
 import { BankTransferAccountSettingsCard } from "@/app/dashboard/settings/club/_components/BankTransferAccountSettingsCard";
 import { GateScreen } from "../GateScreen";
 import { ActivationStepIndicator } from "./components/ActivationStepIndicator";
-import { MEMBERSHIP_STATUS_LABELS } from "./consts";
 
 // Cause A from spec's club-operational-gate-overlay domain: club finished
 // registration but membership payment isn't confirmed yet — replaces the
@@ -37,6 +38,14 @@ import { MEMBERSHIP_STATUS_LABELS } from "./consts";
 // optional-submit widening) — this screen has no single primary action of
 // its own, each step's own content carries its own action(s).
 export function PaymentActivationScreen() {
+  const t = useTranslations("PaymentActivationScreen");
+  const MEMBERSHIP_STATUS_LABELS: Record<MembershipStatusValue, string> = {
+    PENDING: t("statusLabels.pending"),
+    TRIALING: t("statusLabels.trialing"),
+    ACTIVE: t("statusLabels.active"),
+    PAST_DUE: t("statusLabels.pastDue"),
+    CANCELLED: t("statusLabels.cancelled"),
+  };
   const {
     data: subscription,
     isLoading,
@@ -53,8 +62,8 @@ export function PaymentActivationScreen() {
 
   return (
     <GateScreen
-      title="Payment activation"
-      description="Your club needs an active membership and a way to receive reservation payments — connect Mercado Pago or add your bank account — before it can start accepting reservations."
+      title={t("title")}
+      description={t("description")}
       contentClassName={isConfirmed ? "max-w-3xl" : undefined}
     >
       <ActivationStepIndicator current={currentStep} />
@@ -62,9 +71,9 @@ export function PaymentActivationScreen() {
       {isError ? (
         <div className="px-2 py-4">
           <StatusBox className="flex flex-col items-center justify-center gap-3 py-16">
-            <p>We couldn&apos;t load your membership. Try again.</p>
+            <p>{t("loadError")}</p>
             <Button type="button" variant="outline" onClick={() => refetch()}>
-              Retry
+              {t("retry")}
             </Button>
           </StatusBox>
         </div>
@@ -90,14 +99,18 @@ export function PaymentActivationScreen() {
             <div>
               <p className="text-sm font-medium text-foreground">
                 {subscription.plan} ·{" "}
-                {subscription.cycle === "MONTHLY" ? "Monthly" : "Annual"}
+                {subscription.cycle === "MONTHLY"
+                  ? t("cycleMonthly")
+                  : t("cycleAnnual")}
               </p>
               <p className="text-xs text-muted-foreground">
-                Status: {MEMBERSHIP_STATUS_LABELS[subscription.status]}
+                {t("statusLabel", {
+                  status: MEMBERSHIP_STATUS_LABELS[subscription.status],
+                })}
               </p>
             </div>
             <Button type="button" onClick={() => setIsModalOpen(true)}>
-              Pay Membership
+              {t("payMembership")}
             </Button>
           </div>
         </div>

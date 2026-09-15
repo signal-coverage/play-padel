@@ -9,6 +9,8 @@ import {
 } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { NextIntlClientProvider } from "next-intl";
+import messages from "@/messages/en.json";
 import { ClubInactiveCard } from "./ClubInactiveCard";
 
 // This card mounts PlanSelectionModal once reactivation succeeds, which
@@ -60,9 +62,11 @@ function renderCard(
   });
 
   render(
-    <QueryClientProvider client={queryClient}>
-      <ClubInactiveCard />
-    </QueryClientProvider>,
+    <NextIntlClientProvider locale="en" messages={messages}>
+      <QueryClientProvider client={queryClient}>
+        <ClubInactiveCard />
+      </QueryClientProvider>
+    </NextIntlClientProvider>,
   );
 
   return fetchMock;

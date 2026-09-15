@@ -9,6 +9,8 @@ import {
 } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { NextIntlClientProvider } from "next-intl";
+import messages from "@/messages/en.json";
 import { AWAITING_CONFIRMATION_POLL_INTERVAL_MS } from "./consts";
 
 // Mocked purely so the tests below can assert whether the celebration
@@ -119,9 +121,11 @@ function renderModal(
   });
 
   render(
-    <QueryClientProvider client={queryClient}>
-      <PlanSelectionModal open onOpenChange={vi.fn()} />
-    </QueryClientProvider>,
+    <NextIntlClientProvider locale="en" messages={messages}>
+      <QueryClientProvider client={queryClient}>
+        <PlanSelectionModal open onOpenChange={vi.fn()} />
+      </QueryClientProvider>
+    </NextIntlClientProvider>,
   );
 
   return fetchMock;

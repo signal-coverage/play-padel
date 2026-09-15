@@ -1,15 +1,5 @@
 import { subWeeks } from "date-fns";
-import { PLAYER_LOAD_RANGE_WEEKS, WEEKDAY_LABELS } from "./consts";
-
-const WEEKDAY_FULL_NAMES = [
-  "Monday",
-  "Tuesday",
-  "Wednesday",
-  "Thursday",
-  "Friday",
-  "Saturday",
-  "Sunday",
-] as const;
+import { PLAYER_LOAD_RANGE_WEEKS } from "./consts";
 
 /** Monday-first weekday index (0=Mon..6=Sun). */
 function getWeekdayIndex(date: Date): number {
@@ -28,16 +18,25 @@ export function sumByWeekday(
   return totals;
 }
 
-/** Shapes weekday totals into OverviewChart's generic {date,total} datum. */
-export function buildWeekdayChartData(totals: number[]) {
-  return WEEKDAY_LABELS.map((label, index) => ({
+/** Shapes weekday totals into OverviewChart's generic {date,total} datum.
+ * `labels` must already be locale-translated display text, Monday-first,
+ * matching WEEKDAY_KEYS' order (see consts.ts and the caller's own
+ * translation lookup). */
+export function buildWeekdayChartData(
+  totals: number[],
+  labels: readonly string[],
+) {
+  return labels.map((label, index) => ({
     date: label,
     total: totals[index],
   }));
 }
 
-/** Full name of the highest-total weekday, ties broken by first-seen order. Null when every total is zero. */
-export function getBusiestWeekdayName(totals: number[]): string | null {
+/** Index (0=Mon..6=Sun, matching WEEKDAY_KEYS) of the highest-total weekday,
+ * ties broken by first-seen order. Null when every total is zero. The
+ * caller translates this into display text via WEEKDAY_KEYS + the shared
+ * "Weekday" translation namespace. */
+export function getBusiestWeekdayIndex(totals: number[]): number | null {
   const grandTotal = totals.reduce((sum, value) => sum + value, 0);
   if (grandTotal <= 0) return null;
 
@@ -45,7 +44,7 @@ export function getBusiestWeekdayName(totals: number[]): string | null {
   for (let index = 1; index < totals.length; index++) {
     if (totals[index] > totals[busiestIndex]) busiestIndex = index;
   }
-  return WEEKDAY_FULL_NAMES[busiestIndex];
+  return busiestIndex;
 }
 
 /** Start of the trailing player-load window (see PLAYER_LOAD_RANGE_WEEKS). */

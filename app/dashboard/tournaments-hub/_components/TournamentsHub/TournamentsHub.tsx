@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { StatusBox } from "@/components/StatusBox";
 import { TournamentModal } from "./components/TournamentModal";
 import { useOpenTournaments } from "./hooks";
@@ -11,21 +12,18 @@ import { useOpenTournaments } from "./hooks";
  * a row opens TournamentModal for that tournament's registration/standings.
  */
 export function TournamentsHub() {
+  const t = useTranslations("TournamentsHub");
   const { data: tournaments, isLoading } = useOpenTournaments();
   const [selectedTournamentId, setSelectedTournamentId] = useState<
     string | null
   >(null);
 
   if (isLoading) {
-    return (
-      <p className="text-sm text-muted-foreground">Loading tournaments…</p>
-    );
+    return <p className="text-sm text-muted-foreground">{t("loading")}</p>;
   }
 
   if (!tournaments || tournaments.length === 0) {
-    return (
-      <StatusBox>No tournaments are open for registration right now.</StatusBox>
-    );
+    return <StatusBox>{t("emptyState")}</StatusBox>;
   }
 
   return (

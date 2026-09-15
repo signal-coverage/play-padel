@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { track } from "@vercel/analytics";
 import { track as trackAmplitude } from "@amplitude/unified";
@@ -15,6 +16,7 @@ export function PaymentReturnView({
 }: {
   reservationId: string | null;
 }) {
+  const t = useTranslations("PaymentReturnView");
   const { state, isLoading } = usePaymentReturnStatus(reservationId);
   const shouldReduceMotion = useReducedMotion();
 
@@ -33,14 +35,14 @@ export function PaymentReturnView({
   // used in MyReservations and CourtAvailabilityGrid, instead of relying on
   // content that mounts/unmounts with the state itself).
   const statusMessage = !reservationId
-    ? "Missing reservation reference."
+    ? t("missingReference")
     : isLoading || state === "processing"
-      ? "Confirming your payment…"
+      ? t("confirmingPayment")
       : state === "success"
-        ? "Payment confirmed. Your reservation is booked."
+        ? t("paymentConfirmedStatus")
         : state === "error"
-          ? "We couldn't check your payment status. Contact the club to confirm your reservation."
-          : "Payment didn't complete. Your slot hold has expired.";
+          ? t("checkFailedStatus")
+          : t("paymentFailedStatus");
 
   let content: React.ReactNode;
   let contentKey: string;
@@ -55,11 +57,9 @@ export function PaymentReturnView({
           fill="var(--destructive)"
           stroke="color-mix(in oklch, var(--destructive) 70%, black)"
         />
-        <p className="text-sm text-muted-foreground">
-          Missing reservation reference.
-        </p>
+        <p className="text-sm text-muted-foreground">{t("missingReference")}</p>
         <Button asChild>
-          <Link href="/dashboard/browse">Back to Browse Courts</Link>
+          <Link href="/dashboard/browse">{t("backToBrowse")}</Link>
         </Button>
       </>
     );
@@ -69,9 +69,9 @@ export function PaymentReturnView({
       <>
         <BouncingBall size={32} amplitude={16} />
         <div>
-          <p className="font-medium">Confirming your payment…</p>
+          <p className="font-medium">{t("confirmingPayment")}</p>
           <p className="text-sm text-muted-foreground">
-            This usually takes a few seconds.
+            {t("confirmingPaymentHint")}
           </p>
         </div>
       </>
@@ -94,13 +94,13 @@ export function PaymentReturnView({
           stroke="color-mix(in oklch, var(--destructive) 70%, black)"
         />
         <div>
-          <p className="font-medium">We couldn&apos;t check your payment</p>
-          <p className="text-sm text-muted-foreground">
-            Contact the club directly to confirm your reservation.
-          </p>
+          <p className="font-medium">{t("checkFailedTitle")}</p>
+          <p className="text-sm text-muted-foreground">{t("contactClub")}</p>
         </div>
         <Button asChild>
-          <Link href="/dashboard/my-reservations">View my reservations</Link>
+          <Link href="/dashboard/my-reservations">
+            {t("viewMyReservations")}
+          </Link>
         </Button>
       </>
     );
@@ -110,13 +110,15 @@ export function PaymentReturnView({
       <>
         <BouncingBall size={40} amplitude={14} />
         <div>
-          <p className="font-medium">Payment confirmed!</p>
+          <p className="font-medium">{t("paymentConfirmedTitle")}</p>
           <p className="text-sm text-muted-foreground">
-            Your reservation is booked.
+            {t("reservationBooked")}
           </p>
         </div>
         <Button asChild>
-          <Link href="/dashboard/my-reservations">View my reservations</Link>
+          <Link href="/dashboard/my-reservations">
+            {t("viewMyReservations")}
+          </Link>
         </Button>
       </>
     );
@@ -131,13 +133,13 @@ export function PaymentReturnView({
           stroke="color-mix(in oklch, var(--destructive) 70%, black)"
         />
         <div>
-          <p className="font-medium">Payment didn&apos;t complete</p>
+          <p className="font-medium">{t("paymentFailedTitle")}</p>
           <p className="text-sm text-muted-foreground">
-            Your slot hold has expired. You can try booking again.
+            {t("slotHoldExpired")}
           </p>
         </div>
         <Button asChild>
-          <Link href="/dashboard/browse">Back to Browse Courts</Link>
+          <Link href="/dashboard/browse">{t("backToBrowse")}</Link>
         </Button>
       </>
     );

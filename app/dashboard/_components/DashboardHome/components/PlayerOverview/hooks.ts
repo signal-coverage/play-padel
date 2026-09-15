@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import { DEFAULT_PERFORMANCE_SUMMARY, MOCK_PLAYER_STYLE } from "./consts";
@@ -71,6 +72,7 @@ export function usePlayerOverviewData() {
 }
 
 export function useUpdatePlayerStyle() {
+  const t = useTranslations("PlayerOverviewData");
   const { refetchProfile } = useAuth();
   const queryClient = useQueryClient();
 
@@ -86,14 +88,14 @@ export function useUpdatePlayerStyle() {
       });
       const body = await res.json().catch(() => null);
       if (!res.ok) {
-        throw new Error(body?.error ?? "Could not update your profile.");
+        throw new Error(body?.error ?? t("updateError"));
       }
       return body;
     },
     onSuccess: () => {
       refetchProfile();
       queryClient.invalidateQueries({ queryKey: ["players"] });
-      toast.success("Play style updated");
+      toast.success(t("styleUpdated"));
     },
     onError: (error: Error) => toast.error(error.message),
   });

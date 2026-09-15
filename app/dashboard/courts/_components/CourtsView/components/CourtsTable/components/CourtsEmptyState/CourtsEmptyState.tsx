@@ -1,7 +1,7 @@
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 import { Empty, EmptyDescription, EmptyMedia } from "@/components/ui/empty";
 import courtsEmptyImage from "@/assets/images/paddle-tennis-white-line.jpg";
-import { COURTS_EMPTY_STATE_MESSAGE } from "./consts";
 
 // Rendered by CourtsTable as DataTable's `emptyState` for the no-courts
 // case. DataTable returns `emptyState` unwrapped (no height-filling wrapper
@@ -9,6 +9,7 @@ import { COURTS_EMPTY_STATE_MESSAGE } from "./consts";
 // "fill the container" sizing instead of relying on a class passed down
 // from above — see CourtsTable.tsx.
 export function CourtsEmptyState() {
+  const t = useTranslations("CourtsEmptyState");
   return (
     <Empty className="min-h-0 flex-1">
       <EmptyMedia className="relative size-64 overflow-hidden rounded-2xl">
@@ -20,7 +21,7 @@ export function CourtsEmptyState() {
           sizes="512px"
         />
       </EmptyMedia>
-      <EmptyDescription>{COURTS_EMPTY_STATE_MESSAGE}</EmptyDescription>
+      <EmptyDescription>{t("message")}</EmptyDescription>
     </Empty>
   );
 }

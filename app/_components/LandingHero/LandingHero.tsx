@@ -3,12 +3,14 @@ import Image from "next/image";
 import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
 import { ArrowRight, ArrowUpRight } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { ease } from "./consts";
 import { CONTAINER } from "@/lib/consts";
 import { scrollToSection } from "@/lib/utils/scroll-to-section";
 import heroImage from "@/assets/images/tennis-paddles-balls-arrangement.jpg";
 
 export function LandingHero() {
+  const t = useTranslations("LandingHero");
   const shouldReduce = useReducedMotion();
 
   return (
@@ -16,7 +18,7 @@ export function LandingHero() {
       {/* Background image */}
       <Image
         src={heroImage}
-        alt="Arrangement of padel paddles and balls"
+        alt={t("imageAlt")}
         fill
         priority
         sizes="100vw"
@@ -35,11 +37,13 @@ export function LandingHero() {
           transition={{ duration: 0.6, ease }}
         >
           <h1 className="text-[clamp(36px,5vw,58px)] font-extrabold leading-[1.08] tracking-[-0.035em] text-white">
-            Book Courts. <span className="text-accent">Connect.</span> Run
+            {t("heading.start")}{" "}
+            <span className="text-accent">{t("heading.connect")}</span>{" "}
+            {t("heading.run")}
             <br />
-            Your Club with Our
+            {t("heading.clubLine")}
             <br />
-            <span className="text-accent">Padel Platform.</span>
+            <span className="text-accent">{t("heading.platform")}</span>
           </h1>
 
           <motion.div
@@ -53,7 +57,7 @@ export function LandingHero() {
               onClick={(e) => scrollToSection(e, "#appointment")}
               className="inline-flex items-center gap-2 bg-accent text-accent-foreground rounded-full px-6 py-3.5 text-[15px] font-semibold hover:-translate-y-0.5 hover:shadow-xl transition-all duration-200"
             >
-              Explore Clubs
+              {t("ctaPrimary")}
               <ArrowRight size={15} strokeWidth={2.5} />
             </Link>
             <Link
@@ -61,13 +65,12 @@ export function LandingHero() {
               onClick={(e) => scrollToSection(e, "#about")}
               className="inline-flex items-center gap-2 border-[1.5px] border-white text-white rounded-full px-6 py-3.5 text-[15px] font-semibold hover:bg-white hover:text-primary hover:-translate-y-0.5 hover:shadow-xl transition-all duration-200"
             >
-              For Club Owners
+              {t("ctaSecondary")}
               <ArrowUpRight size={15} strokeWidth={2.5} />
             </Link>
           </motion.div>
           <p className="mt-8 md:mt-24 text-[17px] text-white/80 leading-[1.75] max-w-110">
-            Real-time court booking for players, and complete club management
-            tools for owners — all in one platform built for padel.
+            {t("description")}
           </p>
         </motion.div>
       </div>

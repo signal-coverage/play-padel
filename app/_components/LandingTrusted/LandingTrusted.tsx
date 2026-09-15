@@ -1,10 +1,14 @@
 "use client";
 import { motion, useReducedMotion } from "framer-motion";
-import { STATS, ease } from "./consts";
+import { useTranslations } from "next-intl";
+import { ease } from "./consts";
+import type { TrustedStat } from "./types";
 import { CONTAINER } from "@/lib/consts";
 
 export function LandingTrusted() {
+  const t = useTranslations("LandingTrusted");
   const shouldReduce = useReducedMotion();
+  const stats = t.raw("items") as TrustedStat[];
 
   return (
     <section className="py-28 bg-background">
@@ -19,7 +23,7 @@ export function LandingTrusted() {
           transition={{ duration: 0.5, ease }}
         >
           <span className="inline-flex items-center bg-foreground text-background rounded-full px-4 py-2 text-[13px] font-semibold">
-            By The Numbers
+            {t("badge")}
           </span>
         </motion.div>
 
@@ -31,14 +35,12 @@ export function LandingTrusted() {
             viewport={{ once: true }}
             transition={{ duration: 0.5, delay: 0.06, ease }}
           >
-            <span className="font-bold">
-              Whether you&apos;re booking a court or running a club
-            </span>{" "}
-            — Play Padel connects players and clubs in one place, in real time.
+            <span className="font-bold">{t("heading.bold")}</span>{" "}
+            {t("heading.rest", { brand: "Play Padel" })}
           </motion.h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-x-8 gap-y-8 sm:gap-y-10 mt-10 sm:mt-12">
-            {STATS.map((stat, i) => (
+            {stats.map((stat, i) => (
               <motion.div
                 key={stat.label}
                 initial={shouldReduce ? false : { opacity: 0, y: 12 }}

@@ -4,6 +4,8 @@ import { describe, it, expect, afterEach } from "vitest";
 import { render, screen, waitFor, cleanup } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { useForm } from "react-hook-form";
+import { NextIntlClientProvider } from "next-intl";
+import messages from "@/messages/en.json";
 import { useCountryProvinceCityFields } from "./CountryProvinceCityFields";
 import type { CountryProvinceCityFieldsValues } from "./types";
 
@@ -37,18 +39,24 @@ function TestHost({ seed }: { seed: CountryProvinceCityFieldsValues | null }) {
   );
 }
 
+function renderTestHost(seed: CountryProvinceCityFieldsValues | null) {
+  return (
+    <NextIntlClientProvider locale="en" messages={messages}>
+      <TestHost seed={seed} />
+    </NextIntlClientProvider>
+  );
+}
+
 describe("useCountryProvinceCityFields", () => {
   it("keeps province and city populated when country, province, and city are reset() together after an async data fetch", async () => {
-    const { rerender } = render(<TestHost seed={null} />);
+    const { rerender } = render(renderTestHost(null));
 
     rerender(
-      <TestHost
-        seed={{
-          country: "Argentina",
-          province: "Buenos Aires",
-          city: "Buenos Aires",
-        }}
-      />,
+      renderTestHost({
+        country: "Argentina",
+        province: "Buenos Aires",
+        city: "Buenos Aires",
+      }),
     );
 
     await waitFor(() => {
@@ -71,13 +79,11 @@ describe("useCountryProvinceCityFields", () => {
 
   it("still clears province and city when the country genuinely changes from an external source (e.g. PhoneField's calling-code picker)", async () => {
     const { rerender } = render(
-      <TestHost
-        seed={{
-          country: "Argentina",
-          province: "Buenos Aires",
-          city: "Buenos Aires",
-        }}
-      />,
+      renderTestHost({
+        country: "Argentina",
+        province: "Buenos Aires",
+        city: "Buenos Aires",
+      }),
     );
 
     await waitFor(() => {
@@ -86,9 +92,7 @@ describe("useCountryProvinceCityFields", () => {
       ).toHaveTextContent("Buenos Aires");
     });
 
-    rerender(
-      <TestHost seed={{ country: "Uruguay", province: "", city: "" }} />,
-    );
+    rerender(renderTestHost({ country: "Uruguay", province: "", city: "" }));
 
     await waitFor(() => {
       expect(

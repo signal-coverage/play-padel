@@ -83,8 +83,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       recipientId: targetUserId,
       recipientEmail: target.email,
       recipientName: target.displayName,
-      subject: "Your profile was updated",
-      html: "An administrator updated your profile.",
+      params: { variant: "updated" },
       sendEmail: false,
     });
   } catch {
@@ -138,8 +137,7 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
       recipientId: targetUserId,
       recipientEmail: target.email,
       recipientName: target.displayName,
-      subject: "Your account was deleted",
-      html: "An administrator deleted your account. If you believe this is a mistake, contact support.",
+      params: { variant: "deleted" },
       sendEmail: true,
     });
   } catch {

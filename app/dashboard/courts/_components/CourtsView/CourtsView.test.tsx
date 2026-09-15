@@ -10,6 +10,8 @@ import {
 } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { NextIntlClientProvider } from "next-intl";
+import messages from "@/messages/en.json";
 
 // Mocked the same way PlanSelectionModal.test.tsx mocks it — the real module
 // is a plain event dispatch with no DOM/canvas involvement, but these tests
@@ -96,7 +98,9 @@ function renderCourtsView(
 
   render(
     <QueryClientProvider client={queryClient}>
-      <CourtsView />
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <CourtsView />
+      </NextIntlClientProvider>
     </QueryClientProvider>,
   );
 
@@ -167,6 +171,15 @@ afterEach(() => {
 });
 
 describe("CourtsView", () => {
+  // 15s, not the 5s default — this test drives several real React
+  // re-renders (create -> pending -> photo upload resolves -> success)
+  // through a live QueryClient/react-hook-form stack, which reliably
+  // finishes well under 5s in isolation but can exceed it under the CPU
+  // contention of the FULL suite running every file in parallel — confirmed
+  // by reproducing a real "Test timed out in 5000ms" failure that way (not
+  // a race or a leaked rejection from another test, just wall-clock
+  // pressure). See CourtFormSheet.test.tsx's matching case for the same
+  // reasoning.
   it("does not signal success (toast/celebration) until the chained photo upload also resolves, and closes the sheet only then", async () => {
     let resolvePhotoUpload: (() => void) | undefined;
     const photoUploadPromise = new Promise<void>((resolve) => {
@@ -217,7 +230,7 @@ describe("CourtsView", () => {
     expect(
       screen.queryByRole("heading", { name: "New court" }),
     ).not.toBeInTheDocument();
-  });
+  }, 15000);
 
   it("rolls back (silently deletes) the just-created court and surfaces an error toast when the chained photo upload fails, without showing the success toast/celebration", async () => {
     const fetchMock = renderCourtsView(async (url, init) => {
@@ -329,11 +342,11 @@ describe("CourtsView", () => {
 
     await waitFor(() => {
       expect(
-        document.body.querySelector('[data-step="Availability"]'),
+        document.body.querySelector('[data-step="availability"]'),
       ).toHaveAttribute("aria-current", "step");
     });
     expect(
-      document.body.querySelector('[data-step="Details"]'),
+      document.body.querySelector('[data-step="details"]'),
     ).not.toHaveAttribute("aria-current");
 
     // Same merged modal, not a separate one — the heading still reads
@@ -474,9 +487,7 @@ describe("CourtsView", () => {
         screen.getByRole("checkbox", { name: `Select ${EXISTING_COURT.name}` }),
       );
 
-      expect(
-        await screen.findByText("1 court(s) selected"),
-      ).toBeInTheDocument();
+      expect(await screen.findByText("1 court selected")).toBeInTheDocument();
     });
 
     it("clears the selection when Clear is clicked", async () => {
@@ -486,7 +497,7 @@ describe("CourtsView", () => {
       fireEvent.click(
         screen.getByRole("checkbox", { name: `Select ${EXISTING_COURT.name}` }),
       );
-      await screen.findByText("1 court(s) selected");
+      await screen.findByText("1 court selected");
 
       fireEvent.click(screen.getByRole("button", { name: /clear/i }));
 
@@ -502,7 +513,7 @@ describe("CourtsView", () => {
       fireEvent.click(
         screen.getByRole("checkbox", { name: `Select ${EXISTING_COURT.name}` }),
       );
-      await screen.findByText("1 court(s) selected");
+      await screen.findByText("1 court selected");
 
       fireEvent.click(screen.getByRole("button", { name: /bulk edit/i }));
 

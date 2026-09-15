@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type ChangeEvent, type FormEvent } from "react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Field, FieldLabel, FieldError } from "@/components/ui/field";
@@ -20,6 +21,7 @@ export function BankTransferAccountSettingsCard({
   allowSkip = false,
   onDone,
 }: BankTransferAccountSettingsCardProps = {}) {
+  const t = useTranslations("BankTransferAccountSettingsCard");
   const { data: account, isLoading } = useClubBankTransferAccount();
   const setAccount = useSetClubBankTransferAccount();
 
@@ -81,30 +83,31 @@ export function BankTransferAccountSettingsCard({
     <div className="flex flex-col gap-4">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight text-balance">
-          Bank Transfer
+          {t("title")}
         </h1>
         <p className="text-sm text-muted-foreground mt-1 text-pretty">
-          Let players pay by bank transfer directly to your club&apos;s account,
-          as an alternative to Mercado Pago.
+          {t("description")}
         </p>
       </div>
 
       <form onSubmit={handleSubmit} className="flex max-w-lg flex-col gap-4">
         <Field>
-          <FieldLabel htmlFor="bank-transfer-bank-name">Bank name *</FieldLabel>
+          <FieldLabel htmlFor="bank-transfer-bank-name">
+            {t("bankNameLabel")}
+          </FieldLabel>
           <Input
             id="bank-transfer-bank-name"
-            placeholder="Banco Nación"
+            placeholder={t("bankNamePlaceholder")}
             value={values.bankName}
             onChange={handleChange("bankName")}
           />
         </Field>
 
         <Field>
-          <FieldLabel htmlFor="bank-transfer-cbu">CBU *</FieldLabel>
+          <FieldLabel htmlFor="bank-transfer-cbu">{t("cbuLabel")}</FieldLabel>
           <Input
             id="bank-transfer-cbu"
-            placeholder="0000000000000000000000"
+            placeholder={t("cbuPlaceholder")}
             maxLength={22}
             inputMode="numeric"
             value={values.cbu}
@@ -114,17 +117,19 @@ export function BankTransferAccountSettingsCard({
           <FieldError
             errors={
               values.cbu.length > 0 && !isCbuValid
-                ? [{ message: "CBU must be exactly 22 digits" }]
+                ? [{ message: t("cbuError") }]
                 : []
             }
           />
         </Field>
 
         <Field>
-          <FieldLabel htmlFor="bank-transfer-alias">Alias</FieldLabel>
+          <FieldLabel htmlFor="bank-transfer-alias">
+            {t("aliasLabel")}
+          </FieldLabel>
           <Input
             id="bank-transfer-alias"
-            placeholder="club.padel.mp"
+            placeholder={t("aliasPlaceholder")}
             value={values.alias}
             onChange={handleChange("alias")}
           />
@@ -132,11 +137,11 @@ export function BankTransferAccountSettingsCard({
 
         <Field>
           <FieldLabel htmlFor="bank-transfer-account-holder-name">
-            Account holder name
+            {t("accountHolderLabel")}
           </FieldLabel>
           <Input
             id="bank-transfer-account-holder-name"
-            placeholder="Club Padel Norte SA"
+            placeholder={t("accountHolderPlaceholder")}
             value={values.accountHolderName}
             onChange={handleChange("accountHolderName")}
           />
@@ -147,7 +152,9 @@ export function BankTransferAccountSettingsCard({
             type="submit"
             disabled={setAccount.isPending || (!isFormValid && !allowSkip)}
           >
-            {setAccount.isPending ? "Saving…" : (submitLabel ?? "Save changes")}
+            {setAccount.isPending
+              ? t("saving")
+              : (submitLabel ?? t("saveChanges"))}
           </Button>
         </div>
       </form>

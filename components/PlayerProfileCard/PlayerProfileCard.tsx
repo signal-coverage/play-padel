@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -10,6 +11,7 @@ import { getInitials } from "@/lib/utils/initials";
 import type { PlayerProfileCardProps } from "./types";
 
 export function PlayerProfileCard({ player }: PlayerProfileCardProps) {
+  const tOptions = useTranslations("UserOptionLabels");
   return (
     <div className="flex flex-col gap-4">
       <DialogHeader>
@@ -25,7 +27,7 @@ export function PlayerProfileCard({ player }: PlayerProfileCardProps) {
         <div className="min-w-0">
           <p className="truncate text-sm font-semibold">{player.displayName}</p>
           <Badge variant="outline" className="mt-1">
-            {getPadelCategoryLabel(player.padelCategory)}
+            {getPadelCategoryLabel(player.padelCategory, tOptions)}
           </Badge>
         </div>
       </div>
@@ -33,13 +35,13 @@ export function PlayerProfileCard({ player }: PlayerProfileCardProps) {
         <div>
           <p className="text-muted-foreground">Preferred side</p>
           <p className="font-medium">
-            {getPreferredSideLabel(player.preferredSide)}
+            {getPreferredSideLabel(player.preferredSide, tOptions)}
           </p>
         </div>
         <div>
           <p className="text-muted-foreground">Dominant hand</p>
           <p className="font-medium">
-            {getDominantHandLabel(player.dominantHand)}
+            {getDominantHandLabel(player.dominantHand, tOptions)}
           </p>
         </div>
         <div>

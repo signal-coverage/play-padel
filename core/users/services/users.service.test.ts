@@ -22,6 +22,7 @@ vi.mock("@/infrastructure/db/client", () => ({
 
 import {
   anonymizeUserProfile,
+  getUserProfile,
   syncUserProfileFromClerk,
 } from "./users.service";
 
@@ -46,6 +47,7 @@ function makeRow(overrides: Partial<Record<string, unknown>> = {}) {
     preferredSide: null,
     dominantHand: null,
     status: "ACTIVE",
+    locale: "es",
     lastLogin: null,
     acceptedTermsAt: null,
     createdAt: new Date("2026-01-01T00:00:00.000Z"),
@@ -131,6 +133,32 @@ describe("anonymizeUserProfile", () => {
     );
 
     expect(result).toBe(false);
+  });
+});
+
+describe("getUserProfile — locale narrowing", () => {
+  beforeEach(() => {
+    findUniqueMock.mockReset();
+  });
+
+  it("passes through a valid locale from the row", async () => {
+    findUniqueMock.mockResolvedValue(makeRow({ locale: "en" }));
+
+    const profile = await getUserProfile("user_123");
+
+    expect(profile?.locale).toBe("en");
+  });
+
+  // row.locale is a plain TEXT column, not a Postgres enum — this defends
+  // against any value that isn't exactly "en"/"es" ever reaching a caller,
+  // the same defensive narrowing i18n/locale.ts's getUserLocale already
+  // does for the cookie.
+  it("falls back to the default locale ('es') when the row's raw value isn't a real Locale", async () => {
+    findUniqueMock.mockResolvedValue(makeRow({ locale: "fr" }));
+
+    const profile = await getUserProfile("user_123");
+
+    expect(profile?.locale).toBe("es");
   });
 });
 

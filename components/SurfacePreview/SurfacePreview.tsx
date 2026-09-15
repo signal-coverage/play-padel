@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 import { CircleHelp, Image as ImageIcon } from "lucide-react";
 import {
   Tooltip,
@@ -14,6 +15,7 @@ import {
 import type { SurfacePreviewProps } from "./types";
 
 export function SurfacePreview({ surface, color }: SurfacePreviewProps) {
+  const tLabels = useTranslations("CourtLabels");
   // Real per-color renders exist for the ColorField presets; any other
   // (custom-picked) color falls back to the neutral render, tinted at
   // render time instead of pixel-perfect.
@@ -27,7 +29,7 @@ export function SurfacePreview({ surface, color }: SurfacePreviewProps) {
         <button
           type="button"
           onClick={(e) => e.stopPropagation()}
-          aria-label={`See a texture preview of ${surfaceLabel(surface)}`}
+          aria-label={`See a texture preview of ${surfaceLabel(surface, tLabels)}`}
           className="flex size-4 items-center justify-center rounded-full text-muted-foreground outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50"
         >
           <CircleHelp className="size-3.5" />

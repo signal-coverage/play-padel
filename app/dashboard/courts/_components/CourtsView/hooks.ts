@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import type { CreateCourtInput, UpdateCourtInput } from "@/core/courts/types";
 import type {
@@ -14,21 +15,28 @@ import { toCourtClosure } from "./utils";
 
 const COURTS_QUERY_KEY = ["courts", "manage"] as const;
 
-async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
+async function fetchJson<T>(
+  url: string,
+  init: RequestInit | undefined,
+  fallbackErrorMessage: string,
+): Promise<T> {
   const res = await fetch(url, init);
   if (!res.ok) {
     const body = await res.json().catch(() => null);
-    throw new Error(body?.error ?? "Something went wrong. Please try again.");
+    throw new Error(body?.error ?? fallbackErrorMessage);
   }
   return res.json();
 }
 
 export function useManagedCourts() {
+  const t = useTranslations("CourtsViewData");
   return useQuery({
     queryKey: COURTS_QUERY_KEY,
     queryFn: () =>
       fetchJson<{ courts: CourtRecord[] }>(
         "/api/clubs/courts?includeInactive=true",
+        undefined,
+        t("genericError"),
       ).then((data) => data.courts),
   });
 }
@@ -44,29 +52,37 @@ export function useManagedCourts() {
 // the real enforcement lives server-side, so this frontend gate fails open
 // rather than blocking a legitimate create over a transient network hiccup.
 export function useClubPlanInfo() {
+  const t = useTranslations("CourtsViewData");
   return useQuery({
     queryKey: ["clubs", "current", "plan-info"] as const,
     queryFn: () =>
       fetchJson<{
         club: { plan: Plan; courtLimit?: number | null };
         isFreePlan: boolean;
-      }>("/api/clubs").then(({ club, isFreePlan }) => ({
-        plan: club.plan,
-        courtLimit: club.courtLimit ?? null,
-        isFreePlan,
-      })),
+      }>("/api/clubs", undefined, t("genericError")).then(
+        ({ club, isFreePlan }) => ({
+          plan: club.plan,
+          courtLimit: club.courtLimit ?? null,
+          isFreePlan,
+        }),
+      ),
   });
 }
 
 export function useCreateCourt() {
+  const t = useTranslations("CourtsViewData");
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (input: CreateCourtInput) =>
-      fetchJson<{ court: CourtRecord }>("/api/clubs/courts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(input),
-      }),
+      fetchJson<{ court: CourtRecord }>(
+        "/api/clubs/courts",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(input),
+        },
+        t("genericError"),
+      ),
     // Success signaling (toast + celebration) intentionally lives in
     // CourtsView's handleFormSubmit instead of here: this resolves the
     // instant the create POST lands, before the chained photo upload (when
@@ -81,6 +97,7 @@ export function useCreateCourt() {
 }
 
 export function useUpdateCourt() {
+  const t = useTranslations("CourtsViewData");
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({
@@ -95,14 +112,18 @@ export function useUpdateCourt() {
       // toasts from this hook's own onSuccess.
       silent?: boolean;
     }) =>
-      fetchJson<{ court: CourtRecord }>(`/api/clubs/courts/${courtId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(input),
-      }),
+      fetchJson<{ court: CourtRecord }>(
+        `/api/clubs/courts/${courtId}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(input),
+        },
+        t("genericError"),
+      ),
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: COURTS_QUERY_KEY });
-      if (!variables.silent) toast.success("Court updated");
+      if (!variables.silent) toast.success(t("courtUpdated"));
     },
     onError: (error: Error, variables) => {
       if (!variables.silent) toast.error(error.message);
@@ -111,6 +132,7 @@ export function useUpdateCourt() {
 }
 
 export function useUploadCourtPhoto() {
+  const t = useTranslations("CourtsViewData");
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ courtId, file }: { courtId: string; file: File }) => {
@@ -119,6 +141,7 @@ export function useUploadCourtPhoto() {
       return fetchJson<{ photoUrl: string }>(
         `/api/clubs/courts/${courtId}/photo`,
         { method: "POST", body: formData },
+        t("genericError"),
       );
     },
     onSuccess: () => {
@@ -128,6 +151,7 @@ export function useUploadCourtPhoto() {
 }
 
 export function useDeleteCourt() {
+  const t = useTranslations("CourtsViewData");
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({
@@ -144,12 +168,14 @@ export function useDeleteCourt() {
       // shape as useUpdateCourt's own `silent` flag above.
       silent?: boolean;
     }) =>
-      fetchJson<{ ok: true }>(`/api/clubs/courts/${courtId}`, {
-        method: "DELETE",
-      }),
+      fetchJson<{ ok: true }>(
+        `/api/clubs/courts/${courtId}`,
+        { method: "DELETE" },
+        t("genericError"),
+      ),
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: COURTS_QUERY_KEY });
-      if (!variables.silent) toast.success("Court deactivated");
+      if (!variables.silent) toast.success(t("courtDeactivated"));
     },
     onError: (error: Error, variables) => {
       if (!variables.silent) toast.error(error.message);
@@ -158,17 +184,21 @@ export function useDeleteCourt() {
 }
 
 export function useCourtAvailability(courtId: string | null) {
+  const t = useTranslations("CourtsViewData");
   return useQuery({
     queryKey: ["court-availability", courtId],
     queryFn: () =>
       fetchJson<{ availability: CourtAvailability[] }>(
         `/api/clubs/courts/${courtId}/availability`,
+        undefined,
+        t("genericError"),
       ).then((data) => data.availability),
     enabled: Boolean(courtId),
   });
 }
 
 export function useSetCourtAvailability() {
+  const t = useTranslations("CourtsViewData");
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({
@@ -185,6 +215,7 @@ export function useSetCourtAvailability() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(entries),
         },
+        t("genericError"),
       ),
     // No onSuccess toast here: availability is now always saved together
     // with the court's details as one single action (see CourtFormSheet /
@@ -202,22 +233,28 @@ export function useSetCourtAvailability() {
 }
 
 export function useClubOperatingHours(enabled: boolean) {
+  const t = useTranslations("CourtsViewData");
   return useQuery({
     queryKey: ["club-operating-hours"],
     queryFn: () =>
       fetchJson<{ operatingHours: AvailabilityEntry[] }>(
         "/api/clubs/operating-hours",
+        undefined,
+        t("genericError"),
       ).then((data) => data.operatingHours),
     enabled,
   });
 }
 
 export function useCourtClosures(courtId: string | null) {
+  const t = useTranslations("CourtsViewData");
   return useQuery({
     queryKey: ["court-closures", courtId],
     queryFn: () =>
       fetchJson<{ closures: RawCourtClosure[] }>(
         `/api/clubs/courts/${courtId}/closures`,
+        undefined,
+        t("genericError"),
       ).then((data) => data.closures.map(toCourtClosure)),
     enabled: Boolean(courtId),
   });
@@ -229,6 +266,7 @@ export function useCourtClosures(courtId: string | null) {
 // single summary toast itself; a toast fired from here per court would be
 // redundant (or misleading) alongside that aggregate message.
 export function useCreateCourtClosure() {
+  const t = useTranslations("CourtsViewData");
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({
@@ -245,6 +283,7 @@ export function useCreateCourtClosure() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(input),
         },
+        t("genericError"),
       ).then((data) => ({ closure: toCourtClosure(data.closure) })),
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({
@@ -255,6 +294,7 @@ export function useCreateCourtClosure() {
 }
 
 export function useCancelCourtClosure() {
+  const t = useTranslations("CourtsViewData");
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({
@@ -267,12 +307,13 @@ export function useCancelCourtClosure() {
       fetchJson<{ closure: RawCourtClosure }>(
         `/api/clubs/courts/${courtId}/closures/${closureId}/cancel`,
         { method: "POST" },
+        t("genericError"),
       ).then((data) => ({ closure: toCourtClosure(data.closure) })),
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({
         queryKey: ["court-closures", variables.courtId],
       });
-      toast.success("Closure cancelled");
+      toast.success(t("closureCancelled"));
     },
     onError: (error: Error) => toast.error(error.message),
   });

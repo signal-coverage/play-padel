@@ -9,6 +9,8 @@ import {
 } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { NextIntlClientProvider } from "next-intl";
+import messages from "@/messages/en.json";
 import { OperatingHoursSettingsCard } from "./OperatingHoursSettingsCard";
 import type { AvailabilityEntry } from "@/core/courts/types";
 
@@ -36,9 +38,11 @@ function renderCard(getEntries: AvailabilityEntry[]) {
   });
 
   const utils = render(
-    <QueryClientProvider client={queryClient}>
-      <OperatingHoursSettingsCard />
-    </QueryClientProvider>,
+    <NextIntlClientProvider locale="en" messages={messages}>
+      <QueryClientProvider client={queryClient}>
+        <OperatingHoursSettingsCard />
+      </QueryClientProvider>
+    </NextIntlClientProvider>,
   );
 
   return { ...utils, fetchMock, queryClient };

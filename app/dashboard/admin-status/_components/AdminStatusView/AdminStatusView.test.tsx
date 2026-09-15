@@ -3,6 +3,8 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, waitFor, cleanup } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { NextIntlClientProvider } from "next-intl";
+import messages from "@/messages/en.json";
 import { AdminStatusView } from "./AdminStatusView";
 
 // jsdom doesn't implement ResizeObserver, but DataTable relies on it
@@ -23,9 +25,11 @@ function renderView(fetchMock: ReturnType<typeof vi.fn>) {
   });
 
   return render(
-    <QueryClientProvider client={queryClient}>
-      <AdminStatusView />
-    </QueryClientProvider>,
+    <NextIntlClientProvider locale="en" messages={messages}>
+      <QueryClientProvider client={queryClient}>
+        <AdminStatusView />
+      </QueryClientProvider>
+    </NextIntlClientProvider>,
   );
 }
 

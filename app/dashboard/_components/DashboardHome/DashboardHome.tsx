@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 import { useAuth } from "@/hooks/use-auth";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { SearchInput } from "@/components/SearchInput";
@@ -14,6 +15,7 @@ import { Separator } from "@/components/ui/separator";
 import { DashboardLoader } from "@/app/dashboard/_components/DashboardLoader";
 
 export function DashboardHome() {
+  const t = useTranslations("DashboardHome");
   const { user, loading } = useAuth();
   const isMobile = useIsMobile();
   const [query, setQuery] = useState("");
@@ -46,14 +48,14 @@ export function DashboardHome() {
               className="mr-2 inline-block h-4.5 w-4.5 align-middle"
             />
           )}
-          Welcome{name && `, ${name}`}
+          {name ? t("welcomeWithName", { name }) : t("welcome")}
         </h1>
 
         <div className="flex flex-1 items-center gap-2 max-w-208 lg:max-w-160">
           <SearchInput
             value={query}
             onChange={setQuery}
-            placeholder="Search cards…"
+            placeholder={t("searchPlaceholder")}
             className="w-full"
           />
           {role === "owner" && <UpgradeMembershipButton />}

@@ -9,6 +9,8 @@ import {
 } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { NextIntlClientProvider } from "next-intl";
+import messages from "@/messages/en.json";
 import { MercadoPagoConnectedDialog } from "./MercadoPagoConnectedDialog";
 
 const { toastMock } = vi.hoisted(() => ({
@@ -52,9 +54,11 @@ function renderDialog(
   };
 
   const utils = render(
-    <QueryClientProvider client={queryClient}>
-      <MercadoPagoConnectedDialog {...props} />
-    </QueryClientProvider>,
+    <NextIntlClientProvider locale="en" messages={messages}>
+      <QueryClientProvider client={queryClient}>
+        <MercadoPagoConnectedDialog {...props} />
+      </QueryClientProvider>
+    </NextIntlClientProvider>,
   );
 
   return { ...utils, fetchMock, props };

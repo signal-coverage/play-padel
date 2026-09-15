@@ -35,8 +35,7 @@ async function notifyOwnerOfPaymentConflict(
         recipientId: owner.id,
         recipientEmail: owner.email,
         recipientName: owner.displayName,
-        subject: "A paid reservation could not be confirmed",
-        html: "A player's payment was received, but their slot could not be confirmed automatically. Please resolve this manually.",
+        params: { variant: "notConfirmed" },
         sendEmail: false,
       });
     }
