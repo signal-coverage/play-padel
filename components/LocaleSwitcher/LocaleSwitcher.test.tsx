@@ -59,4 +59,22 @@ describe("LocaleSwitcher", () => {
 
     await waitFor(() => expect(setUserLocaleMock).toHaveBeenCalledWith("en"));
   });
+
+  it("falls back to the muted default color when no className is given", () => {
+    renderSwitcher("en");
+
+    expect(screen.getByRole("button")).toHaveClass("text-muted-foreground");
+  });
+
+  it("uses the caller's className instead of the default when one is given", () => {
+    render(
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <LocaleSwitcher className="text-white/70 hover:bg-white/10 hover:text-white" />
+      </NextIntlClientProvider>,
+    );
+
+    const button = screen.getByRole("button");
+    expect(button).toHaveClass("text-white/70");
+    expect(button).not.toHaveClass("text-muted-foreground");
+  });
 });
