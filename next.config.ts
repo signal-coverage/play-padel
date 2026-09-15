@@ -38,7 +38,7 @@ const withNextIntl = createNextIntlPlugin();
 // Google Fonts is deliberately NOT listed: next/font/google self-hosts the
 // font files at build time, so there is no runtime request to
 // fonts.googleapis.com/fonts.gstatic.com to allow.
-const CLERK_FRONTEND_API_HOST = "clerk.play-padel-zeta.vercel.app";
+const CLERK_FRONTEND_API_HOST = "clerk.www.play-padel.com.ar";
 
 // Dev-only: React's development build calls eval() for a few debugging
 // features (reconstructing component stacks from a different environment,

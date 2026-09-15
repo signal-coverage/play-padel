@@ -113,7 +113,13 @@ export function LandingHeader() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.45, delay: 0.27, ease }}
         >
-          <LocaleSwitcher />
+          <LocaleSwitcher
+            className={
+              isScrolled
+                ? "text-foreground/70 hover:bg-muted hover:text-foreground"
+                : "text-white/70 hover:bg-white/10 hover:text-white"
+            }
+          />
 
           {!loading &&
             (isSignedIn ? (
