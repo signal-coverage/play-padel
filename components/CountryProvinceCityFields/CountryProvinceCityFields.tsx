@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useController } from "react-hook-form";
 import type { FieldErrors, FieldValues, Path } from "react-hook-form";
 import { State, City } from "country-state-city";
+import { useTranslations } from "next-intl";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import {
   Select,
@@ -28,6 +29,7 @@ import type {
 export function useCountryProvinceCityFields<
   TFieldValues extends FieldValues = CountryProvinceCityFieldsValues,
 >({ control, errors }: CountryProvinceCityFieldsProps<TFieldValues>) {
+  const t = useTranslations("CountryProvinceCityFields");
   const countryName = "country" as Path<TFieldValues>;
   const provinceName = "province" as Path<TFieldValues>;
   const cityName = "city" as Path<TFieldValues>;
@@ -155,20 +157,20 @@ export function useCountryProvinceCityFields<
   }
 
   const provincePlaceholder = !countryIsoCode
-    ? "Select a country first"
+    ? t("selectCountryFirst")
     : states.length === 0
-      ? "No provinces available"
-      : "Select a province";
+      ? t("noProvincesAvailable")
+      : t("selectProvince");
 
   const cityPlaceholder = !stateIsoCode
-    ? "Select a province first"
+    ? t("selectProvinceFirst")
     : cities.length === 0
-      ? "No cities available"
-      : "Select a city";
+      ? t("noCitiesAvailable")
+      : t("selectCity");
 
   const countryFieldElement = (
     <Field key="country">
-      <FieldLabel htmlFor="country">Country</FieldLabel>
+      <FieldLabel htmlFor="country">{t("country")}</FieldLabel>
       <Select
         // Always a defined string (never `undefined`) so this stays a
         // controlled Radix Select from the very first render — switching
@@ -180,7 +182,7 @@ export function useCountryProvinceCityFields<
         onValueChange={handleCountryChange}
       >
         <SelectTrigger id="country" aria-invalid={!!fieldErrors.country}>
-          <SelectValue placeholder="Select a country" />
+          <SelectValue placeholder={t("selectCountry")} />
         </SelectTrigger>
         <SelectContent>
           {ALL_COUNTRIES.map((c) => (
@@ -196,7 +198,7 @@ export function useCountryProvinceCityFields<
 
   const provinceFieldElement = (
     <Field key="province">
-      <FieldLabel htmlFor="province">Province / State</FieldLabel>
+      <FieldLabel htmlFor="province">{t("province")}</FieldLabel>
       <Select
         value={(provinceField.value as string) ?? ""}
         onValueChange={handleProvinceChange}
@@ -219,7 +221,7 @@ export function useCountryProvinceCityFields<
 
   const cityFieldElement = (
     <Field key="city">
-      <FieldLabel htmlFor="city">City</FieldLabel>
+      <FieldLabel htmlFor="city">{t("city")}</FieldLabel>
       <Select
         value={(cityField.value as string) ?? ""}
         onValueChange={handleCityChange}

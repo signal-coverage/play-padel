@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import { DashboardBentoCard } from "@/components/DashboardBentoCard";
 import type { SystemRole } from "@/providers/auth-provider";
 import { OwnerSessionLoad } from "./components/OwnerSessionLoad";
@@ -10,9 +11,10 @@ export function SessionLoadCard({
   role: SystemRole;
   className?: string;
 }) {
+  const t = useTranslations("SessionLoadCard");
   return (
     <DashboardBentoCard
-      title={role === "owner" ? "Cancellation rate" : "Session load"}
+      title={role === "owner" ? t("cancellationRate") : t("sessionLoad")}
       animationDelay="160ms"
       className={className}
       contentClassName="flex min-h-0 flex-1 flex-col justify-center gap-3"

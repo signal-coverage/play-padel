@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef } from "react";
 import { useQueryState, parseAsString, parseAsStringEnum } from "nuqs";
+import { useTranslations } from "next-intl";
 import { ColorSwatch } from "@/components/ColorSwatch";
 import { CourtPhotoPreview } from "@/components/CourtPhotoPreview";
 import { SortDirectionButton } from "@/components/SortDirectionButton";
@@ -40,6 +41,8 @@ export function ClubCourtsPanel({
   isUpdating,
   isError,
 }: ClubCourtsPanelProps) {
+  const t = useTranslations("ClubCourtsPanel");
+  const tLabels = useTranslations("CourtLabels");
   // Filter/sort state lives in the URL (like `club`/`court`/`date` in
   // BrowseCourts) so the current filters/sort are shareable and survive a
   // refresh, per the feature spec.
@@ -131,18 +134,20 @@ export function ClubCourtsPanel({
     () => [
       {
         key: "court",
-        header: "Court",
+        header: t("court"),
         className: "pl-3",
         cell: (court) => <span className="font-medium">{court.name}</span>,
       },
       {
         key: "surfaceColor",
-        header: "Surface & Color",
+        header: t("surfaceAndColor"),
         cell: (court) => (
           <div className="flex flex-col gap-1">
             <div className="flex items-center gap-1.5 w-fit">
               <ColorSwatch color={court.color} />
-              <span className="w-fit">{surfaceLabel(court.surface)}</span>
+              <span className="w-fit">
+                {surfaceLabel(court.surface, tLabels)}
+              </span>
               <SurfacePreview surface={court.surface} color={court.color} />
             </div>
           </div>
@@ -150,7 +155,7 @@ export function ClubCourtsPanel({
       },
       {
         key: "reservationFee",
-        header: "Reservation fee",
+        header: t("reservationFee"),
         cell: (court) =>
           court.reservationFee !== undefined
             ? formatCourtPrice(court.reservationFee)
@@ -158,7 +163,7 @@ export function ClubCourtsPanel({
       },
       {
         key: "courtPrice",
-        header: "Court price",
+        header: t("courtPrice"),
         cell: (court) => {
           if (court.courtPrice === undefined) return "—";
           const perHour = formatPricePerHour(
@@ -170,7 +175,7 @@ export function ClubCourtsPanel({
               <span>{formatCourtPrice(court.courtPrice)}</span>
               {perHour !== "—" && (
                 <span className="text-xs text-muted-foreground">
-                  {perHour}/hour
+                  {t("perHour", { price: perHour })}
                 </span>
               )}
             </div>
@@ -179,13 +184,13 @@ export function ClubCourtsPanel({
       },
       {
         key: "preview",
-        header: "Preview",
+        header: t("preview"),
         cell: (court) => (
           <CourtPhotoPreview photoUrl={court.photoUrl} courtName={court.name} />
         ),
       },
     ],
-    [],
+    [t, tLabels],
   );
 
   // These replace only the table area below, not the whole panel — the
@@ -193,11 +198,11 @@ export function ClubCourtsPanel({
   // state, so this column doesn't collapse to a bare placeholder box while
   // its siblings keep their own header row.
   const statusMessage = !selectedClubId
-    ? "Select a club to see its courts."
+    ? t("selectClubPrompt")
     : isError
-      ? "Could not load courts. Try again later."
+      ? t("loadError")
       : !isLoading && courts.length === 0
-        ? "No courts available for the selected date."
+        ? t("noCourtsAvailable")
         : null;
 
   return (
@@ -205,11 +210,11 @@ export function ClubCourtsPanel({
       <div className="flex flex-wrap items-start gap-3 justify-between">
         <div className="flex flex-col gap-1.5">
           <span className="text-xs font-medium text-muted-foreground">
-            Filters
+            {t("filters")}
           </span>
           <div
             role="group"
-            aria-label="Filters"
+            aria-label={t("filters")}
             className="flex flex-wrap items-center gap-1.5"
           >
             <Select
@@ -217,13 +222,13 @@ export function ClubCourtsPanel({
               onValueChange={(value) => updateFilter("surface", value)}
             >
               <SelectTrigger className="w-40">
-                <SelectValue placeholder="Surface" />
+                <SelectValue placeholder={t("surface")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All surfaces</SelectItem>
+                <SelectItem value="all">{t("allSurfaces")}</SelectItem>
                 {surfaceOptions.map((surfaceOption) => (
                   <SelectItem key={surfaceOption} value={surfaceOption}>
-                    {surfaceLabel(surfaceOption)}
+                    {surfaceLabel(surfaceOption, tLabels)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -236,12 +241,16 @@ export function ClubCourtsPanel({
               }
             >
               <SelectTrigger className="w-32">
-                <SelectValue placeholder="Indoor" />
+                <SelectValue placeholder={tLabels("indoor")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All courts</SelectItem>
-                <SelectItem value="indoor">{indoorLabel(true)}</SelectItem>
-                <SelectItem value="outdoor">{indoorLabel(false)}</SelectItem>
+                <SelectItem value="all">{t("allCourts")}</SelectItem>
+                <SelectItem value="indoor">
+                  {indoorLabel(true, tLabels)}
+                </SelectItem>
+                <SelectItem value="outdoor">
+                  {indoorLabel(false, tLabels)}
+                </SelectItem>
               </SelectContent>
             </Select>
 
@@ -250,10 +259,10 @@ export function ClubCourtsPanel({
               onValueChange={(value) => updateFilter("color", value)}
             >
               <SelectTrigger className="w-32">
-                <SelectValue placeholder="Color" />
+                <SelectValue placeholder={t("color")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All colors</SelectItem>
+                <SelectItem value="all">{t("allColors")}</SelectItem>
                 {colorOptions.map((colorOption) => (
                   <SelectItem key={colorOption} value={colorOption}>
                     {colorOption}
@@ -265,11 +274,11 @@ export function ClubCourtsPanel({
         </div>
         <div className="flex flex-1 flex-col gap-1.5">
           <span className="text-xs font-medium text-muted-foreground">
-            Sort by
+            {t("sortBy")}
           </span>
           <div
             role="group"
-            aria-label="Sort by"
+            aria-label={t("sortBy")}
             className="flex items-center gap-1.5"
           >
             <Select
@@ -277,12 +286,14 @@ export function ClubCourtsPanel({
               onValueChange={(value) => setSortField(value as CourtSortField)}
             >
               <SelectTrigger className="min-w-35 w-full">
-                <SelectValue placeholder="Sort by" />
+                <SelectValue placeholder={t("sortBy")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="name">Name</SelectItem>
-                <SelectItem value="surface">Surface</SelectItem>
-                <SelectItem value="reservationFee">Reservation fee</SelectItem>
+                <SelectItem value="name">{t("sortName")}</SelectItem>
+                <SelectItem value="surface">{t("surface")}</SelectItem>
+                <SelectItem value="reservationFee">
+                  {t("reservationFee")}
+                </SelectItem>
               </SelectContent>
             </Select>
             <SortDirectionButton
@@ -315,10 +326,10 @@ export function ClubCourtsPanel({
             rows={visibleCourts}
             rowKey={(court) => court.id}
             isLoading={isLoading}
-            loadingLabel="Loading courts…"
+            loadingLabel={t("loading")}
             emptyState={
               <StatusBox className="flex h-full flex-col items-center justify-center">
-                No courts match your filters.
+                {t("noMatches")}
               </StatusBox>
             }
             onRowClick={(court) => onSelectCourt(court.id)}

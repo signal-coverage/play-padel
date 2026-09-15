@@ -952,7 +952,10 @@ describe("setClubStatus", () => {
     await setClubStatus("club_1", "ACTIVE", "admin_1");
 
     expect(dispatchMock).toHaveBeenCalledWith(
-      expect.objectContaining({ type: "CLUB_OPERATIONAL_READY" }),
+      expect.objectContaining({
+        type: "CLUB_OPERATIONAL_READY",
+        params: expect.objectContaining({ variant: "unsuspended" }),
+      }),
     );
   });
 
@@ -1013,6 +1016,9 @@ describe("notifyClubOperationalIfNeeded", () => {
         recipientEmail: "owner@example.com",
         recipientName: "Owner Person",
         sendEmail: false,
+        params: expect.objectContaining({
+          variant: "readyToAcceptReservations",
+        }),
       }),
     );
   });

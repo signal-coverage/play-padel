@@ -9,6 +9,8 @@ import {
 } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { NextIntlClientProvider } from "next-intl";
+import messages from "@/messages/en.json";
 
 // next/image's default loader calls out to Next's build-time image
 // optimization config, which doesn't exist under Vitest — MercadoPagoConnectionCard
@@ -79,9 +81,11 @@ function renderScreen(subscription: object = PENDING_SUBSCRIPTION) {
   });
 
   render(
-    <QueryClientProvider client={queryClient}>
-      <PaymentActivationScreen />
-    </QueryClientProvider>,
+    <NextIntlClientProvider locale="en" messages={messages}>
+      <QueryClientProvider client={queryClient}>
+        <PaymentActivationScreen />
+      </QueryClientProvider>
+    </NextIntlClientProvider>,
   );
 
   return fetchMock;
@@ -208,9 +212,11 @@ describe("PaymentActivationScreen", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     render(
-      <QueryClientProvider client={queryClient}>
-        <PaymentActivationScreen />
-      </QueryClientProvider>,
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <QueryClientProvider client={queryClient}>
+          <PaymentActivationScreen />
+        </QueryClientProvider>
+      </NextIntlClientProvider>,
     );
 
     // Right after the initial synchronous render, the stale PENDING
@@ -271,9 +277,11 @@ describe("PaymentActivationScreen", () => {
     });
 
     render(
-      <QueryClientProvider client={queryClient}>
-        <PaymentActivationScreen />
-      </QueryClientProvider>,
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <QueryClientProvider client={queryClient}>
+          <PaymentActivationScreen />
+        </QueryClientProvider>
+      </NextIntlClientProvider>,
     );
 
     expect(

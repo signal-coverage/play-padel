@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import { useTranslations } from "next-intl";
 import { GroupMatchesList } from "../TournamentsManager/components/GroupMatchesList";
 import { KnockoutRoundsList } from "../TournamentsManager/components/KnockoutRoundsList";
 import { StandingsTable } from "../TournamentsManager/components/StandingsTable";
@@ -25,6 +26,7 @@ export function GroupsStandingsView({
   tournamentId,
   categoryId,
 }: GroupsStandingsViewProps) {
+  const t = useTranslations("GroupsStandingsView");
   const { data, isLoading } = useCategoryStandingsDetail(
     tournamentId,
     categoryId,
@@ -40,11 +42,11 @@ export function GroupsStandingsView({
   }, [data?.teams]);
 
   if (isLoading) {
-    return <p className="text-sm text-muted-foreground">Loading…</p>;
+    return <p className="text-sm text-muted-foreground">{t("loading")}</p>;
   }
 
   if (!data) {
-    return <p className="text-sm text-muted-foreground">No data available.</p>;
+    return <p className="text-sm text-muted-foreground">{t("noData")}</p>;
   }
 
   const knockoutMatches = data.knockoutRounds.flatMap((round) => round.matches);
@@ -56,7 +58,7 @@ export function GroupsStandingsView({
           <h3 className="text-sm font-semibold">{group.name}</h3>
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <h4 className="mb-2 text-sm font-medium">Matches</h4>
+              <h4 className="mb-2 text-sm font-medium">{t("matches")}</h4>
               <GroupMatchesList
                 matches={matches}
                 teamLabels={teamLabels}
@@ -64,7 +66,7 @@ export function GroupsStandingsView({
               />
             </div>
             <div>
-              <h4 className="mb-2 text-sm font-medium">Standings</h4>
+              <h4 className="mb-2 text-sm font-medium">{t("standings")}</h4>
               <StandingsTable rows={standings} teamLabels={teamLabels} />
             </div>
           </div>
@@ -73,7 +75,7 @@ export function GroupsStandingsView({
 
       {knockoutMatches.length > 0 && (
         <div className="flex flex-col gap-2">
-          <h3 className="text-sm font-semibold">Knockout bracket</h3>
+          <h3 className="text-sm font-semibold">{t("knockoutBracket")}</h3>
           <KnockoutRoundsList
             matches={knockoutMatches}
             teamLabels={teamLabels}

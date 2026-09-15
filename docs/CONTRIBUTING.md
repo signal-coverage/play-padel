@@ -20,19 +20,22 @@ npm run dev     # start the dev server (Turbopack)
 npm run build   # production build (Turbopack)
 npm run start   # run a production build
 npm run lint    # ESLint
+npm run manage  # interactive CLI for admin/ops tasks — see the root README's "Maintenance CLI" section
 ```
 
 ## Prisma
 
-This project has no `prisma/migrations` history — schema changes are synced directly to the database:
+Schema changes go through real, tracked migrations in `prisma/migrations/` — never `prisma db push`.
 
 ```bash
 npx prisma generate      # regenerate the client after any schema.prisma edit (no DB connection needed)
-npx prisma db push       # sync schema.prisma to the actual database
-npx prisma studio        # browse the database
+npx prisma migrate dev   # create + apply a new migration against .env.local
+npx prisma studio        # browse the local database
 ```
 
-Do **not** run `npx prisma migrate dev` — with no migration history, it will try to reset the entire database. The generated client outputs to `lib/generated/prisma` (gitignored).
+`prisma.config.ts` hardcodes `.env.local` (with `override: true`), so `migrate dev` and `studio` always target your local database no matter what else is set in the shell. **Never run `prisma migrate deploy` by hand** against `.env.preview`/`.env.prod` — use `npm run manage` → **Apply pending migrations** (one environment) or **Apply pending migrations to all 3 environments** (local → preview → prod in one guided run) instead. Both point the Prisma CLI at the right env file via a throwaway config file, show what's pending, and ask for explicit confirmation before deploying — extra bluntly for prod.
+
+The generated client outputs to `lib/generated/prisma` (gitignored).
 
 ## Conventions
 

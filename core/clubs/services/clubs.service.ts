@@ -230,8 +230,7 @@ export async function approveClub(
         recipientId: owner.id,
         recipientEmail: owner.email,
         recipientName: owner.displayName,
-        subject: "Your club has been approved",
-        html: "Your club is now approved and can accept reservations.",
+        params: {},
         // Sent by email (not just in-app) — approval timing is entirely in
         // an admin's hands, so logging in on the off chance is the owner's
         // only other way to find out; see CLUB_REJECTED below, which stays
@@ -268,8 +267,7 @@ export async function rejectClub(
         recipientId: owner.id,
         recipientEmail: owner.email,
         recipientName: owner.displayName,
-        subject: "Your club application was not approved",
-        html: "Your club application was not approved. Contact support for details.",
+        params: {},
         sendEmail: false,
       });
     }
@@ -340,8 +338,7 @@ export async function setClubStatus(
           recipientId: owner.id,
           recipientEmail: owner.email,
           recipientName: owner.displayName,
-          subject: "Your club has been suspended",
-          html: "Your club has been suspended. Contact support for details.",
+          params: {},
           sendEmail: false,
         });
       } catch {
@@ -358,8 +355,7 @@ export async function setClubStatus(
           recipientId: owner.id,
           recipientEmail: owner.email,
           recipientName: owner.displayName,
-          subject: "Your dashboard is unlocked",
-          html: "Your club is no longer suspended — your dashboard is unlocked again.",
+          params: { variant: "unsuspended" },
           sendEmail: false,
         });
       } catch {
@@ -407,8 +403,7 @@ export async function notifyClubOperationalIfNeeded(
       recipientId: owner.id,
       recipientEmail: owner.email,
       recipientName: owner.displayName,
-      subject: "Your club is ready to accept reservations",
-      html: "Your club can now accept real reservations. Don't forget to set your operating hours in Settings so players know when they can book.",
+      params: { variant: "readyToAcceptReservations" },
       sendEmail: false,
     });
   } catch {

@@ -1,13 +1,17 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import type { CategoryStandingsDetailResponse } from "./types";
 
-async function fetchJson<T>(url: string): Promise<T> {
+async function fetchJson<T>(
+  url: string,
+  fallbackErrorMessage: string,
+): Promise<T> {
   const res = await fetch(url);
   if (!res.ok) {
     const body = await res.json().catch(() => null);
-    throw new Error(body?.error ?? "Something went wrong. Please try again.");
+    throw new Error(body?.error ?? fallbackErrorMessage);
   }
   return res.json();
 }
@@ -21,11 +25,13 @@ export function useCategoryStandingsDetail(
   tournamentId: string | null,
   categoryId: string | null,
 ) {
+  const t = useTranslations("GroupsStandingsViewData");
   return useQuery({
     queryKey: ["tournaments", "standings-detail", tournamentId, categoryId],
     queryFn: () =>
       fetchJson<CategoryStandingsDetailResponse>(
         `/api/tournaments/${tournamentId}/categories/${categoryId}/standings`,
+        t("genericError"),
       ),
     enabled: Boolean(tournamentId && categoryId),
   });

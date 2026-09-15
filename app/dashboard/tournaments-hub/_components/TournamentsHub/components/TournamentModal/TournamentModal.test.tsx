@@ -2,6 +2,8 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
+import { NextIntlClientProvider } from "next-intl";
+import messages from "@/messages/en.json";
 
 const useTournamentDetailMock = vi.fn();
 vi.mock("./hooks", () => ({
@@ -49,6 +51,14 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 
+function renderModal(props: React.ComponentProps<typeof TournamentModal>) {
+  return render(
+    <NextIntlClientProvider locale="en" messages={messages}>
+      <TournamentModal {...props} />
+    </NextIntlClientProvider>,
+  );
+}
+
 describe("TournamentModal", () => {
   it("renders nothing (dialog closed) when tournamentId is null", () => {
     useTournamentDetailMock.mockReturnValue({
@@ -56,7 +66,7 @@ describe("TournamentModal", () => {
       isLoading: false,
     });
 
-    render(<TournamentModal tournamentId={null} onOpenChange={vi.fn()} />);
+    renderModal({ tournamentId: null, onOpenChange: vi.fn() });
 
     expect(screen.queryByText(/registrationpanel/i)).not.toBeInTheDocument();
   });
@@ -67,7 +77,7 @@ describe("TournamentModal", () => {
       isLoading: true,
     });
 
-    render(<TournamentModal tournamentId="t1" onOpenChange={vi.fn()} />);
+    renderModal({ tournamentId: "t1", onOpenChange: vi.fn() });
 
     expect(screen.getByText(/loading/i)).toBeInTheDocument();
   });
@@ -85,7 +95,7 @@ describe("TournamentModal", () => {
       },
     });
 
-    render(<TournamentModal tournamentId="t1" onOpenChange={vi.fn()} />);
+    renderModal({ tournamentId: "t1", onOpenChange: vi.fn() });
 
     expect(screen.queryByText(/tab:/i)).not.toBeInTheDocument();
     expect(screen.getByText("RegistrationPanel:cat_1")).toBeInTheDocument();
@@ -105,7 +115,7 @@ describe("TournamentModal", () => {
       },
     });
 
-    render(<TournamentModal tournamentId="t1" onOpenChange={vi.fn()} />);
+    renderModal({ tournamentId: "t1", onOpenChange: vi.fn() });
 
     expect(screen.getByText("RegistrationPanel:cat_1")).toBeInTheDocument();
 
@@ -127,7 +137,7 @@ describe("TournamentModal", () => {
       },
     });
 
-    render(<TournamentModal tournamentId="t1" onOpenChange={vi.fn()} />);
+    renderModal({ tournamentId: "t1", onOpenChange: vi.fn() });
 
     expect(screen.getByText("GroupsStandingsView:cat_1")).toBeInTheDocument();
     expect(screen.queryByText(/registrationpanel/i)).not.toBeInTheDocument();

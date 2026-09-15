@@ -1,10 +1,7 @@
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-  KNOCKOUT_ROUND_LABELS,
-  KNOCKOUT_ROUND_ORDER,
-  KNOCKOUT_STATUS_LABELS,
-} from "./consts";
+import { KNOCKOUT_ROUND_ORDER } from "./consts";
 import type { KnockoutRoundsListProps } from "./types";
 
 /**
@@ -23,12 +20,23 @@ export function KnockoutRoundsList({
   onRecordWalkover,
   readOnly,
 }: KnockoutRoundsListProps) {
+  const t = useTranslations("KnockoutRoundsList");
+  const roundLabels: Record<string, string> = {
+    ROUND_OF_32: t("roundLabels.ROUND_OF_32"),
+    ROUND_OF_16: t("roundLabels.ROUND_OF_16"),
+    QUARTERFINAL: t("roundLabels.QUARTERFINAL"),
+    SEMIFINAL: t("roundLabels.SEMIFINAL"),
+    FINAL: t("roundLabels.FINAL"),
+  };
+  const statusLabels: Record<string, string> = {
+    SCHEDULED: t("statusLabels.SCHEDULED"),
+    COMPLETED: t("statusLabels.COMPLETED"),
+    WALKOVER: t("statusLabels.WALKOVER"),
+    CANCELLED: t("statusLabels.CANCELLED"),
+  };
+
   if (matches.length === 0) {
-    return (
-      <p className="text-sm text-muted-foreground">
-        No knockout bracket yet — generate it once the group stage is complete.
-      </p>
-    );
+    return <p className="text-sm text-muted-foreground">{t("emptyState")}</p>;
   }
 
   const roundsPresent = KNOCKOUT_ROUND_ORDER.filter((round) =>
@@ -40,7 +48,7 @@ export function KnockoutRoundsList({
       {roundsPresent.map((round) => (
         <div key={round} className="flex flex-col gap-2">
           <h4 className="text-sm font-semibold">
-            {KNOCKOUT_ROUND_LABELS[round] ?? round}
+            {roundLabels[round] ?? round}
           </h4>
           <ul className="flex flex-col gap-2">
             {matches
@@ -48,10 +56,10 @@ export function KnockoutRoundsList({
               .map((match) => {
                 const teamALabel = match.teamAId
                   ? (teamLabels[match.teamAId] ?? match.teamAId)
-                  : "TBD";
+                  : t("tbd");
                 const teamBLabel = match.teamBId
                   ? (teamLabels[match.teamBId] ?? match.teamBId)
-                  : "TBD";
+                  : t("tbd");
                 const isDecided =
                   match.status === "COMPLETED" || match.status === "WALKOVER";
                 const canPlay =
@@ -66,18 +74,20 @@ export function KnockoutRoundsList({
                   >
                     <div className="flex flex-col">
                       <span className="text-sm">
-                        {teamALabel} vs {teamBLabel}
+                        {t("matchup", { teamA: teamALabel, teamB: teamBLabel })}
                       </span>
                       <span className="text-xs text-muted-foreground">
                         <Badge variant="outline">
-                          {KNOCKOUT_STATUS_LABELS[match.status] ?? match.status}
+                          {statusLabels[match.status] ?? match.status}
                         </Badge>
                         {isDecided && match.winnerTeamId && (
                           <>
                             {" "}
-                            — Winner:{" "}
-                            {teamLabels[match.winnerTeamId] ??
-                              match.winnerTeamId}
+                            {t("winner", {
+                              name:
+                                teamLabels[match.winnerTeamId] ??
+                                match.winnerTeamId,
+                            })}
                           </>
                         )}
                       </span>
@@ -90,7 +100,7 @@ export function KnockoutRoundsList({
                           variant="outline"
                           onClick={() => onEnterScore?.(match)}
                         >
-                          Enter score
+                          {t("enterScore")}
                         </Button>
                         <Button
                           type="button"
@@ -98,7 +108,7 @@ export function KnockoutRoundsList({
                           variant="ghost"
                           onClick={() => onRecordWalkover?.(match)}
                         >
-                          Walkover
+                          {t("walkover")}
                         </Button>
                       </div>
                     )}

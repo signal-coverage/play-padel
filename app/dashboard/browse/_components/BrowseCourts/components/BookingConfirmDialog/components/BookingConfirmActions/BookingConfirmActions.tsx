@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { GuardedActionButton } from "@/components/GuardedActionButton";
 import { canConfirmBooking } from "../../utils";
@@ -18,6 +19,7 @@ export function BookingConfirmActions({
   selectedMethod,
   confirmedTransferPending,
 }: BookingConfirmActionsProps) {
+  const t = useTranslations("BookingConfirmDialog");
   const canConfirm = canConfirmBooking(paymentState);
 
   // Once a TRANSFER booking has come back as a pending hold, there's nothing
@@ -30,7 +32,7 @@ export function BookingConfirmActions({
         disabled={false}
         onClick={onCancel}
       >
-        Got it
+        {t("gotIt")}
       </GuardedActionButton>
     );
   }
@@ -38,7 +40,7 @@ export function BookingConfirmActions({
   return (
     <>
       <Button variant="outline" onClick={onCancel} disabled={isSubmitting}>
-        Cancel
+        {t("cancel")}
       </Button>
       <GuardedActionButton
         isPending={isSubmitting}
@@ -46,14 +48,14 @@ export function BookingConfirmActions({
         onClick={onConfirm}
       >
         {isSubmitting
-          ? "Booking…"
+          ? t("booking")
           : paymentState.kind === "pay-now"
             ? selectedMethod === "TRANSFER"
-              ? "Confirm booking"
-              : "Continue to payment"
+              ? t("confirmBooking")
+              : t("continueToPayment")
             : paymentState.kind === "price-missing"
-              ? "Price not set"
-              : "Book court"}
+              ? t("priceNotSet")
+              : t("bookCourt")}
       </GuardedActionButton>
     </>
   );

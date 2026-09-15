@@ -71,6 +71,34 @@ Copy `.env.example` to `.env.local` and fill in the required Clerk, database, an
 
 Open [http://localhost:3000](http://localhost:3000) to view it.
 
+## Maintenance CLI
+
+Admin and ops tasks — granting access, diagnosing a club, applying a migration — all go through one interactive menu instead of one-off scripts:
+
+```bash
+npm run manage
+```
+
+Arrow-key driven ([`@clack/prompts`](https://www.npmjs.com/package/@clack/prompts)), asks which database to target (`.env.local` / `.env.preview` / `.env.prod`) up front, and asks again — bluntly — before touching production.
+
+<details>
+<summary><strong>Available actions</strong></summary>
+
+| Action                            | What it does                                                                                  |
+| --------------------------------- | --------------------------------------------------------------------------------------------- |
+| Grant / Revoke admin access       | Sets `UserProfile.isAdmin`, keeps Clerk's `publicMetadata.isAdmin` in sync                    |
+| Reconcile admin flags             | Read-only audit of drift between those two admin flags                                        |
+| Activate FREE membership plan     | Unlocks a club's dashboard for testing, without a real Mercado Pago subscription              |
+| Grant welcome free months         | Gives any club 1–7 free months                                                                |
+| Describe / diagnose a club        | Health check — status, plan, Mercado Pago connection, membership, hours, court count          |
+| Suspend / reactivate a club       | Same effect as the in-app admin panel; notifies the owner either way                          |
+| Force Mercado Pago hold sweep     | Runs the daily expired-hold sweep now, instead of waiting for the cron                        |
+| Apply pending migrations          | `prisma migrate deploy` against one chosen environment                                        |
+| Apply pending migrations to all 3 | Same, but walks local → preview → prod in sequence, stopping if any step is declined or fails |
+| Reset all data                    | **Destructive** — wipes every row from every table, keeps schema and migration history        |
+
+</details>
+
 ## Project structure
 
 | Path                   | Purpose                                                                                                                                                                                          |

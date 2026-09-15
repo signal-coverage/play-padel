@@ -1,9 +1,12 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { useTranslations } from "next-intl";
 import { LogoBadge } from "@/components/LogoBadge";
 
 export function AuthLeftPanel() {
+  const t = useTranslations("AuthLeftPanel");
+
   return (
     <div
       className="hidden md:flex md:flex-col relative overflow-hidden shrink-0"
@@ -68,21 +71,20 @@ export function AuthLeftPanel() {
             className="text-white font-bold leading-snug"
             style={{ fontSize: "22px", maxWidth: "290px" }}
           >
-            &ldquo;Booking a court used to mean phone tag with the front desk.
-            Now it takes ten seconds.&rdquo;
+            {t("quote")}
           </p>
           <div>
             <p
               className="text-sm font-medium"
               style={{ color: "rgba(255,255,255,0.75)" }}
             >
-              Marina López
+              {t("name")}
             </p>
             <p
               className="text-xs mt-0.5"
               style={{ color: "rgba(255,255,255,0.48)" }}
             >
-              Owner, Level Up Padel Club
+              {t("role")}
             </p>
           </div>
         </motion.div>

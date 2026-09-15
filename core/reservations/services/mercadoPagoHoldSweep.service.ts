@@ -1,8 +1,5 @@
-import * as React from "react";
-import { render } from "@react-email/render";
 import { prisma } from "@/infrastructure/db/client";
 import { dispatch } from "@/lib/notifications/dispatcher";
-import { MercadoPagoHoldExpired } from "@/lib/email/templates/MercadoPagoHoldExpired";
 import { MP_HOLD_EXPIRY_ACTOR } from "@/core/reservations/consts";
 
 export type MercadoPagoHoldSweepResult = {
@@ -50,22 +47,18 @@ export async function sweepLapsedMercadoPagoHolds(): Promise<MercadoPagoHoldSwee
       });
       const userName = user?.displayName ?? reservation.userName;
 
-      const html = await render(
-        React.createElement(MercadoPagoHoldExpired, {
-          userName,
-          courtName: reservation.courtName,
-          scheduledStart: reservation.scheduledStart,
-        }),
-      );
-
       await dispatch({
         type: "RESERVATION_PAYMENT_HOLD_EXPIRED",
         clubId: null,
         recipientId: reservation.userId,
         recipientEmail: user?.email ?? null,
         recipientName: userName,
-        subject: "Your reservation hold expired",
-        html,
+        params: {
+          variant: "mercadoPago",
+          userName,
+          courtName: reservation.courtName,
+          scheduledStart: reservation.scheduledStart.toISOString(),
+        },
       });
 
       await prisma.reservation.update({

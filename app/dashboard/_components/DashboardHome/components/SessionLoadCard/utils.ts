@@ -31,6 +31,6 @@ export function buildTrend(
   const delta = Math.round(currentPercent - previousPercent);
   return {
     direction: delta >= 0 ? "up" : "down",
-    text: `${Math.abs(delta)}% vs previous period`,
+    delta: Math.abs(delta),
   };
 }

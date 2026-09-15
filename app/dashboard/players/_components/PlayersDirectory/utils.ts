@@ -1,7 +1,3 @@
-import {
-  getDominantHandLabel,
-  getPreferredSideLabel,
-} from "@/core/users/consts";
 import type { DominantHand, PreferredSide } from "@/core/users/types";
 import type { PlayerFilters, PlayerListItem, PlayerSort } from "./types";
 
@@ -70,20 +66,25 @@ export function sortPlayers(
           (x, y) => x - y,
           sort.direction,
         );
+      // Sorts by the raw enum value rather than its translated label: this
+      // is a plain util with no access to next-intl's `t` (see
+      // core/users/consts.ts's getPreferredSideLabel/getDominantHandLabel,
+      // which now require one). "forehand"/"backhand" and "right"/"left"
+      // sort in the same relative order as their English or Spanish labels
+      // either way, since each pair's raw values are already alphabetically
+      // distinct in the same order as the labels they represent.
       case "preferredSide":
         return compareWithNullsLast<PreferredSide>(
           a.preferredSide,
           b.preferredSide,
-          (x, y) =>
-            getPreferredSideLabel(x).localeCompare(getPreferredSideLabel(y)),
+          (x, y) => x.localeCompare(y),
           sort.direction,
         );
       case "dominantHand":
         return compareWithNullsLast<DominantHand>(
           a.dominantHand,
           b.dominantHand,
-          (x, y) =>
-            getDominantHandLabel(x).localeCompare(getDominantHandLabel(y)),
+          (x, y) => x.localeCompare(y),
           sort.direction,
         );
     }

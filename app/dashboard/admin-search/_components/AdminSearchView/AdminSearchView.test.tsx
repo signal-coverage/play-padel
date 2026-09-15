@@ -9,6 +9,8 @@ import {
 } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { NextIntlClientProvider } from "next-intl";
+import messages from "@/messages/en.json";
 import { AdminSearchView } from "./AdminSearchView";
 import { ADMIN_SEARCH_DEBOUNCE_MS } from "./consts";
 
@@ -36,9 +38,11 @@ function renderView(fetchMock: ReturnType<typeof vi.fn>) {
   });
 
   return render(
-    <QueryClientProvider client={queryClient}>
-      <AdminSearchView />
-    </QueryClientProvider>,
+    <NextIntlClientProvider locale="en" messages={messages}>
+      <QueryClientProvider client={queryClient}>
+        <AdminSearchView />
+      </QueryClientProvider>
+    </NextIntlClientProvider>,
   );
 }
 

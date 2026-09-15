@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { useManagedTournaments, useTournamentDetail } from "./hooks";
 import { TournamentsList } from "./components/TournamentsList";
@@ -14,6 +15,7 @@ import { CategoryWorkspace } from "./components/CategoryWorkspace";
  * whatever tournaments/categories slice 1's API already exposes.
  */
 export function TournamentsManager() {
+  const t = useTranslations("TournamentsManager");
   const { data: tournaments = [], isLoading } = useManagedTournaments();
   const [selectedTournamentId, setSelectedTournamentId] = useState<
     string | null
@@ -37,15 +39,17 @@ export function TournamentsManager() {
     <div className="flex h-full min-h-0 min-w-0 flex-col gap-4">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight text-balance">
-          Tournaments
+          {t("title")}
         </h1>
         <p className="mt-1 text-sm text-pretty text-muted-foreground">
-          Build groups and enter scores for your tournaments&apos; categories.
+          {t("description")}
         </p>
       </div>
 
       {isLoading ? (
-        <p className="text-sm text-muted-foreground">Loading tournaments…</p>
+        <p className="text-sm text-muted-foreground">
+          {t("loadingTournaments")}
+        </p>
       ) : (
         <TournamentsList
           tournaments={tournaments}

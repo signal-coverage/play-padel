@@ -8,6 +8,31 @@ export type ClosureFanOutOutcome = {
   toastMessage: string;
 };
 
+// Optional, translated message builders — defaults below reproduce the
+// original hardcoded English strings verbatim, so any caller that hasn't
+// been translated yet (e.g. Club Settings' closure form) keeps working
+// unchanged. A translated caller (ClosuresSheet.tsx) passes its own
+// useTranslations-backed builders instead, since this plain util can't call
+// useTranslations itself.
+export type ClosureFanOutMessages = {
+  created: string;
+  createdForCourts: (totalCount: number) => string;
+  failed: string;
+  partial: (
+    succeededCount: number,
+    totalCount: number,
+    failedCount: number,
+  ) => string;
+};
+
+const DEFAULT_MESSAGES: ClosureFanOutMessages = {
+  created: "Closure created",
+  createdForCourts: (totalCount) => `Closure created for ${totalCount} courts`,
+  failed: "Failed to create closure",
+  partial: (succeededCount, totalCount, failedCount) =>
+    `Created for ${succeededCount} of ${totalCount} courts. ${failedCount} conflicted — check each court's closures.`,
+};
+
 /**
  * Reduces the per-court outcomes of fanning a single closure-creation call
  * out over N courts (via `Promise.allSettled`) into one summary suitable for
@@ -18,6 +43,7 @@ export type ClosureFanOutOutcome = {
  */
 export function summarizeClosureFanOut(
   results: PromiseSettledResult<unknown>[],
+  messages: ClosureFanOutMessages = DEFAULT_MESSAGES,
 ): ClosureFanOutOutcome {
   const totalCount = results.length;
   const failures = results.filter(
@@ -38,8 +64,8 @@ export function summarizeClosureFanOut(
       toastTone: "success",
       toastMessage:
         totalCount > 1
-          ? `Closure created for ${totalCount} courts`
-          : "Closure created",
+          ? messages.createdForCourts(totalCount)
+          : messages.created,
     };
   }
 
@@ -55,7 +81,7 @@ export function summarizeClosureFanOut(
       toastMessage:
         firstFailure.reason instanceof Error
           ? firstFailure.reason.message
-          : "Failed to create closure",
+          : messages.failed,
     };
   }
 
@@ -66,6 +92,6 @@ export function summarizeClosureFanOut(
     allSucceeded,
     allFailed,
     toastTone: "error",
-    toastMessage: `Created for ${succeededCount} of ${totalCount} courts. ${failedCount} conflicted — check each court's closures.`,
+    toastMessage: messages.partial(succeededCount, totalCount, failedCount),
   };
 }

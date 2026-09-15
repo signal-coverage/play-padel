@@ -1,4 +1,5 @@
 import { prisma } from "@/infrastructure/db/client";
+import { DEFAULT_LOCALE, isValidLocale } from "@/i18n/localeConstants";
 import type { UserProfile } from "@/core/users/types";
 
 type UserProfileRow = NonNullable<
@@ -17,6 +18,10 @@ function toUserProfile(row: UserProfileRow): UserProfile {
     preferredSide: row.preferredSide ?? undefined,
     dominantHand: row.dominantHand ?? undefined,
     status: row.status as UserProfile["status"],
+    // row.locale is a plain TEXT column (never a Postgres enum) — narrowed
+    // defensively the same way i18n/locale.ts's getUserLocale narrows the
+    // cookie, rather than trusting the DB value is always exactly "en"/"es".
+    locale: isValidLocale(row.locale) ? row.locale : DEFAULT_LOCALE,
     lastLogin: row.lastLogin ?? undefined,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,

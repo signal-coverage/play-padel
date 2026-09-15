@@ -8,6 +8,8 @@ import {
   fireEvent,
 } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
+import { NextIntlClientProvider } from "next-intl";
+import messages from "@/messages/en.json";
 
 // Mocked the same way BulkEditCourtsSheet.test.tsx mocks it, so
 // toast.success/error calls made on save can be asserted on.
@@ -38,6 +40,14 @@ function stubFetch(
   vi.stubGlobal("ResizeObserver", ResizeObserverStub);
   Element.prototype.scrollIntoView = vi.fn();
   return fetchMock;
+}
+
+function renderPage() {
+  return render(
+    <NextIntlClientProvider locale="en" messages={messages}>
+      <ClubStatusAdminPage />
+    </NextIntlClientProvider>,
+  );
 }
 
 const CLUB = {
@@ -72,7 +82,7 @@ describe("ClubStatusAdminPage", () => {
   it("has no admin-secret input at all", () => {
     stubFetch(async () => ({ ok: true, json: async () => ({ club: CLUB }) }));
 
-    render(<ClubStatusAdminPage />);
+    renderPage();
 
     expect(screen.queryByLabelText(/admin secret/i)).not.toBeInTheDocument();
   });
@@ -88,14 +98,14 @@ describe("ClubStatusAdminPage", () => {
       throw new Error(`unexpected fetch: ${url}`);
     });
 
-    render(<ClubStatusAdminPage />);
+    renderPage();
     fillLookupInputs();
     fireEvent.click(screen.getByRole("button", { name: /look up/i }));
 
     await waitFor(() => {
       expect(screen.getByText("Test Padel Club")).toBeInTheDocument();
     });
-    expect(screen.getByText(/ACTIVE/)).toBeInTheDocument();
+    expect(screen.getByText("Current status: Active")).toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
@@ -106,7 +116,7 @@ describe("ClubStatusAdminPage", () => {
       json: async () => ({ error: "Club not found" }),
     }));
 
-    render(<ClubStatusAdminPage />);
+    renderPage();
     fillLookupInputs();
     fireEvent.click(screen.getByRole("button", { name: /look up/i }));
 
@@ -141,7 +151,7 @@ describe("ClubStatusAdminPage", () => {
       return { ok: true, json: async () => ({ club: CLUB }) };
     });
 
-    render(<ClubStatusAdminPage />);
+    renderPage();
     fillLookupInputs();
     fireEvent.click(screen.getByRole("button", { name: /look up/i }));
     await waitFor(() => {
@@ -189,7 +199,7 @@ describe("ClubStatusAdminPage", () => {
       return { ok: true, json: async () => ({ club: CLUB }) };
     });
 
-    render(<ClubStatusAdminPage />);
+    renderPage();
     fillLookupInputs();
     fireEvent.click(screen.getByRole("button", { name: /look up/i }));
     await waitFor(() => {
@@ -218,7 +228,7 @@ describe("ClubStatusAdminPage", () => {
       json: async () => ({ club: CLUB }),
     }));
 
-    render(<ClubStatusAdminPage />);
+    renderPage();
     fillLookupInputs();
     fireEvent.click(screen.getByRole("button", { name: /look up/i }));
     await waitFor(() => {
@@ -251,7 +261,7 @@ describe("ClubStatusAdminPage", () => {
       return { ok: true, json: async () => ({ club: CLUB }) };
     });
 
-    render(<ClubStatusAdminPage />);
+    renderPage();
     fillLookupInputs();
     fireEvent.click(screen.getByRole("button", { name: /look up/i }));
     await waitFor(() => {
@@ -272,7 +282,7 @@ describe("ClubStatusAdminPage", () => {
   it("disables Save while the updated-by field is empty", async () => {
     stubFetch(async () => ({ ok: true, json: async () => ({ club: CLUB }) }));
 
-    render(<ClubStatusAdminPage />);
+    renderPage();
     fillLookupInputs();
     fireEvent.click(screen.getByRole("button", { name: /look up/i }));
     await waitFor(() => {

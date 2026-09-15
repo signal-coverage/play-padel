@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import {
   Dialog,
   DialogContent,
@@ -30,14 +31,14 @@ export function CourtLimitReachedDialog({
   plan,
   limit,
 }: CourtLimitReachedDialogProps) {
+  const t = useTranslations("CourtLimitReachedDialog");
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent showCloseButton={false}>
         <DialogHeader>
-          <DialogTitle>Court limit reached</DialogTitle>
+          <DialogTitle>{t("title")}</DialogTitle>
           <DialogDescription>
-            Your {plan} plan allows up to {limit} court{limit === 1 ? "" : "s"}.
-            Upgrade your plan from the dashboard to add more courts.
+            {t("description", { plan, limit })}
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
@@ -46,10 +47,10 @@ export function CourtLimitReachedDialog({
             variant="outline"
             onClick={() => onOpenChange(false)}
           >
-            Close
+            {t("close")}
           </Button>
           <Button type="button" asChild>
-            <Link href="/dashboard">Go to dashboard</Link>
+            <Link href="/dashboard">{t("goToDashboard")}</Link>
           </Button>
         </DialogFooter>
       </DialogContent>

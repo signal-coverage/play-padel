@@ -5,6 +5,9 @@ export type ClubSettingsTabValue =
 
 export type ClubSettingsTab = {
   value: ClubSettingsTabValue;
-  label: string;
+  // Key into the "ClubSettingsTabs" messages namespace — consts.ts is a
+  // plain data file and can't call useTranslations() itself, so the label
+  // text is resolved in the component via t(tab.labelKey).
+  labelKey: string;
   icon: LucideIcon;
 };

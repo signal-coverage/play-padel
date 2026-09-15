@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import type { TournamentsListProps } from "./types";
@@ -14,14 +15,10 @@ export function TournamentsList({
   selectedTournamentId,
   onSelect,
 }: TournamentsListProps) {
+  const t = useTranslations("TournamentsList");
+
   if (tournaments.length === 0) {
-    return (
-      <p className="text-sm text-muted-foreground">
-        No tournaments yet. Creating a tournament isn&apos;t built in this view
-        yet — use the API directly, or wait for the create-tournament UI
-        fast-follow.
-      </p>
-    );
+    return <p className="text-sm text-muted-foreground">{t("emptyState")}</p>;
   }
 
   return (

@@ -1,5 +1,3 @@
-export const SHARE_DATA = {
-  title: "Play Padel",
-  text: "Book padel courts and manage your club — all in one platform.",
-  url: "/",
-};
+// title is the brand name (never translated); text/url pair with it via
+// messages/*.json's ShareButton.shareText and this literal "/" respectively.
+export const SHARE_URL = "/";

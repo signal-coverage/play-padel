@@ -2,13 +2,17 @@
 
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import type { PaymentReturnState, ReturnReservation } from "./types";
 
-async function fetchJson<T>(url: string): Promise<T> {
+async function fetchJson<T>(
+  url: string,
+  fallbackErrorMessage: string,
+): Promise<T> {
   const res = await fetch(url);
   const body = await res.json().catch(() => null);
   if (!res.ok) {
-    throw new Error(body?.error ?? "Something went wrong. Please try again.");
+    throw new Error(body?.error ?? fallbackErrorMessage);
   }
   return body as T;
 }
@@ -62,12 +66,14 @@ function usePaymentReturnStream(reservationId: string | null) {
 // webhook (the actual source of truth) has settled this reservation one way
 // or the other, or its 15-minute hold has visibly lapsed.
 export function usePaymentReturnStatus(reservationId: string | null) {
+  const t = useTranslations("PaymentReturnData");
   const now = useNow(POLL_INTERVAL_MS);
   const query = useQuery({
     queryKey: ["payment-return", reservationId],
     queryFn: () =>
       fetchJson<{ reservations: ReturnReservation[] }>(
         "/api/player/reservations?includePast=true",
+        t("genericError"),
       ).then((d) => d.reservations.find((r) => r.id === reservationId) ?? null),
     enabled: !!reservationId,
     refetchInterval: (query) => {

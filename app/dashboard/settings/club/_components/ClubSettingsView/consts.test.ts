@@ -1,5 +1,8 @@
 import { describe, it, expect } from "vitest";
-import { clubSettingsFormSchema } from "./consts";
+import { buildClubSettingsFormSchema } from "./consts";
+
+const t = (key: string) => key;
+const clubSettingsFormSchema = buildClubSettingsFormSchema(t);
 
 function basePayload(whatsappNumber: string) {
   return {

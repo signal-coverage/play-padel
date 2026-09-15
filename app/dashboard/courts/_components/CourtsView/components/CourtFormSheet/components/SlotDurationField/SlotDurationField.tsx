@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import {
   Select,
   SelectContent,
@@ -14,18 +15,19 @@ export function SlotDurationField({
   onChange,
   ariaInvalid,
 }: SlotDurationFieldProps) {
+  const t = useTranslations("SlotDurationField");
   return (
     <Select
       value={String(value)}
       onValueChange={(next) => onChange(Number(next))}
     >
       <SelectTrigger id={id} className="w-full" aria-invalid={ariaInvalid}>
-        <SelectValue placeholder="Select a duration" />
+        <SelectValue placeholder={t("selectDuration")} />
       </SelectTrigger>
       <SelectContent>
         {slotDurationOptionsWith(value).map((minutes) => (
           <SelectItem key={minutes} value={String(minutes)}>
-            {minutes} min
+            {t("minutes", { minutes })}
           </SelectItem>
         ))}
       </SelectContent>

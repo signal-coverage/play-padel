@@ -1,6 +1,7 @@
 "use client";
 
 import { subDays } from "date-fns";
+import { useTranslations } from "next-intl";
 import { useOwnerReservationSummary } from "../../../../hooks";
 import { OWNER_SESSION_RANGE_DAYS } from "../../consts";
 import { buildTrend, getGaugeTone } from "../../utils";
@@ -11,6 +12,7 @@ import { SessionLoadGauge } from "../SessionLoadGauge";
 const CANCELLATION_TONE_THRESHOLDS = { good: 5, watch: 15 };
 
 export function OwnerSessionLoad() {
+  const t = useTranslations("OwnerSessionLoad");
   const today = new Date();
   const currentFrom = subDays(today, OWNER_SESSION_RANGE_DAYS - 1);
   const previousTo = subDays(currentFrom, 1);
@@ -48,10 +50,10 @@ export function OwnerSessionLoad() {
     <SessionLoadGauge
       percent={percent}
       tone={tone}
-      caption={`${percent}% of bookings cancelled`}
+      caption={t("caption", { percent })}
       trend={trend}
       hasData={currentTotal > 0}
-      emptyMessage="Once bookings come in, we'll show your cancellation rate here."
+      emptyMessage={t("emptyMessage")}
     />
   );
 }

@@ -15,6 +15,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, waitFor, cleanup } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
+import { NextIntlClientProvider } from "next-intl";
+import messages from "@/messages/en.json";
 import { DashboardShell } from "./DashboardShell";
 import { useAuth } from "@/hooks/use-auth";
 import type { AppUser } from "@/providers/auth-provider";
@@ -100,9 +102,11 @@ describe("DashboardShell — ClubOperationalGate regression vs. DashboardGuard",
     vi.stubGlobal("fetch", fetchMock);
 
     render(
-      <DashboardShell>
-        <div>Dashboard page content</div>
-      </DashboardShell>,
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <DashboardShell>
+          <div>Dashboard page content</div>
+        </DashboardShell>
+      </NextIntlClientProvider>,
     );
 
     await waitFor(() =>
@@ -123,9 +127,11 @@ describe("DashboardShell — ClubOperationalGate regression vs. DashboardGuard",
     vi.stubGlobal("fetch", fetchMock);
 
     render(
-      <DashboardShell>
-        <div>Dashboard page content</div>
-      </DashboardShell>,
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <DashboardShell>
+          <div>Dashboard page content</div>
+        </DashboardShell>
+      </NextIntlClientProvider>,
     );
 
     await waitFor(() =>
@@ -187,9 +193,11 @@ describe("DashboardShell — ClubOperationalGate regression vs. DashboardGuard",
     vi.stubGlobal("fetch", fetchMock);
 
     render(
-      <DashboardShell>
-        <div>Dashboard page content</div>
-      </DashboardShell>,
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <DashboardShell>
+          <div>Dashboard page content</div>
+        </DashboardShell>
+      </NextIntlClientProvider>,
     );
 
     await screen.findByRole("heading", { name: "Payment activation" });
@@ -212,9 +220,11 @@ describe("DashboardShell — ClubOperationalGate regression vs. DashboardGuard",
     vi.stubGlobal("fetch", fetchMock);
 
     render(
-      <DashboardShell>
-        <div>Dashboard page content</div>
-      </DashboardShell>,
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <DashboardShell>
+          <div>Dashboard page content</div>
+        </DashboardShell>
+      </NextIntlClientProvider>,
     );
 
     await waitFor(() =>
@@ -232,9 +242,11 @@ describe("DashboardShell — ClubOperationalGate regression vs. DashboardGuard",
     vi.stubGlobal("fetch", fetchMock);
 
     render(
-      <DashboardShell>
-        <div>Dashboard page content</div>
-      </DashboardShell>,
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <DashboardShell>
+          <div>Dashboard page content</div>
+        </DashboardShell>
+      </NextIntlClientProvider>,
     );
 
     await waitFor(() =>
@@ -276,9 +288,11 @@ describe("DashboardShell — ClubOperationalGate regression vs. DashboardGuard",
     vi.stubGlobal("fetch", fetchMock);
 
     render(
-      <DashboardShell>
-        <div>Dashboard page content</div>
-      </DashboardShell>,
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <DashboardShell>
+          <div>Dashboard page content</div>
+        </DashboardShell>
+      </NextIntlClientProvider>,
     );
 
     await waitFor(() =>
@@ -299,9 +313,11 @@ describe("DashboardShell — ClubOperationalGate regression vs. DashboardGuard",
     vi.stubGlobal("fetch", fetchMock);
 
     render(
-      <DashboardShell>
-        <div>Dashboard page content</div>
-      </DashboardShell>,
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <DashboardShell>
+          <div>Dashboard page content</div>
+        </DashboardShell>
+      </NextIntlClientProvider>,
     );
 
     await waitFor(() =>

@@ -1,13 +1,7 @@
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import type { GroupMatchesListProps } from "./types";
-
-const STATUS_LABELS: Record<string, string> = {
-  SCHEDULED: "Scheduled",
-  COMPLETED: "Completed",
-  WALKOVER: "Walkover",
-  CANCELLED: "Cancelled",
-};
 
 /**
  * Plain list of a group's matches — teams, status, and (once decided) the
@@ -23,12 +17,16 @@ export function GroupMatchesList({
   onRecordWalkover,
   readOnly,
 }: GroupMatchesListProps) {
+  const t = useTranslations("GroupMatchesList");
+  const statusLabels: Record<string, string> = {
+    SCHEDULED: t("statusLabels.SCHEDULED"),
+    COMPLETED: t("statusLabels.COMPLETED"),
+    WALKOVER: t("statusLabels.WALKOVER"),
+    CANCELLED: t("statusLabels.CANCELLED"),
+  };
+
   if (matches.length === 0) {
-    return (
-      <p className="text-sm text-muted-foreground">
-        No matches yet — build groups to generate the schedule.
-      </p>
-    );
+    return <p className="text-sm text-muted-foreground">{t("emptyState")}</p>;
   }
 
   return (
@@ -36,10 +34,10 @@ export function GroupMatchesList({
       {matches.map((match) => {
         const teamALabel = match.teamAId
           ? (teamLabels[match.teamAId] ?? match.teamAId)
-          : "TBD";
+          : t("tbd");
         const teamBLabel = match.teamBId
           ? (teamLabels[match.teamBId] ?? match.teamBId)
-          : "TBD";
+          : t("tbd");
         const isDecided =
           match.status === "COMPLETED" || match.status === "WALKOVER";
 
@@ -50,17 +48,19 @@ export function GroupMatchesList({
           >
             <div className="flex flex-col">
               <span className="text-sm">
-                {teamALabel} vs {teamBLabel}
+                {t("matchup", { teamA: teamALabel, teamB: teamBLabel })}
               </span>
               <span className="text-xs text-muted-foreground">
                 <Badge variant="outline">
-                  {STATUS_LABELS[match.status] ?? match.status}
+                  {statusLabels[match.status] ?? match.status}
                 </Badge>
                 {isDecided && match.winnerTeamId && (
                   <>
                     {" "}
-                    — Winner:{" "}
-                    {teamLabels[match.winnerTeamId] ?? match.winnerTeamId}
+                    {t("winner", {
+                      name:
+                        teamLabels[match.winnerTeamId] ?? match.winnerTeamId,
+                    })}
                   </>
                 )}
               </span>
@@ -73,7 +73,7 @@ export function GroupMatchesList({
                   variant="outline"
                   onClick={() => onEnterScore?.(match)}
                 >
-                  Enter score
+                  {t("enterScore")}
                 </Button>
                 <Button
                   type="button"
@@ -81,7 +81,7 @@ export function GroupMatchesList({
                   variant="ghost"
                   onClick={() => onRecordWalkover?.(match)}
                 >
-                  Walkover
+                  {t("walkover")}
                 </Button>
               </div>
             )}

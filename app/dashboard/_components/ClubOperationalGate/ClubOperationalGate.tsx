@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { BouncingBall } from "@/components/BouncingBall";
 import type { ClubOperationalGateProps } from "./types";
 import { useClubOperationalStatus } from "./hooks";
@@ -35,6 +36,7 @@ import { PendingApprovalCard } from "./components/PendingApprovalCard";
  * does not re-derive precedence itself.
  */
 export function ClubOperationalGate({ children }: ClubOperationalGateProps) {
+  const t = useTranslations("ClubOperationalGate");
   const { data: status, isLoading } = useClubOperationalStatus();
 
   if (isLoading) {
@@ -45,7 +47,7 @@ export function ClubOperationalGate({ children }: ClubOperationalGateProps) {
     return (
       <div className="flex h-full w-full flex-col items-center justify-center gap-3">
         <BouncingBall size={32} amplitude={16} />
-        <span className="sr-only">Loading dashboard…</span>
+        <span className="sr-only">{t("loadingDashboard")}</span>
       </div>
     );
   }

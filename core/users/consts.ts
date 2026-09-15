@@ -2,43 +2,83 @@ import type { DominantHand, PreferredSide } from "@/core/users/types";
 
 // Argentine padel skill-level convention: Category 1 is the highest level,
 // Category 8 is a beginner. "unknown" submits as a null padelCategory.
-export const PADEL_CATEGORY_OPTIONS: { value: string; label: string }[] = [
-  { value: "1", label: "Category 1 — highest level" },
-  { value: "2", label: "Category 2" },
-  { value: "3", label: "Category 3" },
-  { value: "4", label: "Category 4" },
-  { value: "5", label: "Category 5" },
-  { value: "6", label: "Category 6" },
-  { value: "7", label: "Category 7" },
-  { value: "8", label: "Category 8 — beginner" },
-  { value: "unknown", label: "Not sure yet" },
-];
+const PADEL_CATEGORY_VALUES = [
+  "1",
+  "2",
+  "3",
+  "4",
+  "5",
+  "6",
+  "7",
+  "8",
+  "unknown",
+] as const;
 
-export const PREFERRED_SIDE_OPTIONS: { value: PreferredSide; label: string }[] =
-  [
-    { value: "forehand", label: "Forehand" },
-    { value: "backhand", label: "Backhand" },
+// Every label below lives in the messages/*.json "UserOptionLabels"
+// namespace (not as a literal here) — these are plain data/util exports, not
+// components, so they can't call useTranslations() themselves. Callers pass
+// their own next-intl `t`: either their own useTranslations("UserOptionLabels")
+// result, or (server-side) getTranslations("UserOptionLabels") — same factory
+// pattern as getActionLabel(name, t) in
+// app/dashboard/audit-logs/_components/AuditLogsView/utils.ts.
+export type UserOptionLabelsT = (
+  key: string,
+  values?: Record<string, string | number | Date>,
+) => string;
+
+export function buildPadelCategoryOptions(
+  t: UserOptionLabelsT,
+): { value: string; label: string }[] {
+  return PADEL_CATEGORY_VALUES.map((value) => ({
+    value,
+    label: t(`padelCategory.${value}`),
+  }));
+}
+
+export function buildPreferredSideOptions(
+  t: UserOptionLabelsT,
+): { value: PreferredSide; label: string }[] {
+  return [
+    { value: "forehand", label: t("preferredSide.forehand") },
+    { value: "backhand", label: t("preferredSide.backhand") },
   ];
-
-export const DOMINANT_HAND_OPTIONS: { value: DominantHand; label: string }[] = [
-  { value: "right", label: "Right-handed" },
-  { value: "left", label: "Left-handed" },
-];
-
-export function getPreferredSideLabel(value: PreferredSide | null): string {
-  if (value === null) return "Not set yet";
-  return PREFERRED_SIDE_OPTIONS.find((o) => o.value === value)?.label ?? value;
 }
 
-export function getDominantHandLabel(value: DominantHand | null): string {
-  if (value === null) return "Not set yet";
-  return DOMINANT_HAND_OPTIONS.find((o) => o.value === value)?.label ?? value;
+export function buildDominantHandOptions(
+  t: UserOptionLabelsT,
+): { value: DominantHand; label: string }[] {
+  return [
+    { value: "right", label: t("dominantHand.right") },
+    { value: "left", label: t("dominantHand.left") },
+  ];
 }
 
-export function getPadelCategoryLabel(category: number | null): string {
-  if (category === null) return "Not set yet";
-  const option = PADEL_CATEGORY_OPTIONS.find(
-    (o) => o.value === String(category),
+export function getPreferredSideLabel(
+  value: PreferredSide | null,
+  t: UserOptionLabelsT,
+): string {
+  if (value === null) return t("notSet");
+  return t(`preferredSide.${value}`);
+}
+
+export function getDominantHandLabel(
+  value: DominantHand | null,
+  t: UserOptionLabelsT,
+): string {
+  if (value === null) return t("notSet");
+  return t(`dominantHand.${value}`);
+}
+
+export function getPadelCategoryLabel(
+  category: number | null,
+  t: UserOptionLabelsT,
+): string {
+  if (category === null) return t("notSet");
+  const value = String(category);
+  const isKnownCategory = (PADEL_CATEGORY_VALUES as readonly string[]).includes(
+    value,
   );
-  return option?.label ?? `Category ${category}`;
+  return isKnownCategory
+    ? t(`padelCategory.${value}`)
+    : t("padelCategory.other", { category });
 }

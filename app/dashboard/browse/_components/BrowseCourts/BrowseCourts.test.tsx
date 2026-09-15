@@ -10,6 +10,8 @@ import {
 import "@testing-library/jest-dom/vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
+import { NextIntlClientProvider } from "next-intl";
+import messages from "@/messages/en.json";
 import type { ClubBrowseSummary, RawCourt } from "./types";
 
 const { toastMock } = vi.hoisted(() => ({
@@ -157,14 +159,16 @@ function renderBrowseCourts() {
   });
   return render(
     <QueryClientProvider client={queryClient}>
-      {/* club/court are preselected via the URL (like a real shared
+      <NextIntlClientProvider locale="en" messages={messages}>
+        {/* club/court are preselected via the URL (like a real shared
           `?club=X&court=Y` link) rather than driven through the stubbed
           ClubListPanel/ClubCourtsPanel — this keeps the test focused on the
           BookingConfirmDialog payment-method wiring rather than nuqs's own
           multi-key update batching. */}
-      <NuqsTestingAdapter searchParams="?club=club-padel-norte&court=court_1">
-        <BrowseCourts />
-      </NuqsTestingAdapter>
+        <NuqsTestingAdapter searchParams="?club=club-padel-norte&court=court_1">
+          <BrowseCourts />
+        </NuqsTestingAdapter>
+      </NextIntlClientProvider>
     </QueryClientProvider>,
   );
 }

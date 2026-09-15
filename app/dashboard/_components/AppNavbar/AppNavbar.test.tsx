@@ -3,14 +3,18 @@
 // Regression coverage for the "More collapses on desktop and never expands
 // back, even on a huge resize back up" bug: nav-overflow-container's own
 // flex-1 (inside NavLinks) only has real, viewport-stable space to claim if
-// EVERYTHING between it and <header> is also properly stretched — otherwise,
-// once any item collapses into "More", the row's rendered width just
-// shrinks to match its own (now smaller) content, and never grows back
-// regardless of how wide the actual viewport gets (jsdom can't compute real
-// flex layout to catch this directly, so this asserts the load-bearing
-// classNames instead — see NavLinks.test.tsx / MobileBottomNav.test.tsx for
-// the same real-measured-width integration tests this bug's arithmetic
-// itself already has correct coverage for).
+// EVERYTHING between it and <header>'s justify-between row is also properly
+// stretched — otherwise, once any item collapses into "More", the row's
+// rendered width just shrinks to match its own (now smaller) content, and
+// never grows back regardless of how wide the actual viewport gets (jsdom
+// can't compute real flex layout to catch this directly, so this asserts
+// the load-bearing classNames instead — see NavLinks.test.tsx /
+// MobileBottomNav.test.tsx for the same real-measured-width integration
+// tests this bug's arithmetic itself already has correct coverage for).
+//
+// Deliberately left-aligned (logo, then nav immediately after it), not
+// centered — that treatment belongs to the marketing LandingHeader, not
+// this app-shell navbar.
 import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
@@ -54,6 +58,10 @@ vi.mock("../CommandPalette", () => ({
 
 vi.mock("@/components/theme-toggle", () => ({
   ThemeToggle: () => <button type="button">Toggle theme</button>,
+}));
+
+vi.mock("@/components/LocaleSwitcher", () => ({
+  LocaleSwitcher: () => <button type="button">Language</button>,
 }));
 
 describe("AppNavbar layout", () => {

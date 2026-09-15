@@ -1,12 +1,25 @@
 import { useEffect, useRef } from "react";
 import { Mail } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { SelectField } from "@/components/SelectField";
-import { GENDER_OPTIONS } from "@/app/onboarding/types";
+import { GENDER_VALUES, type Gender } from "@/app/onboarding/types";
 import { useCountryProvinceCityFields } from "@/components/CountryProvinceCityFields";
 import { PhoneField } from "@/components/PhoneField";
 import type { PlayerProfileStepProps } from "./types";
+
+// Maps each Gender value to its translation key under
+// "OnboardingWizard.steps.playerProfile.genderOptions" — built locally
+// (rather than translating the exported GENDER_OPTIONS constant in
+// app/onboarding/types.ts) since that file defines a plain module-level
+// array and can't call useTranslations.
+const GENDER_LABEL_KEYS: Record<Gender, string> = {
+  MALE: "male",
+  FEMALE: "female",
+  OTHER: "other",
+  PREFER_NOT_TO_SAY: "preferNotToSay",
+};
 
 export function PlayerProfileStep({
   register,
@@ -14,7 +27,14 @@ export function PlayerProfileStep({
   errors,
   shouldFocusHeading,
 }: PlayerProfileStepProps) {
+  const t = useTranslations("OnboardingWizard.steps.playerProfile");
   const headingRef = useRef<HTMLHeadingElement>(null);
+  const genderOptions: { value: Gender; label: string }[] = GENDER_VALUES.map(
+    (value) => ({
+      value,
+      label: t(`genderOptions.${GENDER_LABEL_KEYS[value]}`),
+    }),
+  );
 
   useEffect(() => {
     if (shouldFocusHeading) {
@@ -33,15 +53,13 @@ export function PlayerProfileStep({
           className="text-base font-semibold mb-0.5"
           tabIndex={-1}
         >
-          Your profile
+          {t("heading")}
         </h2>
-        <p className="text-sm text-muted-foreground">
-          Tell us a bit about yourself and where you play.
-        </p>
+        <p className="text-sm text-muted-foreground">{t("subheading")}</p>
       </div>
 
       <Field>
-        <FieldLabel htmlFor="firstName">First name *</FieldLabel>
+        <FieldLabel htmlFor="firstName">{t("firstName")}</FieldLabel>
         <Input
           id="firstName"
           {...register("firstName")}
@@ -51,7 +69,7 @@ export function PlayerProfileStep({
       </Field>
 
       <Field>
-        <FieldLabel htmlFor="lastName">Last name *</FieldLabel>
+        <FieldLabel htmlFor="lastName">{t("lastName")}</FieldLabel>
         <Input
           id="lastName"
           {...register("lastName")}
@@ -61,14 +79,14 @@ export function PlayerProfileStep({
       </Field>
 
       <Field>
-        <FieldLabel htmlFor="email">Email *</FieldLabel>
+        <FieldLabel htmlFor="email">{t("email")}</FieldLabel>
         <div className="relative">
           <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
             id="email"
             type="email"
             className="pl-9"
-            placeholder="you@example.com"
+            placeholder={t("emailPlaceholder")}
             {...register("email")}
             aria-invalid={!!errors.email}
           />
@@ -79,9 +97,9 @@ export function PlayerProfileStep({
       <SelectField
         control={control}
         name="gender"
-        label="Gender *"
-        placeholder="Select an option"
-        options={GENDER_OPTIONS}
+        label={t("gender")}
+        placeholder={t("genderPlaceholder")}
+        options={genderOptions}
         error={errors.gender}
       />
 
@@ -100,10 +118,10 @@ export function PlayerProfileStep({
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="flex-1">
           <Field>
-            <FieldLabel htmlFor="zipCode">Zip code</FieldLabel>
+            <FieldLabel htmlFor="zipCode">{t("zipCode")}</FieldLabel>
             <Input
               id="zipCode"
-              placeholder="1642"
+              placeholder={t("zipCodePlaceholder")}
               {...register("zipCode")}
               aria-invalid={!!errors.zipCode}
             />
@@ -112,10 +130,10 @@ export function PlayerProfileStep({
         </div>
         <div className="flex-1">
           <Field>
-            <FieldLabel htmlFor="address">Address</FieldLabel>
+            <FieldLabel htmlFor="address">{t("address")}</FieldLabel>
             <Input
               id="address"
-              placeholder="Optional"
+              placeholder={t("addressPlaceholder")}
               {...register("address")}
               aria-invalid={!!errors.address}
             />

@@ -1,0 +1,1829 @@
+{
+  "NotificationContent": {
+    "CLUB_UPDATED_BY_ADMIN": {
+      "subject": "Your club settings were updated",
+      "body": "An administrator updated your club's settings."
+    },
+    "PROFILE_UPDATED_BY_ADMIN": {
+      "updated": {
+        "subject": "Your profile was updated",
+        "body": "An administrator updated your profile."
+      },
+      "deleted": {
+        "subject": "Your account was deleted",
+        "body": "An administrator deleted your account. If you believe this is a mistake, contact support."
+      }
+    },
+    "RESERVATION_PAYMENT_CONFLICT": {
+      "notConfirmed": {
+        "subject": "A paid reservation could not be confirmed",
+        "body": "A player's payment was received, but their slot could not be confirmed automatically. Please resolve this manually."
+      },
+      "overlap": {
+        "subject": "A paid reservation could not be confirmed",
+        "body": "A player's payment was received, but their slot now overlaps another reservation. Please resolve this manually."
+      }
+    },
+    "RESERVATION_PAYMENT_HOLD_EXPIRED": {
+      "bankTransfer": {
+        "subject": "Your reservation hold expired",
+        "body": "Hello {userName}, your bank-transfer payment for {courtName} on {date} was not confirmed in time, so your slot was released. Please book again if you'd still like this slot — it may have been taken by another player in the meantime. If you already sent your transfer, contact the club directly to confirm before booking again."
+      },
+      "mercadoPago": {
+        "subject": "Your reservation hold expired",
+        "body": "Hello {userName}, your Mercado Pago payment for {courtName} on {date} was not completed in time, so your slot was released. Please book again if you'd still like this slot — it may have been taken by another player in the meantime. If you completed the payment and still see this message, contact the club directly before booking again."
+      }
+    },
+    "RESERVATION_REMINDER": {
+      "subject": "Upcoming Reservation Reminder",
+      "body": "Hello {userName}, this is a reminder about your upcoming court reservation on {date} at {time} at {courtName}. You can cancel this reservation yourself up to 2 hours before its start time. After that, please contact the club directly."
+    },
+    "PAYMENT_CONFIRMED": {
+      "subject": "Payment received for invoice #{invoiceNumber}",
+      "body": "Hello {userName}, we have received your payment for your court reservation. Thank you! Invoice #: {invoiceNumber}. Amount paid: {formattedTotal}. Status: Paid. Please keep this email as your payment confirmation."
+    },
+    "RESERVATION_CANCELLED": {
+      "subject": "Your reservation has been cancelled",
+      "body": "Hello {userName}, we want to let you know that the following court reservation has been cancelled: Date: {date}, Time: {time}, Court: {courtName}. Feel free to book a new reservation whenever you'd like to play."
+    },
+    "WAITLIST_SLOT_AVAILABLE": {
+      "subject": "A slot you were waiting for just opened up",
+      "body": "Hello {userName}, good news — a slot you asked to be notified about is now free: Date: {date}, Time: {time}, Court: {courtName}. Book it now: {bookingUrl}. This slot is available on a first-come, first-served basis — other players may have also asked to be notified."
+    },
+    "CLUB_APPROVED": {
+      "subject": "Your club has been approved",
+      "body": "Your club is now approved and can accept reservations."
+    },
+    "CLUB_REJECTED": {
+      "subject": "Your club application was not approved",
+      "body": "Your club application was not approved. Contact support for details."
+    },
+    "CLUB_SUSPENDED": {
+      "subject": "Your club has been suspended",
+      "body": "Your club has been suspended. Contact support for details."
+    },
+    "PAYMENT_RECEIVED": {
+      "subject": "Payment received",
+      "body": "A payment of {currency} {amount} was received."
+    },
+    "MEMBERSHIP_PAST_DUE": {
+      "subject": "Your membership payment is past due",
+      "body": "Your club's membership payment failed and is now past due. Please update your payment method."
+    },
+    "CLUB_PENDING_APPROVAL": {
+      "subject": "A new club is pending approval",
+      "body": "A new club, {clubName}, is pending approval."
+    },
+    "SYSTEM_JOB_FAILED": {
+      "subject": "A background job failed",
+      "body": "Job {kind}/{name} failed: {errorMessage}."
+    },
+    "CLUB_OPERATIONAL_READY": {
+      "trialStarted": {
+        "subject": "Your dashboard is unlocked",
+        "body": "Your club's trial has started — your dashboard is now unlocked."
+      },
+      "recovered": {
+        "subject": "Your dashboard is unlocked",
+        "body": "Your club's membership payment was successful — your dashboard is unlocked again."
+      },
+      "freePlanActivated": {
+        "subject": "Your dashboard is unlocked",
+        "body": "An admin activated the FREE testing plan for your club — your dashboard is now unlocked. Real player reservations still need a connected payment method (Mercado Pago or bank transfer) in Settings."
+      },
+      "welcomePeriodGranted": {
+        "subject": "Your dashboard is unlocked",
+        "body": "An admin granted your club {months} free month(s) — your dashboard is now unlocked. Real player reservations still need a connected payment method (Mercado Pago or bank transfer) in Settings."
+      },
+      "unsuspended": {
+        "subject": "Your dashboard is unlocked",
+        "body": "Your club is no longer suspended — your dashboard is unlocked again."
+      },
+      "readyToAcceptReservations": {
+        "subject": "Your club is ready to accept reservations",
+        "body": "Your club can now accept real reservations. Don't forget to set your operating hours in Settings so players know when they can book."
+      }
+    },
+    "ADMIN_ACCESS_GRANTED": {
+      "subject": "You now have admin access on Play Padel",
+      "body": "Your account now has admin access — you can view platform-wide metrics, approve clubs, and more from the Admin menu."
+    },
+    "ADMIN_ACCESS_REVOKED": {
+      "subject": "Your admin access on Play Padel was revoked",
+      "body": "Your account no longer has admin access — you've lost access to platform-wide metrics, club approvals, and the rest of the Admin menu."
+    },
+    "MEMBERSHIP_CANCELLED": {
+      "subject": "Your club's membership was cancelled",
+      "body": "Your club's membership subscription has been cancelled and your dashboard is now locked. Reactivate your membership to restore access."
+    },
+    "RESERVATION_UPDATED": {
+      "updated": {
+        "subject": "Your reservation has been updated",
+        "body": "One of your reservations was updated by the club. Check My Reservations for the latest details."
+      },
+      "completed": {
+        "subject": "Your reservation is complete",
+        "body": "Your reservation has been marked as completed."
+      },
+      "noShow": {
+        "subject": "You were marked as a no-show",
+        "body": "You were marked as a no-show for a reservation. If you believe this is a mistake, contact the club."
+      }
+    }
+  },
+  "LocaleSwitcher": {
+    "label": "Language",
+    "en": "English",
+    "es": "Español"
+  },
+  "LandingHeader": {
+    "nav": {
+      "about": "About",
+      "features": "Features",
+      "pricing": "Pricing",
+      "getStarted": "Get Started"
+    },
+    "signUp": "Sign Up",
+    "logIn": "Log in",
+    "goToApp": "Go to app",
+    "tryForFree": "Try for free",
+    "openMenu": "Open menu"
+  },
+  "LandingHero": {
+    "heading": {
+      "start": "Book Courts.",
+      "connect": "Connect.",
+      "run": "Run",
+      "clubLine": "Your Club with Our",
+      "platform": "Padel Platform."
+    },
+    "ctaPrimary": "Explore Clubs",
+    "ctaSecondary": "For Club Owners",
+    "description": "Real-time court booking for players, and complete club management tools for owners — all in one platform built for padel.",
+    "imageAlt": "Arrangement of padel paddles and balls"
+  },
+  "LandingTrusted": {
+    "badge": "By The Numbers",
+    "heading": {
+      "bold": "Whether you're booking a court or running a club",
+      "rest": "— {brand} connects players and clubs in one place, in real time."
+    },
+    "items": [
+      {
+        "value": "4",
+        "label": "Flexible Plans",
+        "description": "From a single-court club to a multi-court operation — pick the plan that fits, upgrade anytime."
+      },
+      {
+        "value": "Real-Time",
+        "label": "Court Availability",
+        "description": "See exactly which slots are open right now — no calls, no waiting on a reply."
+      },
+      {
+        "value": "Secure",
+        "label": "Mercado Pago Payments",
+        "description": "Pay online when you book, with automatic refunds if a reservation is cancelled."
+      }
+    ]
+  },
+  "LandingAbout": {
+    "heading": {
+      "bold": "Built for Players and",
+      "muted": "Clubs Who Want More"
+    },
+    "badge": "Booking, Simplified",
+    "items": [
+      {
+        "title": "Real-Time Booking",
+        "description": "Browse clubs, see live court availability, and reserve your slot in seconds — no back-and-forth needed."
+      },
+      {
+        "title": "Secure Payments, Built In",
+        "description": "When a club requires prepayment, checkout happens right in the app via Mercado Pago — cancel and you're refunded automatically."
+      },
+      {
+        "title": "Built for Club Owners Too",
+        "description": "Manage courts, availability, and reservations from one dashboard, with a full audit trail of every change."
+      },
+      {
+        "title": "Your Player Profile, Your Way",
+        "description": "Track your preferred side, dominant hand, and skill category so partners and clubs know your style."
+      }
+    ],
+    "imageAlt": "Players sharing a moment at the net after a match",
+    "learnMore": "Learn More"
+  },
+  "LandingFeatures": {
+    "badge": "One Platform. Every Court.",
+    "heading": {
+      "bold": "Everything You Need",
+      "muted": "to Book and Manage"
+    },
+    "previousLabel": "Previous feature",
+    "nextLabel": "Next feature",
+    "goToFeature": "Go to feature {number}: {title}",
+    "items": [
+      {
+        "title": "Real-Time Availability",
+        "description": "See exactly which courts are free at any club, updated the moment a slot is booked.",
+        "imageAlt": "Two women playing padel on an outdoor court"
+      },
+      {
+        "title": "Instant Booking",
+        "description": "Reserve your court in a few taps — no phone calls, no waiting for a confirmation.",
+        "imageAlt": "High-angle view of padel paddles and balls on the court"
+      },
+      {
+        "title": "Secure Online Payments",
+        "description": "Mercado Pago checkout built right into the booking flow, with automatic refunds on cancellation.",
+        "imageAlt": "People playing padel together on an indoor court"
+      },
+      {
+        "title": "Court & Closure Management",
+        "description": "Owners can block a court for maintenance or an event, with a reason players see before they try to book it.",
+        "imageAlt": "Player getting ready to play padel on an indoor court"
+      },
+      {
+        "title": "Player Profiles",
+        "description": "Track your preferred side, dominant hand, and skill category — visible to partners and clubs.",
+        "imageAlt": "Players sharing a moment on an indoor padel court"
+      },
+      {
+        "title": "Plans for Every Club",
+        "description": "From a single court to a multi-court operation, pick the plan that fits and upgrade as you grow.",
+        "imageAlt": "Side view of a woman playing padel"
+      },
+      {
+        "title": "Full Audit Trail",
+        "description": "Every booking, cancellation, and change is logged, so owners always know what happened and when.",
+        "imageAlt": "Full shot of a woman playing padel"
+      },
+      {
+        "title": "Built for Argentina",
+        "description": "CUIT-formatted tax IDs, ARS pricing, and Mercado Pago — built around how clubs actually operate here.",
+        "imageAlt": "Player getting ready to play padel on an indoor court"
+      }
+    ]
+  },
+  "LandingPricing": {
+    "heading": "Simple, Transparent Pricing",
+    "subheading": "Pick the plan that fits your club today, and upgrade any time as you grow.",
+    "perMonth": "/ month"
+  },
+  "LandingCtaBanner": {
+    "heading": {
+      "line1": "Ready to Book",
+      "line2": "Your Next Match?"
+    },
+    "description": "Find a club, check real-time availability, and reserve your court in minutes — or bring your own club onto {brand} and manage it all from one dashboard.",
+    "ctaPrimary": "Get Started",
+    "ctaSecondary": "Own a club? List it here"
+  },
+  "LandingFooter": {
+    "tagline": "The platform padel clubs and players use to book, manage, and play — without the back-and-forth.",
+    "talkToUs": "Let's Talk",
+    "columns": [
+      {
+        "title": "Navigate",
+        "links": [
+          {
+            "label": "Homepage"
+          },
+          {
+            "label": "About"
+          },
+          {
+            "label": "Features"
+          }
+        ]
+      },
+      {
+        "title": "Support",
+        "links": [
+          {
+            "label": "Contact"
+          }
+        ]
+      }
+    ],
+    "copyright": "© {year} {brand}. All rights reserved.",
+    "privacy": "Privacy",
+    "terms": "Terms & Conditions"
+  },
+  "ShareButton": {
+    "share": "Share",
+    "shareText": "Book padel courts and manage your club — all in one platform.",
+    "shareErrorGeneric": "Couldn't share this page. Try again.",
+    "linkCopied": "Link copied to clipboard",
+    "copyError": "Couldn't copy the link. Try again."
+  },
+  "AuthLeftPanel": {
+    "quote": "“Booking a court used to mean phone tag with the front desk. Now it takes ten seconds.”",
+    "name": "Marina López",
+    "role": "Owner, Level Up Padel Club"
+  },
+  "Login": {
+    "heading": "Welcome back!",
+    "subheading": "Sign in to your account to continue."
+  },
+  "Signup": {
+    "heading": "Create your account",
+    "subheading": "Get started with {brand} today."
+  },
+  "NotFound": {
+    "heading": "Off the court",
+    "description": "The page you're looking for doesn't exist or has moved.",
+    "needHelp": "Need help?",
+    "backToDashboard": "Back to dashboard",
+    "backToHome": "Back to home"
+  },
+  "ErrorPage": {
+    "heading": "Something went wrong",
+    "description": "An unexpected error occurred. You can try again, or reach out if the problem keeps happening.",
+    "needHelp": "Need help?",
+    "tryAgain": "Try again",
+    "backToDashboard": "Back to dashboard",
+    "backToHome": "Back to home"
+  },
+  "GlobalError": {
+    "titleTemplate": "Something went wrong – {brand}",
+    "heading": "Something went wrong",
+    "description": "A critical error occurred and the app couldn't recover on its own. Try again, or reach out if the problem keeps happening.",
+    "needHelp": "Need help?",
+    "tryAgain": "Try again"
+  },
+  "InviteError": {
+    "heading": "Profile setup failed",
+    "description": "There was a problem setting up your account. Please contact your administrator to resolve this issue."
+  },
+  "OnboardingValidation": {
+    "userTypeRequired": "Please choose an option to continue",
+    "confirmedAgeRequired": "You must confirm you are 18 or older",
+    "acceptedTermsRequired": "You must agree to the Terms and Conditions",
+    "clubNameRequired": "Club name is required",
+    "phoneRequired": "Phone is required",
+    "whatsappNumberRequired": "WhatsApp number is required",
+    "addressRequired": "Address is required",
+    "legalNameRequired": "Legal name is required",
+    "taxIdRequired": "Tax ID is required",
+    "displayNameRequired": "Display name is required",
+    "invalidWhatsappNumber": "Enter a valid WhatsApp number",
+    "invalidEmail": "Invalid email address",
+    "firstNameRequired": "First name is required",
+    "lastNameRequired": "Last name is required",
+    "genderRequired": "Please select an option"
+  },
+  "OnboardingWizard": {
+    "pageHeading": "Set up your {brand} account",
+    "pageSubheading": "This takes about 2 minutes.",
+    "stepStatus": "Step {current} of {total}",
+    "buttons": {
+      "cancel": "Cancel",
+      "back": "Back",
+      "continue": "Continue",
+      "submitting": "Setting up…",
+      "launchClub": "Launch my club",
+      "startPlaying": "Start playing"
+    },
+    "toasts": {
+      "genericError": "Something went wrong. Please try again.",
+      "clubCreated": "Club created. Welcome to {brand}.",
+      "playerReady": "You're all set. Welcome to {brand}."
+    },
+    "stepIndicator": {
+      "userType": "You",
+      "clubBasics": "Club",
+      "legalBilling": "Legal",
+      "profile": "Profile",
+      "playerProfile": "Profile",
+      "padelProfile": "Padel",
+      "terms": "Terms"
+    },
+    "steps": {
+      "userType": {
+        "heading": "Welcome to {brand}",
+        "subheading": "Tell us how you'll be using it.",
+        "player": {
+          "title": "I'm a player",
+          "description": "Browse clubs and reserve free courts."
+        },
+        "owner": {
+          "title": "I'm a club owner",
+          "description": "Manage courts and availability for my club."
+        }
+      },
+      "clubBasics": {
+        "heading": "Tell us about your club",
+        "subheading": "Primary contact information and location players will see.",
+        "clubName": "Club name *",
+        "clubNamePlaceholder": "Riverside Padel Club",
+        "contactEmail": "Contact email *",
+        "contactEmailPlaceholder": "contact@riversidepadel.com",
+        "whatsappLabel": "WhatsApp (for payment receipts) *",
+        "zipCode": "Zip code",
+        "zipCodePlaceholder": "1642",
+        "address": "Address *",
+        "addressPlaceholder": "Av. Corrientes 1234"
+      },
+      "legalBilling": {
+        "heading": "Legal & billing",
+        "subheading": "Used for invoices and tax documents.",
+        "legalName": "Legal name *",
+        "legalNamePlaceholder": "Riverside Padel Club S.A.",
+        "taxId": "Tax ID / CUIT *",
+        "taxIdPlaceholder": "30-12345678-9"
+      },
+      "profile": {
+        "heading": "Your profile",
+        "subheading": "How your name appears inside {brand}.",
+        "displayName": "Display name *",
+        "summary": {
+          "title": "Summary",
+          "club": "Club",
+          "email": "Email",
+          "phone": "Phone",
+          "address": "Address",
+          "country": "Country",
+          "province": "Province",
+          "city": "City",
+          "zipCode": "Zip code",
+          "legalName": "Legal name",
+          "taxId": "Tax ID"
+        }
+      },
+      "playerProfile": {
+        "heading": "Your profile",
+        "subheading": "Tell us a bit about yourself and where you play.",
+        "firstName": "First name *",
+        "lastName": "Last name *",
+        "email": "Email *",
+        "emailPlaceholder": "you@example.com",
+        "gender": "Gender *",
+        "genderPlaceholder": "Select an option",
+        "genderOptions": {
+          "male": "Male",
+          "female": "Female",
+          "other": "Other",
+          "preferNotToSay": "Prefer not to say"
+        },
+        "zipCode": "Zip code",
+        "zipCodePlaceholder": "1642",
+        "address": "Address",
+        "addressPlaceholder": "Optional"
+      },
+      "padelProfile": {
+        "heading": "Your padel style",
+        "subheading": "Tell us how you play.",
+        "category": "Padel category",
+        "categoryDescription": "Your skill-level ranking — Category 1 is the highest level, Category 8 is a beginner.",
+        "preferredSide": "Preferred side",
+        "dominantHand": "Dominant hand",
+        "notSetYet": "Not set yet"
+      },
+      "terms": {
+        "heading": "Terms and Conditions",
+        "subheading": "Please review and accept before continuing.",
+        "confirmAge": "I confirm I am 18 years of age or older.",
+        "acceptTerms": "I agree to the Terms and Conditions.",
+        "content": "1. Acceptance of Terms\nBy creating an account on {brand}, you agree to be bound by these Terms and Conditions. If you do not agree, do not proceed with registration.\n\n2. Description of Service\n{brand} connects players with padel clubs, letting players browse courts and reserve free slots, and letting club owners manage their courts' availability and reservations.\n\n3. Accounts and Responsibilities\nYou are responsible for the accuracy of the information provided during registration and for maintaining the confidentiality of your account credentials. Club owners are responsible for keeping their courts' opening hours and reservation records up to date.\n\n4. Bookings and Cancellations\nReservations are confirmed instantly at the time of booking. Players can self-cancel up to 2 hours before a reservation's start time; cancellations inside that window go through the club directly. Reservations are non-refundable: {brand} does not process refunds for any reservation, regardless of who cancels it or the reason. Any dispute, incident, or issue related to a cancelled or unfulfilled reservation must be resolved directly with the club. By booking a reservation, you accept full responsibility for any inconvenience arising from its cancellation.\n\n5. Payments\nSome clubs require online prepayment to confirm a reservation; in that case, payment is processed through Mercado Pago at the time of booking. For clubs that do not require prepayment, payment is handled in person at the club.\n\n6. Data Handling\nData you submit is stored to provide the service and is not shared with third parties except as required to operate the platform or comply with the law.\n\n7. Limitation of Liability\nThe service is provided \"as is\" without warranties of any kind. {brand} is not liable for indirect, incidental, or consequential damages arising from use of the service.\n\n8. Changes to These Terms\nThese terms are placeholder text pending legal review and may be replaced or updated at any time. Continued use of the service after changes constitutes acceptance of the revised terms.\n\n9. Contact\nQuestions about these terms can be directed to your {brand} club administrator, or to {brand} support for player accounts."
+      }
+    }
+  },
+  "ActivationStepIndicator": {
+    "steps": ["Membership", "Payment method"]
+  },
+  "AdminOnlyGuard": {
+    "accessRevoked": "You no longer have admin access."
+  },
+  "ClubInactiveCard": {
+    "title": "Renew your membership",
+    "description": "Your club membership isn't active. Renew it to keep managing courts and accepting reservations.",
+    "preparing": "Preparing…",
+    "renewMembership": "Renew membership",
+    "genericError": "Something went wrong. Please try again."
+  },
+  "ClubOperationalGate": {
+    "loadingDashboard": "Loading dashboard…"
+  },
+  "DashboardLoader": {
+    "loading": "Loading your workspace…"
+  },
+  "MercadoPagoConnectedDialog": {
+    "title": "Mercado Pago connected!",
+    "description": "Players can now pay for reservations through your Mercado Pago account. You can also add your bank account details below to offer bank transfer as an alternative payment method — this is entirely optional.",
+    "submitLabel": "Save and continue"
+  },
+  "OwnerOnlyGuard": {
+    "ownersOnly": "This page is only available to club owners."
+  },
+  "PaymentActivationScreen": {
+    "title": "Payment activation",
+    "description": "Your club needs an active membership and a way to receive reservation payments — connect Mercado Pago or add your bank account — before it can start accepting reservations.",
+    "loadError": "We couldn't load your membership. Try again.",
+    "retry": "Retry",
+    "cycleMonthly": "Monthly",
+    "cycleAnnual": "Annual",
+    "statusLabel": "Status: {status}",
+    "payMembership": "Pay Membership",
+    "statusLabels": {
+      "pending": "Awaiting payment",
+      "trialing": "Free trial",
+      "active": "Active",
+      "pastDue": "Payment past due",
+      "cancelled": "Cancelled"
+    }
+  },
+  "PendingApprovalCard": {
+    "title": "Your club is under review",
+    "description": "We'll notify you once it's approved. Until then, you can't accept reservations."
+  },
+  "PlanOptionCard": {
+    "saveMonths": "Save {months} months",
+    "mostPopular": "Most Popular",
+    "perMonth": "/ month",
+    "billedAnnually": "{price} billed annually"
+  },
+  "AppNavbar": {
+    "navItems": {
+      "dashboard": "Dashboard",
+      "courts": "Courts",
+      "reservations": "Reservations",
+      "clubSettings": "Club Settings",
+      "overview": "Overview",
+      "auditLog": "Audit Log",
+      "search": "Search",
+      "systemStatus": "System Status",
+      "approvals": "Approvals",
+      "browseCourts": "Browse Courts",
+      "myReservations": "My Reservations",
+      "players": "Players",
+      "tournaments": "Tournaments"
+    },
+    "more": "More",
+    "admin": "Admin"
+  },
+  "NavBadge": {
+    "new": "New",
+    "open": "Open"
+  },
+  "CommandPalette": {
+    "title": "Command Palette",
+    "description": "Jump to a page in the dashboard",
+    "placeholder": "Jump to a page...",
+    "noResults": "No results found.",
+    "navigateGroup": "Navigate"
+  },
+  "NotificationsBell": {
+    "tooltip": "Notifications",
+    "srLabel": "Notifications",
+    "heading": "Notifications",
+    "markAllAsRead": "Mark all as read",
+    "loading": "Loading…",
+    "empty": "No notifications yet"
+  },
+  "UserMenu": {
+    "accountSettings": "Account Settings",
+    "clubSettings": "Club Settings",
+    "help": "Help",
+    "signOut": "Sign out"
+  },
+  "DashboardHome": {
+    "welcome": "Welcome",
+    "welcomeWithName": "Welcome, {name}",
+    "searchPlaceholder": "Search cards…"
+  },
+  "OwnerHero": {
+    "emptyHeading": "Let's set up your club",
+    "emptySubheading": "Add your first court to start taking bookings.",
+    "addCourt": "Add a Court",
+    "heading": "Your club today",
+    "todaysBookings": "Today's Bookings",
+    "activeCourts": "Active Courts",
+    "cancelledToday": "Cancelled Today",
+    "busiestCourt": "Busiest Court",
+    "hoursBooked": "Hours Booked"
+  },
+  "PlayerHero": {
+    "emptyHeading": "You don't have any matches booked yet",
+    "readyHeading": "Ready for your next match?",
+    "emptySubheading": "Find a court and lock in your first session.",
+    "browseCourts": "Browse Courts",
+    "upcoming": "Upcoming",
+    "thisMonth": "This Month",
+    "favoriteCourt": "Favorite Court",
+    "hoursPlayed": "Hours Played",
+    "memberSince": "Member Since"
+  },
+  "SearchableCardsGrid": {
+    "noMatches": "No cards match “{query}”.",
+    "clearSearch": "Clear search",
+    "courts": "Courts",
+    "weeklyLoad": "Weekly Load",
+    "sessionLoad": "Session Load",
+    "upcoming": "Upcoming"
+  },
+  "SessionLoadCard": {
+    "cancellationRate": "Cancellation rate",
+    "sessionLoad": "Session load"
+  },
+  "OwnerSessionLoad": {
+    "caption": "{percent}% of bookings cancelled",
+    "emptyMessage": "Once bookings come in, we'll show your cancellation rate here."
+  },
+  "PlayerSessionLoad": {
+    "caption": "{activeWeeks}/{totalWeeks} weeks active",
+    "emptyMessage": "Book a few matches and we'll start tracking your session load here."
+  },
+  "SessionLoadGauge": {
+    "toneGood": "Good",
+    "toneWatch": "Watch",
+    "toneBad": "Needs attention",
+    "noSessionsYet": "No sessions yet",
+    "vsPreviousPeriod": "{delta}% vs previous period"
+  },
+  "Weekday": {
+    "short": {
+      "mon": "Mon",
+      "tue": "Tue",
+      "wed": "Wed",
+      "thu": "Thu",
+      "fri": "Fri",
+      "sat": "Sat",
+      "sun": "Sun"
+    },
+    "full": {
+      "mon": "Monday",
+      "tue": "Tuesday",
+      "wed": "Wednesday",
+      "thu": "Thursday",
+      "fri": "Friday",
+      "sat": "Saturday",
+      "sun": "Sunday"
+    }
+  },
+  "WeeklyLoadCard": {
+    "dailyVolume": "Daily volume",
+    "weeklyLoad": "Weekly load"
+  },
+  "OwnerWeeklyLoad": {
+    "caption": "Most bookings happen on {weekday}s.",
+    "emptyMessage": "Once bookings come in, we'll show your weekday distribution here."
+  },
+  "PlayerWeeklyLoad": {
+    "caption": "You play most often on {weekday}s.",
+    "emptyMessage": "Book a few matches and we'll start showing your weekly rhythm here."
+  },
+  "OverviewChart": {
+    "noPatternsYet": "No patterns yet",
+    "bookingsLabel": "Bookings"
+  },
+  "UpcomingCard": {
+    "title": "Upcoming"
+  },
+  "UpcomingListEmpty": {
+    "title": "No upcoming reservations",
+    "description": "Booked courts will show up here."
+  },
+  "UpcomingListItems": {
+    "today": "Today",
+    "tomorrow": "Tomorrow",
+    "bookedBy": "Booked by {name}",
+    "cancelReservation": "Cancel reservation"
+  },
+  "PlayerOverviewData": {
+    "styleUpdated": "Play style updated",
+    "updateError": "Could not update your profile."
+  },
+  "PlayerOverviewCard": {
+    "title": "Player Overview"
+  },
+  "PlayerOverviewContent": {
+    "performance": "Performance"
+  },
+  "PlayerOverviewBanner": {
+    "title": "Player Overview"
+  },
+  "BannerPreview": {
+    "title": "Your player overview",
+    "subtitle": "Preferred side, partner & stats"
+  },
+  "PerformanceSummarySection": {
+    "position": "Position"
+  },
+  "TournamentRecord": {
+    "label": "Tournament record"
+  },
+  "PlayerStyleSection": {
+    "dominantHand": "Dominant hand",
+    "latestPartner": "Latest partner"
+  },
+  "PadelSideDiagram": {
+    "altNoSide": "Padel court diagram with no preferred side selected",
+    "altWithSide": "Padel court diagram highlighting the {side} side",
+    "preferredLabel": "Preferred: {side}"
+  },
+  "EditPlayerStyleDialog": {
+    "editPlayStyle": "Edit play style",
+    "preferredSide": "Preferred side",
+    "notSetYet": "Not set yet",
+    "dominantHand": "Dominant hand",
+    "save": "Save"
+  },
+  "LatestPartnerCard": {
+    "emptyState": "No partners yet — tag a co-player when you book a court to see them here.",
+    "playedTimes": "Played {count}x",
+    "winRatePrefix": "{percent}% WR"
+  },
+  "BrowseCourts": {
+    "title": "Browse Courts",
+    "description": "Pick a club, then a court, then a free slot to reserve.",
+    "backToClubs": "Back to clubs",
+    "backToCourts": "Back to courts",
+    "clubStillLoading": "Still loading club details, try again in a moment.",
+    "transferPending": "Slot held for 60 minutes — send your transfer and message the club.",
+    "reservationConfirmed": "Reservation confirmed.",
+    "bookingError": "Could not book this slot."
+  },
+  "BrowseCourtsData": {
+    "genericError": "Something went wrong. Please try again.",
+    "joinWaitlistSuccess": "We'll email you if this slot opens up.",
+    "joinWaitlistError": "Could not join the waitlist."
+  },
+  "ClubListPanel": {
+    "club": "Club",
+    "courtCount": "{count, plural, one {# court} other {# courts}}",
+    "availableToday": "Available today",
+    "noAvailability": "No availability",
+    "loadError": "Could not load clubs. Try again later.",
+    "clubsList": "Clubs List",
+    "searchPlaceholder": "Search clubs...",
+    "sortBy": "Sort by",
+    "sortName": "Name",
+    "sortCourtCount": "Court count",
+    "loading": "Loading clubs…",
+    "noMatches": "No clubs match your search."
+  },
+  "CourtLabels": {
+    "concrete": "Concrete",
+    "carpet": "Carpet",
+    "indoor": "Indoor",
+    "outdoor": "Outdoor"
+  },
+  "CourtsTable": {
+    "selectAll": "Select all courts",
+    "selectOne": "Select {name}",
+    "name": "Name",
+    "surface": "Surface",
+    "preview": "Preview",
+    "type": "Type",
+    "reservationFee": "Reservation fee",
+    "courtPrice": "Court price",
+    "minShift": "Minimum shift",
+    "minShiftValue": "{minutes} min",
+    "status": "Status",
+    "active": "Active",
+    "inactive": "Inactive",
+    "actions": "Actions",
+    "editAvailabilityFor": "Edit availability for {name}",
+    "editAvailability": "Edit availability",
+    "manageClosuresFor": "Manage closures for {name}",
+    "manageClosures": "Manage closures",
+    "editFor": "Edit {name}",
+    "editCourt": "Edit court",
+    "deactivateFor": "Deactivate {name}",
+    "deactivateCourt": "Deactivate court",
+    "loading": "Loading courts…"
+  },
+  "ClubCourtsPanel": {
+    "court": "Court",
+    "surfaceAndColor": "Surface & Color",
+    "reservationFee": "Reservation fee",
+    "courtPrice": "Court price",
+    "perHour": "{price}/hour",
+    "preview": "Preview",
+    "selectClubPrompt": "Select a club to see its courts.",
+    "loadError": "Could not load courts. Try again later.",
+    "noCourtsAvailable": "No courts available for the selected date.",
+    "filters": "Filters",
+    "surface": "Surface",
+    "allSurfaces": "All surfaces",
+    "allCourts": "All courts",
+    "color": "Color",
+    "allColors": "All colors",
+    "sortBy": "Sort by",
+    "sortName": "Name",
+    "loading": "Loading courts…",
+    "noMatches": "No courts match your filters."
+  },
+  "CourtSchedulePanel": {
+    "selectCourtPrompt": "Select a court to see its schedule."
+  },
+  "CourtsView": {
+    "title": "Courts",
+    "description": "Manage your club's courts and weekly availability.",
+    "newCourt": "New court",
+    "selectedCount": "{count, plural, one {# court selected} other {# courts selected}}",
+    "bulkEdit": "Bulk edit",
+    "clear": "Clear",
+    "uploadPhotoError": "Could not upload the court photo. Please try again.",
+    "courtCreated": "Court created",
+    "deactivateTitle": "Deactivate court?",
+    "deactivateDescription": "\"{name}\" will be marked inactive and hidden from new bookings. This can't be undone from here.",
+    "deactivateConfirm": "Deactivate",
+    "deactivatePending": "Deactivating…"
+  },
+  "CourtsViewData": {
+    "genericError": "Something went wrong. Please try again.",
+    "courtUpdated": "Court updated",
+    "courtDeactivated": "Court deactivated",
+    "closureCancelled": "Closure cancelled"
+  },
+  "CourtFormSheet": {
+    "editCourtTitle": "Edit court",
+    "newCourtTitle": "New court",
+    "editCourtDescription": "Update this court's details.",
+    "newCourtDescription": "Add a new court to your club.",
+    "nameLabel": "Name *",
+    "namePlaceholder": "Court 1",
+    "courtNumberLabel": "Court number",
+    "photoLegend": "Photo (max {mb}MB)",
+    "surfaceLegend": "Surface *",
+    "courtTypeLegend": "Court type",
+    "colorLegend": "Color",
+    "wallTypeLegend": "Wall type",
+    "netTypeLegend": "Net type",
+    "hasLighting": "Has lighting",
+    "minShiftLabel": "Minimum shift *",
+    "minShiftHint": "The shortest amount of time a player can book this court for.",
+    "reservationFeeLabel": "Reservation fee *",
+    "courtPriceLabel": "Court price",
+    "pricePerHour": "$/hour: {price}",
+    "active": "Active",
+    "back": "Back",
+    "next": "Next",
+    "saving": "Saving…",
+    "saveChanges": "Save changes",
+    "createCourt": "Create court"
+  },
+  "CourtFormValidation": {
+    "nameRequired": "Name is required",
+    "surfaceRequired": "Surface is required",
+    "colorRequired": "Color is required",
+    "slotDurationMustBeNumber": "Slot duration must be a number",
+    "slotDurationMustBePositive": "Slot duration must be greater than 0",
+    "reservationFeeRequired": "Reservation fee is required",
+    "reservationFeeCannotBeNegative": "Reservation fee cannot be negative"
+  },
+  "WallTypeField": {
+    "blindex": "Glass (blindex)",
+    "concrete": "Concrete",
+    "mixed": "Mixed"
+  },
+  "NetTypeField": {
+    "standard": "Standard",
+    "professional": "Professional"
+  },
+  "ColorField": {
+    "blue": "Blue",
+    "green": "Green",
+    "terracotta": "Terracotta",
+    "black": "Black",
+    "fuchsia": "Fuchsia",
+    "purple": "Purple",
+    "customColor": "Custom color"
+  },
+  "PhotoField": {
+    "uploadFailed": "Upload failed. Please try again.",
+    "uploadPicture": "Upload picture",
+    "uploading": "Uploading…"
+  },
+  "SlotDurationField": {
+    "selectDuration": "Select a duration",
+    "minutes": "{minutes} min"
+  },
+  "CourtFormStepIndicator": {
+    "details": "Details",
+    "attributes": "Attributes",
+    "pricing": "Pricing",
+    "availability": "Availability"
+  },
+  "BulkEditCourtsSheet": {
+    "title": "Bulk edit courts",
+    "description": "Editing {count} courts. Only checked fields will be changed.",
+    "selectAtLeastOneField": "Select at least one field to change",
+    "updatedCourts": "Updated {count} courts",
+    "updateFailed": "Failed to update courts",
+    "partialUpdate": "Updated {updated} of {total} courts. {failed} failed.",
+    "surface": "Surface",
+    "courtType": "Court type",
+    "color": "Color",
+    "minShift": "Minimum shift",
+    "reservationFee": "Reservation fee",
+    "courtPrice": "Court price",
+    "active": "Active",
+    "saving": "Saving…",
+    "applyChanges": "Apply changes"
+  },
+  "BulkEditCourtsValidation": {
+    "surfaceRequired": "Surface is required",
+    "colorRequired": "Color is required",
+    "slotDurationMustBeNumber": "Slot duration must be a number",
+    "slotDurationMustBePositive": "Slot duration must be greater than 0",
+    "reservationFeeMustBeNumber": "Reservation fee must be a number",
+    "reservationFeeCannotBeNegative": "Reservation fee cannot be negative",
+    "courtPriceCannotBeNegative": "Court price cannot be negative"
+  },
+  "CourtLimitReachedDialog": {
+    "title": "Court limit reached",
+    "description": "Your {plan} plan allows up to {limit, plural, one {# court} other {# courts}}. Upgrade your plan from the dashboard to add more courts.",
+    "close": "Close",
+    "goToDashboard": "Go to dashboard"
+  },
+  "CourtsEmptyState": {
+    "message": "No courts yet. Create your first court to get started."
+  },
+  "ClosuresSheet": {
+    "title": "Closures",
+    "description": "Block this court for maintenance, events, or planned closures.",
+    "descriptionForCourt": "Block {name} for maintenance, events, or planned closures.",
+    "loadingClosures": "Loading closures…",
+    "cancelTitle": "Cancel this closure?",
+    "cancelDescription": "This will make the court bookable again for its blocked time range.",
+    "keepClosure": "Keep closure",
+    "cancelClosure": "Cancel closure",
+    "cancelling": "Cancelling…",
+    "closureCreated": "Closure created",
+    "closureCreatedForCourts": "Closure created for {count} courts",
+    "closureCreateFailed": "Failed to create closure",
+    "closurePartial": "Created for {succeeded} of {total} courts. {failed} conflicted — check each court's closures."
+  },
+  "ClosuresList": {
+    "noClosures": "No closures yet.",
+    "cancelled": "Cancelled",
+    "past": "Past",
+    "active": "Active",
+    "cancelling": "Cancelling…",
+    "cancel": "Cancel"
+  },
+  "NewClosureForm": {
+    "starts": "Starts",
+    "ends": "Ends",
+    "reasonLabel": "Reason *",
+    "reasonPlaceholder": "Court resurfacing",
+    "applyToAllCourts": "Apply to all courts",
+    "creating": "Creating…",
+    "createClosure": "Create closure"
+  },
+  "NewClosureFormValidation": {
+    "startRequired": "Start is required",
+    "endRequired": "End is required",
+    "reasonRequired": "Reason is required",
+    "endMustBeAfterStart": "End must be after start",
+    "closureNotInPast": "Closure must not be entirely in the past"
+  },
+  "BookingConfirmDialog": {
+    "title": "Confirm reservation",
+    "description": "Review your reservation details and confirm.",
+    "bank": "Bank:",
+    "cbu": "CBU:",
+    "alias": "Alias:",
+    "whatsapp": "WhatsApp:",
+    "payNowTransfer": "This reservation requires payment to be confirmed. Send {amount} via bank transfer and message the club's WhatsApp with your receipt within 30 minutes — your slot is held for 60 minutes total. If the club doesn't confirm in time, the slot is released automatically (Mercado Pago is the only method that confirms instantly).",
+    "payNowMercadoPago": "This reservation requires payment to be confirmed. You'll pay {amount} via Mercado Pago — you'll be redirected to complete it, and your slot is held for 15 minutes.",
+    "free": "This court is free — no payment needed. You can cancel for free up to 2 hours before your reservation.",
+    "priceMissing": "This court doesn't have a price set yet, so it can't be booked online — contact the club directly.",
+    "cancel": "Cancel",
+    "gotIt": "Got it",
+    "booking": "Booking…",
+    "confirmBooking": "Confirm booking",
+    "continueToPayment": "Continue to payment",
+    "priceNotSet": "Price not set",
+    "bookCourt": "Book court",
+    "freeBadge": "Free",
+    "payNowBadge": "Pay now"
+  },
+  "PartnerPicker": {
+    "playingWith": "Playing with (optional)"
+  },
+  "PaymentMethodPicker": {
+    "payWith": "Pay with",
+    "bankTransfer": "Bank transfer"
+  },
+  "PaymentReturnData": {
+    "genericError": "Something went wrong. Please try again."
+  },
+  "PaymentReturnView": {
+    "missingReference": "Missing reservation reference.",
+    "confirmingPayment": "Confirming your payment…",
+    "confirmingPaymentHint": "This usually takes a few seconds.",
+    "paymentConfirmedStatus": "Payment confirmed. Your reservation is booked.",
+    "checkFailedStatus": "We couldn't check your payment status. Contact the club to confirm your reservation.",
+    "paymentFailedStatus": "Payment didn't complete. Your slot hold has expired.",
+    "backToBrowse": "Back to Browse Courts",
+    "checkFailedTitle": "We couldn't check your payment",
+    "contactClub": "Contact the club directly to confirm your reservation.",
+    "viewMyReservations": "View my reservations",
+    "paymentConfirmedTitle": "Payment confirmed!",
+    "reservationBooked": "Your reservation is booked.",
+    "paymentFailedTitle": "Payment didn't complete",
+    "slotHoldExpired": "Your slot hold has expired. You can try booking again."
+  },
+  "ReservationsView": {
+    "title": "Reservations",
+    "description": "View court availability and manage the day's bookings."
+  },
+  "ReservationsViewData": {
+    "genericError": "Something went wrong. Please try again.",
+    "reservationUpdated": "Reservation updated"
+  },
+  "ReservationActionButtons": {
+    "confirmTransfer": "Confirm transfer",
+    "complete": "Complete",
+    "noShow": "No-show",
+    "cancel": "Cancel"
+  },
+  "ReservationsTable": {
+    "player": "Player",
+    "court": "Court",
+    "time": "Time",
+    "status": "Status",
+    "actions": "Actions",
+    "loading": "Loading reservations…",
+    "empty": "No reservations for this day."
+  },
+  "SlotDetailsDialog": {
+    "title": "Reservation details",
+    "descriptionBooked": "This slot is booked.",
+    "descriptionUnavailable": "Reservation details are unavailable for this slot.",
+    "player": "Player",
+    "court": "Court",
+    "time": "Time",
+    "status": "Status",
+    "notes": "Notes"
+  },
+  "MyReservations": {
+    "title": "My Reservations",
+    "descriptionAll": "All your reservations, including past and cancelled ones.",
+    "descriptionUpcoming": "Your upcoming reservations.",
+    "showUpcomingOnly": "Show upcoming only",
+    "showPastReservations": "Show past reservations",
+    "loadingStatus": "Loading your reservations…",
+    "noneYetStatus": "You have no reservations yet.",
+    "noUpcomingStatus": "You have no upcoming reservations.",
+    "loadedStatus": "{count, plural, one {# reservation loaded.} other {# reservations loaded.}}",
+    "emptyUpcomingHint": "You have no upcoming reservations. Go browse courts to book one.",
+    "cancelSuccess": "Reservation cancelled.",
+    "cancelError": "Could not cancel this reservation."
+  },
+  "MyReservationsData": {
+    "genericError": "Something went wrong. Please try again."
+  },
+  "ReservationRow": {
+    "previewTicket": "Preview ticket",
+    "downloadTicket": "Download ticket",
+    "receipt": "Receipt",
+    "cancel": "Cancel",
+    "previewTicketFor": "Preview ticket for {courtName}",
+    "downloadTicketFor": "Download ticket for {courtName}",
+    "downloadReceiptFor": "Download receipt for {courtName}",
+    "cancelReservationFor": "Cancel reservation for {courtName}"
+  },
+  "CancelConfirmDialog": {
+    "title": "Cancel reservation?",
+    "cancelLabel": "Keep reservation",
+    "confirmLabel": "Cancel reservation",
+    "pendingLabel": "Cancelling…"
+  },
+  "PlayersPage": {
+    "title": "Players"
+  },
+  "PlayersDirectory": {
+    "player": "Player",
+    "category": "Category",
+    "preferredSide": "Preferred side",
+    "dominantHand": "Dominant hand",
+    "you": "You",
+    "role": "Role",
+    "admin": "Admin",
+    "actions": "Actions",
+    "editFor": "Edit {name}",
+    "editPlayer": "Edit player",
+    "deleteFor": "Delete {name}",
+    "cantDeleteSelf": "You can't delete your own account",
+    "deletePlayer": "Delete player",
+    "impersonateFor": "Impersonate {name}",
+    "cantImpersonateSelf": "You can't impersonate yourself",
+    "cantImpersonateAdmin": "Can't impersonate another admin",
+    "signInAsPlayer": "Sign in as this player",
+    "exportCsv": "Export CSV",
+    "loadError": "Could not load players. Try again later.",
+    "loading": "Loading players…",
+    "emptyFiltered": "No players match your filters.",
+    "deleteTitle": "Delete player?",
+    "deleteDescription": "\"{name}\" will be anonymized and removed from the directory. This can't be undone.",
+    "deleteConfirm": "Delete",
+    "deletePending": "Deleting…"
+  },
+  "PlayersDirectoryData": {
+    "loadError": "Could not load players.",
+    "genericError": "Something went wrong. Please try again.",
+    "playerUpdated": "Player updated",
+    "playerRemoved": "Player removed"
+  },
+  "PlayersFilterBar": {
+    "searchPlaceholder": "Search players by name...",
+    "category": "Category",
+    "preferredSide": "Preferred side",
+    "dominantHand": "Dominant hand",
+    "sortBy": "Sort by",
+    "allCategories": "All categories",
+    "allSides": "All sides",
+    "allHands": "All hands",
+    "name": "Name"
+  },
+  "PlayerEditSheet": {
+    "title": "Edit player",
+    "description": "Update {name}'s profile.",
+    "thisPlayer": "this player",
+    "nameLabel": "Name *",
+    "emailLabel": "Email *",
+    "phoneLabel": "Phone",
+    "categoryLabel": "Category",
+    "preferredSideLabel": "Preferred side",
+    "dominantHandLabel": "Dominant hand",
+    "notSetYet": "Not set yet",
+    "saving": "Saving…",
+    "saveChanges": "Save changes"
+  },
+  "PlayerEditValidation": {
+    "nameRequired": "Name is required",
+    "invalidEmail": "Enter a valid email"
+  },
+  "UserOptionLabels": {
+    "notSet": "Not set yet",
+    "padelCategory": {
+      "1": "Category 1 — highest level",
+      "2": "Category 2",
+      "3": "Category 3",
+      "4": "Category 4",
+      "5": "Category 5",
+      "6": "Category 6",
+      "7": "Category 7",
+      "8": "Category 8 — beginner",
+      "unknown": "Not sure yet",
+      "other": "Category {category}"
+    },
+    "preferredSide": {
+      "forehand": "Forehand",
+      "backhand": "Backhand"
+    },
+    "dominantHand": {
+      "right": "Right-handed",
+      "left": "Left-handed"
+    }
+  },
+  "AuditLogsView": {
+    "title": "Audit Log",
+    "description": "A record of changes made to your club, courts, and reservations.",
+    "loadError": "Could not load the audit log. Try again later.",
+    "pageOf": "Page {page} of {totalPages}",
+    "previous": "Previous",
+    "next": "Next"
+  },
+  "AuditLogsViewData": {
+    "genericError": "Something went wrong. Please try again."
+  },
+  "AuditLogsFilters": {
+    "allEntities": "All entities",
+    "allActions": "All actions",
+    "entities": {
+      "Club": "Club",
+      "Court": "Court",
+      "CourtClosure": "Court closure",
+      "Payment": "Payment",
+      "Reservation": "Reservation",
+      "Tournament": "Tournament",
+      "TournamentCategory": "Tournament category",
+      "TournamentMatch": "Tournament match",
+      "TournamentTeam": "Tournament team",
+      "UserProfile": "User profile",
+      "WaitlistEntry": "Waitlist entry"
+    }
+  },
+  "AuditLogsTable": {
+    "when": "When",
+    "action": "Action",
+    "entity": "Entity",
+    "by": "By",
+    "loading": "Loading audit log…",
+    "empty": "No audit log entries match these filters."
+  },
+  "AuditActionLabels": {
+    "reservation": {
+      "created": "Reservation created",
+      "cancelled": "Reservation cancelled",
+      "completed": "Reservation completed",
+      "no_show": "Reservation no-show"
+    },
+    "court": {
+      "created": "Court created",
+      "updated": "Court updated",
+      "deactivated": "Court deactivated",
+      "closure_created": "Court closure created",
+      "closure_cancelled": "Court closure cancelled"
+    },
+    "club": {
+      "created": "Club created",
+      "updated": "Club updated",
+      "approved": "Club approved",
+      "rejected": "Club rejected"
+    },
+    "user": {
+      "created": "Player joined",
+      "updated": "Profile updated",
+      "anonymized": "Account deleted",
+      "impersonated": "Admin impersonated user",
+      "role_changed": "Role changed"
+    },
+    "payment": {
+      "confirmed": "Payment confirmed",
+      "refunded": "Payment refunded"
+    },
+    "waitlist": {
+      "notified": "Waitlist notified"
+    },
+    "tournament": {
+      "created": "Tournament created",
+      "updated": "Tournament updated",
+      "published": "Tournament published",
+      "cancelled": "Tournament cancelled"
+    },
+    "tournament_team": {
+      "registered": "Tournament team registered",
+      "withdrawn": "Tournament team withdrawn"
+    },
+    "tournament_groups": {
+      "set_manually": "Tournament groups set manually",
+      "generated_automatically": "Tournament groups generated automatically",
+      "locked": "Tournament groups locked"
+    },
+    "tournament_match": {
+      "score_entered": "Tournament match score entered",
+      "walkover_recorded": "Tournament match walkover recorded"
+    },
+    "tournament_knockout": {
+      "generated": "Tournament knockout bracket generated"
+    }
+  },
+  "ClubSettingsView": {
+    "basicInfoTitle": "Basic information",
+    "basicInfoDescription": "Manage your club's profile and business details.",
+    "nameLabel": "Name *",
+    "namePlaceholder": "Club Padel Norte",
+    "emailLabel": "Email *",
+    "emailPlaceholder": "contact@club.com",
+    "whatsappLabel": "WhatsApp (for payment receipts)",
+    "zipCodeLabel": "Zip code",
+    "zipCodePlaceholder": "1642",
+    "addressLabel": "Address",
+    "addressPlaceholder": "Av. Corrientes 1234",
+    "legalInfoTitle": "Legal information",
+    "legalInfoDescription": "Used for invoices and tax documents.",
+    "legalNameLabel": "Legal name",
+    "legalNamePlaceholder": "Club Padel Norte S.A.",
+    "taxIdLabel": "Tax ID",
+    "taxIdPlaceholder": "30-12345678-9",
+    "saving": "Saving…",
+    "saveChanges": "Save changes"
+  },
+  "ClubSettingsValidation": {
+    "nameRequired": "Club name is required",
+    "emailRequired": "Email is required",
+    "emailInvalid": "Invalid email address",
+    "whatsappInvalid": "Enter a valid WhatsApp number",
+    "timezoneRequired": "Timezone is required",
+    "currencyRequired": "Currency is required"
+  },
+  "ClubSettingsViewData": {
+    "genericError": "Something went wrong. Please try again.",
+    "updated": "Club settings updated"
+  },
+  "ClubSettingsTabs": {
+    "basicTab": "Club settings",
+    "hoursTab": "Schedule",
+    "closuresTab": "Closures",
+    "mercadopagoTab": "Mercado Pago",
+    "bankTransferTab": "Bank Transfer"
+  },
+  "AdminClubSettingsView": {
+    "courtLimitLabel": "Court limit",
+    "savingLimit": "Saving…",
+    "saveLimit": "Save limit",
+    "exportCsv": "Export CSV",
+    "activatingFreePlan": "Activating…",
+    "activateFreePlan": "Activate free plan",
+    "signingIn": "Signing in…",
+    "impersonateOwner": "Impersonate owner",
+    "selectClubPlaceholder": "Select a club to view its settings.",
+    "activateFreePlanConfirm": "Activate the FREE testing plan for \"{clubName}\"? This bypasses paid membership for this club."
+  },
+  "AdminClubSettingsViewData": {
+    "failedToLoadClubs": "Failed to load clubs",
+    "failedToLoadOwner": "Failed to load club owner",
+    "genericError": "Something went wrong. Please try again.",
+    "freePlanActivated": "Club activated on the FREE plan",
+    "courtLimitUpdated": "Court limit updated"
+  },
+  "AdminClubList": {
+    "columnHeader": "Club",
+    "freeBadge": "Free",
+    "needsAttentionOne": "1 club needs attention",
+    "needsAttentionMany": "{count} clubs need attention",
+    "loadingClubs": "Loading clubs…",
+    "noClubsFound": "No clubs found.",
+    "mpTokenIssue": "Mercado Pago token expired",
+    "membershipPastDue": "Membership past due",
+    "noOperatingHours": "No operating hours configured"
+  },
+  "BankTransferAccountSettingsCard": {
+    "title": "Bank Transfer",
+    "description": "Let players pay by bank transfer directly to your club's account, as an alternative to Mercado Pago.",
+    "bankNameLabel": "Bank name *",
+    "bankNamePlaceholder": "Banco Nación",
+    "cbuLabel": "CBU *",
+    "cbuPlaceholder": "0000000000000000000000",
+    "cbuError": "CBU must be exactly 22 digits",
+    "aliasLabel": "Alias",
+    "aliasPlaceholder": "club.padel.mp",
+    "accountHolderLabel": "Account holder name",
+    "accountHolderPlaceholder": "Club Padel Norte SA",
+    "saving": "Saving…",
+    "saveChanges": "Save changes"
+  },
+  "BankTransferAccountSettingsCardData": {
+    "genericError": "Something went wrong. Please try again.",
+    "saved": "Bank transfer account saved"
+  },
+  "ClubClosuresCard": {
+    "title": "Closures",
+    "description": "Block every court at once when the whole complex is rented out for an event. It lifts automatically once it ends — no need to come back and reopen anything.",
+    "noActiveCourts": "Add at least one active court before closing the club",
+    "loadingClosures": "Loading closures…",
+    "cancelTitle": "Cancel this closure?",
+    "cancelDescription": "This will make the court bookable again for its blocked time range.",
+    "keepClosure": "Keep closure",
+    "cancelClosure": "Cancel closure",
+    "cancelling": "Cancelling…",
+    "closureCreated": "Closure created",
+    "closureCreatedForCourts": "Closure created for {count} courts",
+    "closureCreateFailed": "Failed to create closure",
+    "closurePartial": "Created for {succeeded} of {total} courts. {failed} conflicted — check each court's closures."
+  },
+  "ClubClosuresCardData": {
+    "genericError": "Something went wrong. Please try again.",
+    "closureCancelled": "Closure cancelled"
+  },
+  "ClubClosuresList": {
+    "noClosuresYet": "No closures yet.",
+    "cancelled": "Cancelled",
+    "past": "Past",
+    "active": "Active",
+    "cancelling": "Cancelling…",
+    "cancel": "Cancel"
+  },
+  "NewClubClosureForm": {
+    "startsLabel": "Starts",
+    "endsLabel": "Ends",
+    "reasonLabel": "Reason *",
+    "reasonPlaceholder": "Club rented for a private event",
+    "closing": "Closing…",
+    "closeTheClub": "Close the club"
+  },
+  "NewClubClosureFormValidation": {
+    "startRequired": "Start is required",
+    "endRequired": "End is required",
+    "reasonRequired": "Reason is required",
+    "endMustBeAfterStart": "End must be after start",
+    "closureNotInPast": "Closure must not be entirely in the past"
+  },
+  "MercadoPagoConnectionCard": {
+    "logoAlt": "Mercado Pago",
+    "accountLabel": "Account: {label}",
+    "unlink": "Unlink",
+    "unlinkSuccess": "Mercado Pago unlinked.",
+    "unlinkError": "Could not unlink Mercado Pago.",
+    "loadingBadge": "Loading…",
+    "loadingDescription": "Checking your Mercado Pago connection…",
+    "connectCta": "Connect Mercado Pago",
+    "notConnectedBadge": "Not connected",
+    "notConnectedDescription": "Connect your Mercado Pago account so players can pay for court reservations directly to you.",
+    "connectedBadge": "Connected",
+    "clubInactiveDescription": "Mercado Pago is connected, but your club membership isn't active — reactivate it to resume accepting payments.",
+    "switchAccountCta": "Switch account",
+    "connectedDescription": "Mercado Pago is connected. Players pay you directly for court reservations."
+  },
+  "MercadoPagoConnectionCardData": {
+    "failedToLoadStatus": "Failed to load Mercado Pago connection status",
+    "failedToUnlink": "Failed to unlink Mercado Pago"
+  },
+  "DisconnectConfirmDialog": {
+    "title": "Unlink Mercado Pago?",
+    "description": "This app will stop using your Mercado Pago connection immediately — players won't be able to pay for court reservations until you reconnect. This only unlinks it from this app; it doesn't change anything on your Mercado Pago account.",
+    "cancelLabel": "Keep connected",
+    "confirmLabel": "Unlink",
+    "pendingLabel": "Unlinking…"
+  },
+  "SwitchAccountConfirmDialog": {
+    "title": "Switch Mercado Pago account?",
+    "description": "To connect a different Mercado Pago account, first log out of Mercado Pago in this browser (or continue in a private/incognito window). Otherwise, continuing will just reconnect the same account that's already linked.",
+    "cancelLabel": "Cancel",
+    "confirmLabel": "Continue",
+    "pendingLabel": "Redirecting…"
+  },
+  "OperatingHoursSettingsCard": {
+    "title": "Schedule",
+    "description": "Set the days and hours your club is open for players to book. New courts default to these hours.",
+    "saving": "Saving…",
+    "saveChanges": "Save changes"
+  },
+  "OperatingHoursSettingsCardData": {
+    "genericError": "Something went wrong. Please try again.",
+    "saved": "Operating hours saved"
+  },
+  "AdminApprovalsView": {
+    "title": "Approvals",
+    "description": "Clubs from onboarding wait here until an admin approves them — until then they can't accept real reservations.",
+    "clubColumn": "Club",
+    "duplicateWarning": "Another club already has this email or address — check before approving.",
+    "approve": "Approve",
+    "approving": "Approving…",
+    "reject": "Reject",
+    "loading": "Loading pending clubs…",
+    "emptyState": "No clubs are waiting for approval."
+  },
+  "AdminApprovalsViewData": {
+    "genericError": "Something went wrong. Please try again.",
+    "clubApproved": "Club approved",
+    "clubRejected": "Club rejected"
+  },
+  "RejectConfirmDialog": {
+    "title": "Reject this club?",
+    "cancelLabel": "Keep pending",
+    "confirmLabel": "Reject club",
+    "pendingLabel": "Rejecting…"
+  },
+  "AdminDashboardHome": {
+    "title": "Platform Overview",
+    "loadError": "Could not load platform metrics. Try again later.",
+    "totalClubs": "Total Clubs",
+    "totalCourts": "Total Courts",
+    "totalPlayers": "Total Players",
+    "reservationsBooked": "Reservations Booked",
+    "active": "Active",
+    "inactive": "Inactive",
+    "pendingApproval": "Pending approval",
+    "total": "Total",
+    "exportCsv": "Export CSV"
+  },
+  "AdminDashboardHomeData": {
+    "failedToLoadMetrics": "Failed to load admin metrics"
+  },
+  "AdminSearchView": {
+    "title": "Search",
+    "description": "Search across every club, player, and reservation on the platform.",
+    "searchPlaceholder": "Search by name, email, or id…",
+    "searchAriaLabel": "Search",
+    "emptyQueryState": "Start typing to search across clubs, players, and reservations.",
+    "clubsHeading": "Clubs",
+    "playersHeading": "Players",
+    "reservationsHeading": "Reservations"
+  },
+  "AdminSearchViewData": {
+    "searchFailed": "Failed to search"
+  },
+  "AdminSearchClubResults": {
+    "clubColumn": "Club",
+    "statusColumn": "Status",
+    "loading": "Searching clubs…",
+    "emptyState": "No clubs found."
+  },
+  "AdminSearchPlayerResults": {
+    "playerColumn": "Player",
+    "loading": "Searching players…",
+    "emptyState": "No players found."
+  },
+  "AdminSearchReservationResults": {
+    "reservationColumn": "Reservation",
+    "statusColumn": "Status",
+    "loading": "Searching reservations…",
+    "emptyState": "No reservations found."
+  },
+  "AdminStatusView": {
+    "title": "System Status",
+    "description": "Whether each cron job and webhook receiver is actually running and succeeding.",
+    "loadError": "Could not load system status. Try again later.",
+    "recentActivity": "Recent activity"
+  },
+  "AdminStatusRecentActivity": {
+    "when": "When",
+    "job": "Job",
+    "kind": "Kind",
+    "status": "Status",
+    "error": "Error",
+    "cron": "Cron",
+    "webhook": "Webhook",
+    "success": "Success",
+    "failure": "Failure",
+    "loading": "Loading recent activity…",
+    "emptyState": "No system job activity recorded yet."
+  },
+  "AdminStatusSummary": {
+    "job": "Job",
+    "lastRun": "Last run",
+    "status": "Status",
+    "success": "Success",
+    "failure": "Failure",
+    "neverRun": "Never run",
+    "loading": "Loading system status…"
+  },
+  "SystemJobErrorDialog": {
+    "title": "Error details",
+    "copy": "Copy",
+    "copied": "Copied",
+    "close": "Close"
+  },
+  "SystemJobLabels": {
+    "notifications": "Notifications",
+    "membership-grace-sweep": "Membership grace sweep",
+    "mercadopago-token-refresh": "Mercado Pago token refresh",
+    "reset-preview-db": "Preview database reset",
+    "mercadopago": "Mercado Pago webhook",
+    "clerk": "Clerk webhook"
+  },
+  "ClubStatusAdminPage": {
+    "genericError": "Something went wrong. Please try again.",
+    "title": "Club status admin",
+    "clubIdLabel": "Club ID",
+    "lookUp": "Look up",
+    "lookingUp": "Looking up…",
+    "currentStatus": "Current status: {status}",
+    "lastUpdatedBy": "Last updated by {updatedBy} at {updatedAt}",
+    "newStatusLabel": "New status",
+    "updatedByLabel": "Updated by",
+    "updatedByPlaceholder": "your@email.com",
+    "save": "Save",
+    "saving": "Saving…",
+    "activateFreePlan": "Activate free membership (testing)",
+    "activatingFreePlan": "Activating…",
+    "activateFreePlanConfirm": "Activate the FREE testing plan for \"{clubName}\"? This bypasses paid membership for this club.",
+    "clubStatusUpdated": "Club status updated",
+    "freePlanActivated": "Free plan activated for testing",
+    "statusOptions": {
+      "active": "Active",
+      "inactive": "Inactive",
+      "suspended": "Suspended",
+      "disabled": "Disabled"
+    }
+  },
+  "TournamentsHubPage": {
+    "title": "Tournaments"
+  },
+  "GroupsStandingsView": {
+    "loading": "Loading…",
+    "noData": "No data available.",
+    "matches": "Matches",
+    "standings": "Standings",
+    "knockoutBracket": "Knockout bracket"
+  },
+  "GroupsStandingsViewData": {
+    "genericError": "Something went wrong. Please try again."
+  },
+  "TournamentsManager": {
+    "title": "Tournaments",
+    "description": "Build groups and enter scores for your tournaments' categories.",
+    "loadingTournaments": "Loading tournaments…"
+  },
+  "TournamentsManagerData": {
+    "genericError": "Something went wrong. Please try again.",
+    "groupsSaved": "Groups saved",
+    "groupsLocked": "Groups locked",
+    "scoreEntered": "Score entered",
+    "walkoverRecorded": "Walkover recorded",
+    "knockoutBracketGenerated": "Knockout bracket generated"
+  },
+  "CategoryWorkspace": {
+    "matches": "Matches",
+    "standings": "Standings",
+    "generating": "Generating…",
+    "generateKnockoutBracket": "Generate Knockout Bracket",
+    "groupStageIncomplete": "Every group match must be decided before the bracket can be generated.",
+    "knockoutBracket": "Knockout bracket",
+    "teamAFallback": "Team A",
+    "teamBFallback": "Team B"
+  },
+  "GroupBuilder": {
+    "groupsTitle": "Groups",
+    "buildGroupsTitle": "Build groups",
+    "generateAutomatic": "Generate groups automatically",
+    "generatingAutomatic": "Generating…",
+    "manualAssignHint": "Or assign each team to a group manually:",
+    "noRegisteredTeams": "No registered teams yet.",
+    "groupForTeamAriaLabel": "Group for {teamName}",
+    "unassignedOption": "Unassigned",
+    "saveGroups": "Save groups",
+    "savingGroups": "Saving…",
+    "lockGroups": "Lock groups",
+    "groupsLocked": "Groups locked",
+    "locking": "Locking…"
+  },
+  "GroupMatchesList": {
+    "statusLabels": {
+      "SCHEDULED": "Scheduled",
+      "COMPLETED": "Completed",
+      "WALKOVER": "Walkover",
+      "CANCELLED": "Cancelled"
+    },
+    "emptyState": "No matches yet — build groups to generate the schedule.",
+    "tbd": "TBD",
+    "matchup": "{teamA} vs {teamB}",
+    "winner": "— Winner: {name}",
+    "enterScore": "Enter score",
+    "walkover": "Walkover"
+  },
+  "KnockoutRoundsList": {
+    "roundLabels": {
+      "ROUND_OF_32": "Round of 32",
+      "ROUND_OF_16": "Round of 16",
+      "QUARTERFINAL": "Quarterfinal",
+      "SEMIFINAL": "Semifinal",
+      "FINAL": "Final"
+    },
+    "statusLabels": {
+      "SCHEDULED": "Scheduled",
+      "COMPLETED": "Completed",
+      "WALKOVER": "Walkover",
+      "CANCELLED": "Cancelled"
+    },
+    "emptyState": "No knockout bracket yet — generate it once the group stage is complete.",
+    "tbd": "TBD",
+    "matchup": "{teamA} vs {teamB}",
+    "winner": "— Winner: {name}",
+    "enterScore": "Enter score",
+    "walkover": "Walkover"
+  },
+  "MatchScoreEntryDialog": {
+    "title": "Enter score",
+    "set1": "Set 1",
+    "set2": "Set 2",
+    "set3": "Set 3 (if needed)",
+    "teamAGames": "Team A games",
+    "teamBGames": "Team B games",
+    "save": "Save score",
+    "saving": "Saving…"
+  },
+  "MatchScoreEntryValidation": {
+    "minZero": "Must be 0 or more",
+    "decidedLeaveEmpty": "The match is already decided after 2 sets — leave set 3 empty.",
+    "set3Required": "Set 3 is required to decide the match.",
+    "invalidSet3": "Enter valid games for set 3."
+  },
+  "WalkoverDialog": {
+    "title": "Record a walkover",
+    "description": "Which team wins by walkover? No score will be recorded.",
+    "teamWins": "{teamLabel} wins"
+  },
+  "TournamentsList": {
+    "emptyState": "No tournaments yet. Creating a tournament isn't built in this view yet — use the API directly, or wait for the create-tournament UI fast-follow."
+  },
+  "StandingsTable": {
+    "emptyState": "No standings yet — matches haven't been played.",
+    "team": "Team",
+    "wins": "Wins",
+    "setDiff": "Set Diff",
+    "gameDiff": "Game Diff"
+  },
+  "TournamentsHub": {
+    "loading": "Loading tournaments…",
+    "emptyState": "No tournaments are open for registration right now."
+  },
+  "TournamentsHubData": {
+    "genericError": "Something went wrong. Please try again."
+  },
+  "TournamentModal": {
+    "loading": "Loading…"
+  },
+  "TournamentModalData": {
+    "genericError": "Something went wrong. Please try again."
+  },
+  "RegistrationPanel": {
+    "registeredWith": "You're registered with {partnerName}.",
+    "withdraw": "Withdraw",
+    "withdrawing": "Withdrawing…",
+    "registerWithPartner": "Register with a partner",
+    "register": "Register",
+    "registering": "Registering…",
+    "registeredTeams": "Registered teams"
+  },
+  "RegistrationPanelData": {
+    "genericError": "Something went wrong. Please try again.",
+    "registered": "You're registered!",
+    "withdrawn": "Registration withdrawn"
+  },
+  "RegisteredTeamsList": {
+    "loading": "Loading teams…",
+    "emptyState": "No teams registered yet."
+  },
+  "HelpView": {
+    "title": "Help",
+    "description": "A quick guide to getting the most out of {brand}."
+  },
+  "PlayerHelpSection": {
+    "title": "For players",
+    "items": {
+      "browsing": {
+        "title": "Finding a club and court",
+        "body": "Open Browse Courts to see clubs near you, pick a court, and check real-time availability for any day."
+      },
+      "booking": {
+        "title": "Booking a slot and paying online",
+        "body": "Tap an open slot to book it. If the court is free to book, your reservation is confirmed instantly. If the club charges a reservation fee, the slot is held for a short time while you pay through Mercado Pago or bank transfer, whichever the club accepts. If you don't finish paying in time, the hold is released automatically and the slot becomes available again."
+      },
+      "myReservations": {
+        "title": "Managing your reservations",
+        "body": "My Reservations lists your upcoming bookings, with the option to show past ones too. You can cancel an upcoming reservation from there if your plans change."
+      },
+      "tournaments": {
+        "title": "Joining a tournament",
+        "body": "When a club opens a tournament for registration, Tournaments shows up in your navigation. Open it to see the available tournaments, pick your category, and register your team."
+      },
+      "profile": {
+        "title": "Your player profile",
+        "body": "Your padel category, preferred side, and dominant hand are set when you onboard. You can update your preferred side and dominant hand anytime from the pencil icon next to your player style card on your Dashboard home."
+      },
+      "playersDirectory": {
+        "title": "Finding other players",
+        "body": "Players lists everyone signed up so you can search for partners and see their category, preferred side, and dominant hand."
+      }
+    }
+  },
+  "OwnerHelpSection": {
+    "title": "For club owners",
+    "items": {
+      "onboarding": {
+        "title": "Setting up your club",
+        "body": "You set your club's basics (name, contact info, legal and billing details) when you onboard as an owner. You can revisit and edit most of it later from Club Settings."
+      },
+      "gate": {
+        "title": "Before you can accept bookings",
+        "body": "Two things are required before your dashboard unlocks: a confirmed Play Padel membership payment, and a way to get paid — connect Mercado Pago or add a bank transfer account. You're guided through both steps automatically right after you onboard."
+      },
+      "courts": {
+        "title": "Managing courts and closures",
+        "body": "Courts is where you add and edit your club's courts (surface, walls, net, photos, pricing) and close individual courts for maintenance. To close the whole club — for a holiday, for example — use Closures inside Club Settings instead."
+      },
+      "reservations": {
+        "title": "Managing reservations",
+        "body": "Reservations shows a day-by-day grid of every court's bookings. Click a slot to see that reservation's details and manage it."
+      },
+      "clubSettings": {
+        "title": "Club settings",
+        "body": "Club Settings is organized into tabs: Basic Info, Hours, Closures, Mercado Pago, and Bank Transfer — everything about how your club runs and gets paid lives there."
+      },
+      "tournaments": {
+        "title": "Running tournaments",
+        "body": "Tournaments lets you create a tournament, build groups, enter match scores, and manage knockout rounds once group play wraps up."
+      }
+    }
+  },
+  "AccountLanguageHelpSection": {
+    "title": "Account & language",
+    "items": {
+      "account": {
+        "title": "Your account",
+        "body": "Account Settings, in the menu under your avatar, opens your account profile — email, password, and security — managed by Clerk."
+      },
+      "language": {
+        "title": "Switching language",
+        "body": "Use the flag toggle in the navbar to switch {brand} between Spanish and English. The same toggle is also available in the header before you sign in."
+      }
+    }
+  },
+  "PhoneField": {
+    "label": "Phone *",
+    "codePlaceholder": "Code",
+    "searchCountryPlaceholder": "Search country…",
+    "noCountryFound": "No country found."
+  },
+  "CountryProvinceCityFields": {
+    "country": "Country",
+    "province": "Province / State",
+    "city": "City",
+    "selectCountry": "Select a country",
+    "selectCountryFirst": "Select a country first",
+    "selectProvince": "Select a province",
+    "selectProvinceFirst": "Select a province first",
+    "selectCity": "Select a city",
+    "noProvincesAvailable": "No provinces available",
+    "noCitiesAvailable": "No cities available"
+  }
+}

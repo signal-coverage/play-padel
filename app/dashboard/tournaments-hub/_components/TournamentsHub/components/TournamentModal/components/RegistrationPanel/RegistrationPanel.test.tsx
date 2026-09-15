@@ -8,6 +8,8 @@ import {
   waitFor,
 } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
+import { NextIntlClientProvider } from "next-intl";
+import messages from "@/messages/en.json";
 
 const registerTeamMock = { mutate: vi.fn(), isPending: false };
 const withdrawTeamMock = { mutate: vi.fn(), isPending: false };
@@ -34,6 +36,14 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 
+function renderPanel(props: React.ComponentProps<typeof RegistrationPanel>) {
+  return render(
+    <NextIntlClientProvider locale="en" messages={messages}>
+      <RegistrationPanel {...props} />
+    </NextIntlClientProvider>,
+  );
+}
+
 const ACTIVE_TEAMS = [
   {
     id: "team_1",
@@ -57,9 +67,7 @@ describe("RegistrationPanel", () => {
   it("shows a PlayerPicker + disabled Register button when the viewer has no team yet", () => {
     useCategoryTeamsMock.mockReturnValue({ data: [], isLoading: false });
 
-    render(
-      <RegistrationPanel tournamentId="t1" categoryId="c1" viewerId="me" />,
-    );
+    renderPanel({ tournamentId: "t1", categoryId: "c1", viewerId: "me" });
 
     expect(screen.getByText("Pick Bruno")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /^register$/i })).toBeDisabled();
@@ -68,9 +76,7 @@ describe("RegistrationPanel", () => {
   it("enables Register once a partner is picked, and submits with the picked id", async () => {
     useCategoryTeamsMock.mockReturnValue({ data: [], isLoading: false });
 
-    render(
-      <RegistrationPanel tournamentId="t1" categoryId="c1" viewerId="me" />,
-    );
+    renderPanel({ tournamentId: "t1", categoryId: "c1", viewerId: "me" });
 
     fireEvent.click(screen.getByText("Pick Bruno"));
     const registerButton = screen.getByRole("button", { name: /^register$/i });
@@ -90,9 +96,7 @@ describe("RegistrationPanel", () => {
       isLoading: false,
     });
 
-    render(
-      <RegistrationPanel tournamentId="t1" categoryId="c1" viewerId="me" />,
-    );
+    renderPanel({ tournamentId: "t1", categoryId: "c1", viewerId: "me" });
 
     expect(screen.getByText(/you're registered with/i)).toBeInTheDocument();
     expect(screen.getAllByText(/bruno díaz/i).length).toBeGreaterThan(0);
@@ -108,9 +112,7 @@ describe("RegistrationPanel", () => {
       isLoading: false,
     });
 
-    render(
-      <RegistrationPanel tournamentId="t1" categoryId="c1" viewerId="me" />,
-    );
+    renderPanel({ tournamentId: "t1", categoryId: "c1", viewerId: "me" });
 
     fireEvent.click(screen.getByRole("button", { name: /withdraw/i }));
 
@@ -123,9 +125,7 @@ describe("RegistrationPanel", () => {
       isLoading: false,
     });
 
-    render(
-      <RegistrationPanel tournamentId="t1" categoryId="c1" viewerId="me" />,
-    );
+    renderPanel({ tournamentId: "t1", categoryId: "c1", viewerId: "me" });
 
     expect(screen.getByText("Carla Ruiz / Diego Paz")).toBeInTheDocument();
   });
@@ -136,9 +136,7 @@ describe("RegistrationPanel", () => {
       isLoading: false,
     });
 
-    render(
-      <RegistrationPanel tournamentId="t1" categoryId="c1" viewerId="me" />,
-    );
+    renderPanel({ tournamentId: "t1", categoryId: "c1", viewerId: "me" });
 
     expect(screen.getByText("Pick Bruno")).toBeInTheDocument();
     expect(screen.queryByText(/bruno díaz/i)).not.toBeInTheDocument();

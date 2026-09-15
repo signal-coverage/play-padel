@@ -2,6 +2,8 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
+import { NextIntlClientProvider } from "next-intl";
+import messages from "@/messages/en.json";
 import { ChangePlanDialog } from "./ChangePlanDialog";
 
 afterEach(() => {
@@ -19,7 +21,11 @@ function renderDialog(
     onSelectPlan: vi.fn(),
     ...overrides,
   };
-  render(<ChangePlanDialog {...props} />);
+  render(
+    <NextIntlClientProvider locale="en" messages={messages}>
+      <ChangePlanDialog {...props} />
+    </NextIntlClientProvider>,
+  );
   return props;
 }
 

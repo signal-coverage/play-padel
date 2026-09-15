@@ -1,5 +1,10 @@
 import type { MercadoPagoOperationalStatus } from "./types";
 
+// `t` comes from the caller's own useTranslations("MercadoPagoConnectionCard")
+// result — this is a plain util, not a component, so it can't call
+// useTranslations itself.
+export type MercadoPagoConnectionCardT = (key: string) => string;
+
 export type MercadoPagoConnectionCopy = {
   badgeLabel: string;
   badgeVariant: "success" | "warning" | "destructive";
@@ -42,14 +47,15 @@ function buildAccountLabel(
  * the local-only "unlink" action.
  */
 export function getMercadoPagoConnectionCopy(
-  status?: MercadoPagoOperationalStatus,
+  status: MercadoPagoOperationalStatus | undefined,
+  t: MercadoPagoConnectionCardT,
 ): MercadoPagoConnectionCopy {
   if (!status) {
     return {
-      badgeLabel: "Loading…",
+      badgeLabel: t("loadingBadge"),
       badgeVariant: "warning",
-      description: "Checking your Mercado Pago connection…",
-      ctaLabel: "Connect Mercado Pago",
+      description: t("loadingDescription"),
+      ctaLabel: t("connectCta"),
       showDisconnect: false,
       accountLabel: null,
     };
@@ -57,11 +63,10 @@ export function getMercadoPagoConnectionCopy(
 
   if (status.cause === "MP_NOT_CONNECTED") {
     return {
-      badgeLabel: "Not connected",
+      badgeLabel: t("notConnectedBadge"),
       badgeVariant: "destructive",
-      description:
-        "Connect your Mercado Pago account so players can pay for court reservations directly to you.",
-      ctaLabel: "Connect Mercado Pago",
+      description: t("notConnectedDescription"),
+      ctaLabel: t("connectCta"),
       showDisconnect: false,
       accountLabel: null,
     };
@@ -69,22 +74,20 @@ export function getMercadoPagoConnectionCopy(
 
   if (status.cause === "CLUB_INACTIVE") {
     return {
-      badgeLabel: "Connected",
+      badgeLabel: t("connectedBadge"),
       badgeVariant: "warning",
-      description:
-        "Mercado Pago is connected, but your club membership isn't active — reactivate it to resume accepting payments.",
-      ctaLabel: "Switch account",
+      description: t("clubInactiveDescription"),
+      ctaLabel: t("switchAccountCta"),
       showDisconnect: true,
       accountLabel: buildAccountLabel(status),
     };
   }
 
   return {
-    badgeLabel: "Connected",
+    badgeLabel: t("connectedBadge"),
     badgeVariant: "success",
-    description:
-      "Mercado Pago is connected. Players pay you directly for court reservations.",
-    ctaLabel: "Switch account",
+    description: t("connectedDescription"),
+    ctaLabel: t("switchAccountCta"),
     showDisconnect: true,
     accountLabel: buildAccountLabel(status),
   };

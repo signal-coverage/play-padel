@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import { GateScreen } from "../GateScreen";
 
 // New club-operational-gate cause: PENDING_APPROVAL (see
@@ -6,10 +7,7 @@ import { GateScreen } from "../GateScreen";
 // their own club, so this renders no submit action at all (GateScreen omits
 // its bottom button row entirely when submitLabel is not provided).
 export function PendingApprovalCard() {
-  return (
-    <GateScreen
-      title="Your club is under review"
-      description="We'll notify you once it's approved. Until then, you can't accept reservations."
-    />
-  );
+  const t = useTranslations("PendingApprovalCard");
+
+  return <GateScreen title={t("title")} description={t("description")} />;
 }

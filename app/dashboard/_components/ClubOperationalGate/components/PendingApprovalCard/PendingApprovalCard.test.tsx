@@ -2,6 +2,8 @@
 import { describe, it, expect, afterEach } from "vitest";
 import { render, screen, cleanup } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
+import { NextIntlClientProvider } from "next-intl";
+import messages from "@/messages/en.json";
 import { PendingApprovalCard } from "./PendingApprovalCard";
 
 describe("PendingApprovalCard", () => {
@@ -13,7 +15,11 @@ describe("PendingApprovalCard", () => {
   });
 
   it("renders an informational heading and description, with no action button", () => {
-    render(<PendingApprovalCard />);
+    render(
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <PendingApprovalCard />
+      </NextIntlClientProvider>,
+    );
 
     expect(
       screen.getByRole("heading", { name: "Your club is under review" }),

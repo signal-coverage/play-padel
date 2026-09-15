@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import {
   Sheet,
   SheetContent,
@@ -15,6 +16,7 @@ import { BannerPreview } from "./components/BannerPreview";
 import type { PlayerOverviewBannerProps } from "./types";
 
 export function PlayerOverviewBanner({ className }: PlayerOverviewBannerProps) {
+  const t = useTranslations("PlayerOverviewBanner");
   const [open, setOpen] = useState(false);
   const { partner } = usePlayerOverviewData();
 
@@ -36,7 +38,7 @@ export function PlayerOverviewBanner({ className }: PlayerOverviewBannerProps) {
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetContent side="bottom">
           <SheetHeader>
-            <SheetTitle>Player Overview</SheetTitle>
+            <SheetTitle>{t("title")}</SheetTitle>
           </SheetHeader>
           <div className="overflow-y-auto px-4 pb-4">
             <PlayerOverviewContent />

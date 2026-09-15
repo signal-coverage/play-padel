@@ -21,7 +21,10 @@ vi.mock("../lib/prompt", () => ({
   withSpinner: async (_msg: string, task: () => Promise<unknown>) => task(),
 }));
 
-import { applyMigrations } from "./apply-migrations";
+import {
+  applyMigrations,
+  applyMigrationsToAllEnvironments,
+} from "./apply-migrations";
 
 /** Simulates a child_process ChildProcess good enough for this module's needs. */
 function makeFakeChild() {
@@ -136,5 +139,59 @@ describe("applyMigrations", () => {
 
     await expect(applyMigrations(".env.preview")).rejects.toThrow();
     expect(rmMock).toHaveBeenCalled();
+  });
+
+  it("resolves true when already up to date, and false when the deploy fails", async () => {
+    queueCliResult(UP_TO_DATE_OUTPUT, 0);
+    await expect(applyMigrations(".env.preview")).resolves.toBe(true);
+
+    queueCliResult(PENDING_OUTPUT, 1);
+    askConfirmMock.mockResolvedValue(true);
+    queueCliResult("Error: something went wrong", 1);
+    await expect(applyMigrations(".env.preview")).resolves.toBe(false);
+  });
+});
+
+describe("applyMigrationsToAllEnvironments", () => {
+  it("walks local, then preview, then prod, in that order", async () => {
+    queueCliResult(UP_TO_DATE_OUTPUT, 0); // local status
+    queueCliResult(UP_TO_DATE_OUTPUT, 0); // preview status
+    queueCliResult(UP_TO_DATE_OUTPUT, 0); // prod status
+
+    await applyMigrationsToAllEnvironments();
+
+    expect(spawnMock).toHaveBeenCalledTimes(3);
+    expect(writeFileMock.mock.calls[0][1]).toEqual(
+      expect.stringContaining('".env.local"'),
+    );
+    expect(writeFileMock.mock.calls[1][1]).toEqual(
+      expect.stringContaining('".env.preview"'),
+    );
+    expect(writeFileMock.mock.calls[2][1]).toEqual(
+      expect.stringContaining('".env.prod"'),
+    );
+  });
+
+  it("stops before prod when preview is declined, and never touches prod", async () => {
+    queueCliResult(UP_TO_DATE_OUTPUT, 0); // local status — up to date
+    queueCliResult(PENDING_OUTPUT, 1); // preview status — pending
+    askConfirmMock.mockResolvedValue(false); // declined
+
+    await applyMigrationsToAllEnvironments();
+
+    // local status, preview status only — no preview deploy, no prod call at all
+    expect(spawnMock).toHaveBeenCalledTimes(2);
+    expect(writeFileMock.mock.calls).toHaveLength(2);
+  });
+
+  it("stops after a deploy failure instead of continuing to the next environment", async () => {
+    queueCliResult(PENDING_OUTPUT, 1); // local status — pending
+    askConfirmMock.mockResolvedValue(true);
+    queueCliResult("Error: something went wrong", 1); // local deploy fails
+
+    await applyMigrationsToAllEnvironments();
+
+    expect(spawnMock).toHaveBeenCalledTimes(2); // local status + failed deploy only
+    expect(writeFileMock.mock.calls).toHaveLength(1);
   });
 });

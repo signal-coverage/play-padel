@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
+import { useTranslations } from "next-intl";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BankTransferAccountSettingsCard } from "../BankTransferAccountSettingsCard";
 import { ClubClosuresCard } from "../ClubClosuresCard";
@@ -39,6 +40,7 @@ import type { ClubSettingsTabValue } from "./types";
 // render the indicator under — Radix's own uncontrolled state would work
 // fine otherwise.
 export function ClubSettingsTabs() {
+  const t = useTranslations("ClubSettingsTabs");
   const [activeTab, setActiveTab] = useState<ClubSettingsTabValue>(
     DEFAULT_CLUB_SETTINGS_TAB,
   );
@@ -60,7 +62,7 @@ export function ClubSettingsTabs() {
             className="h-auto flex-none flex-row items-center gap-2 rounded-lg px-5 py-2.5 text-muted-foreground after:hidden data-active:text-primary"
           >
             <tab.icon aria-hidden="true" className="size-4" strokeWidth={1.5} />
-            <span className="text-sm font-medium">{tab.label}</span>
+            <span className="text-sm font-medium">{t(tab.labelKey)}</span>
             {tab.value === activeTab && (
               <motion.span
                 layoutId="club-settings-tab-underline"

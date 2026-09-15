@@ -2,8 +2,11 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
+import { NextIntlClientProvider } from "next-intl";
+import messages from "@/messages/en.json";
 import { AdminStatusRecentActivity } from "./AdminStatusRecentActivity";
 import type { SystemJobLogRecord } from "../../types";
+import type { ComponentProps } from "react";
 
 function entry(
   overrides: Partial<SystemJobLogRecord> = {},
@@ -30,6 +33,16 @@ class ResizeObserverStub {
   disconnect() {}
 }
 
+function renderComponent(
+  props: ComponentProps<typeof AdminStatusRecentActivity>,
+) {
+  return render(
+    <NextIntlClientProvider locale="en" messages={messages}>
+      <AdminStatusRecentActivity {...props} />
+    </NextIntlClientProvider>,
+  );
+}
+
 beforeEach(() => {
   vi.stubGlobal("ResizeObserver", ResizeObserverStub);
 });
@@ -41,7 +54,7 @@ afterEach(() => {
 
 describe("AdminStatusRecentActivity", () => {
   it("renders a failed entry's error as a clickable trigger, not just plain truncated text", () => {
-    render(<AdminStatusRecentActivity entries={[entry()]} isLoading={false} />);
+    renderComponent({ entries: [entry()], isLoading: false });
 
     expect(
       screen.getByRole("button", { name: "Signature verification failed" }),
@@ -49,12 +62,10 @@ describe("AdminStatusRecentActivity", () => {
   });
 
   it("renders a plain dash for a successful entry, with nothing to click into", () => {
-    render(
-      <AdminStatusRecentActivity
-        entries={[entry({ status: "SUCCESS", errorMessage: null })]}
-        isLoading={false}
-      />,
-    );
+    renderComponent({
+      entries: [entry({ status: "SUCCESS", errorMessage: null })],
+      isLoading: false,
+    });
 
     expect(screen.getByText("—")).toBeInTheDocument();
     expect(
@@ -63,7 +74,7 @@ describe("AdminStatusRecentActivity", () => {
   });
 
   it("opens a modal with the complete error message when the error is clicked", () => {
-    render(<AdminStatusRecentActivity entries={[entry()]} isLoading={false} />);
+    renderComponent({ entries: [entry()], isLoading: false });
 
     fireEvent.click(
       screen.getByRole("button", { name: "Signature verification failed" }),
@@ -76,7 +87,7 @@ describe("AdminStatusRecentActivity", () => {
   });
 
   it("closes the modal again when Close is clicked", () => {
-    render(<AdminStatusRecentActivity entries={[entry()]} isLoading={false} />);
+    renderComponent({ entries: [entry()], isLoading: false });
 
     fireEvent.click(
       screen.getByRole("button", { name: "Signature verification failed" }),

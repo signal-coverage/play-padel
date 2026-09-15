@@ -92,8 +92,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
           recipientId: owner.id,
           recipientEmail: owner.email,
           recipientName: owner.displayName,
-          subject: "Your club settings were updated",
-          html: "An administrator updated your club's settings.",
+          params: {},
           sendEmail: false,
         });
       }

@@ -9,6 +9,8 @@ import {
 } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { NextIntlClientProvider } from "next-intl";
+import messages from "@/messages/en.json";
 import { NotificationsBell } from "./NotificationsBell";
 import { notificationsQueryKey } from "./hooks";
 
@@ -138,9 +140,11 @@ function renderNotificationsBell(fetchMock: ReturnType<typeof vi.fn>) {
   });
 
   render(
-    <QueryClientProvider client={queryClient}>
-      <NotificationsBell />
-    </QueryClientProvider>,
+    <NextIntlClientProvider locale="en" messages={messages}>
+      <QueryClientProvider client={queryClient}>
+        <NotificationsBell />
+      </QueryClientProvider>
+    </NextIntlClientProvider>,
   );
 
   return { queryClient };
@@ -198,9 +202,11 @@ async function renderAndAwaitBaseline(
   const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
 
   render(
-    <QueryClientProvider client={queryClient}>
-      <NotificationsBell />
-    </QueryClientProvider>,
+    <NextIntlClientProvider locale="en" messages={messages}>
+      <QueryClientProvider client={queryClient}>
+        <NotificationsBell />
+      </QueryClientProvider>
+    </NextIntlClientProvider>,
   );
 
   await screen.findByRole("button", { name: "Notifications" });
@@ -776,9 +782,11 @@ describe("NotificationsBell", () => {
     const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
 
     render(
-      <QueryClientProvider client={queryClient}>
-        <NotificationsBell />
-      </QueryClientProvider>,
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <QueryClientProvider client={queryClient}>
+          <NotificationsBell />
+        </QueryClientProvider>
+      </NextIntlClientProvider>,
     );
 
     await screen.findByRole("button", { name: "Notifications" });
@@ -855,9 +863,11 @@ describe("NotificationsBell", () => {
     const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
 
     render(
-      <QueryClientProvider client={queryClient}>
-        <NotificationsBell />
-      </QueryClientProvider>,
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <QueryClientProvider client={queryClient}>
+          <NotificationsBell />
+        </QueryClientProvider>
+      </NextIntlClientProvider>,
     );
 
     await screen.findByRole("button", { name: "Notifications" });
@@ -917,9 +927,11 @@ describe("NotificationsBell", () => {
     const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
 
     render(
-      <QueryClientProvider client={queryClient}>
-        <NotificationsBell />
-      </QueryClientProvider>,
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <QueryClientProvider client={queryClient}>
+          <NotificationsBell />
+        </QueryClientProvider>
+      </NextIntlClientProvider>,
     );
 
     await screen.findByRole("button", { name: "Notifications" });
@@ -975,9 +987,11 @@ describe("NotificationsBell", () => {
     const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
 
     render(
-      <QueryClientProvider client={queryClient}>
-        <NotificationsBell />
-      </QueryClientProvider>,
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <QueryClientProvider client={queryClient}>
+          <NotificationsBell />
+        </QueryClientProvider>
+      </NextIntlClientProvider>,
     );
 
     await screen.findByRole("button", { name: "Notifications" });
@@ -1031,9 +1045,11 @@ describe("NotificationsBell", () => {
     });
 
     render(
-      <QueryClientProvider client={queryClient}>
-        <NotificationsBell />
-      </QueryClientProvider>,
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <QueryClientProvider client={queryClient}>
+          <NotificationsBell />
+        </QueryClientProvider>
+      </NextIntlClientProvider>,
     );
 
     await screen.findByRole("button", { name: "Notifications" });
@@ -1082,9 +1098,11 @@ describe("NotificationsBell", () => {
     });
 
     render(
-      <QueryClientProvider client={queryClient}>
-        <NotificationsBell />
-      </QueryClientProvider>,
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <QueryClientProvider client={queryClient}>
+          <NotificationsBell />
+        </QueryClientProvider>
+      </NextIntlClientProvider>,
     );
 
     await screen.findByRole("button", { name: "Notifications" });
@@ -1133,9 +1151,11 @@ describe("NotificationsBell", () => {
     });
 
     render(
-      <QueryClientProvider client={queryClient}>
-        <NotificationsBell />
-      </QueryClientProvider>,
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <QueryClientProvider client={queryClient}>
+          <NotificationsBell />
+        </QueryClientProvider>
+      </NextIntlClientProvider>,
     );
 
     await screen.findByRole("button", { name: "Notifications" });
@@ -1184,9 +1204,11 @@ describe("NotificationsBell", () => {
     });
 
     render(
-      <QueryClientProvider client={queryClient}>
-        <NotificationsBell />
-      </QueryClientProvider>,
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <QueryClientProvider client={queryClient}>
+          <NotificationsBell />
+        </QueryClientProvider>
+      </NextIntlClientProvider>,
     );
 
     await screen.findByRole("button", { name: "Notifications" });
@@ -1237,9 +1259,11 @@ describe("NotificationsBell", () => {
     });
 
     render(
-      <QueryClientProvider client={queryClient}>
-        <NotificationsBell />
-      </QueryClientProvider>,
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <QueryClientProvider client={queryClient}>
+          <NotificationsBell />
+        </QueryClientProvider>
+      </NextIntlClientProvider>,
     );
 
     await screen.findByRole("button", { name: "Notifications" });
@@ -1289,9 +1313,11 @@ describe("NotificationsBell", () => {
     });
 
     render(
-      <QueryClientProvider client={queryClient}>
-        <NotificationsBell />
-      </QueryClientProvider>,
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <QueryClientProvider client={queryClient}>
+          <NotificationsBell />
+        </QueryClientProvider>
+      </NextIntlClientProvider>,
     );
 
     await screen.findByRole("button", { name: "Notifications" });

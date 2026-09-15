@@ -1,0 +1,1829 @@
+{
+  "NotificationContent": {
+    "CLUB_UPDATED_BY_ADMIN": {
+      "subject": "La configuración de tu club fue actualizada",
+      "body": "Un administrador actualizó la configuración de tu club."
+    },
+    "PROFILE_UPDATED_BY_ADMIN": {
+      "updated": {
+        "subject": "Tu perfil fue actualizado",
+        "body": "Un administrador actualizó tu perfil."
+      },
+      "deleted": {
+        "subject": "Tu cuenta fue eliminada",
+        "body": "Un administrador eliminó tu cuenta. Si creés que se trata de un error, contactá a soporte."
+      }
+    },
+    "RESERVATION_PAYMENT_CONFLICT": {
+      "notConfirmed": {
+        "subject": "No se pudo confirmar una reserva pagada",
+        "body": "Se recibió el pago de un jugador, pero su turno no pudo confirmarse automáticamente. Por favor, resolvé esto manualmente."
+      },
+      "overlap": {
+        "subject": "No se pudo confirmar una reserva pagada",
+        "body": "Se recibió el pago de un jugador, pero su turno ahora se superpone con otra reserva. Por favor, resolvé esto manualmente."
+      }
+    },
+    "RESERVATION_PAYMENT_HOLD_EXPIRED": {
+      "bankTransfer": {
+        "subject": "Tu reserva pendiente expiró",
+        "body": "Hola {userName}, tu pago por transferencia bancaria para {courtName} el {date} no fue confirmado a tiempo, por lo que tu turno fue liberado. Volvé a reservar si todavía querés este turno — puede que otro jugador ya lo haya tomado. Si ya enviaste la transferencia, contactá directamente al club para confirmarla antes de volver a reservar."
+      },
+      "mercadoPago": {
+        "subject": "Tu reserva pendiente expiró",
+        "body": "Hola {userName}, tu pago con Mercado Pago para {courtName} el {date} no se completó a tiempo, por lo que tu turno fue liberado. Volvé a reservar si todavía querés este turno — puede que otro jugador ya lo haya tomado. Si completaste el pago y seguís viendo este mensaje, contactá directamente al club antes de volver a reservar."
+      }
+    },
+    "RESERVATION_REMINDER": {
+      "subject": "Recordatorio de tu próxima reserva",
+      "body": "Hola {userName}, este es un recordatorio de tu próxima reserva de cancha el {date} a las {time} en {courtName}. Podés cancelar esta reserva vos mismo hasta 2 horas antes de su inicio. Después de eso, contactá directamente al club."
+    },
+    "PAYMENT_CONFIRMED": {
+      "subject": "Pago recibido para la factura #{invoiceNumber}",
+      "body": "Hola {userName}, recibimos tu pago por tu reserva de cancha. ¡Gracias! Factura #: {invoiceNumber}. Monto pagado: {formattedTotal}. Estado: Pagado. Guardá este correo como comprobante de pago."
+    },
+    "RESERVATION_CANCELLED": {
+      "subject": "Tu reserva fue cancelada",
+      "body": "Hola {userName}, te informamos que la siguiente reserva de cancha fue cancelada: Fecha: {date}, Hora: {time}, Cancha: {courtName}. No dudes en hacer una nueva reserva cuando quieras jugar."
+    },
+    "WAITLIST_SLOT_AVAILABLE": {
+      "subject": "Se liberó un turno que estabas esperando",
+      "body": "Hola {userName}, buenas noticias — un turno sobre el que pediste ser notificado ahora está libre: Fecha: {date}, Hora: {time}, Cancha: {courtName}. Reservalo ahora: {bookingUrl}. Este turno está disponible por orden de llegada — otros jugadores también pueden haber pedido ser notificados."
+    },
+    "CLUB_APPROVED": {
+      "subject": "Tu club fue aprobado",
+      "body": "Tu club ya está aprobado y puede aceptar reservas."
+    },
+    "CLUB_REJECTED": {
+      "subject": "Tu solicitud de club no fue aprobada",
+      "body": "Tu solicitud de club no fue aprobada. Contactá a soporte para más detalles."
+    },
+    "CLUB_SUSPENDED": {
+      "subject": "Tu club fue suspendido",
+      "body": "Tu club fue suspendido. Contactá a soporte para más detalles."
+    },
+    "PAYMENT_RECEIVED": {
+      "subject": "Pago recibido",
+      "body": "Se recibió un pago de {currency} {amount}."
+    },
+    "MEMBERSHIP_PAST_DUE": {
+      "subject": "El pago de tu membresía está vencido",
+      "body": "El pago de la membresía de tu club falló y ahora está vencido. Por favor, actualizá tu método de pago."
+    },
+    "CLUB_PENDING_APPROVAL": {
+      "subject": "Hay un nuevo club pendiente de aprobación",
+      "body": "Un nuevo club, {clubName}, está pendiente de aprobación."
+    },
+    "SYSTEM_JOB_FAILED": {
+      "subject": "Falló una tarea en segundo plano",
+      "body": "La tarea {kind}/{name} falló: {errorMessage}."
+    },
+    "CLUB_OPERATIONAL_READY": {
+      "trialStarted": {
+        "subject": "Tu panel está desbloqueado",
+        "body": "El período de prueba de tu club comenzó — tu panel ya está desbloqueado."
+      },
+      "recovered": {
+        "subject": "Tu panel está desbloqueado",
+        "body": "El pago de la membresía de tu club fue exitoso — tu panel está desbloqueado nuevamente."
+      },
+      "freePlanActivated": {
+        "subject": "Tu panel está desbloqueado",
+        "body": "Un administrador activó el plan de prueba GRATUITO para tu club — tu panel ya está desbloqueado. Las reservas reales de jugadores todavía necesitan un método de pago conectado (Mercado Pago o transferencia bancaria) en Configuración."
+      },
+      "welcomePeriodGranted": {
+        "subject": "Tu panel está desbloqueado",
+        "body": "Un administrador le otorgó a tu club {months} mes(es) gratis — tu panel ya está desbloqueado. Las reservas reales de jugadores todavía necesitan un método de pago conectado (Mercado Pago o transferencia bancaria) en Configuración."
+      },
+      "unsuspended": {
+        "subject": "Tu panel está desbloqueado",
+        "body": "Tu club ya no está suspendido — tu panel está desbloqueado nuevamente."
+      },
+      "readyToAcceptReservations": {
+        "subject": "Tu club está listo para aceptar reservas",
+        "body": "Tu club ya puede aceptar reservas reales. No olvides configurar tus horarios de atención en Configuración para que los jugadores sepan cuándo pueden reservar."
+      }
+    },
+    "ADMIN_ACCESS_GRANTED": {
+      "subject": "Ahora tenés acceso de administrador en Play Padel",
+      "body": "Tu cuenta ahora tiene acceso de administrador — podés ver métricas de toda la plataforma, aprobar clubes y más desde el menú de Administración."
+    },
+    "ADMIN_ACCESS_REVOKED": {
+      "subject": "Se revocó tu acceso de administrador en Play Padel",
+      "body": "Tu cuenta ya no tiene acceso de administrador — perdiste el acceso a las métricas de toda la plataforma, la aprobación de clubes y el resto del menú de Administración."
+    },
+    "MEMBERSHIP_CANCELLED": {
+      "subject": "La membresía de tu club fue cancelada",
+      "body": "La suscripción de membresía de tu club fue cancelada y tu panel ahora está bloqueado. Reactivá tu membresía para restaurar el acceso."
+    },
+    "RESERVATION_UPDATED": {
+      "updated": {
+        "subject": "Tu reserva fue actualizada",
+        "body": "Una de tus reservas fue actualizada por el club. Revisá Mis Reservas para ver los detalles más recientes."
+      },
+      "completed": {
+        "subject": "Tu reserva está completa",
+        "body": "Tu reserva fue marcada como completada."
+      },
+      "noShow": {
+        "subject": "Fuiste marcado como ausente",
+        "body": "Fuiste marcado como ausente en una reserva. Si creés que se trata de un error, contactá al club."
+      }
+    }
+  },
+  "LocaleSwitcher": {
+    "label": "Idioma",
+    "en": "Inglés",
+    "es": "Español"
+  },
+  "LandingHeader": {
+    "nav": {
+      "about": "Nosotros",
+      "features": "Funcionalidades",
+      "pricing": "Precios",
+      "getStarted": "Comenzar"
+    },
+    "signUp": "Registrarse",
+    "logIn": "Iniciar sesión",
+    "goToApp": "Ir a la app",
+    "tryForFree": "Probar gratis",
+    "openMenu": "Abrir menú"
+  },
+  "LandingHero": {
+    "heading": {
+      "start": "Reserva canchas.",
+      "connect": "Conecta.",
+      "run": "Administra",
+      "clubLine": "tu club con nuestra",
+      "platform": "Plataforma de Pádel."
+    },
+    "ctaPrimary": "Explorar clubes",
+    "ctaSecondary": "Para dueños de clubes",
+    "description": "Reservas de cancha en tiempo real para jugadores, y herramientas completas de gestión de club para propietarios — todo en una sola plataforma creada para el pádel.",
+    "imageAlt": "Composición de paletas y pelotas de pádel"
+  },
+  "LandingTrusted": {
+    "badge": "En números",
+    "heading": {
+      "bold": "Ya sea que reserves una cancha o gestiones un club",
+      "rest": "— {brand} conecta a jugadores y clubes en un solo lugar, en tiempo real."
+    },
+    "items": [
+      {
+        "value": "4",
+        "label": "Planes flexibles",
+        "description": "Desde un club de una sola cancha hasta una operación de varias canchas: elige el plan que se ajuste a tus necesidades y mejóralo cuando quieras."
+      },
+      {
+        "value": "Tiempo real",
+        "label": "Disponibilidad de canchas",
+        "description": "Mira exactamente qué horarios están disponibles en este momento, sin llamadas ni esperas de respuesta."
+      },
+      {
+        "value": "Seguro",
+        "label": "Pagos con Mercado Pago",
+        "description": "Paga en línea al reservar, con reembolsos automáticos si se cancela una reserva."
+      }
+    ]
+  },
+  "LandingAbout": {
+    "heading": {
+      "bold": "Creado para jugadores y",
+      "muted": "clubes que buscan más"
+    },
+    "badge": "Reservas simplificadas",
+    "items": [
+      {
+        "title": "Reservas en tiempo real",
+        "description": "Explora clubes, consulta la disponibilidad de canchas en vivo y reserva tu turno en segundos, sin idas y vueltas."
+      },
+      {
+        "title": "Pagos seguros integrados",
+        "description": "Cuando un club requiere pago anticipado, el pago se realiza directamente en la app a través de Mercado Pago; si cancelas, se te reembolsa automáticamente."
+      },
+      {
+        "title": "Pensado también para dueños de clubes",
+        "description": "Gestiona canchas, disponibilidad y reservas desde un solo panel, con un registro completo de cada cambio."
+      },
+      {
+        "title": "Tu perfil de jugador, a tu manera",
+        "description": "Registra tu lado preferido, mano dominante y categoría de habilidad para que compañeros y clubes conozcan tu estilo de juego."
+      }
+    ],
+    "imageAlt": "Jugadores compartiendo un momento junto a la red después de un partido",
+    "learnMore": "Saber más"
+  },
+  "LandingFeatures": {
+    "badge": "Una plataforma. Todas las canchas.",
+    "heading": {
+      "bold": "Todo lo que necesitas",
+      "muted": "para reservar y gestionar"
+    },
+    "previousLabel": "Funcionalidad anterior",
+    "nextLabel": "Siguiente funcionalidad",
+    "goToFeature": "Ir a la funcionalidad {number}: {title}",
+    "items": [
+      {
+        "title": "Disponibilidad en tiempo real",
+        "description": "Consulta exactamente qué canchas están libres en cualquier club, actualizado en el momento en que se reserva un turno.",
+        "imageAlt": "Dos mujeres jugando al pádel en una cancha al aire libre"
+      },
+      {
+        "title": "Reserva instantánea",
+        "description": "Reserva tu cancha en pocos toques, sin llamadas ni esperas de confirmación.",
+        "imageAlt": "Vista en ángulo alto de paletas y pelotas de pádel en la cancha"
+      },
+      {
+        "title": "Pagos en línea seguros",
+        "description": "Pago con Mercado Pago integrado directamente en el flujo de reserva, con reembolsos automáticos ante una cancelación.",
+        "imageAlt": "Personas jugando al pádel juntas en una cancha cubierta"
+      },
+      {
+        "title": "Gestión de canchas y cierres",
+        "description": "Los propietarios pueden bloquear una cancha por mantenimiento o un evento, con un motivo que los jugadores ven antes de intentar reservarla.",
+        "imageAlt": "Jugador preparándose para jugar al pádel en una cancha cubierta"
+      },
+      {
+        "title": "Perfiles de jugador",
+        "description": "Registra tu lado preferido, mano dominante y categoría de habilidad, visibles para compañeros y clubes.",
+        "imageAlt": "Jugadores compartiendo un momento en una cancha de pádel cubierta"
+      },
+      {
+        "title": "Planes para cada club",
+        "description": "Desde una sola cancha hasta una operación de varias canchas, elige el plan que se ajuste y mejóralo a medida que creces.",
+        "imageAlt": "Vista lateral de una mujer jugando al pádel"
+      },
+      {
+        "title": "Registro de auditoría completo",
+        "description": "Cada reserva, cancelación y cambio queda registrado, para que los propietarios siempre sepan qué sucedió y cuándo.",
+        "imageAlt": "Plano completo de una mujer jugando al pádel"
+      },
+      {
+        "title": "Pensado para Argentina",
+        "description": "Identificación fiscal con formato CUIT, precios en ARS y Mercado Pago: pensado según cómo operan realmente los clubes aquí.",
+        "imageAlt": "Jugador preparándose para jugar al pádel en una cancha cubierta"
+      }
+    ]
+  },
+  "LandingPricing": {
+    "heading": "Precios simples y transparentes",
+    "subheading": "Elige el plan que se ajuste a tu club hoy, y mejóralo cuando quieras a medida que creces.",
+    "perMonth": "/ mes"
+  },
+  "LandingCtaBanner": {
+    "heading": {
+      "line1": "¿Listo para reservar",
+      "line2": "tu próximo partido?"
+    },
+    "description": "Encuentra un club, consulta la disponibilidad en tiempo real y reserva tu cancha en minutos, o suma tu propio club a {brand} y gestiónalo todo desde un solo panel.",
+    "ctaPrimary": "Comenzar",
+    "ctaSecondary": "¿Tienes un club? Publícalo aquí"
+  },
+  "LandingFooter": {
+    "tagline": "La plataforma que clubes de pádel y jugadores usan para reservar, gestionar y jugar, sin idas y vueltas.",
+    "talkToUs": "Hablemos",
+    "columns": [
+      {
+        "title": "Navegar",
+        "links": [
+          {
+            "label": "Inicio"
+          },
+          {
+            "label": "Nosotros"
+          },
+          {
+            "label": "Funcionalidades"
+          }
+        ]
+      },
+      {
+        "title": "Soporte",
+        "links": [
+          {
+            "label": "Contacto"
+          }
+        ]
+      }
+    ],
+    "copyright": "© {year} {brand}. Todos los derechos reservados.",
+    "privacy": "Privacidad",
+    "terms": "Términos y condiciones"
+  },
+  "ShareButton": {
+    "share": "Compartir",
+    "shareText": "Reserva canchas de pádel y gestiona tu club, todo en una sola plataforma.",
+    "shareErrorGeneric": "No se pudo compartir esta página. Inténtalo de nuevo.",
+    "linkCopied": "Enlace copiado al portapapeles",
+    "copyError": "No se pudo copiar el enlace. Inténtalo de nuevo."
+  },
+  "AuthLeftPanel": {
+    "quote": "“Reservar una cancha solía significar llamadas cruzadas con la recepción. Ahora toma diez segundos.”",
+    "name": "Marina López",
+    "role": "Dueña, Level Up Padel Club"
+  },
+  "Login": {
+    "heading": "¡Bienvenido de nuevo!",
+    "subheading": "Inicia sesión en tu cuenta para continuar."
+  },
+  "Signup": {
+    "heading": "Crea tu cuenta",
+    "subheading": "Comienza con {brand} hoy."
+  },
+  "NotFound": {
+    "heading": "Fuera de la cancha",
+    "description": "La página que buscas no existe o fue movida.",
+    "needHelp": "¿Necesitas ayuda?",
+    "backToDashboard": "Volver al panel",
+    "backToHome": "Volver al inicio"
+  },
+  "ErrorPage": {
+    "heading": "Algo salió mal",
+    "description": "Ocurrió un error inesperado. Puedes intentarlo de nuevo, o contactarnos si el problema persiste.",
+    "needHelp": "¿Necesitas ayuda?",
+    "tryAgain": "Intentar de nuevo",
+    "backToDashboard": "Volver al panel",
+    "backToHome": "Volver al inicio"
+  },
+  "GlobalError": {
+    "titleTemplate": "Algo salió mal – {brand}",
+    "heading": "Algo salió mal",
+    "description": "Ocurrió un error crítico y la aplicación no pudo recuperarse por sí sola. Intenta de nuevo, o contáctanos si el problema persiste.",
+    "needHelp": "¿Necesitas ayuda?",
+    "tryAgain": "Intentar de nuevo"
+  },
+  "InviteError": {
+    "heading": "Error al configurar el perfil",
+    "description": "Hubo un problema al configurar tu cuenta. Por favor, contacta a tu administrador para resolver este inconveniente."
+  },
+  "OnboardingValidation": {
+    "userTypeRequired": "Elige una opción para continuar",
+    "confirmedAgeRequired": "Debes confirmar que sos mayor de 18 años",
+    "acceptedTermsRequired": "Debes aceptar los Términos y Condiciones",
+    "clubNameRequired": "El nombre del club es obligatorio",
+    "phoneRequired": "El teléfono es obligatorio",
+    "whatsappNumberRequired": "El número de WhatsApp es obligatorio",
+    "addressRequired": "La dirección es obligatoria",
+    "legalNameRequired": "La razón social es obligatoria",
+    "taxIdRequired": "El CUIT es obligatorio",
+    "displayNameRequired": "El nombre visible es obligatorio",
+    "invalidWhatsappNumber": "Ingresá un número de WhatsApp válido",
+    "invalidEmail": "Correo electrónico inválido",
+    "firstNameRequired": "El nombre es obligatorio",
+    "lastNameRequired": "El apellido es obligatorio",
+    "genderRequired": "Selecciona una opción"
+  },
+  "OnboardingWizard": {
+    "pageHeading": "Configura tu cuenta de {brand}",
+    "pageSubheading": "Esto toma unos 2 minutos.",
+    "stepStatus": "Paso {current} de {total}",
+    "buttons": {
+      "cancel": "Cancelar",
+      "back": "Atrás",
+      "continue": "Continuar",
+      "submitting": "Configurando…",
+      "launchClub": "Lanzar mi club",
+      "startPlaying": "Empezar a jugar"
+    },
+    "toasts": {
+      "genericError": "Algo salió mal. Inténtalo de nuevo.",
+      "clubCreated": "Club creado. Bienvenido a {brand}.",
+      "playerReady": "Todo listo. Bienvenido a {brand}."
+    },
+    "stepIndicator": {
+      "userType": "Tú",
+      "clubBasics": "Club",
+      "legalBilling": "Legal",
+      "profile": "Perfil",
+      "playerProfile": "Perfil",
+      "padelProfile": "Pádel",
+      "terms": "Términos"
+    },
+    "steps": {
+      "userType": {
+        "heading": "Bienvenido a {brand}",
+        "subheading": "Cuéntanos cómo lo vas a usar.",
+        "player": {
+          "title": "Soy jugador",
+          "description": "Explora clubes y reserva canchas libres."
+        },
+        "owner": {
+          "title": "Soy dueño de un club",
+          "description": "Gestiona canchas y disponibilidad para tu club."
+        }
+      },
+      "clubBasics": {
+        "heading": "Cuéntanos sobre tu club",
+        "subheading": "Información de contacto principal y ubicación que verán los jugadores.",
+        "clubName": "Nombre del club *",
+        "clubNamePlaceholder": "Club de Pádel Riverside",
+        "contactEmail": "Email de contacto *",
+        "contactEmailPlaceholder": "contacto@padelriverside.com",
+        "whatsappLabel": "WhatsApp (para comprobantes de pago) *",
+        "zipCode": "Código postal",
+        "zipCodePlaceholder": "1642",
+        "address": "Dirección *",
+        "addressPlaceholder": "Av. Corrientes 1234"
+      },
+      "legalBilling": {
+        "heading": "Legal y facturación",
+        "subheading": "Se usa para facturas y documentos impositivos.",
+        "legalName": "Razón social *",
+        "legalNamePlaceholder": "Club de Pádel Riverside S.A.",
+        "taxId": "CUIT *",
+        "taxIdPlaceholder": "30-12345678-9"
+      },
+      "profile": {
+        "heading": "Tu perfil",
+        "subheading": "Cómo aparece tu nombre dentro de {brand}.",
+        "displayName": "Nombre para mostrar *",
+        "summary": {
+          "title": "Resumen",
+          "club": "Club",
+          "email": "Email",
+          "phone": "Teléfono",
+          "address": "Dirección",
+          "country": "País",
+          "province": "Provincia",
+          "city": "Ciudad",
+          "zipCode": "Código postal",
+          "legalName": "Razón social",
+          "taxId": "CUIT"
+        }
+      },
+      "playerProfile": {
+        "heading": "Tu perfil",
+        "subheading": "Cuéntanos un poco sobre ti y dónde juegas.",
+        "firstName": "Nombre *",
+        "lastName": "Apellido *",
+        "email": "Email *",
+        "emailPlaceholder": "tu@ejemplo.com",
+        "gender": "Género *",
+        "genderPlaceholder": "Selecciona una opción",
+        "genderOptions": {
+          "male": "Masculino",
+          "female": "Femenino",
+          "other": "Otro",
+          "preferNotToSay": "Prefiero no decirlo"
+        },
+        "zipCode": "Código postal",
+        "zipCodePlaceholder": "1642",
+        "address": "Dirección",
+        "addressPlaceholder": "Opcional"
+      },
+      "padelProfile": {
+        "heading": "Tu estilo de juego",
+        "subheading": "Cuéntanos cómo juegas.",
+        "category": "Categoría de pádel",
+        "categoryDescription": "Tu ranking de nivel — la Categoría 1 es el nivel más alto, la Categoría 8 es principiante.",
+        "preferredSide": "Lado preferido",
+        "dominantHand": "Mano dominante",
+        "notSetYet": "Aún no definido"
+      },
+      "terms": {
+        "heading": "Términos y Condiciones",
+        "subheading": "Por favor revísalos y acéptalos antes de continuar.",
+        "confirmAge": "Confirmo que tengo 18 años de edad o más.",
+        "acceptTerms": "Acepto los Términos y Condiciones.",
+        "content": "1. Aceptación de los Términos\nAl crear una cuenta en {brand}, aceptas quedar sujeto a estos Términos y Condiciones. Si no estás de acuerdo, no continúes con el registro.\n\n2. Descripción del Servicio\n{brand} conecta a jugadores con clubes de pádel, permitiendo a los jugadores explorar canchas y reservar turnos libres, y permitiendo a los dueños de clubes gestionar la disponibilidad y las reservas de sus canchas.\n\n3. Cuentas y Responsabilidades\nEres responsable de la exactitud de la información proporcionada durante el registro y de mantener la confidencialidad de las credenciales de tu cuenta. Los dueños de clubes son responsables de mantener actualizados los horarios de apertura de sus canchas y los registros de reservas.\n\n4. Reservas y Cancelaciones\nLas reservas se confirman de forma instantánea en el momento de reservar. Los jugadores pueden cancelar por su cuenta hasta 2 horas antes del horario de inicio de una reserva; las cancelaciones dentro de esa ventana deben gestionarse directamente con el club. Las reservas no son reembolsables: {brand} no procesa reembolsos por ninguna reserva, sin importar quién la cancele ni el motivo. Cualquier disputa, incidente o problema relacionado con una reserva cancelada o no cumplida debe resolverse directamente con el club. Al reservar un turno, aceptas la responsabilidad total por cualquier inconveniente derivado de su cancelación.\n\n5. Pagos\nAlgunos clubes requieren pago anticipado en línea para confirmar una reserva; en ese caso, el pago se procesa a través de Mercado Pago en el momento de reservar. Para los clubes que no requieren pago anticipado, el pago se realiza en persona en el club.\n\n6. Manejo de Datos\nLos datos que envías se almacenan para brindar el servicio y no se comparten con terceros, salvo que sea necesario para operar la plataforma o cumplir con la ley.\n\n7. Limitación de Responsabilidad\nEl servicio se ofrece \"tal cual\", sin garantías de ningún tipo. {brand} no es responsable por daños indirectos, incidentales o consecuentes que surjan del uso del servicio.\n\n8. Cambios a Estos Términos\nEstos términos son un texto provisorio pendiente de revisión legal y pueden reemplazarse o actualizarse en cualquier momento. El uso continuado del servicio después de los cambios constituye la aceptación de los términos revisados.\n\n9. Contacto\nLas preguntas sobre estos términos pueden dirigirse al administrador de tu club de {brand}, o al soporte de {brand} para cuentas de jugador."
+      }
+    }
+  },
+  "ActivationStepIndicator": {
+    "steps": ["Membresía", "Método de pago"]
+  },
+  "AdminOnlyGuard": {
+    "accessRevoked": "Ya no tenés acceso de administrador."
+  },
+  "ClubInactiveCard": {
+    "title": "Renová tu membresía",
+    "description": "La membresía de tu club no está activa. Renovala para seguir gestionando canchas y aceptando reservas.",
+    "preparing": "Preparando…",
+    "renewMembership": "Renovar membresía",
+    "genericError": "Algo salió mal. Por favor, intentá de nuevo."
+  },
+  "ClubOperationalGate": {
+    "loadingDashboard": "Cargando panel…"
+  },
+  "DashboardLoader": {
+    "loading": "Cargando tu espacio de trabajo…"
+  },
+  "MercadoPagoConnectedDialog": {
+    "title": "¡Mercado Pago conectado!",
+    "description": "Los jugadores ya pueden pagar sus reservas a través de tu cuenta de Mercado Pago. También podés agregar los datos de tu cuenta bancaria abajo para ofrecer transferencia bancaria como método de pago alternativo — esto es totalmente opcional.",
+    "submitLabel": "Guardar y continuar"
+  },
+  "OwnerOnlyGuard": {
+    "ownersOnly": "Esta página solo está disponible para dueños de club."
+  },
+  "PaymentActivationScreen": {
+    "title": "Activación de pago",
+    "description": "Tu club necesita una membresía activa y una forma de recibir pagos de reservas — conectá Mercado Pago o agregá tu cuenta bancaria — antes de poder empezar a aceptar reservas.",
+    "loadError": "No pudimos cargar tu membresía. Intentá de nuevo.",
+    "retry": "Reintentar",
+    "cycleMonthly": "Mensual",
+    "cycleAnnual": "Anual",
+    "statusLabel": "Estado: {status}",
+    "payMembership": "Pagar membresía",
+    "statusLabels": {
+      "pending": "Esperando pago",
+      "trialing": "Prueba gratuita",
+      "active": "Activa",
+      "pastDue": "Pago vencido",
+      "cancelled": "Cancelada"
+    }
+  },
+  "PendingApprovalCard": {
+    "title": "Tu club está en revisión",
+    "description": "Te avisaremos apenas sea aprobado. Mientras tanto, no podés aceptar reservas."
+  },
+  "PlanOptionCard": {
+    "saveMonths": "Ahorrá {months} meses",
+    "mostPopular": "Más popular",
+    "perMonth": "/ mes",
+    "billedAnnually": "{price} facturado anualmente"
+  },
+  "AppNavbar": {
+    "navItems": {
+      "dashboard": "Panel",
+      "courts": "Canchas",
+      "reservations": "Reservas",
+      "clubSettings": "Configuración del club",
+      "overview": "Resumen",
+      "auditLog": "Registro de auditoría",
+      "search": "Buscar",
+      "systemStatus": "Estado del sistema",
+      "approvals": "Aprobaciones",
+      "browseCourts": "Buscar canchas",
+      "myReservations": "Mis reservas",
+      "players": "Jugadores",
+      "tournaments": "Torneos"
+    },
+    "more": "Más",
+    "admin": "Admin"
+  },
+  "NavBadge": {
+    "new": "Nuevo",
+    "open": "Abierto"
+  },
+  "CommandPalette": {
+    "title": "Paleta de comandos",
+    "description": "Saltá a una página del panel",
+    "placeholder": "Saltá a una página...",
+    "noResults": "No se encontraron resultados.",
+    "navigateGroup": "Navegar"
+  },
+  "NotificationsBell": {
+    "tooltip": "Notificaciones",
+    "srLabel": "Notificaciones",
+    "heading": "Notificaciones",
+    "markAllAsRead": "Marcar todas como leídas",
+    "loading": "Cargando…",
+    "empty": "Todavía no tenés notificaciones"
+  },
+  "UserMenu": {
+    "accountSettings": "Configuración de la cuenta",
+    "clubSettings": "Configuración del club",
+    "help": "Ayuda",
+    "signOut": "Cerrar sesión"
+  },
+  "DashboardHome": {
+    "welcome": "Bienvenido",
+    "welcomeWithName": "Bienvenido, {name}",
+    "searchPlaceholder": "Buscar tarjetas…"
+  },
+  "OwnerHero": {
+    "emptyHeading": "Configuremos tu club",
+    "emptySubheading": "Agregá tu primera cancha para empezar a recibir reservas.",
+    "addCourt": "Agregar una cancha",
+    "heading": "Tu club hoy",
+    "todaysBookings": "Reservas de hoy",
+    "activeCourts": "Canchas activas",
+    "cancelledToday": "Canceladas hoy",
+    "busiestCourt": "Cancha más usada",
+    "hoursBooked": "Horas reservadas"
+  },
+  "PlayerHero": {
+    "emptyHeading": "Todavía no tenés partidos reservados",
+    "readyHeading": "¿Listo para tu próximo partido?",
+    "emptySubheading": "Buscá una cancha y reservá tu primer turno.",
+    "browseCourts": "Buscar canchas",
+    "upcoming": "Próximos",
+    "thisMonth": "Este mes",
+    "favoriteCourt": "Cancha favorita",
+    "hoursPlayed": "Horas jugadas",
+    "memberSince": "Miembro desde"
+  },
+  "SearchableCardsGrid": {
+    "noMatches": "Ninguna tarjeta coincide con “{query}”.",
+    "clearSearch": "Borrar búsqueda",
+    "courts": "Canchas",
+    "weeklyLoad": "Carga semanal",
+    "sessionLoad": "Carga de sesión",
+    "upcoming": "Próximos"
+  },
+  "SessionLoadCard": {
+    "cancellationRate": "Tasa de cancelación",
+    "sessionLoad": "Carga de sesión"
+  },
+  "OwnerSessionLoad": {
+    "caption": "{percent}% de reservas canceladas",
+    "emptyMessage": "Cuando lleguen reservas, te mostraremos tu tasa de cancelación acá."
+  },
+  "PlayerSessionLoad": {
+    "caption": "{activeWeeks}/{totalWeeks} semanas activas",
+    "emptyMessage": "Reservá algunos partidos y empezaremos a mostrar tu carga de sesiones acá."
+  },
+  "SessionLoadGauge": {
+    "toneGood": "Bien",
+    "toneWatch": "Atención",
+    "toneBad": "Necesita atención",
+    "noSessionsYet": "Todavía no hay sesiones",
+    "vsPreviousPeriod": "{delta}% respecto al período anterior"
+  },
+  "Weekday": {
+    "short": {
+      "mon": "Lun",
+      "tue": "Mar",
+      "wed": "Mié",
+      "thu": "Jue",
+      "fri": "Vie",
+      "sat": "Sáb",
+      "sun": "Dom"
+    },
+    "full": {
+      "mon": "lunes",
+      "tue": "martes",
+      "wed": "miércoles",
+      "thu": "jueves",
+      "fri": "viernes",
+      "sat": "sábados",
+      "sun": "domingos"
+    }
+  },
+  "WeeklyLoadCard": {
+    "dailyVolume": "Volumen diario",
+    "weeklyLoad": "Carga semanal"
+  },
+  "OwnerWeeklyLoad": {
+    "caption": "La mayoría de las reservas son los {weekday}.",
+    "emptyMessage": "Cuando lleguen reservas, te mostraremos tu distribución semanal acá."
+  },
+  "PlayerWeeklyLoad": {
+    "caption": "Jugás con más frecuencia los {weekday}.",
+    "emptyMessage": "Reservá algunos partidos y empezaremos a mostrar tu ritmo semanal acá."
+  },
+  "OverviewChart": {
+    "noPatternsYet": "Todavía no hay patrones",
+    "bookingsLabel": "Reservas"
+  },
+  "UpcomingCard": {
+    "title": "Próximos"
+  },
+  "UpcomingListEmpty": {
+    "title": "Sin reservas próximas",
+    "description": "Las canchas reservadas aparecerán acá."
+  },
+  "UpcomingListItems": {
+    "today": "Hoy",
+    "tomorrow": "Mañana",
+    "bookedBy": "Reservado por {name}",
+    "cancelReservation": "Cancelar reserva"
+  },
+  "PlayerOverviewData": {
+    "styleUpdated": "Estilo de juego actualizado",
+    "updateError": "No se pudo actualizar tu perfil."
+  },
+  "PlayerOverviewCard": {
+    "title": "Perfil del jugador"
+  },
+  "PlayerOverviewContent": {
+    "performance": "Rendimiento"
+  },
+  "PlayerOverviewBanner": {
+    "title": "Perfil del jugador"
+  },
+  "BannerPreview": {
+    "title": "Tu perfil de jugador",
+    "subtitle": "Lado preferido, compañero y estadísticas"
+  },
+  "PerformanceSummarySection": {
+    "position": "Posición"
+  },
+  "TournamentRecord": {
+    "label": "Récord en torneos"
+  },
+  "PlayerStyleSection": {
+    "dominantHand": "Mano dominante",
+    "latestPartner": "Último compañero"
+  },
+  "PadelSideDiagram": {
+    "altNoSide": "Diagrama de cancha de pádel sin lado preferido seleccionado",
+    "altWithSide": "Diagrama de cancha de pádel resaltando el lado {side}",
+    "preferredLabel": "Preferido: {side}"
+  },
+  "EditPlayerStyleDialog": {
+    "editPlayStyle": "Editar estilo de juego",
+    "preferredSide": "Lado preferido",
+    "notSetYet": "Aún no definido",
+    "dominantHand": "Mano dominante",
+    "save": "Guardar"
+  },
+  "LatestPartnerCard": {
+    "emptyState": "Todavía no tenés compañeros — etiquetá a alguien cuando reserves una cancha para verlo acá.",
+    "playedTimes": "Jugaron {count} veces",
+    "winRatePrefix": "{percent}% de victorias"
+  },
+  "BrowseCourts": {
+    "title": "Explorar canchas",
+    "description": "Elegí un club, después una cancha y un horario libre para reservar.",
+    "backToClubs": "Volver a los clubes",
+    "backToCourts": "Volver a las canchas",
+    "clubStillLoading": "Todavía estamos cargando los datos del club, probá de nuevo en un momento.",
+    "transferPending": "Horario reservado por 60 minutos — enviá tu transferencia y escribile al club.",
+    "reservationConfirmed": "Reserva confirmada.",
+    "bookingError": "No se pudo reservar este horario."
+  },
+  "BrowseCourtsData": {
+    "genericError": "Algo salió mal. Intentá de nuevo.",
+    "joinWaitlistSuccess": "Te avisaremos por correo si este horario se libera.",
+    "joinWaitlistError": "No se pudo unir a la lista de espera."
+  },
+  "ClubListPanel": {
+    "club": "Club",
+    "courtCount": "{count, plural, one {# cancha} other {# canchas}}",
+    "availableToday": "Disponible hoy",
+    "noAvailability": "Sin disponibilidad",
+    "loadError": "No se pudieron cargar los clubes. Probá de nuevo más tarde.",
+    "clubsList": "Lista de clubes",
+    "searchPlaceholder": "Buscar clubes...",
+    "sortBy": "Ordenar por",
+    "sortName": "Nombre",
+    "sortCourtCount": "Cantidad de canchas",
+    "loading": "Cargando clubes…",
+    "noMatches": "Ningún club coincide con tu búsqueda."
+  },
+  "CourtLabels": {
+    "concrete": "Concreto",
+    "carpet": "Alfombra",
+    "indoor": "Techada",
+    "outdoor": "Descubierta"
+  },
+  "CourtsTable": {
+    "selectAll": "Seleccionar todas las canchas",
+    "selectOne": "Seleccionar {name}",
+    "name": "Nombre",
+    "surface": "Superficie",
+    "preview": "Vista previa",
+    "type": "Tipo",
+    "reservationFee": "Seña de reserva",
+    "courtPrice": "Precio de la cancha",
+    "minShift": "Turno mínimo",
+    "minShiftValue": "{minutes} min",
+    "status": "Estado",
+    "active": "Activa",
+    "inactive": "Inactiva",
+    "actions": "Acciones",
+    "editAvailabilityFor": "Editar disponibilidad de {name}",
+    "editAvailability": "Editar disponibilidad",
+    "manageClosuresFor": "Gestionar cierres de {name}",
+    "manageClosures": "Gestionar cierres",
+    "editFor": "Editar {name}",
+    "editCourt": "Editar cancha",
+    "deactivateFor": "Desactivar {name}",
+    "deactivateCourt": "Desactivar cancha",
+    "loading": "Cargando canchas…"
+  },
+  "ClubCourtsPanel": {
+    "court": "Cancha",
+    "surfaceAndColor": "Superficie y color",
+    "reservationFee": "Seña de reserva",
+    "courtPrice": "Precio de la cancha",
+    "perHour": "{price}/hora",
+    "preview": "Vista previa",
+    "selectClubPrompt": "Elegí un club para ver sus canchas.",
+    "loadError": "No se pudieron cargar las canchas. Probá de nuevo más tarde.",
+    "noCourtsAvailable": "No hay canchas disponibles para la fecha seleccionada.",
+    "filters": "Filtros",
+    "surface": "Superficie",
+    "allSurfaces": "Todas las superficies",
+    "allCourts": "Todas las canchas",
+    "color": "Color",
+    "allColors": "Todos los colores",
+    "sortBy": "Ordenar por",
+    "sortName": "Nombre",
+    "loading": "Cargando canchas…",
+    "noMatches": "Ninguna cancha coincide con tus filtros."
+  },
+  "CourtSchedulePanel": {
+    "selectCourtPrompt": "Elegí una cancha para ver su horario."
+  },
+  "CourtsView": {
+    "title": "Canchas",
+    "description": "Gestioná las canchas de tu club y su disponibilidad semanal.",
+    "newCourt": "Nueva cancha",
+    "selectedCount": "{count, plural, one {# cancha seleccionada} other {# canchas seleccionadas}}",
+    "bulkEdit": "Edición masiva",
+    "clear": "Limpiar",
+    "uploadPhotoError": "No se pudo subir la foto de la cancha. Intentá de nuevo.",
+    "courtCreated": "Cancha creada",
+    "deactivateTitle": "¿Desactivar cancha?",
+    "deactivateDescription": "\"{name}\" se marcará como inactiva y se ocultará de las nuevas reservas. Esto no se puede deshacer desde acá.",
+    "deactivateConfirm": "Desactivar",
+    "deactivatePending": "Desactivando…"
+  },
+  "CourtsViewData": {
+    "genericError": "Algo salió mal. Intentá de nuevo.",
+    "courtUpdated": "Cancha actualizada",
+    "courtDeactivated": "Cancha desactivada",
+    "closureCancelled": "Cierre cancelado"
+  },
+  "CourtFormSheet": {
+    "editCourtTitle": "Editar cancha",
+    "newCourtTitle": "Nueva cancha",
+    "editCourtDescription": "Actualizá los detalles de esta cancha.",
+    "newCourtDescription": "Agregá una nueva cancha a tu club.",
+    "nameLabel": "Nombre *",
+    "namePlaceholder": "Cancha 1",
+    "courtNumberLabel": "Número de cancha",
+    "photoLegend": "Foto (máx {mb}MB)",
+    "surfaceLegend": "Superficie *",
+    "courtTypeLegend": "Tipo de cancha",
+    "colorLegend": "Color",
+    "wallTypeLegend": "Tipo de pared",
+    "netTypeLegend": "Tipo de red",
+    "hasLighting": "Tiene iluminación",
+    "minShiftLabel": "Turno mínimo *",
+    "minShiftHint": "El período más corto de tiempo que un jugador puede reservar esta cancha.",
+    "reservationFeeLabel": "Seña de reserva *",
+    "courtPriceLabel": "Precio de la cancha",
+    "pricePerHour": "$/hora: {price}",
+    "active": "Activa",
+    "back": "Atrás",
+    "next": "Siguiente",
+    "saving": "Guardando…",
+    "saveChanges": "Guardar cambios",
+    "createCourt": "Crear cancha"
+  },
+  "CourtFormValidation": {
+    "nameRequired": "El nombre es obligatorio",
+    "surfaceRequired": "La superficie es obligatoria",
+    "colorRequired": "El color es obligatorio",
+    "slotDurationMustBeNumber": "El turno mínimo debe ser un número",
+    "slotDurationMustBePositive": "El turno mínimo debe ser mayor a 0",
+    "reservationFeeRequired": "La seña de reserva es obligatoria",
+    "reservationFeeCannotBeNegative": "La seña de reserva no puede ser negativa"
+  },
+  "WallTypeField": {
+    "blindex": "Vidrio (blindex)",
+    "concrete": "Concreto",
+    "mixed": "Mixto"
+  },
+  "NetTypeField": {
+    "standard": "Estándar",
+    "professional": "Profesional"
+  },
+  "ColorField": {
+    "blue": "Azul",
+    "green": "Verde",
+    "terracotta": "Terracota",
+    "black": "Negro",
+    "fuchsia": "Fucsia",
+    "purple": "Violeta",
+    "customColor": "Color personalizado"
+  },
+  "PhotoField": {
+    "uploadFailed": "La subida falló. Intentá de nuevo.",
+    "uploadPicture": "Subir foto",
+    "uploading": "Subiendo…"
+  },
+  "SlotDurationField": {
+    "selectDuration": "Seleccioná una duración",
+    "minutes": "{minutes} min"
+  },
+  "CourtFormStepIndicator": {
+    "details": "Detalles",
+    "attributes": "Atributos",
+    "pricing": "Precios",
+    "availability": "Disponibilidad"
+  },
+  "BulkEditCourtsSheet": {
+    "title": "Edición masiva de canchas",
+    "description": "Editando {count} canchas. Solo se cambiarán los campos marcados.",
+    "selectAtLeastOneField": "Seleccioná al menos un campo para cambiar",
+    "updatedCourts": "{count} canchas actualizadas",
+    "updateFailed": "No se pudieron actualizar las canchas",
+    "partialUpdate": "Se actualizaron {updated} de {total} canchas. {failed} fallaron.",
+    "surface": "Superficie",
+    "courtType": "Tipo de cancha",
+    "color": "Color",
+    "minShift": "Turno mínimo",
+    "reservationFee": "Seña de reserva",
+    "courtPrice": "Precio de la cancha",
+    "active": "Activa",
+    "saving": "Guardando…",
+    "applyChanges": "Aplicar cambios"
+  },
+  "BulkEditCourtsValidation": {
+    "surfaceRequired": "La superficie es obligatoria",
+    "colorRequired": "El color es obligatorio",
+    "slotDurationMustBeNumber": "El turno mínimo debe ser un número",
+    "slotDurationMustBePositive": "El turno mínimo debe ser mayor a 0",
+    "reservationFeeMustBeNumber": "La seña de reserva debe ser un número",
+    "reservationFeeCannotBeNegative": "La seña de reserva no puede ser negativa",
+    "courtPriceCannotBeNegative": "El precio de la cancha no puede ser negativo"
+  },
+  "CourtLimitReachedDialog": {
+    "title": "Límite de canchas alcanzado",
+    "description": "Tu plan {plan} permite hasta {limit, plural, one {# cancha} other {# canchas}}. Mejorá tu plan desde el panel para agregar más canchas.",
+    "close": "Cerrar",
+    "goToDashboard": "Ir al panel"
+  },
+  "CourtsEmptyState": {
+    "message": "Todavía no hay canchas. Creá tu primera cancha para empezar."
+  },
+  "ClosuresSheet": {
+    "title": "Cierres",
+    "description": "Bloqueá esta cancha por mantenimiento, eventos o cierres planificados.",
+    "descriptionForCourt": "Bloqueá {name} por mantenimiento, eventos o cierres planificados.",
+    "loadingClosures": "Cargando cierres…",
+    "cancelTitle": "¿Cancelar este cierre?",
+    "cancelDescription": "Esto hará que la cancha vuelva a estar disponible para reservar en ese horario.",
+    "keepClosure": "Mantener cierre",
+    "cancelClosure": "Cancelar cierre",
+    "cancelling": "Cancelando…",
+    "closureCreated": "Cierre creado",
+    "closureCreatedForCourts": "Cierre creado para {count} canchas",
+    "closureCreateFailed": "No se pudo crear el cierre",
+    "closurePartial": "Se creó para {succeeded} de {total} canchas. {failed} tuvieron conflictos — revisá los cierres de cada cancha."
+  },
+  "ClosuresList": {
+    "noClosures": "Todavía no hay cierres.",
+    "cancelled": "Cancelado",
+    "past": "Pasado",
+    "active": "Activo",
+    "cancelling": "Cancelando…",
+    "cancel": "Cancelar"
+  },
+  "NewClosureForm": {
+    "starts": "Inicio",
+    "ends": "Fin",
+    "reasonLabel": "Motivo *",
+    "reasonPlaceholder": "Reparación de superficie",
+    "applyToAllCourts": "Aplicar a todas las canchas",
+    "creating": "Creando…",
+    "createClosure": "Crear cierre"
+  },
+  "NewClosureFormValidation": {
+    "startRequired": "El inicio es obligatorio",
+    "endRequired": "El fin es obligatorio",
+    "reasonRequired": "El motivo es obligatorio",
+    "endMustBeAfterStart": "El fin debe ser posterior al inicio",
+    "closureNotInPast": "El cierre no puede estar completamente en el pasado"
+  },
+  "BookingConfirmDialog": {
+    "title": "Confirmar reserva",
+    "description": "Revisá los detalles de tu reserva y confirmá.",
+    "bank": "Banco:",
+    "cbu": "CBU:",
+    "alias": "Alias:",
+    "whatsapp": "WhatsApp:",
+    "payNowTransfer": "Esta reserva requiere pago para confirmarse. Enviá {amount} por transferencia bancaria y escribile al WhatsApp del club con tu comprobante dentro de los 30 minutos — tu horario queda reservado por 60 minutos en total. Si el club no confirma a tiempo, el horario se libera automáticamente (Mercado Pago es el único método que confirma al instante).",
+    "payNowMercadoPago": "Esta reserva requiere pago para confirmarse. Vas a pagar {amount} por Mercado Pago — te vamos a redirigir para completarlo, y tu horario queda reservado por 15 minutos.",
+    "free": "Esta cancha es gratis — no se necesita pago. Podés cancelar sin cargo hasta 2 horas antes de tu reserva.",
+    "priceMissing": "Esta cancha todavía no tiene un precio configurado, así que no se puede reservar en línea — contactá directamente al club.",
+    "cancel": "Cancelar",
+    "gotIt": "Entendido",
+    "booking": "Reservando…",
+    "confirmBooking": "Confirmar reserva",
+    "continueToPayment": "Continuar al pago",
+    "priceNotSet": "Precio no configurado",
+    "bookCourt": "Reservar cancha",
+    "freeBadge": "Gratis",
+    "payNowBadge": "Pagar ahora"
+  },
+  "PartnerPicker": {
+    "playingWith": "Jugando con (opcional)"
+  },
+  "PaymentMethodPicker": {
+    "payWith": "Pagar con",
+    "bankTransfer": "Transferencia bancaria"
+  },
+  "PaymentReturnData": {
+    "genericError": "Algo salió mal. Intentá de nuevo."
+  },
+  "PaymentReturnView": {
+    "missingReference": "Falta la referencia de la reserva.",
+    "confirmingPayment": "Confirmando tu pago…",
+    "confirmingPaymentHint": "Esto suele tardar unos segundos.",
+    "paymentConfirmedStatus": "Pago confirmado. Tu reserva está hecha.",
+    "checkFailedStatus": "No pudimos verificar el estado de tu pago. Contactá al club para confirmar tu reserva.",
+    "paymentFailedStatus": "El pago no se completó. Tu horario reservado expiró.",
+    "backToBrowse": "Volver a Explorar canchas",
+    "checkFailedTitle": "No pudimos verificar tu pago",
+    "contactClub": "Contactá directamente al club para confirmar tu reserva.",
+    "viewMyReservations": "Ver mis reservas",
+    "paymentConfirmedTitle": "¡Pago confirmado!",
+    "reservationBooked": "Tu reserva está hecha.",
+    "paymentFailedTitle": "El pago no se completó",
+    "slotHoldExpired": "Tu horario reservado expiró. Podés intentar reservar de nuevo."
+  },
+  "ReservationsView": {
+    "title": "Reservas",
+    "description": "Consultá la disponibilidad de las canchas y gestioná las reservas del día."
+  },
+  "ReservationsViewData": {
+    "genericError": "Algo salió mal. Intentá de nuevo.",
+    "reservationUpdated": "Reserva actualizada"
+  },
+  "ReservationActionButtons": {
+    "confirmTransfer": "Confirmar transferencia",
+    "complete": "Completar",
+    "noShow": "Ausente",
+    "cancel": "Cancelar"
+  },
+  "ReservationsTable": {
+    "player": "Jugador",
+    "court": "Cancha",
+    "time": "Horario",
+    "status": "Estado",
+    "actions": "Acciones",
+    "loading": "Cargando reservas…",
+    "empty": "No hay reservas para este día."
+  },
+  "SlotDetailsDialog": {
+    "title": "Detalle de la reserva",
+    "descriptionBooked": "Este horario está reservado.",
+    "descriptionUnavailable": "El detalle de la reserva no está disponible para este horario.",
+    "player": "Jugador",
+    "court": "Cancha",
+    "time": "Horario",
+    "status": "Estado",
+    "notes": "Notas"
+  },
+  "MyReservations": {
+    "title": "Mis reservas",
+    "descriptionAll": "Todas tus reservas, incluyendo las pasadas y canceladas.",
+    "descriptionUpcoming": "Tus próximas reservas.",
+    "showUpcomingOnly": "Mostrar solo próximas",
+    "showPastReservations": "Mostrar reservas pasadas",
+    "loadingStatus": "Cargando tus reservas…",
+    "noneYetStatus": "Todavía no tenés reservas.",
+    "noUpcomingStatus": "No tenés próximas reservas.",
+    "loadedStatus": "{count, plural, one {# reserva cargada.} other {# reservas cargadas.}}",
+    "emptyUpcomingHint": "No tenés próximas reservas. Explorá canchas para reservar una.",
+    "cancelSuccess": "Reserva cancelada.",
+    "cancelError": "No se pudo cancelar esta reserva."
+  },
+  "MyReservationsData": {
+    "genericError": "Algo salió mal. Intentá de nuevo."
+  },
+  "ReservationRow": {
+    "previewTicket": "Vista previa del ticket",
+    "downloadTicket": "Descargar ticket",
+    "receipt": "Comprobante",
+    "cancel": "Cancelar",
+    "previewTicketFor": "Vista previa del ticket de {courtName}",
+    "downloadTicketFor": "Descargar ticket de {courtName}",
+    "downloadReceiptFor": "Descargar comprobante de {courtName}",
+    "cancelReservationFor": "Cancelar reserva de {courtName}"
+  },
+  "CancelConfirmDialog": {
+    "title": "¿Cancelar la reserva?",
+    "cancelLabel": "Mantener reserva",
+    "confirmLabel": "Cancelar reserva",
+    "pendingLabel": "Cancelando…"
+  },
+  "PlayersPage": {
+    "title": "Jugadores"
+  },
+  "PlayersDirectory": {
+    "player": "Jugador",
+    "category": "Categoría",
+    "preferredSide": "Lado preferido",
+    "dominantHand": "Mano dominante",
+    "you": "Vos",
+    "role": "Rol",
+    "admin": "Admin",
+    "actions": "Acciones",
+    "editFor": "Editar a {name}",
+    "editPlayer": "Editar jugador",
+    "deleteFor": "Eliminar a {name}",
+    "cantDeleteSelf": "No podés eliminar tu propia cuenta",
+    "deletePlayer": "Eliminar jugador",
+    "impersonateFor": "Suplantar a {name}",
+    "cantImpersonateSelf": "No podés suplantarte a vos mismo",
+    "cantImpersonateAdmin": "No se puede suplantar a otro admin",
+    "signInAsPlayer": "Iniciar sesión como este jugador",
+    "exportCsv": "Exportar CSV",
+    "loadError": "No se pudieron cargar los jugadores. Intentá de nuevo más tarde.",
+    "loading": "Cargando jugadores…",
+    "emptyFiltered": "Ningún jugador coincide con tus filtros.",
+    "deleteTitle": "¿Eliminar jugador?",
+    "deleteDescription": "\"{name}\" será anonimizado y eliminado del directorio. Esta acción no se puede deshacer.",
+    "deleteConfirm": "Eliminar",
+    "deletePending": "Eliminando…"
+  },
+  "PlayersDirectoryData": {
+    "loadError": "No se pudieron cargar los jugadores.",
+    "genericError": "Algo salió mal. Intentá de nuevo.",
+    "playerUpdated": "Jugador actualizado",
+    "playerRemoved": "Jugador eliminado"
+  },
+  "PlayersFilterBar": {
+    "searchPlaceholder": "Buscar jugadores por nombre...",
+    "category": "Categoría",
+    "preferredSide": "Lado preferido",
+    "dominantHand": "Mano dominante",
+    "sortBy": "Ordenar por",
+    "allCategories": "Todas las categorías",
+    "allSides": "Todos los lados",
+    "allHands": "Todas las manos",
+    "name": "Nombre"
+  },
+  "PlayerEditSheet": {
+    "title": "Editar jugador",
+    "description": "Actualizá el perfil de {name}.",
+    "thisPlayer": "este jugador",
+    "nameLabel": "Nombre *",
+    "emailLabel": "Email *",
+    "phoneLabel": "Teléfono",
+    "categoryLabel": "Categoría",
+    "preferredSideLabel": "Lado preferido",
+    "dominantHandLabel": "Mano dominante",
+    "notSetYet": "Todavía no definido",
+    "saving": "Guardando…",
+    "saveChanges": "Guardar cambios"
+  },
+  "PlayerEditValidation": {
+    "nameRequired": "El nombre es obligatorio",
+    "invalidEmail": "Ingresá un email válido"
+  },
+  "UserOptionLabels": {
+    "notSet": "Aún no definido",
+    "padelCategory": {
+      "1": "Categoría 1 — nivel más alto",
+      "2": "Categoría 2",
+      "3": "Categoría 3",
+      "4": "Categoría 4",
+      "5": "Categoría 5",
+      "6": "Categoría 6",
+      "7": "Categoría 7",
+      "8": "Categoría 8 — principiante",
+      "unknown": "No estoy seguro",
+      "other": "Categoría {category}"
+    },
+    "preferredSide": {
+      "forehand": "Drive",
+      "backhand": "Revés"
+    },
+    "dominantHand": {
+      "right": "Diestro",
+      "left": "Zurdo"
+    }
+  },
+  "AuditLogsView": {
+    "title": "Registro de auditoría",
+    "description": "Un registro de los cambios realizados en tu club, canchas y reservas.",
+    "loadError": "No se pudo cargar el registro de auditoría. Intentá de nuevo más tarde.",
+    "pageOf": "Página {page} de {totalPages}",
+    "previous": "Anterior",
+    "next": "Siguiente"
+  },
+  "AuditLogsViewData": {
+    "genericError": "Algo salió mal. Intentá de nuevo."
+  },
+  "AuditLogsFilters": {
+    "allEntities": "Todas las entidades",
+    "allActions": "Todas las acciones",
+    "entities": {
+      "Club": "Club",
+      "Court": "Cancha",
+      "CourtClosure": "Cierre de cancha",
+      "Payment": "Pago",
+      "Reservation": "Reserva",
+      "Tournament": "Torneo",
+      "TournamentCategory": "Categoría de torneo",
+      "TournamentMatch": "Partido de torneo",
+      "TournamentTeam": "Equipo de torneo",
+      "UserProfile": "Perfil de usuario",
+      "WaitlistEntry": "Entrada de lista de espera"
+    }
+  },
+  "AuditLogsTable": {
+    "when": "Cuándo",
+    "action": "Acción",
+    "entity": "Entidad",
+    "by": "Por",
+    "loading": "Cargando registro de auditoría…",
+    "empty": "Ninguna entrada del registro de auditoría coincide con estos filtros."
+  },
+  "AuditActionLabels": {
+    "reservation": {
+      "created": "Reserva creada",
+      "cancelled": "Reserva cancelada",
+      "completed": "Reserva completada",
+      "no_show": "Reserva sin presentación"
+    },
+    "court": {
+      "created": "Cancha creada",
+      "updated": "Cancha actualizada",
+      "deactivated": "Cancha desactivada",
+      "closure_created": "Cierre de cancha creado",
+      "closure_cancelled": "Cierre de cancha cancelado"
+    },
+    "club": {
+      "created": "Club creado",
+      "updated": "Club actualizado",
+      "approved": "Club aprobado",
+      "rejected": "Club rechazado"
+    },
+    "user": {
+      "created": "Jugador se unió",
+      "updated": "Perfil actualizado",
+      "anonymized": "Cuenta eliminada",
+      "impersonated": "Admin suplantó a un usuario",
+      "role_changed": "Rol cambiado"
+    },
+    "payment": {
+      "confirmed": "Pago confirmado",
+      "refunded": "Pago reembolsado"
+    },
+    "waitlist": {
+      "notified": "Lista de espera notificada"
+    },
+    "tournament": {
+      "created": "Torneo creado",
+      "updated": "Torneo actualizado",
+      "published": "Torneo publicado",
+      "cancelled": "Torneo cancelado"
+    },
+    "tournament_team": {
+      "registered": "Equipo de torneo inscrito",
+      "withdrawn": "Equipo de torneo retirado"
+    },
+    "tournament_groups": {
+      "set_manually": "Grupos de torneo definidos manualmente",
+      "generated_automatically": "Grupos de torneo generados automáticamente",
+      "locked": "Grupos de torneo bloqueados"
+    },
+    "tournament_match": {
+      "score_entered": "Resultado de partido de torneo cargado",
+      "walkover_recorded": "Walkover de partido de torneo registrado"
+    },
+    "tournament_knockout": {
+      "generated": "Cuadro de eliminación de torneo generado"
+    }
+  },
+  "ClubSettingsView": {
+    "basicInfoTitle": "Información básica",
+    "basicInfoDescription": "Gestiona el perfil de tu club y sus datos comerciales.",
+    "nameLabel": "Nombre *",
+    "namePlaceholder": "Club Padel Norte",
+    "emailLabel": "Correo electrónico *",
+    "emailPlaceholder": "contacto@club.com",
+    "whatsappLabel": "WhatsApp (para comprobantes de pago)",
+    "zipCodeLabel": "Código postal",
+    "zipCodePlaceholder": "1642",
+    "addressLabel": "Dirección",
+    "addressPlaceholder": "Av. Corrientes 1234",
+    "legalInfoTitle": "Información legal",
+    "legalInfoDescription": "Se usa para facturas y documentos impositivos.",
+    "legalNameLabel": "Razón social",
+    "legalNamePlaceholder": "Club Padel Norte S.A.",
+    "taxIdLabel": "CUIT",
+    "taxIdPlaceholder": "30-12345678-9",
+    "saving": "Guardando…",
+    "saveChanges": "Guardar cambios"
+  },
+  "ClubSettingsValidation": {
+    "nameRequired": "El nombre del club es obligatorio",
+    "emailRequired": "El correo electrónico es obligatorio",
+    "emailInvalid": "Correo electrónico inválido",
+    "whatsappInvalid": "Ingresá un número de WhatsApp válido",
+    "timezoneRequired": "La zona horaria es obligatoria",
+    "currencyRequired": "La moneda es obligatoria"
+  },
+  "ClubSettingsViewData": {
+    "genericError": "Algo salió mal. Intentá de nuevo.",
+    "updated": "Configuración del club actualizada"
+  },
+  "ClubSettingsTabs": {
+    "basicTab": "Configuración del club",
+    "hoursTab": "Horario",
+    "closuresTab": "Cierres",
+    "mercadopagoTab": "Mercado Pago",
+    "bankTransferTab": "Transferencia bancaria"
+  },
+  "AdminClubSettingsView": {
+    "courtLimitLabel": "Límite de canchas",
+    "savingLimit": "Guardando…",
+    "saveLimit": "Guardar límite",
+    "exportCsv": "Exportar CSV",
+    "activatingFreePlan": "Activando…",
+    "activateFreePlan": "Activar plan gratuito",
+    "signingIn": "Iniciando sesión…",
+    "impersonateOwner": "Suplantar propietario",
+    "selectClubPlaceholder": "Seleccioná un club para ver su configuración.",
+    "activateFreePlanConfirm": "¿Activar el plan GRATUITO de prueba para \"{clubName}\"? Esto omite la membresía paga para este club."
+  },
+  "AdminClubSettingsViewData": {
+    "failedToLoadClubs": "No se pudieron cargar los clubes",
+    "failedToLoadOwner": "No se pudo cargar el propietario del club",
+    "genericError": "Algo salió mal. Intentá de nuevo.",
+    "freePlanActivated": "Club activado en el plan GRATUITO",
+    "courtLimitUpdated": "Límite de canchas actualizado"
+  },
+  "AdminClubList": {
+    "columnHeader": "Club",
+    "freeBadge": "Gratis",
+    "needsAttentionOne": "1 club necesita atención",
+    "needsAttentionMany": "{count} clubes necesitan atención",
+    "loadingClubs": "Cargando clubes…",
+    "noClubsFound": "No se encontraron clubes.",
+    "mpTokenIssue": "El token de Mercado Pago expiró",
+    "membershipPastDue": "Membresía vencida",
+    "noOperatingHours": "Sin horarios de atención configurados"
+  },
+  "BankTransferAccountSettingsCard": {
+    "title": "Transferencia bancaria",
+    "description": "Permití que los jugadores paguen por transferencia bancaria directamente a la cuenta de tu club, como alternativa a Mercado Pago.",
+    "bankNameLabel": "Banco *",
+    "bankNamePlaceholder": "Banco Nación",
+    "cbuLabel": "CBU *",
+    "cbuPlaceholder": "0000000000000000000000",
+    "cbuError": "El CBU debe tener exactamente 22 dígitos",
+    "aliasLabel": "Alias",
+    "aliasPlaceholder": "club.padel.mp",
+    "accountHolderLabel": "Nombre del titular de la cuenta",
+    "accountHolderPlaceholder": "Club Padel Norte SA",
+    "saving": "Guardando…",
+    "saveChanges": "Guardar cambios"
+  },
+  "BankTransferAccountSettingsCardData": {
+    "genericError": "Algo salió mal. Intentá de nuevo.",
+    "saved": "Cuenta de transferencia bancaria guardada"
+  },
+  "ClubClosuresCard": {
+    "title": "Cierres",
+    "description": "Bloqueá todas las canchas a la vez cuando alquilen el complejo entero para un evento. Se levanta automáticamente al finalizar — no hace falta volver a reabrirlo.",
+    "noActiveCourts": "Agregá al menos una cancha activa antes de cerrar el club",
+    "loadingClosures": "Cargando cierres…",
+    "cancelTitle": "¿Cancelar este cierre?",
+    "cancelDescription": "Esto hará que la cancha vuelva a estar disponible para reservar en su horario bloqueado.",
+    "keepClosure": "Mantener cierre",
+    "cancelClosure": "Cancelar cierre",
+    "cancelling": "Cancelando…",
+    "closureCreated": "Cierre creado",
+    "closureCreatedForCourts": "Cierre creado para {count} canchas",
+    "closureCreateFailed": "No se pudo crear el cierre",
+    "closurePartial": "Creado para {succeeded} de {total} canchas. {failed} tuvieron conflictos — revisá los cierres de cada cancha."
+  },
+  "ClubClosuresCardData": {
+    "genericError": "Algo salió mal. Intentá de nuevo.",
+    "closureCancelled": "Cierre cancelado"
+  },
+  "ClubClosuresList": {
+    "noClosuresYet": "Todavía no hay cierres.",
+    "cancelled": "Cancelado",
+    "past": "Pasado",
+    "active": "Activo",
+    "cancelling": "Cancelando…",
+    "cancel": "Cancelar"
+  },
+  "NewClubClosureForm": {
+    "startsLabel": "Comienza",
+    "endsLabel": "Termina",
+    "reasonLabel": "Motivo *",
+    "reasonPlaceholder": "Club alquilado para un evento privado",
+    "closing": "Cerrando…",
+    "closeTheClub": "Cerrar el club"
+  },
+  "NewClubClosureFormValidation": {
+    "startRequired": "El inicio es obligatorio",
+    "endRequired": "El fin es obligatorio",
+    "reasonRequired": "El motivo es obligatorio",
+    "endMustBeAfterStart": "El fin debe ser posterior al inicio",
+    "closureNotInPast": "El cierre no puede estar completamente en el pasado"
+  },
+  "MercadoPagoConnectionCard": {
+    "logoAlt": "Mercado Pago",
+    "accountLabel": "Cuenta: {label}",
+    "unlink": "Desvincular",
+    "unlinkSuccess": "Mercado Pago desvinculado.",
+    "unlinkError": "No se pudo desvincular Mercado Pago.",
+    "loadingBadge": "Cargando…",
+    "loadingDescription": "Verificando tu conexión con Mercado Pago…",
+    "connectCta": "Conectar Mercado Pago",
+    "notConnectedBadge": "No conectado",
+    "notConnectedDescription": "Conectá tu cuenta de Mercado Pago para que los jugadores puedan pagarte directamente las reservas de cancha.",
+    "connectedBadge": "Conectado",
+    "clubInactiveDescription": "Mercado Pago está conectado, pero la membresía de tu club no está activa — reactivala para volver a aceptar pagos.",
+    "switchAccountCta": "Cambiar cuenta",
+    "connectedDescription": "Mercado Pago está conectado. Los jugadores te pagan directamente las reservas de cancha."
+  },
+  "MercadoPagoConnectionCardData": {
+    "failedToLoadStatus": "No se pudo cargar el estado de la conexión con Mercado Pago",
+    "failedToUnlink": "No se pudo desvincular Mercado Pago"
+  },
+  "DisconnectConfirmDialog": {
+    "title": "¿Desvincular Mercado Pago?",
+    "description": "Esta app dejará de usar tu conexión con Mercado Pago de inmediato — los jugadores no podrán pagar reservas de cancha hasta que vuelvas a conectarte. Esto solo lo desvincula de esta app; no cambia nada en tu cuenta de Mercado Pago.",
+    "cancelLabel": "Mantener conectado",
+    "confirmLabel": "Desvincular",
+    "pendingLabel": "Desvinculando…"
+  },
+  "SwitchAccountConfirmDialog": {
+    "title": "¿Cambiar de cuenta de Mercado Pago?",
+    "description": "Para conectar una cuenta de Mercado Pago diferente, primero cerrá sesión en Mercado Pago en este navegador (o continuá en una ventana privada/incógnito). De lo contrario, continuar solo volverá a conectar la misma cuenta ya vinculada.",
+    "cancelLabel": "Cancelar",
+    "confirmLabel": "Continuar",
+    "pendingLabel": "Redirigiendo…"
+  },
+  "OperatingHoursSettingsCard": {
+    "title": "Horario",
+    "description": "Definí los días y horarios en que tu club está abierto para que reserven los jugadores. Las nuevas canchas usan este horario por defecto.",
+    "saving": "Guardando…",
+    "saveChanges": "Guardar cambios"
+  },
+  "OperatingHoursSettingsCardData": {
+    "genericError": "Algo salió mal. Intentá de nuevo.",
+    "saved": "Horario de atención guardado"
+  },
+  "AdminApprovalsView": {
+    "title": "Aprobaciones",
+    "description": "Los clubes que vienen del onboarding esperan acá hasta que un administrador los apruebe — hasta entonces no pueden aceptar reservas reales.",
+    "clubColumn": "Club",
+    "duplicateWarning": "Otro club ya tiene este email o dirección — revisá antes de aprobar.",
+    "approve": "Aprobar",
+    "approving": "Aprobando…",
+    "reject": "Rechazar",
+    "loading": "Cargando clubes pendientes…",
+    "emptyState": "No hay clubes esperando aprobación."
+  },
+  "AdminApprovalsViewData": {
+    "genericError": "Algo salió mal. Intentá de nuevo.",
+    "clubApproved": "Club aprobado",
+    "clubRejected": "Club rechazado"
+  },
+  "RejectConfirmDialog": {
+    "title": "¿Rechazar este club?",
+    "cancelLabel": "Mantener pendiente",
+    "confirmLabel": "Rechazar club",
+    "pendingLabel": "Rechazando…"
+  },
+  "AdminDashboardHome": {
+    "title": "Resumen de la plataforma",
+    "loadError": "No se pudieron cargar las métricas de la plataforma. Intentá de nuevo más tarde.",
+    "totalClubs": "Total de clubes",
+    "totalCourts": "Total de canchas",
+    "totalPlayers": "Total de jugadores",
+    "reservationsBooked": "Reservas realizadas",
+    "active": "Activos",
+    "inactive": "Inactivos",
+    "pendingApproval": "Pendientes de aprobación",
+    "total": "Total",
+    "exportCsv": "Exportar CSV"
+  },
+  "AdminDashboardHomeData": {
+    "failedToLoadMetrics": "Error al cargar las métricas de administración"
+  },
+  "AdminSearchView": {
+    "title": "Buscar",
+    "description": "Buscá entre todos los clubes, jugadores y reservas de la plataforma.",
+    "searchPlaceholder": "Buscar por nombre, email o id…",
+    "searchAriaLabel": "Buscar",
+    "emptyQueryState": "Empezá a escribir para buscar entre clubes, jugadores y reservas.",
+    "clubsHeading": "Clubes",
+    "playersHeading": "Jugadores",
+    "reservationsHeading": "Reservas"
+  },
+  "AdminSearchViewData": {
+    "searchFailed": "Error al buscar"
+  },
+  "AdminSearchClubResults": {
+    "clubColumn": "Club",
+    "statusColumn": "Estado",
+    "loading": "Buscando clubes…",
+    "emptyState": "No se encontraron clubes."
+  },
+  "AdminSearchPlayerResults": {
+    "playerColumn": "Jugador",
+    "loading": "Buscando jugadores…",
+    "emptyState": "No se encontraron jugadores."
+  },
+  "AdminSearchReservationResults": {
+    "reservationColumn": "Reserva",
+    "statusColumn": "Estado",
+    "loading": "Buscando reservas…",
+    "emptyState": "No se encontraron reservas."
+  },
+  "AdminStatusView": {
+    "title": "Estado del sistema",
+    "description": "Si cada tarea programada y cada receptor de webhooks se está ejecutando y completando correctamente.",
+    "loadError": "No se pudo cargar el estado del sistema. Intenta nuevamente más tarde.",
+    "recentActivity": "Actividad reciente"
+  },
+  "AdminStatusRecentActivity": {
+    "when": "Cuándo",
+    "job": "Tarea",
+    "kind": "Tipo",
+    "status": "Estado",
+    "error": "Error",
+    "cron": "Programada",
+    "webhook": "Webhook",
+    "success": "Correcto",
+    "failure": "Fallido",
+    "loading": "Cargando actividad reciente…",
+    "emptyState": "Aún no hay actividad de tareas del sistema registrada."
+  },
+  "AdminStatusSummary": {
+    "job": "Tarea",
+    "lastRun": "Última ejecución",
+    "status": "Estado",
+    "success": "Correcto",
+    "failure": "Fallido",
+    "neverRun": "Nunca se ejecutó",
+    "loading": "Cargando estado del sistema…"
+  },
+  "SystemJobErrorDialog": {
+    "title": "Detalles del error",
+    "copy": "Copiar",
+    "copied": "Copiado",
+    "close": "Cerrar"
+  },
+  "SystemJobLabels": {
+    "notifications": "Notificaciones",
+    "membership-grace-sweep": "Barrido de período de gracia de membresía",
+    "mercadopago-token-refresh": "Renovación de token de Mercado Pago",
+    "reset-preview-db": "Reinicio de base de datos de vista previa",
+    "mercadopago": "Webhook de Mercado Pago",
+    "clerk": "Webhook de Clerk"
+  },
+  "ClubStatusAdminPage": {
+    "genericError": "Algo salió mal. Intenta nuevamente.",
+    "title": "Administración de estado del club",
+    "clubIdLabel": "ID del club",
+    "lookUp": "Buscar",
+    "lookingUp": "Buscando…",
+    "currentStatus": "Estado actual: {status}",
+    "lastUpdatedBy": "Última actualización por {updatedBy} el {updatedAt}",
+    "newStatusLabel": "Nuevo estado",
+    "updatedByLabel": "Actualizado por",
+    "updatedByPlaceholder": "tu@email.com",
+    "save": "Guardar",
+    "saving": "Guardando…",
+    "activateFreePlan": "Activar membresía gratuita (pruebas)",
+    "activatingFreePlan": "Activando…",
+    "activateFreePlanConfirm": "¿Activar el plan gratuito de prueba para \"{clubName}\"? Esto omite la membresía paga para este club.",
+    "clubStatusUpdated": "Estado del club actualizado",
+    "freePlanActivated": "Plan gratuito activado para pruebas",
+    "statusOptions": {
+      "active": "Activo",
+      "inactive": "Inactivo",
+      "suspended": "Suspendido",
+      "disabled": "Deshabilitado"
+    }
+  },
+  "TournamentsHubPage": {
+    "title": "Torneos"
+  },
+  "GroupsStandingsView": {
+    "loading": "Cargando…",
+    "noData": "No hay datos disponibles.",
+    "matches": "Partidos",
+    "standings": "Posiciones",
+    "knockoutBracket": "Llave de eliminación"
+  },
+  "GroupsStandingsViewData": {
+    "genericError": "Algo salió mal. Intentá de nuevo."
+  },
+  "TournamentsManager": {
+    "title": "Torneos",
+    "description": "Armá los grupos y cargá los resultados de las categorías de tus torneos.",
+    "loadingTournaments": "Cargando torneos…"
+  },
+  "TournamentsManagerData": {
+    "genericError": "Algo salió mal. Intentá de nuevo.",
+    "groupsSaved": "Grupos guardados",
+    "groupsLocked": "Grupos bloqueados",
+    "scoreEntered": "Resultado cargado",
+    "walkoverRecorded": "Walkover registrado",
+    "knockoutBracketGenerated": "Llave de eliminación generada"
+  },
+  "CategoryWorkspace": {
+    "matches": "Partidos",
+    "standings": "Posiciones",
+    "generating": "Generando…",
+    "generateKnockoutBracket": "Generar llave de eliminación",
+    "groupStageIncomplete": "Todos los partidos de la fase de grupos deben estar decididos antes de generar la llave.",
+    "knockoutBracket": "Llave de eliminación",
+    "teamAFallback": "Equipo A",
+    "teamBFallback": "Equipo B"
+  },
+  "GroupBuilder": {
+    "groupsTitle": "Grupos",
+    "buildGroupsTitle": "Armar grupos",
+    "generateAutomatic": "Generar grupos automáticamente",
+    "generatingAutomatic": "Generando…",
+    "manualAssignHint": "O asigná cada equipo a un grupo manualmente:",
+    "noRegisteredTeams": "Todavía no hay equipos registrados.",
+    "groupForTeamAriaLabel": "Grupo para {teamName}",
+    "unassignedOption": "Sin asignar",
+    "saveGroups": "Guardar grupos",
+    "savingGroups": "Guardando…",
+    "lockGroups": "Bloquear grupos",
+    "groupsLocked": "Grupos bloqueados",
+    "locking": "Bloqueando…"
+  },
+  "GroupMatchesList": {
+    "statusLabels": {
+      "SCHEDULED": "Programado",
+      "COMPLETED": "Completado",
+      "WALKOVER": "Walkover",
+      "CANCELLED": "Cancelado"
+    },
+    "emptyState": "Todavía no hay partidos — armá los grupos para generar el fixture.",
+    "tbd": "A definir",
+    "matchup": "{teamA} vs {teamB}",
+    "winner": "— Ganador: {name}",
+    "enterScore": "Cargar resultado",
+    "walkover": "Walkover"
+  },
+  "KnockoutRoundsList": {
+    "roundLabels": {
+      "ROUND_OF_32": "Dieciseisavos de final",
+      "ROUND_OF_16": "Octavos de final",
+      "QUARTERFINAL": "Cuartos de final",
+      "SEMIFINAL": "Semifinal",
+      "FINAL": "Final"
+    },
+    "statusLabels": {
+      "SCHEDULED": "Programado",
+      "COMPLETED": "Completado",
+      "WALKOVER": "Walkover",
+      "CANCELLED": "Cancelado"
+    },
+    "emptyState": "Todavía no hay llave de eliminación — generala una vez que termine la fase de grupos.",
+    "tbd": "A definir",
+    "matchup": "{teamA} vs {teamB}",
+    "winner": "— Ganador: {name}",
+    "enterScore": "Cargar resultado",
+    "walkover": "Walkover"
+  },
+  "MatchScoreEntryDialog": {
+    "title": "Cargar resultado",
+    "set1": "Set 1",
+    "set2": "Set 2",
+    "set3": "Set 3 (si hace falta)",
+    "teamAGames": "Games del equipo A",
+    "teamBGames": "Games del equipo B",
+    "save": "Guardar resultado",
+    "saving": "Guardando…"
+  },
+  "MatchScoreEntryValidation": {
+    "minZero": "Debe ser 0 o más",
+    "decidedLeaveEmpty": "El partido ya está decidido después de 2 sets — dejá el set 3 vacío.",
+    "set3Required": "El set 3 es obligatorio para decidir el partido.",
+    "invalidSet3": "Ingresá games válidos para el set 3."
+  },
+  "WalkoverDialog": {
+    "title": "Registrar un walkover",
+    "description": "¿Qué equipo gana por walkover? No se registrará ningún resultado.",
+    "teamWins": "Gana {teamLabel}"
+  },
+  "TournamentsList": {
+    "emptyState": "Todavía no hay torneos. Crear un torneo todavía no está disponible en esta vista — usá la API directamente, o esperá a que se agregue la función de creación."
+  },
+  "StandingsTable": {
+    "emptyState": "Todavía no hay posiciones — no se jugaron partidos.",
+    "team": "Equipo",
+    "wins": "Ganados",
+    "setDiff": "Dif. sets",
+    "gameDiff": "Dif. games"
+  },
+  "TournamentsHub": {
+    "loading": "Cargando torneos…",
+    "emptyState": "No hay torneos abiertos para inscripción en este momento."
+  },
+  "TournamentsHubData": {
+    "genericError": "Algo salió mal. Intentá de nuevo."
+  },
+  "TournamentModal": {
+    "loading": "Cargando…"
+  },
+  "TournamentModalData": {
+    "genericError": "Algo salió mal. Intentá de nuevo."
+  },
+  "RegistrationPanel": {
+    "registeredWith": "Estás registrado con {partnerName}.",
+    "withdraw": "Retirarse",
+    "withdrawing": "Retirando…",
+    "registerWithPartner": "Registrate con un compañero",
+    "register": "Registrarse",
+    "registering": "Registrando…",
+    "registeredTeams": "Equipos registrados"
+  },
+  "RegistrationPanelData": {
+    "genericError": "Algo salió mal. Intentá de nuevo.",
+    "registered": "¡Ya estás registrado!",
+    "withdrawn": "Inscripción retirada"
+  },
+  "RegisteredTeamsList": {
+    "loading": "Cargando equipos…",
+    "emptyState": "Todavía no hay equipos registrados."
+  },
+  "HelpView": {
+    "title": "Ayuda",
+    "description": "Una guía rápida para aprovechar {brand} al máximo."
+  },
+  "PlayerHelpSection": {
+    "title": "Para jugadores",
+    "items": {
+      "browsing": {
+        "title": "Buscar un club y una cancha",
+        "body": "Abrí Explorar canchas para ver los clubes cercanos, elegir una cancha y consultar la disponibilidad en tiempo real para cualquier día."
+      },
+      "booking": {
+        "title": "Reservar un turno y pagar online",
+        "body": "Tocá un horario disponible para reservarlo. Si la cancha es gratuita, tu reserva se confirma al instante. Si el club cobra una tarifa de reserva, el turno queda retenido por un tiempo corto mientras pagás con Mercado Pago o transferencia bancaria, según lo que acepte el club. Si no completás el pago a tiempo, la retención se libera automáticamente y el turno vuelve a estar disponible."
+      },
+      "myReservations": {
+        "title": "Gestionar tus reservas",
+        "body": "Mis reservas lista tus próximas reservas, con la opción de mostrar también las pasadas. Desde ahí podés cancelar una reserva próxima si cambian tus planes."
+      },
+      "tournaments": {
+        "title": "Sumarte a un torneo",
+        "body": "Cuando un club abre la inscripción a un torneo, Torneos aparece en tu navegación. Abrilo para ver los torneos disponibles, elegir tu categoría e inscribir tu equipo."
+      },
+      "profile": {
+        "title": "Tu perfil de jugador",
+        "body": "Tu categoría de pádel, lado preferido y mano dominante se definen cuando te registrás. Podés actualizar tu lado preferido y mano dominante en cualquier momento desde el ícono de lápiz junto a tu estilo de juego, en el inicio de tu Dashboard."
+      },
+      "playersDirectory": {
+        "title": "Encontrar a otros jugadores",
+        "body": "Jugadores lista a todas las personas registradas para que puedas buscar compañeros y ver su categoría, lado preferido y mano dominante."
+      }
+    }
+  },
+  "OwnerHelpSection": {
+    "title": "Para dueños de club",
+    "items": {
+      "onboarding": {
+        "title": "Configurar tu club",
+        "body": "Definís los datos básicos de tu club (nombre, contacto, datos legales y de facturación) al registrarte como dueño. Podés revisar y editar la mayoría de esos datos después desde Configuración del club."
+      },
+      "gate": {
+        "title": "Antes de poder aceptar reservas",
+        "body": "Se necesitan dos cosas antes de que tu panel se desbloquee: el pago de tu membresía de Play Padel confirmado, y una forma de cobrar — conectar Mercado Pago o agregar una cuenta para transferencias. Te guiamos por ambos pasos automáticamente apenas te registrás."
+      },
+      "courts": {
+        "title": "Gestionar canchas y cierres",
+        "body": "Canchas es donde agregás y editás las canchas de tu club (superficie, paredes, red, fotos, precio) y cerrás canchas puntuales por mantenimiento. Para cerrar todo el club — un feriado, por ejemplo — usá Cierres dentro de Configuración del club."
+      },
+      "reservations": {
+        "title": "Gestionar reservas",
+        "body": "Reservas muestra una grilla día por día con las reservas de cada cancha. Hacé clic en un turno para ver el detalle de esa reserva y gestionarla."
+      },
+      "clubSettings": {
+        "title": "Configuración del club",
+        "body": "Configuración del club se organiza en pestañas: Datos básicos, Horarios, Cierres, Mercado Pago y Transferencia bancaria — todo lo relacionado con cómo funciona tu club y cómo cobrás está ahí."
+      },
+      "tournaments": {
+        "title": "Organizar torneos",
+        "body": "Torneos te permite crear un torneo, armar zonas, cargar resultados de partidos y gestionar las rondas eliminatorias una vez que termina la fase de grupos."
+      }
+    }
+  },
+  "AccountLanguageHelpSection": {
+    "title": "Cuenta e idioma",
+    "items": {
+      "account": {
+        "title": "Tu cuenta",
+        "body": "Configuración de la cuenta, en el menú debajo de tu avatar, abre tu perfil — email, contraseña y seguridad — gestionado por Clerk."
+      },
+      "language": {
+        "title": "Cambiar de idioma",
+        "body": "Usá el selector de bandera en la barra de navegación para cambiar {brand} entre español e inglés. El mismo selector está disponible en el encabezado antes de iniciar sesión."
+      }
+    }
+  },
+  "PhoneField": {
+    "label": "Teléfono *",
+    "codePlaceholder": "Código",
+    "searchCountryPlaceholder": "Buscar país…",
+    "noCountryFound": "No se encontró el país."
+  },
+  "CountryProvinceCityFields": {
+    "country": "País",
+    "province": "Provincia / Estado",
+    "city": "Ciudad",
+    "selectCountry": "Seleccioná un país",
+    "selectCountryFirst": "Seleccioná primero un país",
+    "selectProvince": "Seleccioná una provincia",
+    "selectProvinceFirst": "Seleccioná primero una provincia",
+    "selectCity": "Seleccioná una ciudad",
+    "noProvincesAvailable": "No hay provincias disponibles",
+    "noCitiesAvailable": "No hay ciudades disponibles"
+  }
+}

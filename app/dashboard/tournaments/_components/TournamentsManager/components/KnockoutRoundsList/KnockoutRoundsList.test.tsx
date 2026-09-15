@@ -2,6 +2,8 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, fireEvent, cleanup } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
+import { NextIntlClientProvider } from "next-intl";
+import messages from "@/messages/en.json";
 import { KnockoutRoundsList } from "./KnockoutRoundsList";
 import type { GroupMatch } from "../../types";
 
@@ -14,16 +16,22 @@ const TEAM_LABELS = {
   t4: "Dana / Dee",
 };
 
+function renderList(props: React.ComponentProps<typeof KnockoutRoundsList>) {
+  return render(
+    <NextIntlClientProvider locale="en" messages={messages}>
+      <KnockoutRoundsList {...props} />
+    </NextIntlClientProvider>,
+  );
+}
+
 describe("KnockoutRoundsList", () => {
   it("shows an empty state with no matches", () => {
-    render(
-      <KnockoutRoundsList
-        matches={[]}
-        teamLabels={TEAM_LABELS}
-        onEnterScore={vi.fn()}
-        onRecordWalkover={vi.fn()}
-      />,
-    );
+    renderList({
+      matches: [],
+      teamLabels: TEAM_LABELS,
+      onEnterScore: vi.fn(),
+      onRecordWalkover: vi.fn(),
+    });
     expect(screen.getByText(/no knockout bracket yet/i)).toBeInTheDocument();
   });
 
@@ -44,36 +52,32 @@ describe("KnockoutRoundsList", () => {
         status: "SCHEDULED",
       },
     ];
-    render(
-      <KnockoutRoundsList
-        matches={matches}
-        teamLabels={TEAM_LABELS}
-        onEnterScore={vi.fn()}
-        onRecordWalkover={vi.fn()}
-      />,
-    );
+    renderList({
+      matches,
+      teamLabels: TEAM_LABELS,
+      onEnterScore: vi.fn(),
+      onRecordWalkover: vi.fn(),
+    });
 
     const headings = screen.getAllByRole("heading").map((h) => h.textContent);
     expect(headings).toEqual(["Semifinal", "Final"]);
   });
 
   it("shows TBD for a match with no team assigned yet", () => {
-    render(
-      <KnockoutRoundsList
-        matches={[
-          {
-            id: "final",
-            knockoutRound: "FINAL",
-            teamAId: undefined,
-            teamBId: undefined,
-            status: "SCHEDULED",
-          },
-        ]}
-        teamLabels={TEAM_LABELS}
-        onEnterScore={vi.fn()}
-        onRecordWalkover={vi.fn()}
-      />,
-    );
+    renderList({
+      matches: [
+        {
+          id: "final",
+          knockoutRound: "FINAL",
+          teamAId: undefined,
+          teamBId: undefined,
+          status: "SCHEDULED",
+        },
+      ],
+      teamLabels: TEAM_LABELS,
+      onEnterScore: vi.fn(),
+      onRecordWalkover: vi.fn(),
+    });
     expect(screen.getByText("TBD vs TBD")).toBeInTheDocument();
   });
 
@@ -87,14 +91,12 @@ describe("KnockoutRoundsList", () => {
       teamBId: "t2",
       status: "SCHEDULED",
     };
-    render(
-      <KnockoutRoundsList
-        matches={[match]}
-        teamLabels={TEAM_LABELS}
-        onEnterScore={onEnterScore}
-        onRecordWalkover={onRecordWalkover}
-      />,
-    );
+    renderList({
+      matches: [match],
+      teamLabels: TEAM_LABELS,
+      onEnterScore,
+      onRecordWalkover,
+    });
 
     fireEvent.click(screen.getByRole("button", { name: /enter score/i }));
     expect(onEnterScore).toHaveBeenCalledWith(match);
@@ -104,23 +106,21 @@ describe("KnockoutRoundsList", () => {
   });
 
   it("hides action buttons and shows the winner for a decided match", () => {
-    render(
-      <KnockoutRoundsList
-        matches={[
-          {
-            id: "semi_1",
-            knockoutRound: "SEMIFINAL",
-            teamAId: "t1",
-            teamBId: "t2",
-            status: "COMPLETED",
-            winnerTeamId: "t1",
-          },
-        ]}
-        teamLabels={TEAM_LABELS}
-        onEnterScore={vi.fn()}
-        onRecordWalkover={vi.fn()}
-      />,
-    );
+    renderList({
+      matches: [
+        {
+          id: "semi_1",
+          knockoutRound: "SEMIFINAL",
+          teamAId: "t1",
+          teamBId: "t2",
+          status: "COMPLETED",
+          winnerTeamId: "t1",
+        },
+      ],
+      teamLabels: TEAM_LABELS,
+      onEnterScore: vi.fn(),
+      onRecordWalkover: vi.fn(),
+    });
 
     expect(
       screen.queryByRole("button", { name: /enter score/i }),
@@ -129,21 +129,19 @@ describe("KnockoutRoundsList", () => {
   });
 
   it("never shows action buttons in readOnly mode, even for a ready match", () => {
-    render(
-      <KnockoutRoundsList
-        matches={[
-          {
-            id: "semi_1",
-            knockoutRound: "SEMIFINAL",
-            teamAId: "t1",
-            teamBId: "t2",
-            status: "SCHEDULED",
-          },
-        ]}
-        teamLabels={TEAM_LABELS}
-        readOnly
-      />,
-    );
+    renderList({
+      matches: [
+        {
+          id: "semi_1",
+          knockoutRound: "SEMIFINAL",
+          teamAId: "t1",
+          teamBId: "t2",
+          status: "SCHEDULED",
+        },
+      ],
+      teamLabels: TEAM_LABELS,
+      readOnly: true,
+    });
 
     expect(
       screen.queryByRole("button", { name: /enter score/i }),

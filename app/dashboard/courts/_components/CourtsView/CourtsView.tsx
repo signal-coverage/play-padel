@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Plus } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useReducedMotion } from "framer-motion";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -28,6 +29,7 @@ import type { AvailabilityEntry } from "@/core/courts/types";
 import type { CourtFormValues, CourtRecord } from "./types";
 
 export function CourtsView() {
+  const t = useTranslations("CourtsView");
   const { data: courts = [], isLoading } = useManagedCourts();
   const { data: clubPlanInfo } = useClubPlanInfo();
   const createCourt = useCreateCourt();
@@ -175,7 +177,7 @@ export function CourtsView() {
           toast.error(
             uploadError instanceof Error
               ? uploadError.message
-              : "Could not upload the court photo. Please try again.",
+              : t("uploadPhotoError"),
           );
           throw uploadError;
         }
@@ -186,7 +188,7 @@ export function CourtsView() {
       // upload above even starts, which would show the success toast/
       // celebration while the Sheet (see CourtFormSheet's submit) is still
       // "Saving…" the photo.
-      toast.success("Court created");
+      toast.success(t("courtCreated"));
       if (!shouldReduceMotion) {
         fireSuccessCelebration();
       }
@@ -209,10 +211,10 @@ export function CourtsView() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-balance">
-            Courts
+            {t("title")}
           </h1>
           <p className="text-sm text-muted-foreground mt-1 text-pretty">
-            Manage your club&apos;s courts and weekly availability.
+            {t("description")}
           </p>
         </div>
         <Button
@@ -221,14 +223,14 @@ export function CourtsView() {
           className={cn(atCourtLimit && "cursor-not-allowed opacity-50")}
         >
           <Plus className="h-4 w-4" />
-          New court
+          {t("newCourt")}
         </Button>
       </div>
 
       {selectedIds.size > 0 && (
         <div className="flex items-center justify-between rounded-sm border bg-muted/30 px-3 py-2">
           <span className="text-sm text-muted-foreground">
-            {selectedIds.size} court(s) selected
+            {t("selectedCount", { count: selectedIds.size })}
           </span>
           <div className="flex items-center gap-2">
             <Button
@@ -236,14 +238,14 @@ export function CourtsView() {
               variant="outline"
               onClick={() => setBulkEditOpen(true)}
             >
-              Bulk edit
+              {t("bulkEdit")}
             </Button>
             <Button
               type="button"
               variant="ghost"
               onClick={() => setSelectedIds(new Set())}
             >
-              Clear
+              {t("clear")}
             </Button>
           </div>
         </div>
@@ -327,14 +329,14 @@ export function CourtsView() {
       <ConfirmDialog
         open={Boolean(courtPendingDeletion)}
         onOpenChange={handleDeleteDialogClose}
-        title="Deactivate court?"
+        title={t("deactivateTitle")}
         description={
           courtPendingDeletion
-            ? `"${courtPendingDeletion.name}" will be marked inactive and hidden from new bookings. This can't be undone from here.`
+            ? t("deactivateDescription", { name: courtPendingDeletion.name })
             : undefined
         }
-        confirmLabel="Deactivate"
-        pendingLabel="Deactivating…"
+        confirmLabel={t("deactivateConfirm")}
+        pendingLabel={t("deactivatePending")}
         isPending={deleteCourt.isPending}
         onConfirm={confirmDelete}
         variant="default"

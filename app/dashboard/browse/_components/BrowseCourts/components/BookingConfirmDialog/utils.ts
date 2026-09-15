@@ -39,21 +39,30 @@ export function getBookingPaymentState(
   return { kind: "price-missing" };
 }
 
+// `t` comes from the caller's own "BookingConfirmDialog" translations
+// (getBookingConfirmMessage is a plain util, not a component, so it can't
+// call useTranslations itself) — BookingConfirmDesktopDialog and
+// BookingConfirmMobileDrawer both pass their own useTranslations result.
 export function getBookingConfirmMessage(
   state: BookingPaymentState,
   currency: string,
   selectedMethod: ReservationPaymentMethod | null,
+  t: (key: string, values?: Record<string, string | number>) => string,
 ): string {
   switch (state.kind) {
     case "pay-now":
       if (selectedMethod === "TRANSFER") {
-        return `This reservation requires payment to be confirmed. Send ${formatCurrency(state.price, currency)} via bank transfer and message the club's WhatsApp with your receipt within 30 minutes — your slot is held for 60 minutes total. If the club doesn't confirm in time, the slot is released automatically (Mercado Pago is the only method that confirms instantly).`;
+        return t("payNowTransfer", {
+          amount: formatCurrency(state.price, currency),
+        });
       }
-      return `This reservation requires payment to be confirmed. You'll pay ${formatCurrency(state.price, currency)} via Mercado Pago — you'll be redirected to complete it, and your slot is held for 15 minutes.`;
+      return t("payNowMercadoPago", {
+        amount: formatCurrency(state.price, currency),
+      });
     case "free":
-      return "This court is free — no payment needed. You can cancel for free up to 2 hours before your reservation.";
+      return t("free");
     case "price-missing":
-      return "This court doesn't have a price set yet, so it can't be booked online — contact the club directly.";
+      return t("priceMissing");
   }
 }
 

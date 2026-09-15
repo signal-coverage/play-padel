@@ -3,16 +3,21 @@ import { useState } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { ArrowLeft, ArrowRight, ArrowUpRight } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { SlideCounter } from "@/app/_components/SlideCounter";
-import { PLATFORM_FEATURES, ease } from "./consts";
+import { ease } from "./consts";
+import type { FeatureTranslation } from "./types";
+import { buildFeatures } from "./utils";
 import { CONTAINER } from "@/lib/consts";
 
 export function LandingFeatures() {
+  const t = useTranslations("LandingFeatures");
   const shouldReduce = useReducedMotion();
   const [index, setIndex] = useState(0);
-  const total = PLATFORM_FEATURES.length;
-  const current = PLATFORM_FEATURES[index];
-  const next = PLATFORM_FEATURES[(index + 1) % total];
+  const features = buildFeatures(t.raw("items") as FeatureTranslation[]);
+  const total = features.length;
+  const current = features[index];
+  const next = features[(index + 1) % total];
 
   const goPrev = () => setIndex((i) => (i - 1 + total) % total);
   const goNext = () => setIndex((i) => (i + 1) % total);
@@ -48,7 +53,7 @@ export function LandingFeatures() {
             viewport={{ once: true }}
             transition={{ duration: 0.5, ease }}
           >
-            One Platform. Every Court.
+            {t("badge")}
           </motion.span>
         </div>
 
@@ -60,9 +65,9 @@ export function LandingFeatures() {
             viewport={{ once: true }}
             transition={{ duration: 0.5, ease, delay: 0.05 }}
           >
-            <span className="text-foreground">Everything You Need</span>
+            <span className="text-foreground">{t("heading.bold")}</span>
             <br />
-            <span className="text-muted-foreground">to Book and Manage</span>
+            <span className="text-muted-foreground">{t("heading.muted")}</span>
           </motion.h2>
 
           <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6 sm:gap-8">
@@ -71,7 +76,7 @@ export function LandingFeatures() {
                 <button
                   type="button"
                   onClick={goPrev}
-                  aria-label="Previous feature"
+                  aria-label={t("previousLabel")}
                   className="w-11 h-11 rounded-full border border-border text-foreground flex items-center justify-center hover:border-foreground transition-colors"
                 >
                   <ArrowLeft size={16} strokeWidth={2} />
@@ -79,7 +84,7 @@ export function LandingFeatures() {
                 <button
                   type="button"
                   onClick={goNext}
-                  aria-label="Next feature"
+                  aria-label={t("nextLabel")}
                   className="w-11 h-11 rounded-full border border-border text-foreground flex items-center justify-center hover:border-foreground transition-colors"
                 >
                   <ArrowRight size={16} strokeWidth={2} />
@@ -102,12 +107,15 @@ export function LandingFeatures() {
                   <div className="mt-4">
                     <SlideCounter current={index + 1} total={total} />
                     <div className="mt-3 flex items-center gap-1.5">
-                      {PLATFORM_FEATURES.map((feature, i) => (
+                      {features.map((feature, i) => (
                         <button
                           key={feature.title}
                           type="button"
                           onClick={() => setIndex(i)}
-                          aria-label={`Go to feature ${i + 1}: ${feature.title}`}
+                          aria-label={t("goToFeature", {
+                            number: i + 1,
+                            title: feature.title,
+                          })}
                           aria-current={i === index}
                           className={`h-2 rounded-full transition-all duration-300 ${
                             i === index

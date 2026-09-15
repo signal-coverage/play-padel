@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import { useQueryState, parseAsString, parseAsStringEnum } from "nuqs";
+import { useTranslations } from "next-intl";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { SortDirectionButton } from "@/components/SortDirectionButton";
@@ -30,6 +31,7 @@ export function ClubListPanel({
   isLoading,
   isError,
 }: ClubListPanelProps) {
+  const t = useTranslations("ClubListPanel");
   // Filter/sort state lives in the URL (like `club`/`court`/`date` in
   // BrowseCourts) so the current search/sort is shareable and survives a
   // refresh, per the feature spec.
@@ -58,7 +60,7 @@ export function ClubListPanel({
     () => [
       {
         key: "club",
-        header: "Club",
+        header: t("club"),
         headerClassName: "pl-3",
         className: "px-2",
         cell: (club) => (
@@ -82,14 +84,14 @@ export function ClubListPanel({
               <p className="truncate text-xs font-medium">{club.name}</p>
               <div className="mt-0.5 flex flex-wrap items-center gap-1">
                 <Badge variant="outline">
-                  {club.courtCount} {club.courtCount === 1 ? "court" : "courts"}
+                  {t("courtCount", { count: club.courtCount })}
                 </Badge>
                 <Badge
                   variant={club.hasAvailabilityToday ? "success" : "secondary"}
                 >
                   {club.hasAvailabilityToday
-                    ? "Available today"
-                    : "No availability"}
+                    ? t("availableToday")
+                    : t("noAvailability")}
                 </Badge>
               </div>
             </div>
@@ -97,13 +99,13 @@ export function ClubListPanel({
         ),
       },
     ],
-    [selectedClubSlug, onSelectClub],
+    [t, selectedClubSlug, onSelectClub],
   );
 
   if (isError) {
     return (
       <StatusBox className="flex h-full flex-col items-center justify-center">
-        Could not load clubs. Try again later.
+        {t("loadError")}
       </StatusBox>
     );
   }
@@ -115,33 +117,24 @@ export function ClubListPanel({
           this to one control row, instead of stacking search above sort,
           keeps all three BrowseCourts columns reserving the same header
           height so their tables/grid line up and fill the rest evenly. */}
-      <div className="flex flex-wrap items-start gap-3 justify-between">
-        <div className="flex flex-1 flex-col gap-1.5">
+      <div className="flex flex-col flex-wrap items-start gap-3 justify-between">
+        <div className="flex flex-col gap-1.5 w-full">
           <span className="text-xs font-medium text-muted-foreground">
-            Clubs List
+            {t("sortBy")}
           </span>
-          <SearchInput
-            value={query}
-            onChange={setQuery}
-            placeholder="Search clubs..."
-          />
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <span className="text-xs font-medium text-muted-foreground">
-            Sort by
-          </span>
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5 w-full">
             <Select
               value={sort.field}
               onValueChange={(value) => setSortField(value as ClubSortField)}
             >
-              <SelectTrigger className="w-32">
-                <SelectValue placeholder="Sort by" />
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder={t("sortBy")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="name">Name</SelectItem>
-                <SelectItem value="courtCount">Court count</SelectItem>
+                <SelectItem value="name">{t("sortName")}</SelectItem>
+                <SelectItem value="courtCount">
+                  {t("sortCourtCount")}
+                </SelectItem>
               </SelectContent>
             </Select>
             <SortDirectionButton
@@ -152,6 +145,17 @@ export function ClubListPanel({
             />
           </div>
         </div>
+
+        <div className="flex flex-1 flex-col gap-1.5 w-full">
+          <span className="text-xs font-medium text-muted-foreground">
+            {t("clubsList")}
+          </span>
+          <SearchInput
+            value={query}
+            onChange={setQuery}
+            placeholder={t("searchPlaceholder")}
+          />
+        </div>
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto">
@@ -161,10 +165,10 @@ export function ClubListPanel({
           rows={visibleClubs}
           rowKey={(club) => club.id}
           isLoading={isLoading}
-          loadingLabel="Loading clubs…"
+          loadingLabel={t("loading")}
           emptyState={
             <StatusBox className="flex h-full flex-col items-center justify-center">
-              No clubs match your search.
+              {t("noMatches")}
             </StatusBox>
           }
         />

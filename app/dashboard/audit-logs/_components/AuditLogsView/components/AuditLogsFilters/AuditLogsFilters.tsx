@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import {
   Select,
   SelectContent,
@@ -5,8 +6,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { AuditAction } from "@/core/audit/types";
-import { AUDIT_ACTION_LABELS, AUDIT_ENTITY_OPTIONS } from "../../consts";
+import { AUDIT_ACTION_VALUES, AUDIT_ENTITY_OPTIONS } from "../../consts";
+import { getActionLabel } from "../../utils";
 import type { AuditLogsFiltersProps } from "./types";
 
 // Radix Select can't use an empty string as an item value, so "show
@@ -19,6 +20,9 @@ export function AuditLogsFilters({
   onEntityChange,
   onActionChange,
 }: AuditLogsFiltersProps) {
+  const t = useTranslations("AuditLogsFilters");
+  const tActionLabels = useTranslations("AuditActionLabels");
+
   return (
     <div className="flex flex-wrap gap-2">
       <Select
@@ -28,13 +32,13 @@ export function AuditLogsFilters({
         }
       >
         <SelectTrigger className="w-40">
-          <SelectValue placeholder="All entities" />
+          <SelectValue placeholder={t("allEntities")} />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value={ALL}>All entities</SelectItem>
+          <SelectItem value={ALL}>{t("allEntities")}</SelectItem>
           {AUDIT_ENTITY_OPTIONS.map((option) => (
             <SelectItem key={option} value={option}>
-              {option}
+              {t(`entities.${option}`)}
             </SelectItem>
           ))}
         </SelectContent>
@@ -46,13 +50,13 @@ export function AuditLogsFilters({
         }
       >
         <SelectTrigger className="w-52">
-          <SelectValue placeholder="All actions" />
+          <SelectValue placeholder={t("allActions")} />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value={ALL}>All actions</SelectItem>
-          {(Object.keys(AUDIT_ACTION_LABELS) as AuditAction[]).map((option) => (
+          <SelectItem value={ALL}>{t("allActions")}</SelectItem>
+          {AUDIT_ACTION_VALUES.map((option) => (
             <SelectItem key={option} value={option}>
-              {AUDIT_ACTION_LABELS[option]}
+              {getActionLabel(option, tActionLabels)}
             </SelectItem>
           ))}
         </SelectContent>

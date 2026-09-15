@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import {
   useActiveCourts,
   useDayReservations,
@@ -9,6 +10,7 @@ import { StatPill } from "../StatPill";
 import { getFavoriteCourt, getHoursPlayed } from "../../utils";
 
 export function OwnerHero({ className }: { className?: string }) {
+  const t = useTranslations("OwnerHero");
   const { data: reservations = [] } = useDayReservations(new Date());
   const { data: courts = [] } = useActiveCourts();
 
@@ -19,9 +21,9 @@ export function OwnerHero({ className }: { className?: string }) {
       <HeroShell
         className={className}
         href="/dashboard/courts"
-        heading="Let's set up your club"
-        subheading="Add your first court to start taking bookings."
-        ctaLabel="Add a Court"
+        heading={t("emptyHeading")}
+        subheading={t("emptySubheading")}
+        ctaLabel={t("addCourt")}
       />
     );
   }
@@ -35,13 +37,13 @@ export function OwnerHero({ className }: { className?: string }) {
     <HeroShell
       className={className}
       href="/dashboard/reservations"
-      heading="Your club today"
+      heading={t("heading")}
     >
-      <StatPill label="Today's Bookings" value={String(active.length)} />
-      <StatPill label="Active Courts" value={String(courts.length)} />
-      <StatPill label="Cancelled Today" value={String(cancelled.length)} />
-      <StatPill label="Busiest Court" value={busiestCourt} />
-      <StatPill label="Hours Booked" value={`${hoursBooked}h`} />
+      <StatPill label={t("todaysBookings")} value={String(active.length)} />
+      <StatPill label={t("activeCourts")} value={String(courts.length)} />
+      <StatPill label={t("cancelledToday")} value={String(cancelled.length)} />
+      <StatPill label={t("busiestCourt")} value={busiestCourt} />
+      <StatPill label={t("hoursBooked")} value={`${hoursBooked}h`} />
     </HeroShell>
   );
 }

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useTranslations } from "next-intl";
 import { Plus } from "lucide-react";
 import {
   Dialog,
@@ -34,7 +35,7 @@ import {
   courtToFormValues,
 } from "../../utils";
 import { useClubOperatingHours, useCourtAvailability } from "../../hooks";
-import { courtFormSchema } from "./consts";
+import { buildCourtFormSchema } from "./consts";
 import { SurfaceField } from "./components/SurfaceField";
 import { CourtTypeField } from "./components/CourtTypeField";
 import { ColorField } from "./components/ColorField";
@@ -80,6 +81,8 @@ export function CourtFormSheet({
   isSubmitting,
   initialStep = 0,
 }: CourtFormSheetProps) {
+  const t = useTranslations("CourtFormSheet");
+  const tValidation = useTranslations("CourtFormValidation");
   const isEditMode = Boolean(court);
   const courtId = court?.id ?? null;
 
@@ -118,7 +121,7 @@ export function CourtFormSheet({
     setValue,
     formState: { errors, isValid, touchedFields, isSubmitted },
   } = useForm<CourtFormValues>({
-    resolver: zodResolver(courtFormSchema),
+    resolver: zodResolver(buildCourtFormSchema(tValidation)),
     defaultValues: courtToFormValues(court),
     mode: "onChange",
   });
@@ -302,11 +305,13 @@ export function CourtFormSheet({
           className="flex h-[70vh] w-full flex-col sm:max-w-4xl"
         >
           <DialogHeader>
-            <DialogTitle>{isEditMode ? "Edit court" : "New court"}</DialogTitle>
+            <DialogTitle>
+              {isEditMode ? t("editCourtTitle") : t("newCourtTitle")}
+            </DialogTitle>
             <DialogDescription>
               {isEditMode
-                ? "Update this court's details."
-                : "Add a new court to your club."}
+                ? t("editCourtDescription")
+                : t("newCourtDescription")}
             </DialogDescription>
           </DialogHeader>
 
@@ -333,10 +338,10 @@ export function CourtFormSheet({
                 reads as a lot of empty margin either side. */}
             <div className="mx-auto flex w-full max-w-sm flex-col gap-4">
               <Field>
-                <FieldLabel htmlFor="court-name">Name *</FieldLabel>
+                <FieldLabel htmlFor="court-name">{t("nameLabel")}</FieldLabel>
                 <Input
                   id="court-name"
-                  placeholder="Court 1"
+                  placeholder={t("namePlaceholder")}
                   {...register("name")}
                   aria-invalid={
                     (touchedFields.name || isSubmitted) && !!errors.name
@@ -346,7 +351,9 @@ export function CourtFormSheet({
               </Field>
 
               <Field>
-                <FieldLabel htmlFor="court-number">Court number</FieldLabel>
+                <FieldLabel htmlFor="court-number">
+                  {t("courtNumberLabel")}
+                </FieldLabel>
                 <Input
                   id="court-number"
                   type="number"
@@ -367,7 +374,7 @@ export function CourtFormSheet({
 
               <FieldSet>
                 <FieldLegend variant="label">
-                  Photo (max {MAX_COURT_PHOTO_MB}MB)
+                  {t("photoLegend", { mb: MAX_COURT_PHOTO_MB })}
                 </FieldLegend>
                 <PhotoField
                   courtId={court?.id}
@@ -395,7 +402,7 @@ export function CourtFormSheet({
                 otherwise. */}
             <div className="flex flex-1 flex-col gap-4">
               <FieldSet>
-                <FieldLegend variant="label">Surface *</FieldLegend>
+                <FieldLegend variant="label">{t("surfaceLegend")}</FieldLegend>
                 <SurfaceField
                   name="court-surface"
                   value={surface}
@@ -410,7 +417,9 @@ export function CourtFormSheet({
               </FieldSet>
 
               <FieldSet>
-                <FieldLegend variant="label">Court type</FieldLegend>
+                <FieldLegend variant="label">
+                  {t("courtTypeLegend")}
+                </FieldLegend>
                 <CourtTypeField
                   name="court-type"
                   indoor={indoor}
@@ -421,7 +430,7 @@ export function CourtFormSheet({
               </FieldSet>
 
               <FieldSet>
-                <FieldLegend variant="label">Color</FieldLegend>
+                <FieldLegend variant="label">{t("colorLegend")}</FieldLegend>
                 <ColorField
                   name="court-color"
                   value={color}
@@ -439,7 +448,7 @@ export function CourtFormSheet({
 
             <div className="flex flex-1 flex-col gap-4">
               <FieldSet>
-                <FieldLegend variant="label">Wall type</FieldLegend>
+                <FieldLegend variant="label">{t("wallTypeLegend")}</FieldLegend>
                 <WallTypeField
                   name="court-wall-type"
                   value={wallType ?? ""}
@@ -450,7 +459,7 @@ export function CourtFormSheet({
               </FieldSet>
 
               <FieldSet>
-                <FieldLegend variant="label">Net type</FieldLegend>
+                <FieldLegend variant="label">{t("netTypeLegend")}</FieldLegend>
                 <NetTypeField
                   name="court-net-type"
                   value={netType ?? ""}
@@ -461,7 +470,9 @@ export function CourtFormSheet({
               </FieldSet>
 
               <Field orientation="horizontal">
-                <FieldLabel htmlFor="court-lighting">Has lighting</FieldLabel>
+                <FieldLabel htmlFor="court-lighting">
+                  {t("hasLighting")}
+                </FieldLabel>
                 <Switch
                   id="court-lighting"
                   checked={lighting}
@@ -486,7 +497,7 @@ export function CourtFormSheet({
             <div className="mx-auto flex w-full max-w-sm flex-col gap-4">
               <Field>
                 <FieldLabel htmlFor="court-slot-duration">
-                  Minimum shift *
+                  {t("minShiftLabel")}
                 </FieldLabel>
                 <SlotDurationField
                   id="court-slot-duration"
@@ -502,15 +513,13 @@ export function CourtFormSheet({
                     !!errors.slotDurationMinutes
                   }
                 />
-                <FieldDescription>
-                  The shortest amount of time a player can book this court for.
-                </FieldDescription>
+                <FieldDescription>{t("minShiftHint")}</FieldDescription>
                 <FieldError errors={shownError("slotDurationMinutes")} />
               </Field>
 
               <Field>
                 <FieldLabel htmlFor="court-reservation-fee">
-                  Reservation fee *
+                  {t("reservationFeeLabel")}
                 </FieldLabel>
                 <CurrencyAmountField
                   id="court-reservation-fee"
@@ -534,7 +543,9 @@ export function CourtFormSheet({
               </Field>
 
               <Field>
-                <FieldLabel htmlFor="court-price">Court price</FieldLabel>
+                <FieldLabel htmlFor="court-price">
+                  {t("courtPriceLabel")}
+                </FieldLabel>
                 <CurrencyAmountField
                   id="court-price"
                   value={courtPrice}
@@ -543,13 +554,15 @@ export function CourtFormSheet({
                   }
                 />
                 <FieldDescription>
-                  $/hour: {formatPricePerHour(courtPrice, slotDurationMinutes)}
+                  {t("pricePerHour", {
+                    price: formatPricePerHour(courtPrice, slotDurationMinutes),
+                  })}
                 </FieldDescription>
               </Field>
 
               {isEditMode && (
                 <Field orientation="horizontal">
-                  <FieldLabel htmlFor="court-active">Active</FieldLabel>
+                  <FieldLabel htmlFor="court-active">{t("active")}</FieldLabel>
                   <Switch
                     id="court-active"
                     checked={active}
@@ -583,7 +596,7 @@ export function CourtFormSheet({
                   onClick={handleBack}
                   className="min-w-28"
                 >
-                  Back
+                  {t("back")}
                 </Button>
               )}
             </div>
@@ -598,15 +611,15 @@ export function CourtFormSheet({
               className="min-w-28 gap-1.5"
             >
               {!isLastStep ? (
-                "Next"
+                t("next")
               ) : isSubmitting ? (
-                "Saving…"
+                t("saving")
               ) : isEditMode ? (
-                "Save changes"
+                t("saveChanges")
               ) : (
                 <>
                   <Plus className="size-4" />
-                  Create court
+                  {t("createCourt")}
                 </>
               )}
             </Button>
@@ -614,7 +627,7 @@ export function CourtFormSheet({
         </DialogContent>
       </Dialog>
 
-      <GlobalLoadingOverlay open={isSubmitting} label="Saving…" />
+      <GlobalLoadingOverlay open={isSubmitting} label={t("saving")} />
     </>
   );
 }

@@ -10,6 +10,8 @@ import {
 } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { NextIntlClientProvider } from "next-intl";
+import messages from "@/messages/en.json";
 
 import { CourtFormSheet } from "./CourtFormSheet";
 import { MAX_COURT_PHOTO_SIZE_BYTES } from "@/core/courts/validation";
@@ -42,14 +44,16 @@ function renderModal(
 
   const { container } = render(
     <QueryClientProvider client={queryClient}>
-      <CourtFormSheet
-        open
-        onOpenChange={onOpenChange}
-        court={null}
-        onSubmit={onSubmit}
-        isSubmitting={false}
-        {...overrides}
-      />
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <CourtFormSheet
+          open
+          onOpenChange={onOpenChange}
+          court={null}
+          onSubmit={onSubmit}
+          isSubmitting={false}
+          {...overrides}
+        />
+      </NextIntlClientProvider>
     </QueryClientProvider>,
   );
 
@@ -149,6 +153,13 @@ afterEach(() => {
 });
 
 describe("CourtFormSheet", () => {
+  // 15s, not the 5s default — same reasoning as CourtsView.test.tsx's
+  // matching case: this test drives several real React re-renders through
+  // a live react-hook-form stack across multiple wizard steps, which
+  // reliably finishes well under 5s in isolation but can exceed it under
+  // the CPU contention of the FULL suite running every file in parallel —
+  // confirmed by reproducing a real "Test timed out in 5000ms" failure that
+  // way (not a race or a leaked rejection from another test).
   it("keeps the modal open with the staged photo intact when onSubmit rejects, so the owner can retry, without leaking an unhandled rejection", async () => {
     const onSubmit = vi.fn().mockRejectedValue(new Error("upload failed"));
     const { onOpenChange } = renderModal(
@@ -201,7 +212,7 @@ describe("CourtFormSheet", () => {
     // preview state (an <img> for a staged file, instead of the placeholder
     // icon) survives regardless of which step is currently showing.
     expect(document.querySelector('img[alt=""]')).toBeInTheDocument();
-  });
+  }, 15000);
 
   it("shows the 5MB limit upfront in the Photo field, computed from the shared constant", () => {
     renderModal(async (url) => {

@@ -305,6 +305,7 @@ describe("POST /api/webhooks/mercadopago", () => {
         recipientEmail: "owner@example.com",
         recipientName: "Owner One",
         sendEmail: false,
+        params: expect.objectContaining({ variant: "overlap" }),
       }),
     );
   });

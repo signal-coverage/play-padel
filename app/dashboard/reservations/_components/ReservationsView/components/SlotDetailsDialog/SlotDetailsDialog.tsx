@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { ReservationStatusBadge } from "@/components/ReservationStatusBadge";
 import { StatValue } from "@/components/StatValue";
 import {
@@ -25,6 +26,7 @@ export function SlotDetailsDialog({
   onAction,
   isPending,
 }: SlotDetailsDialogProps) {
+  const t = useTranslations("SlotDetailsDialog");
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
@@ -39,13 +41,9 @@ export function SlotDetailsDialog({
         }}
       >
         <DialogHeader>
-          <DialogTitle className="text-balance">
-            Reservation details
-          </DialogTitle>
+          <DialogTitle className="text-balance">{t("title")}</DialogTitle>
           <DialogDescription className="text-pretty">
-            {reservation
-              ? "This slot is booked."
-              : "Reservation details are unavailable for this slot."}
+            {reservation ? t("descriptionBooked") : t("descriptionUnavailable")}
           </DialogDescription>
         </DialogHeader>
 
@@ -53,17 +51,17 @@ export function SlotDetailsDialog({
           <div className="flex flex-col gap-2 text-sm">
             <StatValue
               variant="row"
-              label="Player"
+              label={t("player")}
               value={reservation.userName}
             />
             <StatValue
               variant="row"
-              label="Court"
+              label={t("court")}
               value={reservation.courtName}
             />
             <StatValue
               variant="row"
-              label="Time"
+              label={t("time")}
               value={formatTimeRange(
                 reservation.scheduledStart,
                 reservation.scheduledEnd,
@@ -71,14 +69,14 @@ export function SlotDetailsDialog({
             />
             <StatValue
               variant="row"
-              label="Status"
+              label={t("status")}
               value={reservation.status}
               valueSlot={<ReservationStatusBadge status={reservation.status} />}
             />
             {reservation.notes && (
               <StatValue
                 variant="row"
-                label="Notes"
+                label={t("notes")}
                 value={reservation.notes}
               />
             )}

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useController } from "react-hook-form";
 import type { FieldValues, Path } from "react-hook-form";
 import { Check, ChevronsUpDown } from "lucide-react";
+import { useTranslations } from "next-intl";
 import * as FlagIcons from "country-flag-icons/react/3x2";
 import { Button } from "@/components/ui/button";
 import {
@@ -98,8 +99,10 @@ export function PhoneField<
   errors,
   phoneFieldName,
   countryFieldName,
-  label = "Phone *",
+  label,
 }: PhoneFieldProps<TFieldValues>) {
+  const t = useTranslations("PhoneField");
+  const resolvedLabel = label ?? t("label");
   const phoneName = phoneFieldName ?? ("phone" as Path<TFieldValues>);
   const countryName = countryFieldName ?? ("country" as Path<TFieldValues>);
   const { field: phoneField } = useController({ control, name: phoneName });
@@ -169,7 +172,7 @@ export function PhoneField<
 
   return (
     <Field>
-      <FieldLabel htmlFor={inputId}>{label}</FieldLabel>
+      <FieldLabel htmlFor={inputId}>{resolvedLabel}</FieldLabel>
       {/* Stacked (code above, number full-width below) at 1023px and below;
           side by side from 1024px (Tailwind's `lg`) up. */}
       <div className="flex flex-col gap-2 lg:flex-row">
@@ -186,7 +189,9 @@ export function PhoneField<
               <span className="flex items-center gap-1.5 truncate">
                 <CountryFlag isoCode={selectedCountry?.isoCode} />
                 {dialCode || (
-                  <span className="text-muted-foreground">Code</span>
+                  <span className="text-muted-foreground">
+                    {t("codePlaceholder")}
+                  </span>
                 )}
               </span>
               <ChevronsUpDown className="opacity-50" />
@@ -194,9 +199,9 @@ export function PhoneField<
           </PopoverTrigger>
           <PopoverContent className="w-64 p-0" align="start">
             <Command>
-              <CommandInput placeholder="Search country…" />
+              <CommandInput placeholder={t("searchCountryPlaceholder")} />
               <CommandList>
-                <CommandEmpty>No country found.</CommandEmpty>
+                <CommandEmpty>{t("noCountryFound")}</CommandEmpty>
                 <CommandGroup>
                   {ALL_COUNTRIES.map((country) => {
                     const countryDialCode = `+${normalizePhoneCode(country.phonecode)}`;

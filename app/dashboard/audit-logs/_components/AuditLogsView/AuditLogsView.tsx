@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { AUDIT_LOGS_PAGE_SIZE } from "./consts";
 import { useAuditLogs } from "./hooks";
@@ -9,6 +10,7 @@ import { AuditLogsTable } from "./components/AuditLogsTable";
 import type { AuditLogFiltersState } from "./types";
 
 export function AuditLogsView() {
+  const t = useTranslations("AuditLogsView");
   const [filters, setFilters] = useState<AuditLogFiltersState>({ page: 1 });
   const { data, isLoading, isError } = useAuditLogs(filters);
 
@@ -25,10 +27,10 @@ export function AuditLogsView() {
     <div className="flex h-full min-h-0 min-w-0 flex-col gap-4">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight text-balance">
-          Audit Log
+          {t("title")}
         </h1>
         <p className="mt-1 text-sm text-pretty text-muted-foreground">
-          A record of changes made to your club, courts, and reservations.
+          {t("description")}
         </p>
       </div>
 
@@ -40,9 +42,7 @@ export function AuditLogsView() {
       />
 
       {isError ? (
-        <p className="text-sm text-destructive">
-          Could not load the audit log. Try again later.
-        </p>
+        <p className="text-sm text-destructive">{t("loadError")}</p>
       ) : (
         <AuditLogsTable
           // Same fix as PlayersDirectory's table
@@ -60,9 +60,7 @@ export function AuditLogsView() {
       )}
 
       <div className="flex items-center justify-between text-sm text-muted-foreground">
-        <span>
-          Page {filters.page} of {totalPages}
-        </span>
+        <span>{t("pageOf", { page: filters.page, totalPages })}</span>
         <div className="flex gap-2">
           <Button
             variant="outline"
@@ -72,7 +70,7 @@ export function AuditLogsView() {
               setFilters((prev) => ({ ...prev, page: prev.page - 1 }))
             }
           >
-            Previous
+            {t("previous")}
           </Button>
           <Button
             variant="outline"
@@ -82,7 +80,7 @@ export function AuditLogsView() {
               setFilters((prev) => ({ ...prev, page: prev.page + 1 }))
             }
           >
-            Next
+            {t("next")}
           </Button>
         </div>
       </div>

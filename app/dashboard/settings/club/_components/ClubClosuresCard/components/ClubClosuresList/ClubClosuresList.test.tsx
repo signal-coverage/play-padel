@@ -1,9 +1,20 @@
 // @vitest-environment jsdom
+import type * as React from "react";
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
+import { NextIntlClientProvider } from "next-intl";
+import messages from "@/messages/en.json";
 import { ClubClosuresList } from "./ClubClosuresList";
 import type { ClubClosure } from "../../types";
+
+function renderWithIntl(ui: React.ReactElement) {
+  return render(
+    <NextIntlClientProvider locale="en" messages={messages}>
+      {ui}
+    </NextIntlClientProvider>,
+  );
+}
 
 const noopCancel = () => {};
 
@@ -27,7 +38,7 @@ describe("ClubClosuresList", () => {
   });
 
   it("shows an empty state when there are no closures", () => {
-    render(
+    renderWithIntl(
       <ClubClosuresList
         closures={[]}
         onCancel={noopCancel}
@@ -39,7 +50,7 @@ describe("ClubClosuresList", () => {
   });
 
   it("renders each closure's reason and owning court name", () => {
-    render(
+    renderWithIntl(
       <ClubClosuresList
         closures={[
           makeClosure({ courtName: "Court 1" }),
@@ -63,7 +74,7 @@ describe("ClubClosuresList", () => {
   });
 
   it("badges an upcoming/ongoing closure as Active", () => {
-    render(
+    renderWithIntl(
       <ClubClosuresList
         closures={[
           makeClosure({
@@ -80,7 +91,7 @@ describe("ClubClosuresList", () => {
   });
 
   it("badges a closure whose endsAt has already passed as Past", () => {
-    render(
+    renderWithIntl(
       <ClubClosuresList
         closures={[
           makeClosure({
@@ -97,7 +108,7 @@ describe("ClubClosuresList", () => {
   });
 
   it("badges a cancelled closure as Cancelled even if it hasn't ended yet", () => {
-    render(
+    renderWithIntl(
       <ClubClosuresList
         closures={[
           makeClosure({
@@ -115,7 +126,7 @@ describe("ClubClosuresList", () => {
   });
 
   it("shows a Cancel button only for an active closure", () => {
-    render(
+    renderWithIntl(
       <ClubClosuresList
         closures={[
           makeClosure({
@@ -139,7 +150,7 @@ describe("ClubClosuresList", () => {
 
   it("calls onCancel with the closure id when its Cancel button is clicked", () => {
     const onCancel = vi.fn();
-    render(
+    renderWithIntl(
       <ClubClosuresList
         closures={[
           makeClosure({
@@ -159,7 +170,7 @@ describe("ClubClosuresList", () => {
   });
 
   it("disables and relabels the Cancel button for the closure currently being cancelled", () => {
-    render(
+    renderWithIntl(
       <ClubClosuresList
         closures={[
           makeClosure({

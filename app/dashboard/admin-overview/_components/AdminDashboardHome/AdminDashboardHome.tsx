@@ -1,6 +1,7 @@
 "use client";
 
 import { Download } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { DashboardBentoCard } from "@/components/DashboardBentoCard";
 import { StatValue } from "@/components/StatValue";
 import { Button } from "@/components/ui/button";
@@ -18,6 +19,7 @@ import { useAdminMetrics } from "./hooks";
  * own dashboard).
  */
 export function AdminDashboardHome() {
+  const t = useTranslations("AdminDashboardHome");
   const { data: metrics, isLoading, isError } = useAdminMetrics();
 
   if (isLoading) return <DashboardLoader />;
@@ -25,19 +27,17 @@ export function AdminDashboardHome() {
   return (
     <div className="flex flex-col gap-4">
       <h1 className="font-heading text-xl font-semibold tracking-tight">
-        Platform Overview
+        {t("title")}
       </h1>
 
       {isError ? (
-        <p className="text-sm text-destructive">
-          Could not load platform metrics. Try again later.
-        </p>
+        <p className="text-sm text-destructive">{t("loadError")}</p>
       ) : (
         <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-          {ADMIN_METRIC_CARDS.map(({ key, label, animationDelay }) => (
+          {ADMIN_METRIC_CARDS.map(({ key, labelKey, animationDelay }) => (
             <DashboardBentoCard
               key={key}
-              title={label}
+              title={t(labelKey)}
               animationDelay={animationDelay}
               // flex-1 (not just flex-col) so this card's content area
               // stretches to the card's full height — Cards in the same
@@ -53,7 +53,7 @@ export function AdminDashboardHome() {
                     <StatValue
                       key={row.key}
                       variant="row"
-                      label={row.label}
+                      label={t(row.labelKey)}
                       value={String(metrics?.[row.key] ?? 0)}
                       valueClassName="text-sm"
                     />
@@ -61,7 +61,7 @@ export function AdminDashboardHome() {
                   <div className="mt-1 border-t border-border pt-1">
                     <StatValue
                       variant="row"
-                      label="Total"
+                      label={t("total")}
                       value={String(metrics?.totalClubs ?? 0)}
                       valueClassName="text-base font-semibold"
                     />
@@ -86,7 +86,7 @@ export function AdminDashboardHome() {
                 >
                   <a href="/api/admin/export/reservations" download>
                     <Download size={14} strokeWidth={2.25} />
-                    Export CSV
+                    {t("exportCsv")}
                   </a>
                 </Button>
               )}

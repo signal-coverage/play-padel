@@ -1,9 +1,6 @@
 import { NextResponse } from "next/server";
-import { render } from "@react-email/render";
-import * as React from "react";
 import { getPendingReservationReminders } from "@/core/notifications/services/notifications.service";
 import { dispatch } from "@/lib/notifications/dispatcher";
-import { ReservationReminder } from "@/lib/email/templates/ReservationReminder";
 import { logSystemJob } from "@/core/systemJobs/services/systemJobs.service";
 import { requireCronSecret } from "@/lib/auth/requireCronSecret";
 
@@ -23,22 +20,17 @@ export async function GET(request: Request) {
     const pending = await getPendingReservationReminders();
 
     for (const reminder of pending) {
-      const html = await render(
-        React.createElement(ReservationReminder, {
-          userName: reminder.userName,
-          scheduledStart: reminder.scheduledStart,
-          courtName: reminder.courtName,
-        }),
-      );
-
       await dispatch({
         type: "RESERVATION_REMINDER",
         clubId: reminder.clubId,
         recipientId: reminder.userId,
         recipientEmail: reminder.userEmail,
         recipientName: reminder.userName,
-        subject: "Upcoming Reservation Reminder",
-        html,
+        params: {
+          userName: reminder.userName,
+          courtName: reminder.courtName,
+          scheduledStart: reminder.scheduledStart.toISOString(),
+        },
       });
     }
 

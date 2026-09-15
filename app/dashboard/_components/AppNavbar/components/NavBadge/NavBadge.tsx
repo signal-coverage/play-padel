@@ -1,17 +1,14 @@
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils/utils";
 import type { NavBadgeProps } from "./types";
-
-const LABEL_TEXT: Record<NavBadgeProps["label"], string> = {
-  new: "New",
-  open: "Open",
-};
 
 export function NavBadge({
   label,
   variant = "pill",
   className,
 }: NavBadgeProps) {
-  const text = LABEL_TEXT[label];
+  const t = useTranslations("NavBadge");
+  const text = t(label);
 
   if (variant === "dot") {
     return (

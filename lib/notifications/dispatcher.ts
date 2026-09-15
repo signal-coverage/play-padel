@@ -4,6 +4,9 @@ import {
   updateNotificationStatus,
   listAdminRecipients,
 } from "@/core/notifications/services/notifications.service";
+import { getUserProfile } from "@/core/users/services/users.service";
+import { resolveNotificationContent } from "@/lib/notifications/content";
+import { DEFAULT_LOCALE } from "@/i18n/localeConstants";
 import type { DispatchParams } from "@/core/notifications/types";
 
 // Overridable via RESEND_FROM_ADDRESS (read live in dispatch() below, not
@@ -64,6 +67,21 @@ export async function dispatch(params: DispatchParams): Promise<void> {
   let notificationId: string | null = null;
 
   try {
+    // Resolve which language to render this notification in — ALWAYS the
+    // recipient's own UserProfile.locale, never the triggering session's
+    // (a cron sweep, an admin action, or a webhook has no session locale at
+    // all). A missing profile (e.g. a Clerk user who never finished
+    // onboarding) falls back to DEFAULT_LOCALE rather than throwing —
+    // dispatch() must never fail a caller's own success path over this.
+    const recipientProfile = await getUserProfile(params.recipientId);
+    const recipientLocale = recipientProfile?.locale ?? DEFAULT_LOCALE;
+
+    const { subject, html } = await resolveNotificationContent(
+      params.type,
+      recipientLocale,
+      params.params,
+    );
+
     // Step 1: persist PENDING row
     const notification = await createNotification({
       clubId: params.clubId,
@@ -71,8 +89,14 @@ export async function dispatch(params: DispatchParams): Promise<void> {
       recipientId: params.recipientId,
       // Use a placeholder for missing email so the row is still created
       recipientEmail: params.recipientEmail ?? "",
-      title: params.subject,
-      message: params.html,
+      title: subject,
+      message: html,
+      // Stored alongside the baked title/message above — see
+      // notifications.service.ts's hydrateLiveContent, which uses this to
+      // re-render title/message live in whatever locale the VIEWER is
+      // currently using, rather than staying frozen in recipientLocale
+      // forever.
+      params: params.params,
     });
     notificationId = notification.id;
 
@@ -105,8 +129,8 @@ export async function dispatch(params: DispatchParams): Promise<void> {
       getResendClient().emails.send({
         from: process.env.RESEND_FROM_ADDRESS ?? DEFAULT_FROM_ADDRESS,
         to: params.recipientEmail,
-        subject: params.subject,
-        html: params.html,
+        subject,
+        html,
       }),
       RESEND_SEND_TIMEOUT_MS,
       "Resend email send",

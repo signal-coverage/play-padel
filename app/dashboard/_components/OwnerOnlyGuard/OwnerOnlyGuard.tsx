@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { StatusBox } from "@/components/StatusBox";
 import { useAuth } from "@/hooks/use-auth";
 import type { OwnerOnlyGuardProps } from "./types";
@@ -13,12 +14,13 @@ import type { OwnerOnlyGuardProps } from "./types";
  * showing a broken/empty page instead of a clear message.
  */
 export function OwnerOnlyGuard({ children }: OwnerOnlyGuardProps) {
+  const t = useTranslations("OwnerOnlyGuard");
   const { user, profileLoading } = useAuth();
 
   if (profileLoading) return null;
 
   if (user?.role !== "owner") {
-    return <StatusBox>This page is only available to club owners.</StatusBox>;
+    return <StatusBox>{t("ownersOnly")}</StatusBox>;
   }
 
   return <>{children}</>;

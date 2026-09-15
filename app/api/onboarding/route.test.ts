@@ -1,8 +1,32 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import enMessages from "@/messages/en.json";
+
+// next-intl/server's getTranslations only works inside a real Next.js RSC
+// request (it needs the "react-server" bundler condition Vitest doesn't
+// set) — calling the real thing here throws "getTranslations is not
+// supported in Client Components". Stubbed with a plain lookup against the
+// REAL English message catalog instead of re-typed literals, so this can
+// never silently drift from what messages/en.json actually ships.
+vi.mock("next-intl/server", () => ({
+  getTranslations: vi
+    .fn()
+    .mockResolvedValue(
+      (key: string) =>
+        (enMessages.OnboardingValidation as Record<string, string>)[key] ?? key,
+    ),
+}));
 
 vi.mock("@clerk/nextjs/server", () => ({
   auth: vi.fn(),
   currentUser: vi.fn(),
+}));
+
+// Same reasoning as next-intl/server above — i18n/locale.ts's getUserLocale
+// calls next/headers's cookies(), which throws "called outside a request
+// scope" when POST() is invoked directly like this, not through a real
+// Next.js request.
+vi.mock("@/i18n/locale", () => ({
+  getUserLocale: vi.fn().mockResolvedValue("en"),
 }));
 
 vi.mock("botid/server", () => ({
@@ -225,6 +249,7 @@ describe("POST /api/onboarding", () => {
         type: "CLUB_PENDING_APPROVAL",
         clubId: "club_1",
         sendEmail: false,
+        params: expect.objectContaining({ clubName: "Test Club" }),
       }),
     );
   });

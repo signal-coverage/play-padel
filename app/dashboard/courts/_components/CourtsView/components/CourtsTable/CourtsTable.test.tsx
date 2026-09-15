@@ -2,6 +2,8 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
+import { NextIntlClientProvider } from "next-intl";
+import messages from "@/messages/en.json";
 import { CourtsTable } from "./CourtsTable";
 import type { CourtRecord } from "../../types";
 
@@ -47,19 +49,21 @@ function renderTable(
   const onToggleSelectAll = vi.fn();
 
   render(
-    <CourtsTable
-      courts={[COURT_A, COURT_B]}
-      isLoading={false}
-      onEdit={vi.fn()}
-      onEditAvailability={vi.fn()}
-      onEditClosures={vi.fn()}
-      onDelete={vi.fn()}
-      deletingCourtId={null}
-      selectedIds={new Set()}
-      onToggleSelect={onToggleSelect}
-      onToggleSelectAll={onToggleSelectAll}
-      {...overrides}
-    />,
+    <NextIntlClientProvider locale="en" messages={messages}>
+      <CourtsTable
+        courts={[COURT_A, COURT_B]}
+        isLoading={false}
+        onEdit={vi.fn()}
+        onEditAvailability={vi.fn()}
+        onEditClosures={vi.fn()}
+        onDelete={vi.fn()}
+        deletingCourtId={null}
+        selectedIds={new Set()}
+        onToggleSelect={onToggleSelect}
+        onToggleSelectAll={onToggleSelectAll}
+        {...overrides}
+      />
+    </NextIntlClientProvider>,
   );
 
   return { onToggleSelect, onToggleSelectAll };

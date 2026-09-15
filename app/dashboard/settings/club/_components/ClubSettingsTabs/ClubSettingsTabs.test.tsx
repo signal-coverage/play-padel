@@ -3,6 +3,8 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, cleanup } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { NextIntlClientProvider } from "next-intl";
+import messages from "@/messages/en.json";
 import { ClubSettingsTabs } from "./ClubSettingsTabs";
 
 vi.mock("sonner", () => ({
@@ -30,9 +32,11 @@ function renderTabs() {
     defaultOptions: { queries: { retry: false } },
   });
   return render(
-    <QueryClientProvider client={queryClient}>
-      <ClubSettingsTabs />
-    </QueryClientProvider>,
+    <NextIntlClientProvider locale="en" messages={messages}>
+      <QueryClientProvider client={queryClient}>
+        <ClubSettingsTabs />
+      </QueryClientProvider>
+    </NextIntlClientProvider>,
   );
 }
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 import {
   CourtAvailabilityGrid,
   type Slot,
@@ -18,6 +19,7 @@ import { buildCourtColumns, buildReservationMap } from "./utils";
 import type { ReservationActionKind } from "./types";
 
 export function ReservationsView() {
+  const t = useTranslations("ReservationsView");
   const [selectedDate, setSelectedDate] = useState(() => new Date());
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedReservationId, setSelectedReservationId] = useState<
@@ -77,10 +79,10 @@ export function ReservationsView() {
     <div className="flex flex-col gap-6">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight text-balance">
-          Reservations
+          {t("title")}
         </h1>
         <p className="text-sm text-muted-foreground mt-1 text-pretty">
-          View court availability and manage the day&apos;s bookings.
+          {t("description")}
         </p>
       </div>
 

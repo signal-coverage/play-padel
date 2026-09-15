@@ -9,6 +9,8 @@ import {
 } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { NextIntlClientProvider } from "next-intl";
+import messages from "@/messages/en.json";
 import { AdminApprovalsView } from "./AdminApprovalsView";
 
 const { toastMock } = vi.hoisted(() => ({
@@ -53,9 +55,11 @@ function renderView(fetchImpl: (url: string, init?: RequestInit) => unknown) {
   });
 
   render(
-    <QueryClientProvider client={queryClient}>
-      <AdminApprovalsView />
-    </QueryClientProvider>,
+    <NextIntlClientProvider locale="en" messages={messages}>
+      <QueryClientProvider client={queryClient}>
+        <AdminApprovalsView />
+      </QueryClientProvider>
+    </NextIntlClientProvider>,
   );
 
   return fetchMock;

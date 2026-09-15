@@ -1,24 +1,28 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import type { AdminClubListItem, ClubOwner } from "./types";
 
 export const ADMIN_CLUBS_QUERY_KEY = ["admin", "clubs"] as const;
 
-async function fetchAdminClubs(): Promise<AdminClubListItem[]> {
+async function fetchAdminClubs(
+  fallbackErrorMessage: string,
+): Promise<AdminClubListItem[]> {
   const res = await fetch("/api/admin/clubs");
   if (!res.ok) {
-    throw new Error("Failed to load clubs");
+    throw new Error(fallbackErrorMessage);
   }
   const data = await res.json();
   return data.clubs;
 }
 
 export function useAdminClubs() {
+  const t = useTranslations("AdminClubSettingsViewData");
   return useQuery({
     queryKey: ADMIN_CLUBS_QUERY_KEY,
-    queryFn: fetchAdminClubs,
+    queryFn: () => fetchAdminClubs(t("failedToLoadClubs")),
   });
 }
 
@@ -29,12 +33,13 @@ export function useAdminClubs() {
 // folder's hooks, so this is a second small round-trip to the same route
 // rather than a shared cross-folder hook.
 export function useClubOwner(clubId?: string) {
+  const t = useTranslations("AdminClubSettingsViewData");
   return useQuery({
     queryKey: ["admin", "clubs", clubId, "owner"] as const,
     queryFn: async (): Promise<ClubOwner | null> => {
       const res = await fetch(`/api/admin/clubs/${clubId}`);
       if (!res.ok) {
-        throw new Error("Failed to load club owner");
+        throw new Error(t("failedToLoadOwner"));
       }
       const data = await res.json();
       return data.owner ?? null;
@@ -49,6 +54,7 @@ export function useClubOwner(clubId?: string) {
 // action scripts/make-free-plan.ts performs from a terminal. Invalidates the
 // clubs list so the picker's plan badge picks up the change immediately.
 export function useActivateFreePlan() {
+  const t = useTranslations("AdminClubSettingsViewData");
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (clubId: string) => {
@@ -59,15 +65,13 @@ export function useActivateFreePlan() {
       });
       const body = await res.json().catch(() => null);
       if (!res.ok) {
-        throw new Error(
-          body?.error ?? "Something went wrong. Please try again.",
-        );
+        throw new Error(body?.error ?? t("genericError"));
       }
       return body;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ADMIN_CLUBS_QUERY_KEY });
-      toast.success("Club activated on the FREE plan");
+      toast.success(t("freePlanActivated"));
     },
     onError: (error: Error) => toast.error(error.message),
   });
@@ -81,6 +85,7 @@ export function useActivateFreePlan() {
 // uses for every other field — no dedicated endpoint needed since
 // updateClubSchema/updateClub already carry courtLimit end to end.
 export function useSetCourtLimit(clubId: string | undefined) {
+  const t = useTranslations("AdminClubSettingsViewData");
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (courtLimit: number | null) => {
@@ -91,15 +96,13 @@ export function useSetCourtLimit(clubId: string | undefined) {
       });
       const body = await res.json().catch(() => null);
       if (!res.ok) {
-        throw new Error(
-          body?.error ?? "Something went wrong. Please try again.",
-        );
+        throw new Error(body?.error ?? t("genericError"));
       }
       return body;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ADMIN_CLUBS_QUERY_KEY });
-      toast.success("Court limit updated");
+      toast.success(t("courtLimitUpdated"));
     },
     onError: (error: Error) => toast.error(error.message),
   });
@@ -109,6 +112,7 @@ export function useSetCourtLimit(clubId: string | undefined) {
 // behavior as PlayersDirectory's useImpersonatePlayer: opens the returned
 // Clerk sign-in url in a new tab, keeping the admin's own session intact.
 export function useImpersonateOwner() {
+  const t = useTranslations("AdminClubSettingsViewData");
   return useMutation({
     mutationFn: async ({ userId }: { userId: string }) => {
       const res = await fetch("/api/admin/impersonate", {
@@ -118,9 +122,7 @@ export function useImpersonateOwner() {
       });
       const body = await res.json().catch(() => null);
       if (!res.ok) {
-        throw new Error(
-          body?.error ?? "Something went wrong. Please try again.",
-        );
+        throw new Error(body?.error ?? t("genericError"));
       }
       return body as { url: string };
     },

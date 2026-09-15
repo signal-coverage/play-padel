@@ -114,6 +114,11 @@ describe("logSystemJob", () => {
         type: "SYSTEM_JOB_FAILED",
         clubId: null,
         sendEmail: false,
+        params: expect.objectContaining({
+          kind: "WEBHOOK",
+          name: "mercadopago",
+          errorMessage: "boom",
+        }),
       }),
     );
   });

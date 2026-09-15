@@ -13,11 +13,16 @@ export const CLUB_STATUS_BADGE_VARIANT: Record<
   DISABLED: "destructive",
 };
 
-// User-facing messages for each "club health" flag on AdminClubListItem —
-// see core/clubs/services/clubs.service.ts's listAllClubs for how these are
-// computed. Order here is the order they're joined in when multiple apply.
-export const CLUB_HEALTH_ISSUE_MESSAGES = {
-  mpTokenIssue: "Mercado Pago token expired",
-  membershipPastDue: "Membership past due",
-  noOperatingHours: "No operating hours configured",
-} as const;
+// The "club health" flags on AdminClubListItem, in the order their messages
+// are joined when multiple apply — see core/clubs/services/clubs.service.ts's
+// listAllClubs for how each flag is computed. The actual user-facing message
+// for each flag lives in the messages/*.json "AdminClubList" namespace (this
+// is a plain data file, so it can't call useTranslations() itself) —
+// AdminClubList.tsx builds a { flag: message } map from its own
+// useTranslations() result and passes it into getClubHealthWarning /
+// countClubsNeedingAttention below.
+export const CLUB_HEALTH_ISSUE_FLAGS = [
+  "mpTokenIssue",
+  "membershipPastDue",
+  "noOperatingHours",
+] as const;

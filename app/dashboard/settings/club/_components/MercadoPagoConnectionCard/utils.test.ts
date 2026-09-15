@@ -1,9 +1,17 @@
 import { describe, it, expect } from "vitest";
+import en from "@/messages/en.json";
 import { getMercadoPagoConnectionCopy } from "./utils";
+
+// Fake translator backed by the real en.json copy — a plain lookup, since
+// this util isn't a component and can't call useTranslations() itself (see
+// MercadoPagoConnectionCard.tsx's own useTranslations("MercadoPagoConnectionCard")
+// call for the real caller).
+const t = (key: string) =>
+  (en.MercadoPagoConnectionCard as Record<string, string>)[key];
 
 describe("getMercadoPagoConnectionCopy", () => {
   it("returns loading copy when status is undefined", () => {
-    const copy = getMercadoPagoConnectionCopy(undefined);
+    const copy = getMercadoPagoConnectionCopy(undefined, t);
 
     expect(copy.badgeLabel).toBe("Loading…");
     expect(copy.ctaLabel).toBe("Connect Mercado Pago");
@@ -11,10 +19,13 @@ describe("getMercadoPagoConnectionCopy", () => {
   });
 
   it("returns not-connected copy with a destructive badge for MP_NOT_CONNECTED, with no disconnect action", () => {
-    const copy = getMercadoPagoConnectionCopy({
-      operational: false,
-      cause: "MP_NOT_CONNECTED",
-    });
+    const copy = getMercadoPagoConnectionCopy(
+      {
+        operational: false,
+        cause: "MP_NOT_CONNECTED",
+      },
+      t,
+    );
 
     expect(copy.badgeLabel).toBe("Not connected");
     expect(copy.badgeVariant).toBe("destructive");
@@ -23,10 +34,13 @@ describe("getMercadoPagoConnectionCopy", () => {
   });
 
   it("returns inactive-club copy with a warning badge and a disconnect action for CLUB_INACTIVE", () => {
-    const copy = getMercadoPagoConnectionCopy({
-      operational: false,
-      cause: "CLUB_INACTIVE",
-    });
+    const copy = getMercadoPagoConnectionCopy(
+      {
+        operational: false,
+        cause: "CLUB_INACTIVE",
+      },
+      t,
+    );
 
     expect(copy.badgeLabel).toBe("Connected");
     expect(copy.badgeVariant).toBe("warning");
@@ -35,21 +49,27 @@ describe("getMercadoPagoConnectionCopy", () => {
   });
 
   it("includes the account label for CLUB_INACTIVE when nickname and email are present", () => {
-    const copy = getMercadoPagoConnectionCopy({
-      operational: false,
-      cause: "CLUB_INACTIVE",
-      email: "owner@club.com",
-      nickname: "clubowner",
-    });
+    const copy = getMercadoPagoConnectionCopy(
+      {
+        operational: false,
+        cause: "CLUB_INACTIVE",
+        email: "owner@club.com",
+        nickname: "clubowner",
+      },
+      t,
+    );
 
     expect(copy.accountLabel).toBe("clubowner (owner@club.com)");
   });
 
   it("returns connected copy with a success badge and a disconnect action when operational", () => {
-    const copy = getMercadoPagoConnectionCopy({
-      operational: true,
-      cause: null,
-    });
+    const copy = getMercadoPagoConnectionCopy(
+      {
+        operational: true,
+        cause: null,
+      },
+      t,
+    );
 
     expect(copy.badgeLabel).toBe("Connected");
     expect(copy.badgeVariant).toBe("success");
@@ -58,60 +78,75 @@ describe("getMercadoPagoConnectionCopy", () => {
   });
 
   it("returns accountLabel: null when status is undefined (loading)", () => {
-    const copy = getMercadoPagoConnectionCopy(undefined);
+    const copy = getMercadoPagoConnectionCopy(undefined, t);
 
     expect(copy.accountLabel).toBeNull();
   });
 
   it("returns accountLabel: null for MP_NOT_CONNECTED", () => {
-    const copy = getMercadoPagoConnectionCopy({
-      operational: false,
-      cause: "MP_NOT_CONNECTED",
-    });
+    const copy = getMercadoPagoConnectionCopy(
+      {
+        operational: false,
+        cause: "MP_NOT_CONNECTED",
+      },
+      t,
+    );
 
     expect(copy.accountLabel).toBeNull();
   });
 
   it('builds accountLabel as "nickname (email)" when both are present', () => {
-    const copy = getMercadoPagoConnectionCopy({
-      operational: true,
-      cause: null,
-      email: "owner@club.com",
-      nickname: "clubowner",
-    });
+    const copy = getMercadoPagoConnectionCopy(
+      {
+        operational: true,
+        cause: null,
+        email: "owner@club.com",
+        nickname: "clubowner",
+      },
+      t,
+    );
 
     expect(copy.accountLabel).toBe("clubowner (owner@club.com)");
   });
 
   it("builds accountLabel as the bare email when only email is present", () => {
-    const copy = getMercadoPagoConnectionCopy({
-      operational: true,
-      cause: null,
-      email: "owner@club.com",
-      nickname: null,
-    });
+    const copy = getMercadoPagoConnectionCopy(
+      {
+        operational: true,
+        cause: null,
+        email: "owner@club.com",
+        nickname: null,
+      },
+      t,
+    );
 
     expect(copy.accountLabel).toBe("owner@club.com");
   });
 
   it("builds accountLabel as the bare nickname when only nickname is present", () => {
-    const copy = getMercadoPagoConnectionCopy({
-      operational: true,
-      cause: null,
-      email: null,
-      nickname: "clubowner",
-    });
+    const copy = getMercadoPagoConnectionCopy(
+      {
+        operational: true,
+        cause: null,
+        email: null,
+        nickname: "clubowner",
+      },
+      t,
+    );
 
     expect(copy.accountLabel).toBe("clubowner");
   });
 
   it("builds accountLabel as null when neither email nor nickname is present", () => {
-    const copy = getMercadoPagoConnectionCopy({
-      operational: true,
-      cause: null,
-      email: null,
-      nickname: null,
-    });
+    const copy = getMercadoPagoConnectionCopy(
+      {
+        operational: true,
+        cause: null,
+        email: null,
+        nickname: null,
+      },
+      t,
+    );
 
     expect(copy.accountLabel).toBeNull();
   });

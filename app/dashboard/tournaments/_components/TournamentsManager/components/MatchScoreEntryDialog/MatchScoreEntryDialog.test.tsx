@@ -8,22 +8,32 @@ import {
   waitFor,
 } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
+import { NextIntlClientProvider } from "next-intl";
+import messages from "@/messages/en.json";
 import { MatchScoreEntryDialog } from "./MatchScoreEntryDialog";
 
 afterEach(cleanup);
 
+function renderDialog(
+  props: React.ComponentProps<typeof MatchScoreEntryDialog>,
+) {
+  return render(
+    <NextIntlClientProvider locale="en" messages={messages}>
+      <MatchScoreEntryDialog {...props} />
+    </NextIntlClientProvider>,
+  );
+}
+
 describe("MatchScoreEntryDialog", () => {
   it("submits a 2-0 sweep with set 3 left blank", async () => {
     const onSubmit = vi.fn().mockResolvedValue(undefined);
-    render(
-      <MatchScoreEntryDialog
-        open
-        onOpenChange={vi.fn()}
-        matchLabel="Team A vs Team B"
-        onSubmit={onSubmit}
-        isSubmitting={false}
-      />,
-    );
+    renderDialog({
+      open: true,
+      onOpenChange: vi.fn(),
+      matchLabel: "Team A vs Team B",
+      onSubmit,
+      isSubmitting: false,
+    });
 
     const teamAInputs = screen.getAllByLabelText("Team A games");
     const teamBInputs = screen.getAllByLabelText("Team B games");
@@ -44,15 +54,13 @@ describe("MatchScoreEntryDialog", () => {
 
   it("shows a validation error and does not submit when a 1-1 split leaves set 3 blank", async () => {
     const onSubmit = vi.fn().mockResolvedValue(undefined);
-    render(
-      <MatchScoreEntryDialog
-        open
-        onOpenChange={vi.fn()}
-        matchLabel="Team A vs Team B"
-        onSubmit={onSubmit}
-        isSubmitting={false}
-      />,
-    );
+    renderDialog({
+      open: true,
+      onOpenChange: vi.fn(),
+      matchLabel: "Team A vs Team B",
+      onSubmit,
+      isSubmitting: false,
+    });
 
     const teamAInputs = screen.getAllByLabelText("Team A games");
     const teamBInputs = screen.getAllByLabelText("Team B games");
@@ -71,15 +79,13 @@ describe("MatchScoreEntryDialog", () => {
 
   it("submits set 3 when a 1-1 split is decided", async () => {
     const onSubmit = vi.fn().mockResolvedValue(undefined);
-    render(
-      <MatchScoreEntryDialog
-        open
-        onOpenChange={vi.fn()}
-        matchLabel="Team A vs Team B"
-        onSubmit={onSubmit}
-        isSubmitting={false}
-      />,
-    );
+    renderDialog({
+      open: true,
+      onOpenChange: vi.fn(),
+      matchLabel: "Team A vs Team B",
+      onSubmit,
+      isSubmitting: false,
+    });
 
     const teamAInputs = screen.getAllByLabelText("Team A games");
     const teamBInputs = screen.getAllByLabelText("Team B games");
