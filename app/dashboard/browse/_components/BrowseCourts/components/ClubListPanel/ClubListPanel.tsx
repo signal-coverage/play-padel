@@ -117,28 +117,17 @@ export function ClubListPanel({
           this to one control row, instead of stacking search above sort,
           keeps all three BrowseCourts columns reserving the same header
           height so their tables/grid line up and fill the rest evenly. */}
-      <div className="flex flex-wrap items-start gap-3 justify-between">
-        <div className="flex flex-1 flex-col gap-1.5">
-          <span className="text-xs font-medium text-muted-foreground">
-            {t("clubsList")}
-          </span>
-          <SearchInput
-            value={query}
-            onChange={setQuery}
-            placeholder={t("searchPlaceholder")}
-          />
-        </div>
-
-        <div className="flex flex-col gap-1.5">
+      <div className="flex flex-col flex-wrap items-start gap-3 justify-between">
+        <div className="flex flex-col gap-1.5 w-full">
           <span className="text-xs font-medium text-muted-foreground">
             {t("sortBy")}
           </span>
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5 w-full">
             <Select
               value={sort.field}
               onValueChange={(value) => setSortField(value as ClubSortField)}
             >
-              <SelectTrigger className="w-32">
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder={t("sortBy")} />
               </SelectTrigger>
               <SelectContent>
@@ -155,6 +144,17 @@ export function ClubListPanel({
               }
             />
           </div>
+        </div>
+
+        <div className="flex flex-1 flex-col gap-1.5 w-full">
+          <span className="text-xs font-medium text-muted-foreground">
+            {t("clubsList")}
+          </span>
+          <SearchInput
+            value={query}
+            onChange={setQuery}
+            placeholder={t("searchPlaceholder")}
+          />
         </div>
       </div>
 

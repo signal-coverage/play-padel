@@ -21,6 +21,14 @@ vi.mock("@clerk/nextjs/server", () => ({
   currentUser: vi.fn(),
 }));
 
+// Same reasoning as next-intl/server above — i18n/locale.ts's getUserLocale
+// calls next/headers's cookies(), which throws "called outside a request
+// scope" when POST() is invoked directly like this, not through a real
+// Next.js request.
+vi.mock("@/i18n/locale", () => ({
+  getUserLocale: vi.fn().mockResolvedValue("en"),
+}));
+
 vi.mock("botid/server", () => ({
   checkBotId: vi.fn(),
 }));
@@ -241,6 +249,7 @@ describe("POST /api/onboarding", () => {
         type: "CLUB_PENDING_APPROVAL",
         clubId: "club_1",
         sendEmail: false,
+        params: expect.objectContaining({ clubName: "Test Club" }),
       }),
     );
   });

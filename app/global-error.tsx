@@ -5,7 +5,12 @@ import { RotateCw } from "lucide-react";
 import { NextIntlClientProvider, useTranslations } from "next-intl";
 import enMessages from "@/messages/en.json";
 import esMessages from "@/messages/es.json";
-import { LOCALE_COOKIE_NAME, type Locale } from "@/i18n/localeConstants";
+import {
+  DEFAULT_LOCALE,
+  LOCALE_COOKIE_NAME,
+  isValidLocale,
+  type Locale,
+} from "@/i18n/localeConstants";
 import "./globals.css";
 
 const SUPPORT_EMAIL = "signal.coverage.lead@gmail.com";
@@ -17,12 +22,11 @@ const SUPPORT_EMAIL = "signal.coverage.lead@gmail.com";
 // the same "locale" cookie directly on the client and stands up its own
 // minimal NextIntlClientProvider around just this page's copy.
 function readLocaleCookie(): Locale {
-  // Spanish default, matching i18n/locale.ts's DEFAULT_LOCALE.
-  if (typeof document === "undefined") return "es";
+  if (typeof document === "undefined") return DEFAULT_LOCALE;
   const match = document.cookie.match(
-    new RegExp(`(?:^|; )${LOCALE_COOKIE_NAME}=(en|es)`),
+    new RegExp(`(?:^|; )${LOCALE_COOKIE_NAME}=([^;]+)`),
   );
-  return match?.[1] === "en" ? "en" : "es";
+  return isValidLocale(match?.[1]) ? match[1] : DEFAULT_LOCALE;
 }
 
 function GlobalErrorContent({ reset }: { reset: () => void }) {

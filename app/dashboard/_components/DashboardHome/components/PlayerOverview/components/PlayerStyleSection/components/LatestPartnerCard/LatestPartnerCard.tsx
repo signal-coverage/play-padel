@@ -12,6 +12,7 @@ import type { LatestPartnerCardProps } from "./types";
 
 export function LatestPartnerCard({ partner }: LatestPartnerCardProps) {
   const t = useTranslations("LatestPartnerCard");
+  const tOptions = useTranslations("UserOptionLabels");
 
   if (!partner) {
     return (
@@ -39,8 +40,8 @@ export function LatestPartnerCard({ partner }: LatestPartnerCardProps) {
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-semibold">{partner.name}</p>
             <p className="truncate text-xs text-muted-foreground">
-              {getPadelCategoryLabel(partner.padelCategory)} •{" "}
-              {getPreferredSideLabel(partner.preferredSide)}
+              {getPadelCategoryLabel(partner.padelCategory, tOptions)} •{" "}
+              {getPreferredSideLabel(partner.preferredSide, tOptions)}
             </p>
             <p className="truncate text-xs text-muted-foreground">
               {partner.coupleWinRate !== undefined && (

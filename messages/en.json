@@ -1,4 +1,136 @@
 {
+  "NotificationContent": {
+    "CLUB_UPDATED_BY_ADMIN": {
+      "subject": "Your club settings were updated",
+      "body": "An administrator updated your club's settings."
+    },
+    "PROFILE_UPDATED_BY_ADMIN": {
+      "updated": {
+        "subject": "Your profile was updated",
+        "body": "An administrator updated your profile."
+      },
+      "deleted": {
+        "subject": "Your account was deleted",
+        "body": "An administrator deleted your account. If you believe this is a mistake, contact support."
+      }
+    },
+    "RESERVATION_PAYMENT_CONFLICT": {
+      "notConfirmed": {
+        "subject": "A paid reservation could not be confirmed",
+        "body": "A player's payment was received, but their slot could not be confirmed automatically. Please resolve this manually."
+      },
+      "overlap": {
+        "subject": "A paid reservation could not be confirmed",
+        "body": "A player's payment was received, but their slot now overlaps another reservation. Please resolve this manually."
+      }
+    },
+    "RESERVATION_PAYMENT_HOLD_EXPIRED": {
+      "bankTransfer": {
+        "subject": "Your reservation hold expired",
+        "body": "Hello {userName}, your bank-transfer payment for {courtName} on {date} was not confirmed in time, so your slot was released. Please book again if you'd still like this slot — it may have been taken by another player in the meantime. If you already sent your transfer, contact the club directly to confirm before booking again."
+      },
+      "mercadoPago": {
+        "subject": "Your reservation hold expired",
+        "body": "Hello {userName}, your Mercado Pago payment for {courtName} on {date} was not completed in time, so your slot was released. Please book again if you'd still like this slot — it may have been taken by another player in the meantime. If you completed the payment and still see this message, contact the club directly before booking again."
+      }
+    },
+    "RESERVATION_REMINDER": {
+      "subject": "Upcoming Reservation Reminder",
+      "body": "Hello {userName}, this is a reminder about your upcoming court reservation on {date} at {time} at {courtName}. You can cancel this reservation yourself up to 2 hours before its start time. After that, please contact the club directly."
+    },
+    "PAYMENT_CONFIRMED": {
+      "subject": "Payment received for invoice #{invoiceNumber}",
+      "body": "Hello {userName}, we have received your payment for your court reservation. Thank you! Invoice #: {invoiceNumber}. Amount paid: {formattedTotal}. Status: Paid. Please keep this email as your payment confirmation."
+    },
+    "RESERVATION_CANCELLED": {
+      "subject": "Your reservation has been cancelled",
+      "body": "Hello {userName}, we want to let you know that the following court reservation has been cancelled: Date: {date}, Time: {time}, Court: {courtName}. Feel free to book a new reservation whenever you'd like to play."
+    },
+    "WAITLIST_SLOT_AVAILABLE": {
+      "subject": "A slot you were waiting for just opened up",
+      "body": "Hello {userName}, good news — a slot you asked to be notified about is now free: Date: {date}, Time: {time}, Court: {courtName}. Book it now: {bookingUrl}. This slot is available on a first-come, first-served basis — other players may have also asked to be notified."
+    },
+    "CLUB_APPROVED": {
+      "subject": "Your club has been approved",
+      "body": "Your club is now approved and can accept reservations."
+    },
+    "CLUB_REJECTED": {
+      "subject": "Your club application was not approved",
+      "body": "Your club application was not approved. Contact support for details."
+    },
+    "CLUB_SUSPENDED": {
+      "subject": "Your club has been suspended",
+      "body": "Your club has been suspended. Contact support for details."
+    },
+    "PAYMENT_RECEIVED": {
+      "subject": "Payment received",
+      "body": "A payment of {currency} {amount} was received."
+    },
+    "MEMBERSHIP_PAST_DUE": {
+      "subject": "Your membership payment is past due",
+      "body": "Your club's membership payment failed and is now past due. Please update your payment method."
+    },
+    "CLUB_PENDING_APPROVAL": {
+      "subject": "A new club is pending approval",
+      "body": "A new club, {clubName}, is pending approval."
+    },
+    "SYSTEM_JOB_FAILED": {
+      "subject": "A background job failed",
+      "body": "Job {kind}/{name} failed: {errorMessage}."
+    },
+    "CLUB_OPERATIONAL_READY": {
+      "trialStarted": {
+        "subject": "Your dashboard is unlocked",
+        "body": "Your club's trial has started — your dashboard is now unlocked."
+      },
+      "recovered": {
+        "subject": "Your dashboard is unlocked",
+        "body": "Your club's membership payment was successful — your dashboard is unlocked again."
+      },
+      "freePlanActivated": {
+        "subject": "Your dashboard is unlocked",
+        "body": "An admin activated the FREE testing plan for your club — your dashboard is now unlocked. Real player reservations still need a connected payment method (Mercado Pago or bank transfer) in Settings."
+      },
+      "welcomePeriodGranted": {
+        "subject": "Your dashboard is unlocked",
+        "body": "An admin granted your club {months} free month(s) — your dashboard is now unlocked. Real player reservations still need a connected payment method (Mercado Pago or bank transfer) in Settings."
+      },
+      "unsuspended": {
+        "subject": "Your dashboard is unlocked",
+        "body": "Your club is no longer suspended — your dashboard is unlocked again."
+      },
+      "readyToAcceptReservations": {
+        "subject": "Your club is ready to accept reservations",
+        "body": "Your club can now accept real reservations. Don't forget to set your operating hours in Settings so players know when they can book."
+      }
+    },
+    "ADMIN_ACCESS_GRANTED": {
+      "subject": "You now have admin access on Play Padel",
+      "body": "Your account now has admin access — you can view platform-wide metrics, approve clubs, and more from the Admin menu."
+    },
+    "ADMIN_ACCESS_REVOKED": {
+      "subject": "Your admin access on Play Padel was revoked",
+      "body": "Your account no longer has admin access — you've lost access to platform-wide metrics, club approvals, and the rest of the Admin menu."
+    },
+    "MEMBERSHIP_CANCELLED": {
+      "subject": "Your club's membership was cancelled",
+      "body": "Your club's membership subscription has been cancelled and your dashboard is now locked. Reactivate your membership to restore access."
+    },
+    "RESERVATION_UPDATED": {
+      "updated": {
+        "subject": "Your reservation has been updated",
+        "body": "One of your reservations was updated by the club. Check My Reservations for the latest details."
+      },
+      "completed": {
+        "subject": "Your reservation is complete",
+        "body": "Your reservation has been marked as completed."
+      },
+      "noShow": {
+        "subject": "You were marked as a no-show",
+        "body": "You were marked as a no-show for a reservation. If you believe this is a mistake, contact the club."
+      }
+    }
+  },
   "LocaleSwitcher": {
     "label": "Language",
     "en": "English",
@@ -1027,6 +1159,29 @@
     "nameRequired": "Name is required",
     "invalidEmail": "Enter a valid email"
   },
+  "UserOptionLabels": {
+    "notSet": "Not set yet",
+    "padelCategory": {
+      "1": "Category 1 — highest level",
+      "2": "Category 2",
+      "3": "Category 3",
+      "4": "Category 4",
+      "5": "Category 5",
+      "6": "Category 6",
+      "7": "Category 7",
+      "8": "Category 8 — beginner",
+      "unknown": "Not sure yet",
+      "other": "Category {category}"
+    },
+    "preferredSide": {
+      "forehand": "Forehand",
+      "backhand": "Backhand"
+    },
+    "dominantHand": {
+      "right": "Right-handed",
+      "left": "Left-handed"
+    }
+  },
   "AuditLogsView": {
     "title": "Audit Log",
     "description": "A record of changes made to your club, courts, and reservations.",
@@ -1652,5 +1807,23 @@
         "body": "Use the flag toggle in the navbar to switch {brand} between Spanish and English. The same toggle is also available in the header before you sign in."
       }
     }
+  },
+  "PhoneField": {
+    "label": "Phone *",
+    "codePlaceholder": "Code",
+    "searchCountryPlaceholder": "Search country…",
+    "noCountryFound": "No country found."
+  },
+  "CountryProvinceCityFields": {
+    "country": "Country",
+    "province": "Province / State",
+    "city": "City",
+    "selectCountry": "Select a country",
+    "selectCountryFirst": "Select a country first",
+    "selectProvince": "Select a province",
+    "selectProvinceFirst": "Select a province first",
+    "selectCity": "Select a city",
+    "noProvincesAvailable": "No provinces available",
+    "noCitiesAvailable": "No cities available"
   }
 }

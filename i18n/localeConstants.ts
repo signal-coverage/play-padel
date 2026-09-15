@@ -12,3 +12,15 @@
 export type Locale = "en" | "es";
 
 export const LOCALE_COOKIE_NAME = "locale";
+
+export const DEFAULT_LOCALE: Locale = "es";
+
+// Shared narrowing check — used wherever an untrusted string (a cookie
+// value, a raw DB column, an HTTP header) needs to become a real Locale.
+// Kept here, not duplicated per call site, so "which locales are valid"
+// only has one source of truth.
+export function isValidLocale(
+  value: string | null | undefined,
+): value is Locale {
+  return value === "en" || value === "es";
+}

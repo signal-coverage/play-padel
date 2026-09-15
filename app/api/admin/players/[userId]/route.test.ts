@@ -218,6 +218,7 @@ describe("PATCH /api/admin/players/[userId]", () => {
         recipientId: PLAYER_ID,
         recipientEmail: "old@example.com",
         sendEmail: false,
+        params: expect.objectContaining({ variant: "updated" }),
       }),
     );
   });
@@ -312,6 +313,7 @@ describe("DELETE /api/admin/players/[userId]", () => {
         recipientId: PLAYER_ID,
         recipientEmail: "old@example.com",
         sendEmail: true,
+        params: expect.objectContaining({ variant: "deleted" }),
       }),
     );
   });

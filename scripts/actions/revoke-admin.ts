@@ -69,8 +69,7 @@ export async function revokeAdmin(email: string): Promise<void> {
         recipientId: profile.id,
         recipientEmail: email,
         recipientName: profile.displayName,
-        subject: "Your admin access on Play Padel was revoked",
-        html: "Your account no longer has admin access — you've lost access to platform-wide metrics, club approvals, and the rest of the Admin menu.",
+        params: {},
         sendEmail: true,
       });
     } catch (err) {

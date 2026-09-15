@@ -266,6 +266,17 @@ async function runApplyMigrations(): Promise<boolean> {
   return true;
 }
 
+async function runApplyMigrationsToAll(): Promise<boolean> {
+  // Same "never touch this process's own DATABASE_URL" reasoning as
+  // runApplyMigrations above — applyMigrationsToAllEnvironments shells out
+  // to a fresh `prisma` subprocess per environment, so it's free to walk
+  // local → preview → prod in one call without any loadEnv() involvement.
+  const { applyMigrationsToAllEnvironments } =
+    await import("./actions/apply-migrations");
+  await applyMigrationsToAllEnvironments();
+  return true;
+}
+
 async function runResetData(): Promise<boolean> {
   // Deliberately NOT loadEnv() — same reasoning as apply-migrations just
   // above: this is the one other action that must NEVER silently reuse
@@ -353,7 +364,13 @@ export async function main() {
         value: "apply-migrations",
         label: "Apply pending migrations",
         description:
-          "Runs prisma migrate deploy against local/preview/prod — shows what's pending and asks first",
+          "Runs prisma migrate deploy against one of local/preview/prod — shows what's pending and asks first",
+      },
+      {
+        value: "apply-migrations-all",
+        label: "Apply pending migrations to all 3 environments",
+        description:
+          "Runs local → preview → prod in sequence, asking for confirmation before each — stops if any one is declined or fails",
       },
       {
         value: "reset-data",
@@ -402,6 +419,9 @@ export async function main() {
         break;
       case "apply-migrations":
         await runApplyMigrations();
+        break;
+      case "apply-migrations-all":
+        await runApplyMigrationsToAll();
         break;
       case "reset-data":
         await runResetData();

@@ -22,7 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { PADEL_CATEGORY_OPTIONS } from "@/app/onboarding/types";
+import { buildPadelCategoryOptions } from "@/app/onboarding/types";
 import {
   buildDominantHandSelectOptions,
   buildPlayerEditFormSchema,
@@ -40,6 +40,7 @@ export function PlayerEditSheet({
 }: PlayerEditSheetProps) {
   const t = useTranslations("PlayerEditSheet");
   const tValidation = useTranslations("PlayerEditValidation");
+  const tOptions = useTranslations("UserOptionLabels");
   const {
     register,
     handleSubmit,
@@ -86,8 +87,9 @@ export function PlayerEditSheet({
     onOpenChange(false);
   }
 
-  const preferredSideOptions = buildPreferredSideSelectOptions(t);
-  const dominantHandOptions = buildDominantHandSelectOptions(t);
+  const padelCategoryOptions = buildPadelCategoryOptions(tOptions);
+  const preferredSideOptions = buildPreferredSideSelectOptions(t, tOptions);
+  const dominantHandOptions = buildDominantHandSelectOptions(t, tOptions);
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -152,7 +154,7 @@ export function PlayerEditSheet({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {PADEL_CATEGORY_OPTIONS.map((option) => (
+                {padelCategoryOptions.map((option) => (
                   <SelectItem key={option.value} value={option.value}>
                     {option.label}
                   </SelectItem>

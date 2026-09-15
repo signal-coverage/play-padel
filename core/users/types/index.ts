@@ -1,3 +1,5 @@
+import type { Locale } from "@/i18n/localeConstants";
+
 export type UserStatus = "ACTIVE" | "INACTIVE" | "PENDING" | "DELETED";
 export type SystemRole = "owner" | "player";
 export type PreferredSide = "forehand" | "backhand";
@@ -31,6 +33,14 @@ export interface UserProfile {
   // player-edit route. Owners never set these.
   preferredSide?: PreferredSide | null;
   dominantHand?: DominantHand | null;
+  // Persisted mirror of the "locale" cookie (see
+  // i18n/localeActions.ts's setUserLocale) — see
+  // prisma/schema.prisma's UserProfile.locale doc comment for why this
+  // exists separately from the cookie. Narrowed from the raw DB TEXT column
+  // to Locale in toUserProfile (core/users/services/users.service.ts), the
+  // same defensive narrowing i18n/locale.ts's getUserLocale already does
+  // for the cookie.
+  locale: Locale;
   lastLogin?: Date;
   createdAt: Date;
   updatedAt: Date;

@@ -1,4 +1,136 @@
 {
+  "NotificationContent": {
+    "CLUB_UPDATED_BY_ADMIN": {
+      "subject": "La configuración de tu club fue actualizada",
+      "body": "Un administrador actualizó la configuración de tu club."
+    },
+    "PROFILE_UPDATED_BY_ADMIN": {
+      "updated": {
+        "subject": "Tu perfil fue actualizado",
+        "body": "Un administrador actualizó tu perfil."
+      },
+      "deleted": {
+        "subject": "Tu cuenta fue eliminada",
+        "body": "Un administrador eliminó tu cuenta. Si creés que se trata de un error, contactá a soporte."
+      }
+    },
+    "RESERVATION_PAYMENT_CONFLICT": {
+      "notConfirmed": {
+        "subject": "No se pudo confirmar una reserva pagada",
+        "body": "Se recibió el pago de un jugador, pero su turno no pudo confirmarse automáticamente. Por favor, resolvé esto manualmente."
+      },
+      "overlap": {
+        "subject": "No se pudo confirmar una reserva pagada",
+        "body": "Se recibió el pago de un jugador, pero su turno ahora se superpone con otra reserva. Por favor, resolvé esto manualmente."
+      }
+    },
+    "RESERVATION_PAYMENT_HOLD_EXPIRED": {
+      "bankTransfer": {
+        "subject": "Tu reserva pendiente expiró",
+        "body": "Hola {userName}, tu pago por transferencia bancaria para {courtName} el {date} no fue confirmado a tiempo, por lo que tu turno fue liberado. Volvé a reservar si todavía querés este turno — puede que otro jugador ya lo haya tomado. Si ya enviaste la transferencia, contactá directamente al club para confirmarla antes de volver a reservar."
+      },
+      "mercadoPago": {
+        "subject": "Tu reserva pendiente expiró",
+        "body": "Hola {userName}, tu pago con Mercado Pago para {courtName} el {date} no se completó a tiempo, por lo que tu turno fue liberado. Volvé a reservar si todavía querés este turno — puede que otro jugador ya lo haya tomado. Si completaste el pago y seguís viendo este mensaje, contactá directamente al club antes de volver a reservar."
+      }
+    },
+    "RESERVATION_REMINDER": {
+      "subject": "Recordatorio de tu próxima reserva",
+      "body": "Hola {userName}, este es un recordatorio de tu próxima reserva de cancha el {date} a las {time} en {courtName}. Podés cancelar esta reserva vos mismo hasta 2 horas antes de su inicio. Después de eso, contactá directamente al club."
+    },
+    "PAYMENT_CONFIRMED": {
+      "subject": "Pago recibido para la factura #{invoiceNumber}",
+      "body": "Hola {userName}, recibimos tu pago por tu reserva de cancha. ¡Gracias! Factura #: {invoiceNumber}. Monto pagado: {formattedTotal}. Estado: Pagado. Guardá este correo como comprobante de pago."
+    },
+    "RESERVATION_CANCELLED": {
+      "subject": "Tu reserva fue cancelada",
+      "body": "Hola {userName}, te informamos que la siguiente reserva de cancha fue cancelada: Fecha: {date}, Hora: {time}, Cancha: {courtName}. No dudes en hacer una nueva reserva cuando quieras jugar."
+    },
+    "WAITLIST_SLOT_AVAILABLE": {
+      "subject": "Se liberó un turno que estabas esperando",
+      "body": "Hola {userName}, buenas noticias — un turno sobre el que pediste ser notificado ahora está libre: Fecha: {date}, Hora: {time}, Cancha: {courtName}. Reservalo ahora: {bookingUrl}. Este turno está disponible por orden de llegada — otros jugadores también pueden haber pedido ser notificados."
+    },
+    "CLUB_APPROVED": {
+      "subject": "Tu club fue aprobado",
+      "body": "Tu club ya está aprobado y puede aceptar reservas."
+    },
+    "CLUB_REJECTED": {
+      "subject": "Tu solicitud de club no fue aprobada",
+      "body": "Tu solicitud de club no fue aprobada. Contactá a soporte para más detalles."
+    },
+    "CLUB_SUSPENDED": {
+      "subject": "Tu club fue suspendido",
+      "body": "Tu club fue suspendido. Contactá a soporte para más detalles."
+    },
+    "PAYMENT_RECEIVED": {
+      "subject": "Pago recibido",
+      "body": "Se recibió un pago de {currency} {amount}."
+    },
+    "MEMBERSHIP_PAST_DUE": {
+      "subject": "El pago de tu membresía está vencido",
+      "body": "El pago de la membresía de tu club falló y ahora está vencido. Por favor, actualizá tu método de pago."
+    },
+    "CLUB_PENDING_APPROVAL": {
+      "subject": "Hay un nuevo club pendiente de aprobación",
+      "body": "Un nuevo club, {clubName}, está pendiente de aprobación."
+    },
+    "SYSTEM_JOB_FAILED": {
+      "subject": "Falló una tarea en segundo plano",
+      "body": "La tarea {kind}/{name} falló: {errorMessage}."
+    },
+    "CLUB_OPERATIONAL_READY": {
+      "trialStarted": {
+        "subject": "Tu panel está desbloqueado",
+        "body": "El período de prueba de tu club comenzó — tu panel ya está desbloqueado."
+      },
+      "recovered": {
+        "subject": "Tu panel está desbloqueado",
+        "body": "El pago de la membresía de tu club fue exitoso — tu panel está desbloqueado nuevamente."
+      },
+      "freePlanActivated": {
+        "subject": "Tu panel está desbloqueado",
+        "body": "Un administrador activó el plan de prueba GRATUITO para tu club — tu panel ya está desbloqueado. Las reservas reales de jugadores todavía necesitan un método de pago conectado (Mercado Pago o transferencia bancaria) en Configuración."
+      },
+      "welcomePeriodGranted": {
+        "subject": "Tu panel está desbloqueado",
+        "body": "Un administrador le otorgó a tu club {months} mes(es) gratis — tu panel ya está desbloqueado. Las reservas reales de jugadores todavía necesitan un método de pago conectado (Mercado Pago o transferencia bancaria) en Configuración."
+      },
+      "unsuspended": {
+        "subject": "Tu panel está desbloqueado",
+        "body": "Tu club ya no está suspendido — tu panel está desbloqueado nuevamente."
+      },
+      "readyToAcceptReservations": {
+        "subject": "Tu club está listo para aceptar reservas",
+        "body": "Tu club ya puede aceptar reservas reales. No olvides configurar tus horarios de atención en Configuración para que los jugadores sepan cuándo pueden reservar."
+      }
+    },
+    "ADMIN_ACCESS_GRANTED": {
+      "subject": "Ahora tenés acceso de administrador en Play Padel",
+      "body": "Tu cuenta ahora tiene acceso de administrador — podés ver métricas de toda la plataforma, aprobar clubes y más desde el menú de Administración."
+    },
+    "ADMIN_ACCESS_REVOKED": {
+      "subject": "Se revocó tu acceso de administrador en Play Padel",
+      "body": "Tu cuenta ya no tiene acceso de administrador — perdiste el acceso a las métricas de toda la plataforma, la aprobación de clubes y el resto del menú de Administración."
+    },
+    "MEMBERSHIP_CANCELLED": {
+      "subject": "La membresía de tu club fue cancelada",
+      "body": "La suscripción de membresía de tu club fue cancelada y tu panel ahora está bloqueado. Reactivá tu membresía para restaurar el acceso."
+    },
+    "RESERVATION_UPDATED": {
+      "updated": {
+        "subject": "Tu reserva fue actualizada",
+        "body": "Una de tus reservas fue actualizada por el club. Revisá Mis Reservas para ver los detalles más recientes."
+      },
+      "completed": {
+        "subject": "Tu reserva está completa",
+        "body": "Tu reserva fue marcada como completada."
+      },
+      "noShow": {
+        "subject": "Fuiste marcado como ausente",
+        "body": "Fuiste marcado como ausente en una reserva. Si creés que se trata de un error, contactá al club."
+      }
+    }
+  },
   "LocaleSwitcher": {
     "label": "Idioma",
     "en": "Inglés",
@@ -1027,6 +1159,29 @@
     "nameRequired": "El nombre es obligatorio",
     "invalidEmail": "Ingresá un email válido"
   },
+  "UserOptionLabels": {
+    "notSet": "Aún no definido",
+    "padelCategory": {
+      "1": "Categoría 1 — nivel más alto",
+      "2": "Categoría 2",
+      "3": "Categoría 3",
+      "4": "Categoría 4",
+      "5": "Categoría 5",
+      "6": "Categoría 6",
+      "7": "Categoría 7",
+      "8": "Categoría 8 — principiante",
+      "unknown": "No estoy seguro",
+      "other": "Categoría {category}"
+    },
+    "preferredSide": {
+      "forehand": "Drive",
+      "backhand": "Revés"
+    },
+    "dominantHand": {
+      "right": "Diestro",
+      "left": "Zurdo"
+    }
+  },
   "AuditLogsView": {
     "title": "Registro de auditoría",
     "description": "Un registro de los cambios realizados en tu club, canchas y reservas.",
@@ -1652,5 +1807,23 @@
         "body": "Usá el selector de bandera en la barra de navegación para cambiar {brand} entre español e inglés. El mismo selector está disponible en el encabezado antes de iniciar sesión."
       }
     }
+  },
+  "PhoneField": {
+    "label": "Teléfono *",
+    "codePlaceholder": "Código",
+    "searchCountryPlaceholder": "Buscar país…",
+    "noCountryFound": "No se encontró el país."
+  },
+  "CountryProvinceCityFields": {
+    "country": "País",
+    "province": "Provincia / Estado",
+    "city": "Ciudad",
+    "selectCountry": "Seleccioná un país",
+    "selectCountryFirst": "Seleccioná primero un país",
+    "selectProvince": "Seleccioná una provincia",
+    "selectProvinceFirst": "Seleccioná primero una provincia",
+    "selectCity": "Seleccioná una ciudad",
+    "noProvincesAvailable": "No hay provincias disponibles",
+    "noCitiesAvailable": "No hay ciudades disponibles"
   }
 }

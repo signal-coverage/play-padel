@@ -232,6 +232,7 @@ describe("PATCH /api/clubs/reservations/[reservationId]", () => {
         type: "RESERVATION_PAYMENT_CONFLICT",
         clubId: "club_1",
         recipientId: "owner_1",
+        params: expect.objectContaining({ variant: "notConfirmed" }),
       }),
     );
   });
@@ -257,7 +258,10 @@ describe("PATCH /api/clubs/reservations/[reservationId]", () => {
     expect(res.status).toBe(200);
     expect(body.reservation.status).toBe("SCHEDULED");
     expect(dispatchMock).toHaveBeenCalledWith(
-      expect.objectContaining({ type: "RESERVATION_PAYMENT_CONFLICT" }),
+      expect.objectContaining({
+        type: "RESERVATION_PAYMENT_CONFLICT",
+        params: expect.objectContaining({ variant: "notConfirmed" }),
+      }),
     );
   });
 
@@ -287,7 +291,10 @@ describe("PATCH /api/clubs/reservations/[reservationId]", () => {
     expect(body.error).not.toBe("Failed to update reservation");
     expect(typeof body.warning).toBe("string");
     expect(dispatchMock).toHaveBeenCalledWith(
-      expect.objectContaining({ type: "RESERVATION_PAYMENT_CONFLICT" }),
+      expect.objectContaining({
+        type: "RESERVATION_PAYMENT_CONFLICT",
+        params: expect.objectContaining({ variant: "notConfirmed" }),
+      }),
     );
   });
 

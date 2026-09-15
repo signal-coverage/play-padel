@@ -47,6 +47,7 @@ const DEFAULT_SORT: PlayerSort = { field: "name", direction: "asc" };
 
 export function PlayersDirectory() {
   const t = useTranslations("PlayersDirectory");
+  const tOptions = useTranslations("UserOptionLabels");
   const { user } = useAuth();
   const isAdmin = user?.isAdmin === true;
 
@@ -132,7 +133,7 @@ export function PlayersDirectory() {
           </button>
         ),
       },
-      ...buildStaticPlayerColumns(t),
+      ...buildStaticPlayerColumns(t, tOptions),
       ...(isAdmin
         ? [
             {
@@ -268,7 +269,7 @@ export function PlayersDirectory() {
           ]
         : []),
     ],
-    [t, isAdmin, impersonatePlayer, user?.id],
+    [t, tOptions, isAdmin, impersonatePlayer, user?.id],
   );
 
   return (

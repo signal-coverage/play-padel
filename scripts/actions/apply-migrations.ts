@@ -81,9 +81,16 @@ function extractPendingList(statusOutput: string): string {
   return beforeFooter?.trim() || "(see full output above)";
 }
 
+/**
+ * Returns whether `envFile` ended up up to date — either it already was, or
+ * the deploy just applied cleanly. False covers every other outcome
+ * (status couldn't be read, the user declined the confirmation, or the
+ * deploy itself failed) — used by applyMigrationsToAllEnvironments below to
+ * decide whether it's safe to move on to the next environment.
+ */
 export async function applyMigrations(
   envFile: MigrationEnvFile,
-): Promise<void> {
+): Promise<boolean> {
   await fs.writeFile(TMP_CONFIG_PATH, buildTempConfig(envFile), "utf8");
 
   try {
@@ -94,13 +101,13 @@ export async function applyMigrations(
 
     if (status.output.includes("up to date")) {
       log.success(`${envFile} is already up to date — nothing to apply.`);
-      return;
+      return true;
     }
 
     if (!status.output.includes("have not yet been applied")) {
       log.error(`Could not determine migration status for ${envFile}:`);
       log.message(status.output.trim());
-      return;
+      return false;
     }
 
     note(extractPendingList(status.output), "Pending migrations");
@@ -113,7 +120,7 @@ export async function applyMigrations(
     );
     if (!confirmed) {
       log.warn("Cancelled — nothing was applied.");
-      return;
+      return false;
     }
 
     const deploy = await withSpinner(`Applying migrations to ${envFile}…`, () =>
@@ -122,11 +129,45 @@ export async function applyMigrations(
 
     if (deploy.code === 0) {
       log.success(`Migrations applied to ${envFile}.`);
-    } else {
-      log.error(`Migration failed (exit code ${deploy.code}):`);
-      log.message(deploy.output.trim());
+      return true;
     }
+
+    log.error(`Migration failed (exit code ${deploy.code}):`);
+    log.message(deploy.output.trim());
+    return false;
   } finally {
     await fs.rm(TMP_CONFIG_PATH, { force: true });
   }
+}
+
+// Deliberately local → preview → prod, never the other way round: this way
+// a status/confirmation/deploy problem surfaces on the cheapest environment
+// first, and a decline or failure on any one of them (see applyMigrations'
+// own return value above) stops the run before it ever reaches prod.
+const ALL_ENV_FILES: MigrationEnvFile[] = [
+  ".env.local",
+  ".env.preview",
+  ".env.prod",
+];
+
+/** Runs applyMigrations against local, then preview, then prod — in that
+ * order, asking for confirmation before each one exactly as a standalone
+ * call would. Stops at the first environment that isn't cleanly up to date
+ * afterward, so a declined or failed step never cascades into the next
+ * (and in particular, never reaches prod on its own). */
+export async function applyMigrationsToAllEnvironments(): Promise<void> {
+  note(
+    "Runs migrate status + deploy against .env.local, then .env.preview, then .env.prod — in that order, asking for confirmation before each one.",
+    "Apply migrations to all 3 environments",
+  );
+
+  for (const envFile of ALL_ENV_FILES) {
+    const ok = await applyMigrations(envFile);
+    if (!ok) {
+      log.warn(`Stopping here — ${envFile} was not applied cleanly.`);
+      return;
+    }
+  }
+
+  log.success("All 3 environments are up to date.");
 }

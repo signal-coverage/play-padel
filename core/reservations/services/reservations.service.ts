@@ -1,8 +1,6 @@
 import { prisma } from "@/infrastructure/db/client";
 import { Prisma } from "@/lib/generated/prisma/client";
 import { startOfDay, endOfDay, eachDayOfInterval, format } from "date-fns";
-import { render } from "@react-email/render";
-import * as React from "react";
 import type {
   Reservation,
   ReservationFilters,
@@ -21,7 +19,6 @@ import {
   MP_HOLD_EXPIRY_ACTOR,
 } from "@/core/reservations/consts";
 import { dispatch } from "@/lib/notifications/dispatcher";
-import { ReservationCancelled } from "@/lib/email/templates/ReservationCancelled";
 import { logAudit } from "@/core/audit/services/audit.service";
 import { notifyWaitlistForSlot } from "@/core/waitlist/services/waitlist.service";
 import {
@@ -557,8 +554,7 @@ export async function createReservation(
  */
 async function notifyReservationUpdated(
   row: ReservationRow,
-  subject: string,
-  html: string,
+  variant: "updated" | "completed" | "noShow",
 ): Promise<void> {
   try {
     const user = await prisma.userProfile.findUnique({
@@ -571,8 +567,7 @@ async function notifyReservationUpdated(
       recipientId: row.userId,
       recipientEmail: user?.email ?? null,
       recipientName: user?.displayName ?? row.userName,
-      subject,
-      html,
+      params: { variant },
       sendEmail: false,
     });
   } catch {
@@ -626,11 +621,7 @@ export async function updateReservation(
     },
   });
 
-  await notifyReservationUpdated(
-    row,
-    "Your reservation has been updated",
-    "One of your reservations was updated by the club. Check My Reservations for the latest details.",
-  );
+  await notifyReservationUpdated(row, "updated");
 
   return toReservation(row);
 }
@@ -678,22 +669,17 @@ export async function cancelReservation(
 
     const userName = user?.displayName ?? row.userName;
 
-    const html = await render(
-      React.createElement(ReservationCancelled, {
-        userName,
-        scheduledStart: row.scheduledStart,
-        courtName: row.courtName,
-      }),
-    );
-
     await dispatch({
       type: "RESERVATION_CANCELLED",
       clubId: row.clubId,
       recipientId: row.userId,
       recipientEmail: user?.email ?? null,
       recipientName: userName,
-      subject: "Your reservation has been cancelled",
-      html,
+      params: {
+        userName,
+        courtName: row.courtName,
+        scheduledStart: row.scheduledStart.toISOString(),
+      },
     });
   } catch {
     // notification failure must not affect reservation cancellation
@@ -788,11 +774,7 @@ export async function completeReservation(
     metadata: { courtId: row.courtId, courtName: row.courtName },
   });
 
-  await notifyReservationUpdated(
-    row,
-    "Your reservation is complete",
-    "Your reservation has been marked as completed.",
-  );
+  await notifyReservationUpdated(row, "completed");
 
   return toReservation(row);
 }
@@ -824,11 +806,7 @@ export async function noShowReservation(
     metadata: { courtId: row.courtId, courtName: row.courtName },
   });
 
-  await notifyReservationUpdated(
-    row,
-    "You were marked as a no-show",
-    "You were marked as a no-show for a reservation. If you believe this is a mistake, contact the club.",
-  );
+  await notifyReservationUpdated(row, "noShow");
 
   return toReservation(row);
 }

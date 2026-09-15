@@ -8,6 +8,7 @@ import { logAudit } from "@/core/audit/services/audit.service";
 import { notifyAllAdmins } from "@/lib/notifications/dispatcher";
 import type { Plan } from "@/core/clubs/types";
 import { getTranslations } from "next-intl/server";
+import { getUserLocale } from "@/i18n/locale";
 import { buildOnboardingFormSchema } from "@/app/onboarding/types";
 import { requireAuthUser } from "@/lib/auth/requireAuthUser";
 import { checkBot } from "@/lib/security/botGuard";
@@ -26,6 +27,13 @@ export async function POST(request: Request) {
   const authResult = await requireAuthUser();
   if (!authResult.ok) return authResult.response;
   const { userId } = authResult;
+  // Captured once, from whatever locale the submitting session is actually
+  // using — only ever written on the CREATE branch of each upsert below,
+  // never update: a resubmit (this upsert exists to make retries
+  // idempotent) must not silently reset a locale the user may have changed
+  // via the LocaleSwitcher between their first submit and a later one, same
+  // reasoning as preferredSide/dominantHand/photoURL further down.
+  const locale = await getUserLocale();
 
   const botCheck = await checkBot();
   if (botCheck) return botCheck;
@@ -103,6 +111,7 @@ export async function POST(request: Request) {
           dominantHand: data.dominantHand ?? null,
           photoURL: clerkUser?.imageUrl ?? null,
           email: accountEmail,
+          locale,
           acceptedTermsAt: new Date(),
           createdBy: userId,
           updatedBy: userId,
@@ -217,8 +226,7 @@ export async function POST(request: Request) {
       await notifyAllAdmins({
         type: "CLUB_PENDING_APPROVAL",
         clubId: club.id,
-        subject: "A new club is pending approval",
-        html: `A new club, ${club.name}, is pending approval.`,
+        params: { clubName: club.name },
         sendEmail: false,
       });
     } catch {
@@ -249,6 +257,7 @@ export async function POST(request: Request) {
         clubId: club.id,
         displayName: data.displayName!,
         email: accountEmail,
+        locale,
         acceptedTermsAt: new Date(),
         createdBy: userId,
         updatedBy: userId,

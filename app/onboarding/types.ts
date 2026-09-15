@@ -24,7 +24,9 @@ export const GENDER_OPTIONS: { value: Gender; label: string }[] = [
 // Category 8 is a beginner. "unknown" submits as a null padelCategory.
 // Defined in core/users/consts (core/ owns domain vocabulary; app/ only
 // re-exports it here so existing imports from this module keep working).
-export { PADEL_CATEGORY_OPTIONS } from "@/core/users/consts";
+// buildPadelCategoryOptions(t) needs a next-intl `t` scoped to the
+// "UserOptionLabels" namespace — see core/users/consts.ts.
+export { buildPadelCategoryOptions } from "@/core/users/consts";
 
 // Every user-facing validation message lives in the messages/*.json
 // "OnboardingValidation" namespace, not as a literal here — this schema is a

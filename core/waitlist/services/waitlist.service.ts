@@ -1,9 +1,6 @@
 import { prisma } from "@/infrastructure/db/client";
-import { render } from "@react-email/render";
-import * as React from "react";
 import { dispatch } from "@/lib/notifications/dispatcher";
 import { logAudit } from "@/core/audit/services/audit.service";
-import { WaitlistSlotAvailable } from "@/lib/email/templates/WaitlistSlotAvailable";
 import type { WaitlistEntry, WaitlistEntryStatus } from "@/core/waitlist/types";
 
 type WaitlistEntryRow = NonNullable<
@@ -135,17 +132,7 @@ export async function notifyWaitlistForSlot(
           2,
           "0",
         )}-${String(entry.scheduledStart.getDate()).padStart(2, "0")}`;
-
-        const html = await render(
-          React.createElement(WaitlistSlotAvailable, {
-            userName,
-            courtName: entry.courtName,
-            scheduledStart: entry.scheduledStart,
-            clubId: entry.clubId,
-            courtId: entry.courtId,
-            dateKey,
-          }),
-        );
+        const bookingUrl = `https://playpadel.app/dashboard/browse?club=${entry.clubId}&court=${entry.courtId}&date=${dateKey}`;
 
         await dispatch({
           type: "WAITLIST_SLOT_AVAILABLE",
@@ -153,8 +140,12 @@ export async function notifyWaitlistForSlot(
           recipientId: entry.userId,
           recipientEmail: user?.email ?? null,
           recipientName: userName,
-          subject: "A slot you were waiting for just opened up",
-          html,
+          params: {
+            userName,
+            courtName: entry.courtName,
+            scheduledStart: entry.scheduledStart.toISOString(),
+            bookingUrl,
+          },
         });
 
         await prisma.waitlistEntry.update({

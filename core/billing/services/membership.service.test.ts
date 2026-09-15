@@ -397,6 +397,7 @@ describe("startTrial", () => {
         clubId: "club_1",
         recipientId: "owner_1",
         sendEmail: false,
+        params: expect.objectContaining({ variant: "trialStarted" }),
       }),
     );
   });
@@ -623,6 +624,7 @@ describe("recordSuccessfulCharge", () => {
         clubId: "club_1",
         recipientId: "owner_1",
         sendEmail: false,
+        params: expect.objectContaining({ variant: "recovered" }),
       }),
     );
   });
@@ -1755,6 +1757,7 @@ describe("activateFreePlan (admin-only override — unblocks ClubOperationalGate
         recipientEmail: "jane@example.com",
         recipientName: "Jane Doe",
         sendEmail: false,
+        params: expect.objectContaining({ variant: "freePlanActivated" }),
       }),
     );
   });
@@ -1981,6 +1984,10 @@ describe("grantWelcomePeriod (admin-only override — free welcome time for any 
         clubId: "club_1",
         recipientId: "owner_1",
         sendEmail: false,
+        params: expect.objectContaining({
+          variant: "welcomePeriodGranted",
+          months: 5,
+        }),
       }),
     );
   });

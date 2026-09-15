@@ -26,6 +26,7 @@ export function PlayersFilterBar({
   onSortChange,
 }: PlayersFilterBarProps) {
   const t = useTranslations("PlayersFilterBar");
+  const tOptions = useTranslations("UserOptionLabels");
 
   function updateFilter<K extends keyof PlayerFilters>(
     key: K,
@@ -34,9 +35,9 @@ export function PlayersFilterBar({
     onFiltersChange({ ...filters, [key]: value });
   }
 
-  const categoryOptions = buildCategoryFilterOptions(t);
-  const preferredSideOptions = buildPreferredSideFilterOptions(t);
-  const dominantHandOptions = buildDominantHandFilterOptions(t);
+  const categoryOptions = buildCategoryFilterOptions(t, tOptions);
+  const preferredSideOptions = buildPreferredSideFilterOptions(t, tOptions);
+  const dominantHandOptions = buildDominantHandFilterOptions(t, tOptions);
   const sortFieldOptions = buildSortFieldOptions(t);
 
   return (

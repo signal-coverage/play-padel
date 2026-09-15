@@ -10,6 +10,8 @@ const {
   userProfileFindManyMock,
   reservationFindManyMock,
   clubFindManyMock,
+  getUserLocaleMock,
+  resolveNotificationContentMock,
 } = vi.hoisted(() => ({
   findManyMock: vi.fn(),
   countMock: vi.fn(),
@@ -17,6 +19,8 @@ const {
   userProfileFindManyMock: vi.fn(),
   reservationFindManyMock: vi.fn(),
   clubFindManyMock: vi.fn(),
+  getUserLocaleMock: vi.fn(),
+  resolveNotificationContentMock: vi.fn(),
 }));
 
 vi.mock("@/infrastructure/db/client", () => ({
@@ -36,6 +40,14 @@ vi.mock("@/infrastructure/db/client", () => ({
       findMany: clubFindManyMock,
     },
   },
+}));
+
+vi.mock("@/i18n/locale", () => ({
+  getUserLocale: getUserLocaleMock,
+}));
+
+vi.mock("@/lib/notifications/content", () => ({
+  resolveNotificationContent: resolveNotificationContentMock,
 }));
 
 import {
@@ -72,6 +84,81 @@ describe("listRecipientNotifications", () => {
     findManyMock.mockReset();
     clubFindManyMock.mockReset();
     clubFindManyMock.mockResolvedValue([]);
+    getUserLocaleMock.mockReset();
+    resolveNotificationContentMock.mockReset();
+  });
+
+  it("re-renders title/message live, in the current VIEWER's locale, for a notification that has params stored", async () => {
+    findManyMock.mockResolvedValue([
+      makeNotificationRow({
+        type: "ADMIN_ACCESS_REVOKED",
+        title: "Your admin access on Play Padel was revoked",
+        message: "<div>stale English body</div>",
+        params: {},
+      }),
+    ]);
+    getUserLocaleMock.mockResolvedValue("es");
+    resolveNotificationContentMock.mockResolvedValue({
+      subject: "Se revocó tu acceso de administrador en Play Padel",
+      html: "<div>cuerpo en español</div>",
+    });
+
+    const result = await listRecipientNotifications("user_1");
+
+    expect(resolveNotificationContentMock).toHaveBeenCalledWith(
+      "ADMIN_ACCESS_REVOKED",
+      "es",
+      {},
+    );
+    expect(result[0].title).toBe(
+      "Se revocó tu acceso de administrador en Play Padel",
+    );
+    expect(result[0].message).toBe("<div>cuerpo en español</div>");
+  });
+
+  it("leaves a notification's title/message exactly as stored when it has no params (dispatched before this column existed)", async () => {
+    findManyMock.mockResolvedValue([
+      makeNotificationRow({ title: "Original title", params: null }),
+    ]);
+
+    const result = await listRecipientNotifications("user_1");
+
+    expect(result[0].title).toBe("Original title");
+    expect(resolveNotificationContentMock).not.toHaveBeenCalled();
+  });
+
+  // Skipping getUserLocale() entirely when nothing needs it isn't just an
+  // optimization — it's what lets every OTHER test in this file (built
+  // before Notification.params existed) keep passing without also having
+  // to mock i18n/locale.ts's cookies()-backed getUserLocale.
+  it("never calls getUserLocale at all when no notification in the page has params", async () => {
+    findManyMock.mockResolvedValue([makeNotificationRow({ params: null })]);
+
+    await listRecipientNotifications("user_1");
+
+    expect(getUserLocaleMock).not.toHaveBeenCalled();
+  });
+
+  it("re-renders only the notifications that have params, leaving the rest untouched, in one page", async () => {
+    findManyMock.mockResolvedValue([
+      makeNotificationRow({
+        id: "notif_1",
+        title: "Stale",
+        params: { courtName: "Court 1" },
+      }),
+      makeNotificationRow({ id: "notif_2", title: "Kept as-is", params: null }),
+    ]);
+    getUserLocaleMock.mockResolvedValue("es");
+    resolveNotificationContentMock.mockResolvedValue({
+      subject: "Renovado",
+      html: "<div>renovado</div>",
+    });
+
+    const result = await listRecipientNotifications("user_1");
+
+    expect(resolveNotificationContentMock).toHaveBeenCalledTimes(1);
+    expect(result.find((n) => n.id === "notif_1")?.title).toBe("Renovado");
+    expect(result.find((n) => n.id === "notif_2")?.title).toBe("Kept as-is");
   });
 
   it("queries notifications scoped to the recipient, newest first, capped at the given limit", async () => {

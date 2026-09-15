@@ -15,10 +15,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { SelectField } from "@/components/SelectField";
-import { PADEL_CATEGORY_OPTIONS } from "@/app/onboarding/types";
+import { buildPadelCategoryOptions } from "@/app/onboarding/types";
 import {
-  DOMINANT_HAND_OPTIONS,
-  PREFERRED_SIDE_OPTIONS,
+  buildDominantHandOptions,
+  buildPreferredSideOptions,
 } from "@/core/users/consts";
 import type { PadelProfileStepProps } from "./types";
 
@@ -28,7 +28,11 @@ export function PadelProfileStep({
   shouldFocusHeading,
 }: PadelProfileStepProps) {
   const t = useTranslations("OnboardingWizard.steps.padelProfile");
+  const tOptions = useTranslations("UserOptionLabels");
   const headingRef = useRef<HTMLHeadingElement>(null);
+  const padelCategoryOptions = buildPadelCategoryOptions(tOptions);
+  const preferredSideOptions = buildPreferredSideOptions(tOptions);
+  const dominantHandOptions = buildDominantHandOptions(tOptions);
 
   useEffect(() => {
     if (shouldFocusHeading) {
@@ -64,7 +68,7 @@ export function PadelProfileStep({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {PADEL_CATEGORY_OPTIONS.map((c) => (
+                {padelCategoryOptions.map((c) => (
                   <SelectItem key={c.value} value={c.value}>
                     {c.label}
                   </SelectItem>
@@ -81,7 +85,7 @@ export function PadelProfileStep({
         name="preferredSide"
         label={t("preferredSide")}
         placeholder={t("notSetYet")}
-        options={PREFERRED_SIDE_OPTIONS}
+        options={preferredSideOptions}
         error={errors.preferredSide}
       />
 
@@ -90,7 +94,7 @@ export function PadelProfileStep({
         name="dominantHand"
         label={t("dominantHand")}
         placeholder={t("notSetYet")}
-        options={DOMINANT_HAND_OPTIONS}
+        options={dominantHandOptions}
         error={errors.dominantHand}
       />
     </>

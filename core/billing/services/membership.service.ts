@@ -19,8 +19,7 @@ async function notifyMembershipPastDue(clubId: string): Promise<void> {
         recipientId: owner.id,
         recipientEmail: owner.email,
         recipientName: owner.displayName,
-        subject: "Your membership payment is past due",
-        html: "Your club's membership payment failed and is now past due. Please update your payment method.",
+        params: {},
         sendEmail: false,
       });
     }
@@ -385,11 +384,7 @@ export async function startTrial(
     data: { status: "ACTIVE" },
   });
 
-  await notifyClubDashboardUnlocked(
-    input.clubId,
-    "Your dashboard is unlocked",
-    "Your club's trial has started — your dashboard is now unlocked.",
-  );
+  await notifyClubDashboardUnlocked(input.clubId, "trialStarted");
 
   return toSnapshot(row);
 }
@@ -472,11 +467,7 @@ export async function recordSuccessfulCharge(
   // deserves a "you're unblocked again" signal, but a routine ACTIVE ->
   // ACTIVE renewal (nothing was ever broken) would just be noise.
   if (currentStatus === "PAST_DUE") {
-    await notifyClubDashboardUnlocked(
-      input.clubId,
-      "Your dashboard is unlocked",
-      "Your club's membership payment was successful — your dashboard is unlocked again.",
-    );
+    await notifyClubDashboardUnlocked(input.clubId, "recovered");
   }
 
   return toSnapshot(row);
@@ -745,8 +736,9 @@ export async function changeTrialPlan(
  */
 async function notifyClubDashboardUnlocked(
   clubId: string,
-  subject: string,
-  html: string,
+  variant:
+    "trialStarted" | "recovered" | "freePlanActivated" | "welcomePeriodGranted",
+  params: Record<string, string | number> = {},
 ): Promise<void> {
   try {
     const owner = await getClubOwner(clubId);
@@ -757,8 +749,7 @@ async function notifyClubDashboardUnlocked(
         recipientId: owner.id,
         recipientEmail: owner.email,
         recipientName: owner.displayName,
-        subject,
-        html,
+        params: { variant, ...params },
         sendEmail: false,
       });
     }
@@ -773,11 +764,7 @@ async function notifyClubDashboardUnlocked(
 // (requireClubOperational/createCheckoutPreference still require a real
 // Mercado Pago or bank transfer connection regardless of plan).
 async function notifyFreePlanActivated(clubId: string): Promise<void> {
-  await notifyClubDashboardUnlocked(
-    clubId,
-    "Your dashboard is unlocked",
-    "An admin activated the FREE testing plan for your club — your dashboard is now unlocked. Real player reservations still need a connected payment method (Mercado Pago or bank transfer) in Settings.",
-  );
+  await notifyClubDashboardUnlocked(clubId, "freePlanActivated");
 }
 
 /**
@@ -800,8 +787,7 @@ async function notifyMembershipCancelled(clubId: string): Promise<void> {
         recipientId: owner.id,
         recipientEmail: owner.email,
         recipientName: owner.displayName,
-        subject: "Your club's membership was cancelled",
-        html: "Your club's membership subscription has been cancelled and your dashboard is now locked. Reactivate your membership to restore access.",
+        params: {},
         sendEmail: true,
       });
     }
@@ -1038,11 +1024,9 @@ export async function grantWelcomePeriod(
     data: { status: "ACTIVE" },
   });
 
-  await notifyClubDashboardUnlocked(
-    input.clubId,
-    "Your dashboard is unlocked",
-    `An admin granted your club ${input.months} free month(s) — your dashboard is now unlocked. Real player reservations still need a connected payment method (Mercado Pago or bank transfer) in Settings.`,
-  );
+  await notifyClubDashboardUnlocked(input.clubId, "welcomePeriodGranted", {
+    months: input.months,
+  });
 
   return toSnapshot(row);
 }

@@ -11,6 +11,7 @@ import type { PadelSideDiagramProps } from "./types";
 
 export function PadelSideDiagram({ side, className }: PadelSideDiagramProps) {
   const t = useTranslations("PadelSideDiagram");
+  const tOptions = useTranslations("UserOptionLabels");
   const image =
     side === null
       ? court
@@ -31,13 +32,13 @@ export function PadelSideDiagram({ side, className }: PadelSideDiagramProps) {
           side === null
             ? t("altNoSide")
             : t("altWithSide", {
-                side: getPreferredSideLabel(side).toLowerCase(),
+                side: getPreferredSideLabel(side, tOptions).toLowerCase(),
               })
         }
         className="h-auto w-full"
       />
       <span className="absolute inset-x-3 bottom-3 truncate rounded bg-primary px-2 py-1 text-center font-mono text-xs font-bold tracking-widest text-primary-foreground uppercase">
-        {t("preferredLabel", { side: getPreferredSideLabel(side) })}
+        {t("preferredLabel", { side: getPreferredSideLabel(side, tOptions) })}
       </span>
     </div>
   );

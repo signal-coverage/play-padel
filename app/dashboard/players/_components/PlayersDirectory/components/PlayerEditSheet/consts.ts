@@ -1,8 +1,9 @@
 import { z } from "zod";
 import {
-  DOMINANT_HAND_OPTIONS,
-  PREFERRED_SIDE_OPTIONS,
+  buildDominantHandOptions,
+  buildPreferredSideOptions,
 } from "@/core/users/consts";
+import type { UserOptionLabelsT } from "@/core/users/consts";
 
 // "notSetYet" mirrors getPreferredSideLabel/getDominantHandLabel's own label
 // for a null value (see core/users/consts.ts) — this sentinel is what
@@ -10,13 +11,28 @@ import {
 // Callers pass their own next-intl `t` (PlayerEditSheet.tsx's
 // useTranslations('PlayerEditSheet')) since this is a plain data module and
 // can't call useTranslations() itself — same factory pattern as
-// buildCategoryFilterOptions in ../../consts.tsx.
-export function buildPreferredSideSelectOptions(t: (key: string) => string) {
-  return [{ value: "unset", label: t("notSetYet") }, ...PREFERRED_SIDE_OPTIONS];
+// buildCategoryFilterOptions in ../../consts.tsx. `tOptions` is a second,
+// separate useTranslations('UserOptionLabels') result — the base
+// forehand/backhand/right/left labels live in that shared namespace (see
+// core/users/consts.ts), not under "PlayerEditSheet".
+export function buildPreferredSideSelectOptions(
+  t: (key: string) => string,
+  tOptions: UserOptionLabelsT,
+) {
+  return [
+    { value: "unset", label: t("notSetYet") },
+    ...buildPreferredSideOptions(tOptions),
+  ];
 }
 
-export function buildDominantHandSelectOptions(t: (key: string) => string) {
-  return [{ value: "unset", label: t("notSetYet") }, ...DOMINANT_HAND_OPTIONS];
+export function buildDominantHandSelectOptions(
+  t: (key: string) => string,
+  tOptions: UserOptionLabelsT,
+) {
+  return [
+    { value: "unset", label: t("notSetYet") },
+    ...buildDominantHandOptions(tOptions),
+  ];
 }
 
 // Every user-facing validation message lives in the messages/*.json

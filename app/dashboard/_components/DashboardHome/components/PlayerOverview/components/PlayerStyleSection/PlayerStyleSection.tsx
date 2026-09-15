@@ -10,6 +10,7 @@ export function PlayerStyleSection({
   partner,
 }: PlayerStyleSectionProps) {
   const t = useTranslations("PlayerStyleSection");
+  const tOptions = useTranslations("UserOptionLabels");
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-3">
@@ -18,7 +19,7 @@ export function PlayerStyleSection({
           <span className="text-muted-foreground">{t("dominantHand")}</span>
           <div className="flex items-center gap-1.5">
             <span className="font-semibold">
-              {getDominantHandLabel(playerStyle.dominantHand)}
+              {getDominantHandLabel(playerStyle.dominantHand, tOptions)}
             </span>
             <EditPlayerStyleDialog />
           </div>

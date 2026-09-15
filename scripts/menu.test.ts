@@ -16,6 +16,7 @@ const {
   grantAdminMock,
   reconcileAdminFlagsMock,
   applyMigrationsMock,
+  applyMigrationsToAllEnvironmentsMock,
   resetAllDataMock,
   BACK,
 } = vi.hoisted(() => ({
@@ -31,6 +32,7 @@ const {
   grantAdminMock: vi.fn(),
   reconcileAdminFlagsMock: vi.fn(),
   applyMigrationsMock: vi.fn(),
+  applyMigrationsToAllEnvironmentsMock: vi.fn(),
   resetAllDataMock: vi.fn(),
   BACK: Symbol("back"),
 }));
@@ -62,6 +64,7 @@ vi.mock("./actions/reconcile-admin-flags", () => ({
 }));
 vi.mock("./actions/apply-migrations", () => ({
   applyMigrations: applyMigrationsMock,
+  applyMigrationsToAllEnvironments: applyMigrationsToAllEnvironmentsMock,
 }));
 vi.mock("./actions/reset-data", () => ({
   resetAllData: resetAllDataMock,
@@ -93,6 +96,7 @@ beforeEach(async () => {
   grantAdminMock.mockReset().mockResolvedValue(undefined);
   reconcileAdminFlagsMock.mockReset().mockResolvedValue(undefined);
   applyMigrationsMock.mockReset().mockResolvedValue(undefined);
+  applyMigrationsToAllEnvironmentsMock.mockReset().mockResolvedValue(undefined);
   resetAllDataMock.mockReset().mockResolvedValue(undefined);
   askTextMock.mockResolvedValue("owner@club.com");
 
@@ -173,6 +177,17 @@ describe("main", () => {
 
     expect(applyMigrationsMock).toHaveBeenNthCalledWith(1, ".env.preview");
     expect(applyMigrationsMock).toHaveBeenNthCalledWith(2, ".env.prod");
+  });
+
+  it("runs applyMigrationsToAllEnvironments, with no database picker, for the 'all 3 environments' action", async () => {
+    scriptAskChoiceOrBack({
+      [ACTION_QUESTION]: ["apply-migrations-all", "exit"],
+    });
+
+    await main();
+
+    expect(applyMigrationsToAllEnvironmentsMock).toHaveBeenCalledTimes(1);
+    expect(applyMigrationsMock).not.toHaveBeenCalled();
   });
 
   it("re-asks which database on every reset-data call too, even after an earlier action already cached one — regression test for the bug where it silently reused the last-picked database instead of re-asking", async () => {

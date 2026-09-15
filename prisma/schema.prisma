@@ -331,6 +331,17 @@ model UserProfile {
   preferredSide   PreferredSide?
   dominantHand    DominantHand?
   status          UserStatus     @default(ACTIVE)
+  // Persisted mirror of the "locale" cookie (see i18n/localeConstants.ts) —
+  // written by i18n/localeActions.ts's setUserLocale whenever a SIGNED-IN
+  // user flips the LocaleSwitcher, so their preference follows them across
+  // devices/sessions instead of living only in one browser's cookie. This is
+  // also the one place server-side notification dispatch (see
+  // lib/notifications/content.ts) can look up which language to render a
+  // given RECIPIENT's email/in-app notification in — the dispatching
+  // request's own cookie reflects whoever triggered the action, not
+  // necessarily the recipient. Defaults to "es" to match this app's default
+  // locale (see i18n/locale.ts's DEFAULT_LOCALE) for every pre-existing row.
+  locale          String         @default("es")
   lastLogin       DateTime?
   // Set server-side at onboarding submit time (see app/api/onboarding/route.ts).
   // Nullable because existing rows predate this field; the onboarding Terms
@@ -685,6 +696,17 @@ model Notification {
   recipientEmail String
   title          String
   message        String
+  // The raw structured params dispatch() resolved title/message FROM (see
+  // lib/notifications/content.ts's resolveNotificationContent) — stored
+  // alongside the baked title/message (never instead of them: the EMAIL
+  // Resend already sent is genuinely historical and must never change,
+  // and this column is nullable for every row that predates it). Lets
+  // listNotifications/listRecipientNotifications RE-RENDER title/message
+  // live in the VIEWER's current locale on every read — the one thing a
+  // baked string alone can never do — instead of forever showing whatever
+  // language happened to be the recipient's preference at dispatch time.
+  // Null (not re-renderable) for any row from before this column existed.
+  params         Json?
   status         NotificationStatus @default(PENDING)
   failureReason  String?
   sentAt         DateTime?

@@ -10,6 +10,7 @@ export function PerformanceSummarySection({
   preferredSide,
 }: PerformanceSummarySectionProps) {
   const t = useTranslations("PerformanceSummarySection");
+  const tOptions = useTranslations("UserOptionLabels");
   return (
     <div className="flex flex-col gap-3">
       <TournamentRecord
@@ -19,7 +20,7 @@ export function PerformanceSummarySection({
       <div className="flex items-center justify-between text-sm">
         <span className="text-muted-foreground">{t("position")}</span>
         <Badge className="bg-primary text-primary-foreground [a]:hover:bg-primary/80">
-          {getPreferredSideLabel(preferredSide)}
+          {getPreferredSideLabel(preferredSide, tOptions)}
         </Badge>
       </div>
       <LatestTournamentResults

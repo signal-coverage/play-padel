@@ -22,14 +22,15 @@ import {
 } from "@/components/ui/select";
 import { useAuth } from "@/hooks/use-auth";
 import {
-  DOMINANT_HAND_OPTIONS,
-  PREFERRED_SIDE_OPTIONS,
+  buildDominantHandOptions,
+  buildPreferredSideOptions,
 } from "@/core/users/consts";
 import { useUpdatePlayerStyle } from "../../../../hooks";
 import type { DominantHand, PreferredSide } from "@/core/users/types";
 
 export function EditPlayerStyleDialog() {
   const t = useTranslations("EditPlayerStyleDialog");
+  const tOptions = useTranslations("UserOptionLabels");
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [preferredSide, setPreferredSide] = useState<PreferredSide | undefined>(
@@ -39,6 +40,8 @@ export function EditPlayerStyleDialog() {
     user?.dominantHand ?? undefined,
   );
   const { mutate, isPending } = useUpdatePlayerStyle();
+  const preferredSideOptions = buildPreferredSideOptions(tOptions);
+  const dominantHandOptions = buildDominantHandOptions(tOptions);
 
   function handleOpenChange(nextOpen: boolean) {
     if (nextOpen) {
@@ -88,7 +91,7 @@ export function EditPlayerStyleDialog() {
                 <SelectValue placeholder={t("notSetYet")} />
               </SelectTrigger>
               <SelectContent>
-                {PREFERRED_SIDE_OPTIONS.map((option) => (
+                {preferredSideOptions.map((option) => (
                   <SelectItem key={option.value} value={option.value}>
                     {option.label}
                   </SelectItem>
@@ -111,7 +114,7 @@ export function EditPlayerStyleDialog() {
                 <SelectValue placeholder={t("notSetYet")} />
               </SelectTrigger>
               <SelectContent>
-                {DOMINANT_HAND_OPTIONS.map((option) => (
+                {dominantHandOptions.map((option) => (
                   <SelectItem key={option.value} value={option.value}>
                     {option.label}
                   </SelectItem>

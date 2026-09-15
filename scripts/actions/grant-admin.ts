@@ -73,8 +73,7 @@ export async function grantAdmin(email: string): Promise<void> {
         recipientId: profile.id,
         recipientEmail: email,
         recipientName: profile.displayName,
-        subject: "You now have admin access on Play Padel",
-        html: "Your account now has admin access — you can view platform-wide metrics, approve clubs, and more from the Admin menu.",
+        params: {},
         sendEmail: true,
       });
     } catch (err) {

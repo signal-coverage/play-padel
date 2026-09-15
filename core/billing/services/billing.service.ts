@@ -1,9 +1,6 @@
-import { render } from "@react-email/render";
-import * as React from "react";
 import { prisma } from "@/infrastructure/db/client";
 import { Prisma } from "@/lib/generated/prisma/client";
 import { dispatch } from "@/lib/notifications/dispatcher";
-import { PaymentConfirmed } from "@/lib/email/templates/PaymentConfirmed";
 import { logAudit } from "@/core/audit/services/audit.service";
 import { getClubOwner } from "@/core/clubs/services/clubs.service";
 import type {
@@ -305,23 +302,18 @@ export async function recordPayment(
 
     const userName = user?.displayName ?? invoice.userName;
 
-    const html = await render(
-      React.createElement(PaymentConfirmed, {
-        userName,
-        invoiceNumber: invoice.number,
-        total: roundedAmount,
-        currency: input.currency,
-      }),
-    );
-
     await dispatch({
       type: "PAYMENT_CONFIRMED",
       clubId,
       recipientId: invoice.userId,
       recipientEmail: user?.email ?? null,
       recipientName: userName,
-      subject: `Payment received for invoice #${invoice.number}`,
-      html,
+      params: {
+        userName,
+        invoiceNumber: invoice.number,
+        total: roundedAmount,
+        currency: input.currency,
+      },
     });
   } catch {
     // notification failure must not affect payment recording
@@ -337,8 +329,7 @@ export async function recordPayment(
         recipientId: owner.id,
         recipientEmail: owner.email,
         recipientName: owner.displayName,
-        subject: "Payment received",
-        html: `A payment of ${input.currency} ${roundedAmount} was received.`,
+        params: { currency: input.currency, amount: roundedAmount },
         sendEmail: false,
       });
     }

@@ -20,6 +20,6 @@ export type PhoneFieldProps<
   phoneFieldName?: Path<TFieldValues>;
   /** Field name for the matched country's display name. Defaults to "country". */
   countryFieldName?: Path<TFieldValues>;
-  /** Field label text. Defaults to "Phone *". */
+  /** Field label text. Defaults to the translated "PhoneField.label" message. */
   label?: string;
 };
