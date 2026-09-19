@@ -177,8 +177,18 @@ describe("PATCH /api/admin/membership-trial-config", () => {
   it("propagates the new trialDays to every cached preapproval_plan for that tier via updateMembershipPreapprovalPlan", async () => {
     upsertMock.mockResolvedValue({ plan: "PRO", trialDays: 21 });
     cacheFindManyMock.mockResolvedValue([
-      { plan: "PRO", currency: "ARS", preapprovalPlanId: "plan_pro_ars" },
-      { plan: "PRO", currency: "USD", preapprovalPlanId: "plan_pro_usd" },
+      {
+        plan: "PRO",
+        currency: "ARS",
+        cycle: "MONTHLY",
+        preapprovalPlanId: "plan_pro_ars",
+      },
+      {
+        plan: "PRO",
+        currency: "USD",
+        cycle: "MONTHLY",
+        preapprovalPlanId: "plan_pro_usd",
+      },
     ]);
     updateMembershipPreapprovalPlanMock.mockResolvedValue({
       id: "plan_pro_ars",
@@ -197,15 +207,52 @@ describe("PATCH /api/admin/membership-trial-config", () => {
     expect(updateMembershipPreapprovalPlanMock).toHaveBeenCalledWith({
       preapprovalPlanId: "plan_pro_ars",
       plan: "PRO",
+      cycle: "MONTHLY",
       currency: "ARS",
     });
     expect(updateMembershipPreapprovalPlanMock).toHaveBeenCalledWith({
       preapprovalPlanId: "plan_pro_usd",
       plan: "PRO",
+      cycle: "MONTHLY",
       currency: "USD",
     });
     expect(updateMembershipPreapprovalPlanMock).toHaveBeenCalledTimes(2);
     expect(response.status).toBe(200);
+  });
+
+  it("propagates independently per cycle — a MONTHLY and an ANNUAL cached plan for the same tier+currency each get their own correct cycle passed through", async () => {
+    upsertMock.mockResolvedValue({ plan: "PRO", trialDays: 21 });
+    cacheFindManyMock.mockResolvedValue([
+      {
+        plan: "PRO",
+        currency: "ARS",
+        cycle: "MONTHLY",
+        preapprovalPlanId: "plan_pro_ars_monthly",
+      },
+      {
+        plan: "PRO",
+        currency: "ARS",
+        cycle: "ANNUAL",
+        preapprovalPlanId: "plan_pro_ars_annual",
+      },
+    ]);
+    updateMembershipPreapprovalPlanMock.mockResolvedValue({});
+
+    await PATCH(makePatchRequest({ plan: "PRO", trialDays: 21 }));
+
+    expect(updateMembershipPreapprovalPlanMock).toHaveBeenCalledWith({
+      preapprovalPlanId: "plan_pro_ars_monthly",
+      plan: "PRO",
+      cycle: "MONTHLY",
+      currency: "ARS",
+    });
+    expect(updateMembershipPreapprovalPlanMock).toHaveBeenCalledWith({
+      preapprovalPlanId: "plan_pro_ars_annual",
+      plan: "PRO",
+      cycle: "ANNUAL",
+      currency: "ARS",
+    });
+    expect(updateMembershipPreapprovalPlanMock).toHaveBeenCalledTimes(2);
   });
 
   it("no-ops cleanly (never calls updateMembershipPreapprovalPlan) when no cached preapproval_plan exists yet for that tier", async () => {
@@ -226,8 +273,18 @@ describe("PATCH /api/admin/membership-trial-config", () => {
   it("still returns 200 and continues propagating to other currencies when one cached plan's Mercado Pago update fails", async () => {
     upsertMock.mockResolvedValue({ plan: "PRO", trialDays: 10 });
     cacheFindManyMock.mockResolvedValue([
-      { plan: "PRO", currency: "ARS", preapprovalPlanId: "plan_pro_ars" },
-      { plan: "PRO", currency: "USD", preapprovalPlanId: "plan_pro_usd" },
+      {
+        plan: "PRO",
+        currency: "ARS",
+        cycle: "MONTHLY",
+        preapprovalPlanId: "plan_pro_ars",
+      },
+      {
+        plan: "PRO",
+        currency: "USD",
+        cycle: "MONTHLY",
+        preapprovalPlanId: "plan_pro_usd",
+      },
     ]);
     updateMembershipPreapprovalPlanMock.mockImplementation(
       async ({ currency }: { currency: string }) => {

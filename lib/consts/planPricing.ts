@@ -110,12 +110,12 @@ export const PLAN_DETAILS: Record<Plan, PlanDetails> = {
   PRO: {
     monthlyPrice: 59000,
     annualPrice: 590000,
-    welcomeFreeMonths: 3,
+    welcomeFreeMonths: 2,
   },
   PLUS: {
     monthlyPrice: 79000,
     annualPrice: 790000,
-    welcomeFreeMonths: 6,
+    welcomeFreeMonths: 2,
   },
   MAX: {
     monthlyPrice: null,

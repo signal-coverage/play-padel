@@ -2,8 +2,7 @@
  * Central home for required-environment-variable accessors. Consolidates the
  * identical `requireEnv`/`requireAppUrl` implementations that used to be
  * duplicated across `lib/mercadopago/oauth.ts`, `lib/mercadopago/
- * platformClient.ts`, `lib/mercadopago/preferences.ts`, and `lib/mercadopago/
- * platformPreferences.ts`.
+ * platformClient.ts`, and `lib/mercadopago/preferences.ts`.
  */
 
 /** Reads `process.env[name]`, throwing a clear error if it's missing/empty. */

@@ -63,7 +63,6 @@ async function runGraceSweep(startedAt: Date): Promise<NextResponse> {
 
   let autoReconciled = 0;
   let autoStillPending = 0;
-  let annualTrialsExpired = 0;
   let manualExpired = 0;
   let manualLockedOut = 0;
   let failed = 0;
@@ -98,44 +97,6 @@ async function runGraceSweep(startedAt: Date): Promise<NextResponse> {
         // don't guess.
         autoStillPending++;
       }
-    } catch {
-      failed++;
-    }
-  }
-
-  // --- ANNUAL trial expiry: no native MP trial-without-charge exists for a
-  // one-time Checkout Pro payment, so `trialEndsAt` is app-tracked and
-  // authoritative for ANNUAL only (see design.md's ANNUAL-trial correction).
-  // If the trial ends with no confirmed payment webhook, the subscription
-  // is cancelled — reusing `recordAutoCancellation`'s CANCELLED +
-  // `Club.status` sync rather than duplicating that logic, even though this
-  // path is cron-driven, not MP-webhook-driven (no `webhookEventId`).
-  //
-  // `mpPreferenceId: null` excludes rows with a payment attempt already in
-  // flight (sdd-verify follow-up fix): a "Pay Now" checkout during the trial
-  // sets `mpPreferenceId` but deliberately leaves `status` at TRIALING until
-  // the webhook confirms it (webhook-only state confirmation). Without this
-  // exclusion, a trial ending right as (or after) that pay-now click — with
-  // the webhook simply not yet landed before this once-daily cron runs —
-  // would be wrongly cancelled despite an already-in-flight/possibly-already
-  // -successful payment. A row excluded here either gets confirmed ACTIVE by
-  // the webhook shortly after, or a permanently failed/never-completed
-  // payment is a separate concern already covered by the existing
-  // payment-webhook/rejected-payment handling — not this sweep's job.
-  const expiredAnnualTrials = await prisma.clubMembershipSubscription.findMany({
-    where: {
-      cycle: "ANNUAL",
-      status: "TRIALING",
-      trialEndsAt: { not: null, lte: now },
-      mpPreferenceId: null,
-    },
-    select: { clubId: true },
-  });
-
-  for (const sub of expiredAnnualTrials) {
-    try {
-      await recordAutoCancellation({ clubId: sub.clubId, cancelledAt: now });
-      annualTrialsExpired++;
     } catch {
       failed++;
     }
@@ -197,7 +158,6 @@ async function runGraceSweep(startedAt: Date): Promise<NextResponse> {
   return NextResponse.json({
     autoReconciled,
     autoStillPending,
-    annualTrialsExpired,
     manualExpired,
     manualLockedOut,
     failed,

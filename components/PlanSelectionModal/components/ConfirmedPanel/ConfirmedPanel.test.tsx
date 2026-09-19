@@ -50,75 +50,9 @@ describe("ConfirmedPanel", () => {
     expect(screen.queryByText("Free Trial Active")).not.toBeInTheDocument();
   });
 
-  // sdd-verify follow-up fix: an ANNUAL trial has no way to reach ACTIVE
-  // without an explicit "Pay Now" action generating the one-time payment
-  // link (see app/api/clubs/membership/route.ts's TRIALING "pay now"
-  // branch) — otherwise it only ever ends via the cron sweep cancelling it.
-  it("shows a Pay Now button when showPayNow is true", () => {
-    render(<ConfirmedPanel onClose={vi.fn()} isTrialing showPayNow />);
-
-    expect(screen.getByRole("button", { name: "Pay Now" })).toBeInTheDocument();
-  });
-
-  it("does not show a Pay Now button when showPayNow is false/omitted (e.g. a MONTHLY trial, which already has an authorized preapproval)", () => {
-    render(<ConfirmedPanel onClose={vi.fn()} isTrialing />);
-
-    expect(
-      screen.queryByRole("button", { name: "Pay Now" }),
-    ).not.toBeInTheDocument();
-  });
-
-  it("calls onPayNow when the Pay Now button is clicked", () => {
-    const onPayNow = vi.fn();
-    render(
-      <ConfirmedPanel
-        onClose={vi.fn()}
-        isTrialing
-        showPayNow
-        onPayNow={onPayNow}
-      />,
-    );
-
-    fireEvent.click(screen.getByRole("button", { name: "Pay Now" }));
-
-    expect(onPayNow).toHaveBeenCalled();
-  });
-
-  it("disables the Pay Now button and shows a loading label while isPayNowLoading is true", () => {
-    render(
-      <ConfirmedPanel
-        onClose={vi.fn()}
-        isTrialing
-        showPayNow
-        isPayNowLoading
-      />,
-    );
-
-    const button = screen.getByRole("button", {
-      name: "Generating payment link...",
-    });
-    expect(button).toBeDisabled();
-  });
-
-  it("shows payNowError when present", () => {
-    render(
-      <ConfirmedPanel
-        onClose={vi.fn()}
-        isTrialing
-        showPayNow
-        payNowError="Mercado Pago is unavailable right now."
-      />,
-    );
-
-    expect(
-      screen.getByText("Mercado Pago is unavailable right now."),
-    ).toBeInTheDocument();
-  });
-
   // Lets the owner change plan tier IMMEDIATELY while on a free trial —
   // both MONTHLY and ANNUAL trials qualify, since neither has been charged
-  // yet. Independent of showPayNow (ANNUAL-only) — a MONTHLY trial gets
-  // Change Plan but never Pay Now.
+  // yet (both cycles get only an authorized-but-uncharged preapproval).
   it("shows a Change Plan button when isTrialing and onChangePlan are both provided", () => {
     render(
       <ConfirmedPanel onClose={vi.fn()} isTrialing onChangePlan={vi.fn()} />,

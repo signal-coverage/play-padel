@@ -37,7 +37,6 @@ function subscriptionRow(overrides: Record<string, unknown> = {}) {
     status: "CANCELLED",
     currency: "ARS",
     mpPreapprovalId: null,
-    mpPreferenceId: null,
     mpCustomerId: null,
     mpCardId: null,
     trialEndsAt: null,

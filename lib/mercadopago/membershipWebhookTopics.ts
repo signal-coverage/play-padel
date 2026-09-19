@@ -46,18 +46,3 @@
 // through this one notification type, each time meaning "go re-check this
 // preapproval's current state."
 export const MEMBERSHIP_WEBHOOK_TOPIC = "subscription_preapproval" as const;
-
-// ANNUAL membership billing is a one-time Checkout Pro payment (see
-// design.md's "Annual one-time payment" decision), never a preapproval — MP
-// notifies THAT confirmation via the standard `payment` topic, exactly like
-// the reservation webhook (app/api/webhooks/mercadopago/route.ts) already
-// handles for reservation payments. `lib/mercadopago/platformPreferences.ts`'s
-// `createMembershipPreference` embeds `?clubId=` on its `notification_url`
-// (pointing at the base, consolidated route — see that file) for exactly
-// this purpose (club resolution BEFORE ever re-fetching the payment,
-// matching the reservation webhook's own `reservationId`-query-param
-// pattern) — this constant is what lets the consolidated base route
-// (app/api/webhooks/mercadopago/route.ts) dispatch a `type: "payment"`
-// notification with no `reservationId` to `handleMembershipPaymentTopic`
-// instead of the reservation flow.
-export const MEMBERSHIP_PAYMENT_WEBHOOK_TOPIC = "payment" as const;

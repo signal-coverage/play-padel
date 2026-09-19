@@ -84,6 +84,7 @@ describe("createMembershipPreapprovalPlan", () => {
 
     await createMembershipPreapprovalPlan({
       plan: "PRO",
+      cycle: "MONTHLY",
       currency: "ARS",
       backUrl: "https://app.example.com/dashboard",
     });
@@ -101,6 +102,7 @@ describe("createMembershipPreapprovalPlan", () => {
 
     await createMembershipPreapprovalPlan({
       plan: "PRO",
+      cycle: "MONTHLY",
       currency: "ARS",
       backUrl: "https://app.example.com/dashboard",
     });
@@ -117,14 +119,15 @@ describe("createMembershipPreapprovalPlan", () => {
 
     await createMembershipPreapprovalPlan({
       plan: "PRO",
+      cycle: "MONTHLY",
       currency: "ARS",
       backUrl: "https://app.example.com/dashboard",
     });
 
     const callArgs = createMock.mock.calls[0][0];
-    // PRO's static welcomeFreeMonths is 3 (lib/consts/planPricing.ts)
+    // PRO's static welcomeFreeMonths is 2 (lib/consts/planPricing.ts)
     expect(callArgs.body.auto_recurring.free_trial).toEqual({
-      frequency: 3,
+      frequency: 2,
       frequency_type: "months",
     });
   });
@@ -134,6 +137,7 @@ describe("createMembershipPreapprovalPlan", () => {
 
     await createMembershipPreapprovalPlan({
       plan: "BASIC",
+      cycle: "MONTHLY",
       currency: "USD",
       backUrl: "https://app.example.com/dashboard",
     });
@@ -150,6 +154,7 @@ describe("createMembershipPreapprovalPlan", () => {
 
     const result = await createMembershipPreapprovalPlan({
       plan: "PRO",
+      cycle: "MONTHLY",
       currency: "ARS",
       backUrl: "https://app.example.com/dashboard",
     });
@@ -167,6 +172,7 @@ describe("createMembershipPreapprovalPlan", () => {
     await expect(
       createMembershipPreapprovalPlan({
         plan: "PRO",
+        cycle: "MONTHLY",
         currency: "ARS",
         backUrl: "https://app.example.com/dashboard",
       }),
@@ -179,11 +185,42 @@ describe("createMembershipPreapprovalPlan", () => {
     await expect(
       createMembershipPreapprovalPlan({
         plan: "MAX",
+        cycle: "MONTHLY",
         currency: "ARS",
         backUrl: "https://app.example.com/dashboard",
       }),
     ).rejects.toThrow(/MAX/);
     expect(createMock).not.toHaveBeenCalled();
+  });
+
+  it("uses frequency 12 (months) for ANNUAL instead of MONTHLY's frequency 1", async () => {
+    findUniqueMock.mockResolvedValue(null);
+
+    await createMembershipPreapprovalPlan({
+      plan: "PRO",
+      cycle: "ANNUAL",
+      currency: "ARS",
+      backUrl: "https://app.example.com/dashboard",
+    });
+
+    const callArgs = createMock.mock.calls[0][0];
+    expect(callArgs.body.auto_recurring.frequency).toBe(12);
+    expect(callArgs.body.auto_recurring.frequency_type).toBe("months");
+  });
+
+  it("uses PLAN_DETAILS.annualPrice (not monthlyPrice) as the ANNUAL transaction_amount", async () => {
+    findUniqueMock.mockResolvedValue(null);
+
+    await createMembershipPreapprovalPlan({
+      plan: "PRO",
+      cycle: "ANNUAL",
+      currency: "ARS",
+      backUrl: "https://app.example.com/dashboard",
+    });
+
+    const callArgs = createMock.mock.calls[0][0];
+    // PRO's static annualPrice is 590000 (lib/consts/planPricing.ts)
+    expect(callArgs.body.auto_recurring.transaction_amount).toBe(590000);
   });
 });
 
@@ -192,21 +229,29 @@ describe("getOrCreateMembershipPreapprovalPlanId", () => {
     findUniqueMock.mockResolvedValue(null);
   });
 
-  it("reuses the cached preapproval_plan id for a (plan, currency) pair without calling Mercado Pago", async () => {
+  it("reuses the cached preapproval_plan id for a (plan, currency, cycle) triple without calling Mercado Pago", async () => {
     cacheFindUniqueMock.mockResolvedValue({
       plan: "PRO",
       currency: "ARS",
+      cycle: "MONTHLY",
       preapprovalPlanId: "plan_cached_1",
     });
 
     const result = await getOrCreateMembershipPreapprovalPlanId({
       plan: "PRO",
+      cycle: "MONTHLY",
       currency: "ARS",
       backUrl: "https://app.example.com/dashboard",
     });
 
     expect(cacheFindUniqueMock).toHaveBeenCalledWith({
-      where: { plan_currency: { plan: "PRO", currency: "ARS" } },
+      where: {
+        plan_currency_cycle: {
+          plan: "PRO",
+          currency: "ARS",
+          cycle: "MONTHLY",
+        },
+      },
     });
     expect(result).toEqual({ id: "plan_cached_1" });
     expect(createMock).not.toHaveBeenCalled();
@@ -221,23 +266,30 @@ describe("getOrCreateMembershipPreapprovalPlanId", () => {
     cacheCreateMock.mockResolvedValue({
       plan: "PRO",
       currency: "ARS",
+      cycle: "MONTHLY",
       preapprovalPlanId: "plan_new_1",
     });
 
     const result = await getOrCreateMembershipPreapprovalPlanId({
       plan: "PRO",
+      cycle: "MONTHLY",
       currency: "ARS",
       backUrl: "https://app.example.com/dashboard",
     });
 
     expect(createMock).toHaveBeenCalledTimes(1);
     expect(cacheCreateMock).toHaveBeenCalledWith({
-      data: { plan: "PRO", currency: "ARS", preapprovalPlanId: "plan_new_1" },
+      data: {
+        plan: "PRO",
+        currency: "ARS",
+        cycle: "MONTHLY",
+        preapprovalPlanId: "plan_new_1",
+      },
     });
     expect(result.id).toBe("plan_new_1");
   });
 
-  it("caches per (plan, currency) — a different currency for the same tier is a cache miss", async () => {
+  it("caches per (plan, currency, cycle) — a different currency for the same tier+cycle is a cache miss", async () => {
     cacheFindUniqueMock.mockResolvedValue(null);
     createMock.mockResolvedValue(
       buildPreapprovalPlanResponse({ id: "plan_usd_1" }),
@@ -246,12 +298,45 @@ describe("getOrCreateMembershipPreapprovalPlanId", () => {
 
     await getOrCreateMembershipPreapprovalPlanId({
       plan: "PRO",
+      cycle: "MONTHLY",
       currency: "USD",
       backUrl: "https://app.example.com/dashboard",
     });
 
     expect(cacheFindUniqueMock).toHaveBeenCalledWith({
-      where: { plan_currency: { plan: "PRO", currency: "USD" } },
+      where: {
+        plan_currency_cycle: {
+          plan: "PRO",
+          currency: "USD",
+          cycle: "MONTHLY",
+        },
+      },
+    });
+    expect(createMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("caches per (plan, currency, cycle) — MONTHLY and ANNUAL for the same tier+currency never share a row", async () => {
+    cacheFindUniqueMock.mockResolvedValue(null);
+    createMock.mockResolvedValue(
+      buildPreapprovalPlanResponse({ id: "plan_annual_1" }),
+    );
+    cacheCreateMock.mockResolvedValue({});
+
+    await getOrCreateMembershipPreapprovalPlanId({
+      plan: "PRO",
+      cycle: "ANNUAL",
+      currency: "ARS",
+      backUrl: "https://app.example.com/dashboard",
+    });
+
+    expect(cacheFindUniqueMock).toHaveBeenCalledWith({
+      where: {
+        plan_currency_cycle: {
+          plan: "PRO",
+          currency: "ARS",
+          cycle: "ANNUAL",
+        },
+      },
     });
     expect(createMock).toHaveBeenCalledTimes(1);
   });
@@ -260,6 +345,7 @@ describe("getOrCreateMembershipPreapprovalPlanId", () => {
     cacheFindUniqueMock.mockResolvedValueOnce(null).mockResolvedValueOnce({
       plan: "PRO",
       currency: "ARS",
+      cycle: "MONTHLY",
       preapprovalPlanId: "plan_winner_1",
     });
     createMock.mockResolvedValue(
@@ -272,6 +358,7 @@ describe("getOrCreateMembershipPreapprovalPlanId", () => {
 
     const result = await getOrCreateMembershipPreapprovalPlanId({
       plan: "PRO",
+      cycle: "MONTHLY",
       currency: "ARS",
       backUrl: "https://app.example.com/dashboard",
     });
@@ -290,6 +377,7 @@ describe("getOrCreateMembershipPreapprovalPlanId", () => {
     await expect(
       getOrCreateMembershipPreapprovalPlanId({
         plan: "PRO",
+        cycle: "MONTHLY",
         currency: "ARS",
         backUrl: "https://app.example.com/dashboard",
       }),

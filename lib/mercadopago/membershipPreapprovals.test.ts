@@ -51,6 +51,7 @@ describe("createMembershipPreapproval", () => {
     await createMembershipPreapproval({
       clubId: "club_1",
       preapprovalPlanId: "plan_1",
+      cycle: "MONTHLY",
       payerEmail: "owner@example.com",
       cardTokenId: "card_tok_1",
       currency: "ARS",
@@ -66,6 +67,7 @@ describe("createMembershipPreapproval", () => {
     await createMembershipPreapproval({
       clubId: "club_1",
       preapprovalPlanId: "plan_1",
+      cycle: "MONTHLY",
       payerEmail: "owner@example.com",
       cardTokenId: "card_tok_1",
       currency: "ARS",
@@ -82,6 +84,7 @@ describe("createMembershipPreapproval", () => {
     await createMembershipPreapproval({
       clubId: "club_42",
       preapprovalPlanId: "plan_99",
+      cycle: "MONTHLY",
       payerEmail: "owner@example.com",
       cardTokenId: "card_tok_1",
       currency: "ARS",
@@ -98,6 +101,7 @@ describe("createMembershipPreapproval", () => {
     await createMembershipPreapproval({
       clubId: "club_1",
       preapprovalPlanId: "plan_1",
+      cycle: "MONTHLY",
       payerEmail: "owner@example.com",
       cardTokenId: "card_tok_1",
       currency: "USD",
@@ -120,6 +124,7 @@ describe("createMembershipPreapproval", () => {
     await createMembershipPreapproval({
       clubId: "club_1",
       preapprovalPlanId: "plan_1",
+      cycle: "MONTHLY",
       payerEmail: "owner@example.com",
       cardTokenId: "card_tok_1",
       currency: "ARS",
@@ -139,6 +144,7 @@ describe("createMembershipPreapproval", () => {
     const result = await createMembershipPreapproval({
       clubId: "club_1",
       preapprovalPlanId: "plan_1",
+      cycle: "MONTHLY",
       payerEmail: "owner@example.com",
       cardTokenId: "card_tok_1",
       currency: "ARS",
@@ -163,6 +169,7 @@ describe("createMembershipPreapproval", () => {
       createMembershipPreapproval({
         clubId: "club_1",
         preapprovalPlanId: "plan_1",
+        cycle: "MONTHLY",
         payerEmail: "owner@example.com",
         cardTokenId: "card_tok_1",
         currency: "ARS",
@@ -170,6 +177,23 @@ describe("createMembershipPreapproval", () => {
         backUrl: "https://app.example.com/dashboard",
       }),
     ).rejects.toThrow("Mercado Pago did not return a preapproval id/status");
+  });
+
+  it("sends frequency 12 (months) for ANNUAL instead of MONTHLY's frequency 1", async () => {
+    await createMembershipPreapproval({
+      clubId: "club_1",
+      preapprovalPlanId: "plan_1",
+      cycle: "ANNUAL",
+      payerEmail: "owner@example.com",
+      cardTokenId: "card_tok_1",
+      currency: "ARS",
+      transactionAmount: 390000,
+      backUrl: "https://app.example.com/dashboard",
+    });
+
+    const callArgs = createMock.mock.calls[0][0];
+    expect(callArgs.body.auto_recurring.frequency).toBe(12);
+    expect(callArgs.body.auto_recurring.frequency_type).toBe("months");
   });
 });
 
@@ -232,7 +256,7 @@ describe("reactivateMembershipPreapproval", () => {
   });
 });
 
-describe("updateMembershipPreapprovalAmount (immediate TRIALING plan change — MONTHLY only)", () => {
+describe("updateMembershipPreapprovalAmount (immediate TRIALING plan change — either cycle)", () => {
   it("PUTs the new transaction_amount/currency_id for the given preapproval id", async () => {
     updateMock.mockResolvedValue(
       buildPreapprovalResponse({ status: "authorized" }),

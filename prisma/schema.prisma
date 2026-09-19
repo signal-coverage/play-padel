@@ -193,8 +193,7 @@ model ClubMembershipSubscription {
   // explicit parameter (see spec's "Currency Threaded as Explicit Parameter").
   currency String
 
-  mpPreapprovalId String? // MONTHLY only — real MP Subscriptions/Preapproval id
-  mpPreferenceId  String? // ANNUAL only — one-time Checkout Pro preference id
+  mpPreapprovalId String? // Real MP Subscriptions/Preapproval id — both cycles (MONTHLY: frequency 1 month, ANNUAL: frequency 12 months)
   mpCustomerId    String?
   mpCardId        String?
 
@@ -207,9 +206,9 @@ model ClubMembershipSubscription {
   payerIdentificationType   String?
   payerIdentificationNumber String?
 
-  // Authoritative for ANNUAL only (no native MP trial-without-charge exists
-  // for one-off Checkout Pro). Informational mirror for MONTHLY — MP's own
-  // `preapproval_plan.auto_recurring.free_trial` is authoritative there.
+  // Informational mirror for both cycles — MP's own
+  // `preapproval_plan.auto_recurring.free_trial` is authoritative; this
+  // column is never independently consulted to gate access.
   trialEndsAt DateTime?
 
   currentPeriodStart DateTime?
@@ -246,25 +245,29 @@ model MembershipTrialConfig {
 }
 
 // System-managed cache of the Mercado Pago `preapproval_plan` object created
-// for a given (plan tier, currency) pair, so a MONTHLY checkout reuses one
-// plan object per tier+currency instead of creating a near-duplicate on
-// every single checkout (post-archive optimization — see this batch's
-// apply-progress notes). Composite-keyed by (plan, currency) rather than
-// plan alone: `Club.currency` is a free-form per-club field (spec's
-// "Currency Threaded as Explicit Parameter"), so a plan object created for
-// one currency must never be reused for a club billed in a different
-// currency. Deliberately a separate table from `MembershipTrialConfig`
-// rather than a field on it: that model's `trialDays`/`updatedBy` are
-// required admin-authored fields, but a cache write can legitimately happen
-// before any admin has ever configured a trial override for that tier.
+// for a given (plan tier, currency, cycle) triple, so a checkout reuses one
+// plan object per tier+currency+cycle instead of creating a near-duplicate
+// on every single checkout (post-archive optimization — see this batch's
+// apply-progress notes). Composite-keyed by (plan, currency, cycle) rather
+// than (plan, currency) alone: MONTHLY and ANNUAL are different MP plan
+// objects (different `auto_recurring.frequency`/`transaction_amount`) even
+// for the same tier+currency, so they must never share a cache row.
+// `Club.currency` is a free-form per-club field (spec's "Currency Threaded
+// as Explicit Parameter"), so a plan object created for one currency must
+// never be reused for a club billed in a different currency. Deliberately a
+// separate table from `MembershipTrialConfig` rather than a field on it:
+// that model's `trialDays`/`updatedBy` are required admin-authored fields,
+// but a cache write can legitimately happen before any admin has ever
+// configured a trial override for that tier.
 model MembershipPreapprovalPlanCache {
   plan              Plan
   currency          String
+  cycle             MembershipCycle
   preapprovalPlanId String
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
-  @@id([plan, currency])
+  @@id([plan, currency, cycle])
   @@map("membership_preapproval_plan_cache")
 }
 

@@ -48,7 +48,6 @@ export interface MembershipSubscriptionSnapshot {
   status: MembershipStatusValue;
   currency: string;
   mpPreapprovalId: string | null;
-  mpPreferenceId: string | null;
   mpCustomerId: string | null;
   mpCardId: string | null;
   payerIdentificationType: string | null;
@@ -79,7 +78,6 @@ function toSnapshot(row: SubscriptionRow): MembershipSubscriptionSnapshot {
     status: row.status as MembershipStatusValue,
     currency: row.currency,
     mpPreapprovalId: row.mpPreapprovalId ?? null,
-    mpPreferenceId: row.mpPreferenceId ?? null,
     mpCustomerId: row.mpCustomerId ?? null,
     mpCardId: row.mpCardId ?? null,
     payerIdentificationType: row.payerIdentificationType ?? null,
@@ -152,7 +150,7 @@ export class ClubNotFoundError extends Error {
 /**
  * Thrown by `activateFreePlan`'s safety guard when the club already has a
  * real (or real-attempt) Mercado Pago subscription — a non-null
- * `mpPreapprovalId`/`mpPreferenceId` — and `force` was not passed. Prevents
+ * `mpPreapprovalId` — and `force` was not passed. Prevents
  * an admin from accidentally converting a real paying club to FREE by
  * mistyping a `clubId`.
  */
@@ -691,10 +689,10 @@ export interface ChangeTrialPlanInput {
  * TRIALING — deliberately separate from `requestPlanChange` above, which
  * only applies once ACTIVE and defers the change to the next renewal
  * boundary with no proration. While TRIALING, no real charge has happened
- * yet on EITHER cycle (MONTHLY already has an authorized-but-uncharged
- * preapproval; ANNUAL has no Mercado Pago object at all), so there is
- * nothing to prorate — whatever plan the owner picks simply becomes what
- * eventually gets charged. Same billing cycle only: this never touches
+ * yet on EITHER cycle (both already have an authorized-but-uncharged
+ * preapproval), so there is nothing to prorate — whatever plan the owner
+ * picks simply becomes what eventually gets charged. Same billing cycle
+ * only: this never touches
  * `cycle`. Overwrites `plan` directly (never `pendingPlan`/`pendingCycle`,
  * which exist solely for the deferred ACTIVE-only mechanism).
  */
@@ -815,17 +813,14 @@ export async function clubHasRealMercadoPagoSubscription(
   const existing = await prisma.clubMembershipSubscription.findUnique({
     where: { clubId },
   });
-  return (
-    existing != null &&
-    (existing.mpPreapprovalId != null || existing.mpPreferenceId != null)
-  );
+  return existing != null && existing.mpPreapprovalId != null;
 }
 
 export interface ActivateFreePlanInput {
   clubId: string;
   /**
    * Overrides the safety guard that otherwise refuses to touch a
-   * subscription that already has a real `mpPreapprovalId`/`mpPreferenceId`.
+   * subscription that already has a real `mpPreapprovalId`.
    * Defaults to `false`.
    */
   force?: boolean;
@@ -868,8 +863,7 @@ export async function activateFreePlan(
   });
 
   const hasRealSubscription =
-    existing != null &&
-    (existing.mpPreapprovalId != null || existing.mpPreferenceId != null);
+    existing != null && existing.mpPreapprovalId != null;
 
   if (hasRealSubscription && !input.force) {
     throw new RealSubscriptionExistsError();
@@ -884,7 +878,6 @@ export async function activateFreePlan(
     currentPeriodStart: now,
     currentPeriodEnd: null,
     mpPreapprovalId: null,
-    mpPreferenceId: null,
     mpCustomerId: null,
     mpCardId: null,
     pendingPlan: null,
@@ -933,7 +926,7 @@ export interface GrantWelcomePeriodInput {
   months: number;
   /**
    * Overrides the safety guard that otherwise refuses to touch a
-   * subscription that already has a real `mpPreapprovalId`/`mpPreferenceId`
+   * subscription that already has a real `mpPreapprovalId`
    * — same net as `activateFreePlan`'s own `force`, against accidentally
    * granting a real, actively-charging club unwanted free time via a
    * mistyped `clubId`. Defaults to `false`.
@@ -993,8 +986,7 @@ export async function grantWelcomePeriod(
   });
 
   const hasRealSubscription =
-    existing != null &&
-    (existing.mpPreapprovalId != null || existing.mpPreferenceId != null);
+    existing != null && existing.mpPreapprovalId != null;
 
   if (hasRealSubscription && !input.force) {
     throw new RealSubscriptionExistsError();
@@ -1088,62 +1080,6 @@ export async function attachPendingPreapproval(
       renewalMode: input.renewalMode,
       currency: input.currency,
       mpPreapprovalId: input.mpPreapprovalId,
-    },
-  });
-
-  return toSnapshot(row);
-}
-
-export interface AttachPendingPreferenceInput {
-  clubId: string;
-  plan: Plan;
-  currency: string;
-  mpPreferenceId: string;
-}
-
-/**
- * Records that an ANNUAL checkout created a real MP (platform) preference
- * WITHOUT advancing membership status — same "webhook is the only thing
- * that confirms payment" rule as `attachPendingPreapproval`. `cycle` is
- * always forced to `ANNUAL` and `renewalMode` to `AUTO`: annual billing is
- * a one-time Checkout Pro payment (spec's "Annual Billing Uses One-Time
- * Payment") with no recurring/manual-renewal concept, so `renewalMode` is
- * only a nominal placeholder to satisfy the non-nullable column.
- *
- * Valid from PENDING (first-ever ANNUAL checkout attempt), same guard as
- * `attachPendingPreapproval`, OR from an existing TRIALING+ANNUAL
- * subscription (the "pay now during trial" follow-up fix — ANNUAL trials
- * start with no MP object at all, see `startTrial`'s ANNUAL caller in
- * app/api/clubs/membership/route.ts, so this is the only way one can ever
- * reach ACTIVE before the cron sweep cancels it at `trialEndsAt`). This
- * function never touches `status` itself either way — a TRIALING
- * subscription stays TRIALING, now with an `mpPreferenceId` attached, until
- * the payment webhook confirms it (spec's "Webhook-Only State
- * Confirmation").
- */
-export async function attachPendingPreference(
-  input: AttachPendingPreferenceInput,
-): Promise<MembershipSubscriptionSnapshot> {
-  const current = await requireSubscription(input.clubId);
-  const currentStatus = current.status as MembershipStatusValue;
-  const isAnnualTrialPayNow =
-    currentStatus === "TRIALING" &&
-    (current.cycle as MembershipCycleValue) === "ANNUAL";
-
-  if (currentStatus !== "PENDING" && !isAnnualTrialPayNow) {
-    throw new Error(
-      `Cannot attach a new preference while membership subscription is ${current.status} — expected PENDING`,
-    );
-  }
-
-  const row = await prisma.clubMembershipSubscription.update({
-    where: { clubId: input.clubId },
-    data: {
-      plan: input.plan,
-      cycle: "ANNUAL",
-      renewalMode: "AUTO",
-      currency: input.currency,
-      mpPreferenceId: input.mpPreferenceId,
     },
   });
 
@@ -1264,7 +1200,7 @@ export async function requestPlanChange(
  * still refuses to touch a CANCELLED row.
  *
  * This is a FULL reset, not a partial one: a cancelled subscription's old MP
- * identifiers (preapproval/preference/customer/card), trial dates, and
+ * identifiers (preapproval/customer/card), trial dates, and
  * billing-period dates are all stale relative to a brand-new checkout
  * attempt. Leaving any of them in place risks the new checkout accidentally
  * reusing a dead MP object (e.g. a cancelled preapproval id) or a stale
@@ -1300,7 +1236,6 @@ export async function reactivateCancelledSubscription(
     data: {
       status: "PENDING",
       mpPreapprovalId: null,
-      mpPreferenceId: null,
       mpCustomerId: null,
       mpCardId: null,
       trialEndsAt: null,

@@ -24,17 +24,19 @@ export async function GET() {
  * override over the static `welcomeFreeMonths` default.
  *
  * After persisting the override, propagates the new trial length to every
- * already-created `preapproval_plan` for this tier — one per currency, per
- * `MembershipPreapprovalPlanCache` (see
+ * already-created `preapproval_plan` for this tier — one per (currency,
+ * cycle) pair, per `MembershipPreapprovalPlanCache` (see
  * lib/mercadopago/preapprovalPlans.ts's `getOrCreateMembershipPreapprovalPlanId`)
  * — via `updateMembershipPreapprovalPlan`, so existing cached plan objects
- * stay in sync instead of only affecting future checkouts. If no tier's
- * plan has been created yet (nobody has checked out on it), this is a
- * clean no-op — the next checkout creates it fresh with the new config.
- * Propagation is best-effort per currency: a failure updating one cached
- * plan is logged and does not block propagation to the others or the
- * overall 200 response, since the authoritative trialDays write already
- * succeeded.
+ * stay in sync instead of only affecting future checkouts. Each row's own
+ * `cycle` is passed through so a MONTHLY and an ANNUAL plan object for the
+ * same tier+currency are each updated with their own correct frequency —
+ * never assumed to both be MONTHLY. If no tier's plan has been created yet
+ * (nobody has checked out on it), this is a clean no-op — the next checkout
+ * creates it fresh with the new config. Propagation is best-effort: a
+ * failure updating one cached plan is logged and does not block propagation
+ * to the others or the overall 200 response, since the authoritative
+ * trialDays write already succeeded.
  */
 export async function PATCH(request: Request) {
   const unauthorized = await requireAdmin();
@@ -72,6 +74,7 @@ export async function PATCH(request: Request) {
         await updateMembershipPreapprovalPlan({
           preapprovalPlanId: cached.preapprovalPlanId,
           plan,
+          cycle: cached.cycle,
           currency: cached.currency,
         });
       } catch (err) {

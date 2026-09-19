@@ -49,6 +49,7 @@ function renderDrawer(
     open: true,
     view: "collect-card" as const,
     amount: 30000,
+    cycle: "monthly" as const,
     payerEmail: "",
     saveIdentification: false,
     onSaveIdentificationChange: vi.fn(),
@@ -179,5 +180,23 @@ describe("MembershipCheckoutDrawer", () => {
     fireEvent.click(screen.getByRole("button", { name: /check again/i }));
 
     expect(props.onRefresh).toHaveBeenCalled();
+  });
+
+  // Both billing cycles collect a card through this same drawer now — the
+  // "/ month" vs "/ year" copy is the one piece of UI text that must track
+  // which cycle the owner actually picked (see this component's own
+  // `cycle` prop doc comment).
+  it("shows '/ month' copy for a MONTHLY checkout", () => {
+    renderDrawer({ cycle: "monthly" });
+
+    expect(screen.getByText(/\/ month/)).toBeInTheDocument();
+    expect(screen.queryByText(/\/ year/)).not.toBeInTheDocument();
+  });
+
+  it("shows '/ year' copy for an ANNUAL checkout", () => {
+    renderDrawer({ cycle: "annual" });
+
+    expect(screen.getByText(/\/ year/)).toBeInTheDocument();
+    expect(screen.queryByText(/\/ month/)).not.toBeInTheDocument();
   });
 });
