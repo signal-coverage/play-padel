@@ -1,50 +1,30 @@
-import { redirect } from "next/navigation";
-import { auth } from "@clerk/nextjs/server";
-import { getUserProfile } from "@/core/users/services/users.service";
-import { hasCompletedOnboarding } from "@/core/users/utils";
-import {
-  HomeAnalytics,
-  LandingAbout,
-  LandingCtaBanner,
-  LandingFeatures,
-  LandingFooter,
-  LandingHeader,
-  LandingHero,
-  LandingPricing,
-  LandingTrusted,
-} from "@/app/_components";
+import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
+import { LandingPage } from "@/app/_components/LandingPage";
 
-// A signed-in visitor has no reason to see marketing content — send them
-// straight to the app instead of making them notice "Go to app" in the
-// header themselves. Whichever redirect target actually applies (Clerk's
-// own post-auth redirect, or a stray one from wherever they came from)
-// landing them back on "/" is exactly the case this exists to catch.
-//
-// Shares `hasCompletedOnboarding` with OnboardingLayout and DashboardGuard
-// rather than re-deriving "is this account done onboarding?" a third time
-// — those two used to disagree (one checked "a UserProfile row exists",
-// the other "role set, and if owner, clubId set"), which let an owner
-// stuck mid-club-creation bounce forever between /dashboard and
-// /onboarding. Reproduced live via a real Google sign-in.
+// Overrides the root layout's (English) default title/description with the
+// real Spanish copy for this, the actual page real visitors land on — the
+// layout defaults were never localized, so Google was showing an English
+// snippet for a Spanish-market page. No `languages` hreflang block right
+// now: /en just redirects here while English is hidden (see
+// i18n/getRequestLocale.ts) — add it back once that page has real content
+// again.
+export async function generateMetadata(): Promise<Metadata> {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+  const t = await getTranslations("HomePage");
+  return {
+    // `absolute` bypasses the root layout's `%s | Play Padel` template —
+    // this title already carries the brand name in the same "Brand —
+    // tagline" shape the layout's own default does, so the template would
+    // otherwise duplicate it ("... | Play Padel" appended a second time).
+    title: { absolute: t("title") },
+    description: t("description"),
+    alternates: {
+      canonical: appUrl,
+    },
+  };
+}
+
 export default async function HomePage() {
-  const { userId } = await auth();
-
-  if (userId) {
-    const profile = await getUserProfile(userId);
-    redirect(hasCompletedOnboarding(profile) ? "/dashboard" : "/onboarding");
-  }
-
-  return (
-    <div className="theme-light font-(family-name:--font-jakarta) bg-white">
-      <HomeAnalytics />
-      <LandingHeader />
-      <LandingHero />
-      <LandingTrusted />
-      <LandingAbout />
-      <LandingFeatures />
-      <LandingPricing />
-      <LandingCtaBanner />
-      <LandingFooter />
-    </div>
-  );
+  return <LandingPage />;
 }

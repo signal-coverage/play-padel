@@ -1,4 +1,5 @@
 import type { CardTokenResult } from "../CardTokenForm/types";
+import type { BillingCycle } from "../../types";
 
 export type MembershipCheckoutDrawerView =
   "collect-card" | "awaiting-confirmation";
@@ -7,6 +8,10 @@ export type MembershipCheckoutDrawerProps = {
   open: boolean;
   view: MembershipCheckoutDrawerView;
   amount: number;
+  // Both billing cycles reach this same drawer now — this is what tells
+  // the "/ month" vs "/ year" copy below apart (previously always "/
+  // month", back when only MONTHLY ever collected a card here).
+  cycle: BillingCycle;
   payerEmail: string;
   // The owner's own account email (from Clerk) — passed through to
   // CardCollectionPanel to pre-fill its draft field. See that component's

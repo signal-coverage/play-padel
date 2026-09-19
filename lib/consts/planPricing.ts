@@ -73,25 +73,24 @@ export const PLAN_EMPHASIS: Record<Plan, PlanEmphasis> = {
   },
 };
 
-// Pricing/marketing details for each plan tier, shown by PlanOptionCard
-// (dashboard payment-activation gate) and PlanSelectionModal. Plan tier is
-// now chosen from the dashboard gate rather than at onboarding — this only
-// holds the pricing/marketing copy, not the tier-selection logic. MAX has no
-// fixed price (custom/enterprise), so its price and welcome-free-months
-// fields are null and priceNote carries the "contact us" copy instead.
+// Numeric pricing data for each plan tier, shown by PlanOptionCard
+// (dashboard payment-activation gate) and LandingPricing. Marketing copy
+// (tagline, feature bullets, MAX's "contact us" note) is locale-dependent
+// and lives in i18n instead, under the "PlanPricingDetails" namespace keyed
+// by plan — see messages/en.json / messages/es.json. This file only holds
+// locale-independent numbers, so it never needs to change per-language. MAX
+// has no fixed price (custom/enterprise), so its price and
+// welcome-free-months fields are null.
 export type PlanDetails = {
-  tagline: string;
   monthlyPrice: number | null;
   annualPrice: number | null;
   welcomeFreeMonths: number | null;
-  priceNote?: string;
-  features: string[];
 };
 
 // Court-count ceiling enforced at court-creation time (see
 // core/courts/services/courts.service.ts's `createCourt`) — kept in sync
-// with the "Up to N courts" line in each tier's `features` below. MAX has no
-// entry: its limit is negotiated per client and lives only on
+// with the "Up to N courts" line in each tier's PlanPricingDetails.features
+// translation. MAX has no entry: its limit is negotiated per client and lives only on
 // `Club.courtLimit` (an admin-set override, never a fixed constant); with no
 // override set it is treated as unlimited. FREE (the hidden testing tier)
 // bypasses the check entirely via `isClubOnFreePlan`, regardless of
@@ -104,64 +103,33 @@ export const PLAN_COURT_LIMITS: Partial<Record<Plan, number>> = {
 
 export const PLAN_DETAILS: Record<Plan, PlanDetails> = {
   BASIC: {
-    tagline: "Perfect for clubs just getting started.",
-    monthlyPrice: 30000,
-    annualPrice: 300000,
+    monthlyPrice: 39000,
+    annualPrice: 390000,
     welcomeFreeMonths: 1,
-    features: [
-      "Up to 2 courts",
-      "Online booking & reservations",
-      "Mercado Pago payments",
-      "Court schedule management",
-    ],
   },
   PRO: {
-    tagline: "For growing clubs that need more room to book.",
-    monthlyPrice: 50000,
-    annualPrice: 500000,
-    welcomeFreeMonths: 3,
-    features: [
-      "Everything in Basic",
-      "Up to 4 courts",
-      "Player directory",
-      "Audit log & activity history",
-    ],
+    monthlyPrice: 59000,
+    annualPrice: 590000,
+    welcomeFreeMonths: 2,
   },
   PLUS: {
-    tagline: "Built for busy clubs running at full capacity.",
-    monthlyPrice: 70000,
-    annualPrice: 700000,
-    welcomeFreeMonths: 6,
-    features: [
-      "Everything in Pro",
-      "Up to 7 courts",
-      "Priority support",
-      "Advanced reporting",
-    ],
+    monthlyPrice: 79000,
+    annualPrice: 790000,
+    welcomeFreeMonths: 2,
   },
   MAX: {
-    tagline: "Custom-built for large multi-court operations.",
     monthlyPrice: null,
     annualPrice: null,
     welcomeFreeMonths: null,
-    priceNote: "Contact us",
-    features: [
-      "Everything in Plus",
-      "Unlimited courts",
-      "Dedicated account manager",
-      "Custom integrations",
-      "Enterprise support",
-    ],
   },
   // Internal testing plan only — activated exclusively via the admin-only
   // `activateFreePlan` (core/billing/services/membership.service.ts) through
   // app/admin/club-status. Never rendered to a real customer since "FREE" is
-  // deliberately excluded from PLAN_ORDER.
+  // deliberately excluded from PLAN_ORDER, so it has no entry in the
+  // PlanPricingDetails i18n namespace either.
   FREE: {
-    tagline: "Internal testing plan — not available to customers.",
     monthlyPrice: 0,
     annualPrice: 0,
     welcomeFreeMonths: null,
-    features: [],
   },
 };

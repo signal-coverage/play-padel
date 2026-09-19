@@ -138,7 +138,6 @@ export type InitiateMembershipCheckoutInput = {
 export type InitiateMembershipCheckoutResult = {
   subscription: MembershipSubscriptionResponse;
   mpPreapprovalId?: string;
-  checkoutUrl?: string;
 };
 
 // Initiates a membership checkout — POST /api/clubs/membership (Phase 4).

@@ -13,14 +13,8 @@ import {
 } from "@/core/billing/services/billing.service";
 import { getClubOwner } from "@/core/clubs/services/clubs.service";
 import { dispatch } from "@/lib/notifications/dispatcher";
-import {
-  MEMBERSHIP_WEBHOOK_TOPIC,
-  MEMBERSHIP_PAYMENT_WEBHOOK_TOPIC,
-} from "@/lib/mercadopago/membershipWebhookTopics";
-import {
-  handleSubscriptionPreapprovalTopic,
-  handleMembershipPaymentTopic,
-} from "@/lib/mercadopago/membershipWebhookHandlers";
+import { MEMBERSHIP_WEBHOOK_TOPIC } from "@/lib/mercadopago/membershipWebhookTopics";
+import { handleSubscriptionPreapprovalTopic } from "@/lib/mercadopago/membershipWebhookHandlers";
 import { logSystemJob } from "@/core/systemJobs/services/systemJobs.service";
 
 const SYSTEM_ACTOR = "system:mercadopago-webhook";
@@ -42,13 +36,12 @@ const SYSTEM_ACTOR = "system:mercadopago-webhook";
 // shapes are read, preferring the body when present.
 //
 // Reservation-payment notifications (this route's original, still-primary
-// responsibility) carry NO `type` disambiguation of their own beyond
-// `"payment"` and are resolved via the `reservationId` query param embedded
-// on `notification_url` at preference-creation time (see
-// lib/mercadopago/preferences.ts). ANNUAL membership payments also use the
-// `"payment"` type but resolve via a `clubId` query param instead (see
-// lib/mercadopago/platformPreferences.ts) — `reservationId` presence is what
-// disambiguates between the two "payment"-type flows below.
+// responsibility) carry `type: "payment"` and are resolved via the
+// `reservationId` query param embedded on `notification_url` at
+// preference-creation time (see lib/mercadopago/preferences.ts). Club
+// membership billing (both cycles) is a real recurring preapproval and
+// arrives as `type: "subscription_preapproval"` instead — see
+// lib/mercadopago/membershipWebhookTopics.ts.
 //
 // `POST` itself is only a thin outer instrumentation shell (start/success/
 // failure system job logging, see core/systemJobs) around `handlePost`
@@ -121,10 +114,6 @@ async function handlePost(request: NextRequest) {
 
   if (type === MEMBERSHIP_WEBHOOK_TOPIC) {
     return handleSubscriptionPreapprovalTopic(dataId, notificationId);
-  }
-
-  if (type === MEMBERSHIP_PAYMENT_WEBHOOK_TOPIC && !reservationId) {
-    return handleMembershipPaymentTopic(request, dataId, notificationId);
   }
 
   return handleReservationPaymentTopic(dataId, reservationId);

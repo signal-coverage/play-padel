@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { isValidEmail } from "./utils";
 import type { CardCollectionPanelProps } from "./types";
 
-// MONTHLY-only step: collect a payer email inside
+// Collect a payer email inside
 // MembershipCheckoutDrawer's Sheet, above where the Mercado Pago card form
 // reveals once verified (see that component). The input locks once
 // verified — `payerEmail` also controls whether the card form is showing,

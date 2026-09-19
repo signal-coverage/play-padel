@@ -1,0 +1,22 @@
+# CodeRabbit config — automated AI review on every PR.
+# Docs: https://docs.coderabbit.ai/reference/configuration
+#
+# This file alone does nothing: CodeRabbit's GitHub App must be installed on
+# this repo (coderabbit.ai -> Sign in with GitHub -> install on
+# signal-coverage/play-padel or the whole org) before it will actually
+# comment on PRs. That install step can't be done from here — it's a
+# one-time action in CodeRabbit's own dashboard.
+
+language: "en-US"
+
+reviews:
+  profile: chill
+  request_changes_workflow: false
+  high_level_summary: true
+  auto_review:
+    enabled: true
+    drafts: false
+  path_filters:
+    - "!**/*.lock"
+    - "!package-lock.json"
+    - "!**/*.svg"

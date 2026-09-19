@@ -70,8 +70,10 @@ export function PlanOptionCard({
   ref,
 }: PlanOptionCardProps) {
   const t = useTranslations("PlanOptionCard");
+  const tPlan = useTranslations("PlanPricingDetails");
   const shouldReduce = useReducedMotion();
   const details = PLAN_DETAILS[plan];
+  const features = tPlan.raw(`${plan}.features`) as string[];
   const emphasis = PLAN_EMPHASIS[plan];
   const Icon = PLAN_ICONS[plan];
   const hasFixedPrice =
@@ -213,20 +215,20 @@ export function PlanOptionCard({
                   </>
                 ) : (
                   <p className="text-2xl font-bold text-foreground">
-                    {details.priceNote}
+                    {tPlan(`${plan}.priceNote`)}
                   </p>
                 )}
               </motion.div>
             </AnimatePresence>
             <p className="mt-2 text-xs text-muted-foreground">
-              {details.tagline}
+              {tPlan(`${plan}.tagline`)}
             </p>
           </div>
 
           <div className="border-t border-border" />
 
           <ul className="flex flex-col gap-2.5">
-            {details.features.map((feature) => (
+            {features.map((feature) => (
               <li key={feature} className="flex items-center gap-2 text-sm">
                 <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
                   <Check aria-hidden="true" className="size-3" />

@@ -16,7 +16,6 @@ vi.mock("@/core/billing/services/membership.service", () => ({
   getMembershipSubscription: vi.fn(),
   seedPendingMembershipSubscriptionFromClub: vi.fn(),
   attachPendingPreapproval: vi.fn(),
-  attachPendingPreference: vi.fn(),
   startTrial: vi.fn(),
   changeTrialPlan: vi.fn(),
   saveMembershipPayerIdentification: vi.fn(),
@@ -32,17 +31,12 @@ vi.mock("@/lib/mercadopago/membershipPreapprovals", () => ({
   updateMembershipPreapprovalAmount: vi.fn(),
 }));
 
-vi.mock("@/lib/mercadopago/platformPreferences", () => ({
-  createMembershipPreference: vi.fn(),
-}));
-
 import { requireOwnerClub } from "../_lib/require-owner";
 import { prisma } from "@/infrastructure/db/client";
 import {
   getMembershipSubscription,
   seedPendingMembershipSubscriptionFromClub,
   attachPendingPreapproval,
-  attachPendingPreference,
   startTrial,
   changeTrialPlan,
   saveMembershipPayerIdentification,
@@ -55,7 +49,6 @@ import {
   createMembershipPreapproval,
   updateMembershipPreapprovalAmount,
 } from "@/lib/mercadopago/membershipPreapprovals";
-import { createMembershipPreference } from "@/lib/mercadopago/platformPreferences";
 import { GET, POST, PATCH } from "./route";
 
 const requireOwnerClubMock = requireOwnerClub as ReturnType<typeof vi.fn>;
@@ -70,9 +63,6 @@ const seedPendingMembershipSubscriptionFromClubMock =
 const attachPendingPreapprovalMock = attachPendingPreapproval as ReturnType<
   typeof vi.fn
 >;
-const attachPendingPreferenceMock = attachPendingPreference as ReturnType<
-  typeof vi.fn
->;
 const startTrialMock = startTrial as ReturnType<typeof vi.fn>;
 const getOrCreateMembershipPreapprovalPlanIdMock =
   getOrCreateMembershipPreapprovalPlanId as ReturnType<typeof vi.fn>;
@@ -83,9 +73,6 @@ const createMembershipPreapprovalMock =
   createMembershipPreapproval as ReturnType<typeof vi.fn>;
 const updateMembershipPreapprovalAmountMock =
   updateMembershipPreapprovalAmount as ReturnType<typeof vi.fn>;
-const createMembershipPreferenceMock = createMembershipPreference as ReturnType<
-  typeof vi.fn
->;
 const changeTrialPlanMock = changeTrialPlan as ReturnType<typeof vi.fn>;
 const saveMembershipPayerIdentificationMock =
   saveMembershipPayerIdentification as ReturnType<typeof vi.fn>;
@@ -112,7 +99,6 @@ function subscriptionRow(overrides: Record<string, unknown> = {}) {
     status: "PENDING",
     currency: "ARS",
     mpPreapprovalId: null,
-    mpPreferenceId: null,
     mpCustomerId: null,
     mpCardId: null,
     trialEndsAt: null,
@@ -135,13 +121,11 @@ beforeEach(() => {
   getMembershipSubscriptionMock.mockReset();
   seedPendingMembershipSubscriptionFromClubMock.mockReset();
   attachPendingPreapprovalMock.mockReset();
-  attachPendingPreferenceMock.mockReset();
   startTrialMock.mockReset();
   getOrCreateMembershipPreapprovalPlanIdMock.mockReset();
   resolveFreeTrialConfigMock.mockReset();
   createMembershipPreapprovalMock.mockReset();
   updateMembershipPreapprovalAmountMock.mockReset();
-  createMembershipPreferenceMock.mockReset();
   changeTrialPlanMock.mockReset();
   saveMembershipPayerIdentificationMock.mockReset();
 
@@ -225,6 +209,15 @@ describe("POST /api/clubs/membership", () => {
     expect(getMembershipSubscriptionMock).not.toHaveBeenCalled();
   });
 
+  it("rejects ANNUAL billing missing renewalMode/payerEmail/cardTokenId with 400 (both cycles now require a tokenized card)", async () => {
+    const response = await POST(
+      makePostRequest({ plan: "PRO", cycle: "ANNUAL" }),
+    );
+
+    expect(response.status).toBe(400);
+    expect(getMembershipSubscriptionMock).not.toHaveBeenCalled();
+  });
+
   it("rejects MAX plan for MONTHLY checkout with 400 (no fixed monthly price — contact-us tier)", async () => {
     const response = await POST(
       makePostRequest({
@@ -242,11 +235,17 @@ describe("POST /api/clubs/membership", () => {
 
   it("rejects MAX plan for ANNUAL checkout with 400 (no fixed annual price — contact-us tier)", async () => {
     const response = await POST(
-      makePostRequest({ plan: "MAX", cycle: "ANNUAL" }),
+      makePostRequest({
+        plan: "MAX",
+        cycle: "ANNUAL",
+        renewalMode: "AUTO",
+        payerEmail: "owner@example.com",
+        cardTokenId: "card_tok_1",
+      }),
     );
 
     expect(response.status).toBe(400);
-    expect(createMembershipPreferenceMock).not.toHaveBeenCalled();
+    expect(getOrCreateMembershipPreapprovalPlanIdMock).not.toHaveBeenCalled();
   });
 
   it("returns 409 when a checkout is already in progress or the subscription is not PENDING", async () => {
@@ -255,40 +254,26 @@ describe("POST /api/clubs/membership", () => {
     );
 
     const response = await POST(
-      makePostRequest({ plan: "PRO", cycle: "ANNUAL" }),
+      makePostRequest({
+        plan: "PRO",
+        cycle: "ANNUAL",
+        renewalMode: "AUTO",
+        payerEmail: "owner@example.com",
+        cardTokenId: "card_tok_1",
+      }),
     );
 
     expect(response.status).toBe(409);
-    expect(createMembershipPreferenceMock).not.toHaveBeenCalled();
+    expect(getOrCreateMembershipPreapprovalPlanIdMock).not.toHaveBeenCalled();
   });
 
-  it("returns 409 for a TRIALING MONTHLY subscription requesting ANNUAL pay-now (pay-now only applies to an ANNUAL trial)", async () => {
-    getMembershipSubscriptionMock.mockResolvedValue(
-      subscriptionRow({ status: "TRIALING", cycle: "MONTHLY" }),
-    );
-
-    const response = await POST(
-      makePostRequest({ plan: "PRO", cycle: "ANNUAL" }),
-    );
-
-    expect(response.status).toBe(409);
-    expect(createMembershipPreferenceMock).not.toHaveBeenCalled();
-  });
-
-  it("returns 409 for a CANCELLED subscription requesting ANNUAL (terminal status, no pay-now exception applies)", async () => {
-    getMembershipSubscriptionMock.mockResolvedValue(
-      subscriptionRow({ status: "CANCELLED", cycle: "ANNUAL" }),
-    );
-
-    const response = await POST(
-      makePostRequest({ plan: "PRO", cycle: "ANNUAL" }),
-    );
-
-    expect(response.status).toBe(409);
-    expect(createMembershipPreferenceMock).not.toHaveBeenCalled();
-  });
-
-  it("returns 409 for a TRIALING ANNUAL subscription requesting MONTHLY (cycle mismatch, no pay-now exception applies)", async () => {
+  // Confirms the old "pay now" exception (a TRIALING+ANNUAL subscription
+  // requesting ANNUAL again used to be allowed through as a special case) is
+  // genuinely gone — every non-PENDING status now 409s unconditionally, no
+  // exceptions, on either cycle. ANNUAL trials get a real preapproval at
+  // signup now (same as MONTHLY), so there is no more "generate a payment
+  // link later" re-entry to support.
+  it("returns 409 for a TRIALING ANNUAL subscription requesting ANNUAL again (no more pay-now exception)", async () => {
     getMembershipSubscriptionMock.mockResolvedValue(
       subscriptionRow({ status: "TRIALING", cycle: "ANNUAL" }),
     );
@@ -296,7 +281,26 @@ describe("POST /api/clubs/membership", () => {
     const response = await POST(
       makePostRequest({
         plan: "PRO",
-        cycle: "MONTHLY",
+        cycle: "ANNUAL",
+        renewalMode: "AUTO",
+        payerEmail: "owner@example.com",
+        cardTokenId: "card_tok_1",
+      }),
+    );
+
+    expect(response.status).toBe(409);
+    expect(getOrCreateMembershipPreapprovalPlanIdMock).not.toHaveBeenCalled();
+  });
+
+  it("returns 409 for a CANCELLED subscription (terminal status)", async () => {
+    getMembershipSubscriptionMock.mockResolvedValue(
+      subscriptionRow({ status: "CANCELLED", cycle: "ANNUAL" }),
+    );
+
+    const response = await POST(
+      makePostRequest({
+        plan: "PRO",
+        cycle: "ANNUAL",
         renewalMode: "AUTO",
         payerEmail: "owner@example.com",
         cardTokenId: "card_tok_1",
@@ -310,18 +314,29 @@ describe("POST /api/clubs/membership", () => {
   it("seeds a fresh PENDING subscription (via the shared seed helper) when none exists yet", async () => {
     getMembershipSubscriptionMock.mockResolvedValue(null);
     seedPendingMembershipSubscriptionFromClubMock.mockResolvedValue(
-      subscriptionRow({ status: "PENDING" }),
+      subscriptionRow({ status: "PENDING", cycle: "ANNUAL" }),
     );
-    createMembershipPreferenceMock.mockResolvedValue({
-      checkoutUrl: "https://mp.example.com/checkout",
-      preferenceId: "pref_1",
+    getOrCreateMembershipPreapprovalPlanIdMock.mockResolvedValue({
+      id: "plan_1",
     });
-    attachPendingPreferenceMock.mockResolvedValue(
-      subscriptionRow({ status: "PENDING", mpPreferenceId: "pref_1" }),
+    createMembershipPreapprovalMock.mockResolvedValue({
+      id: "preap_1",
+      status: "authorized",
+    });
+    trialConfigFindUniqueMock.mockResolvedValue(null);
+    resolveFreeTrialConfigMock.mockReturnValue(undefined);
+    attachPendingPreapprovalMock.mockResolvedValue(
+      subscriptionRow({ cycle: "ANNUAL", mpPreapprovalId: "preap_1" }),
     );
 
     const response = await POST(
-      makePostRequest({ plan: "PRO", cycle: "ANNUAL" }),
+      makePostRequest({
+        plan: "PRO",
+        cycle: "ANNUAL",
+        renewalMode: "AUTO",
+        payerEmail: "owner@example.com",
+        cardTokenId: "card_tok_1",
+      }),
     );
 
     expect(seedPendingMembershipSubscriptionFromClubMock).toHaveBeenCalledWith(
@@ -343,7 +358,7 @@ describe("POST /api/clubs/membership", () => {
       cardTokenId: "card_tok_1",
     };
 
-    it("creates the preapproval_plan BEFORE creating the preapproval", async () => {
+    it("creates the preapproval_plan BEFORE creating the preapproval, threading cycle through both calls", async () => {
       getMembershipSubscriptionMock.mockResolvedValue(subscriptionRow());
       getOrCreateMembershipPreapprovalPlanIdMock.mockResolvedValue({
         id: "plan_1",
@@ -365,12 +380,17 @@ describe("POST /api/clubs/membership", () => {
       const preapprovalOrder =
         createMembershipPreapprovalMock.mock.invocationCallOrder[0];
       expect(planOrder).toBeLessThan(preapprovalOrder);
+      expect(getOrCreateMembershipPreapprovalPlanIdMock).toHaveBeenCalledWith(
+        expect.objectContaining({ plan: "PRO", cycle: "MONTHLY" }),
+      );
       expect(createMembershipPreapprovalMock).toHaveBeenCalledWith(
         expect.objectContaining({
           clubId: "club_1",
           preapprovalPlanId: "plan_1",
+          cycle: "MONTHLY",
           payerEmail: "owner@example.com",
           cardTokenId: "card_tok_1",
+          transactionAmount: 59000,
         }),
       );
     });
@@ -435,8 +455,6 @@ describe("POST /api/clubs/membership", () => {
       expect(response.status).toBe(200);
     });
 
-    // Identification is only meaningful alongside a real card token, so it's
-    // wired up ONLY in this MONTHLY branch — never ANNUAL, never GET/PATCH.
     it("saves the confirmed identification and returns its snapshot when saveIdentification is true and identification is present", async () => {
       getMembershipSubscriptionMock.mockResolvedValue(subscriptionRow());
       getOrCreateMembershipPreapprovalPlanIdMock.mockResolvedValue({
@@ -540,63 +558,90 @@ describe("POST /api/clubs/membership", () => {
     });
   });
 
+  // ANNUAL now goes through the exact same preapproval mechanism MONTHLY
+  // does — the only real difference is a 12-month `auto_recurring.frequency`
+  // instead of 1 (enforced inside getOrCreateMembershipPreapprovalPlanId/
+  // createMembershipPreapproval themselves, not this route) and
+  // PLAN_DETAILS.annualPrice instead of monthlyPrice. These tests mirror
+  // the MONTHLY block above almost exactly.
   describe("ANNUAL", () => {
-    it("creates a one-time Checkout Pro preference and returns its checkoutUrl when the tier has no free trial configured", async () => {
+    const annualBody = {
+      plan: "PRO",
+      cycle: "ANNUAL",
+      renewalMode: "AUTO",
+      payerEmail: "owner@example.com",
+      cardTokenId: "card_tok_1",
+    };
+
+    it("creates the preapproval_plan and preapproval with cycle: ANNUAL and the annual price, exactly like MONTHLY but for the annual amount", async () => {
       getMembershipSubscriptionMock.mockResolvedValue(
         subscriptionRow({ cycle: "ANNUAL" }),
       );
+      getOrCreateMembershipPreapprovalPlanIdMock.mockResolvedValue({
+        id: "plan_annual_1",
+      });
+      createMembershipPreapprovalMock.mockResolvedValue({
+        id: "preap_annual_1",
+        status: "authorized",
+      });
       trialConfigFindUniqueMock.mockResolvedValue(null);
       resolveFreeTrialConfigMock.mockReturnValue(undefined);
-      createMembershipPreferenceMock.mockResolvedValue({
-        checkoutUrl: "https://mp.example.com/checkout",
-        preferenceId: "pref_1",
-      });
-      attachPendingPreferenceMock.mockResolvedValue(
-        subscriptionRow({ cycle: "ANNUAL", mpPreferenceId: "pref_1" }),
+      attachPendingPreapprovalMock.mockResolvedValue(
+        subscriptionRow({ cycle: "ANNUAL", mpPreapprovalId: "preap_annual_1" }),
       );
 
-      const response = await POST(
-        makePostRequest({ plan: "PRO", cycle: "ANNUAL" }),
-      );
+      const response = await POST(makePostRequest(annualBody));
       const body = await response.json();
 
-      expect(createMembershipPreferenceMock).toHaveBeenCalledWith(
-        expect.objectContaining({ clubId: "club_1", plan: "PRO" }),
+      expect(getOrCreateMembershipPreapprovalPlanIdMock).toHaveBeenCalledWith(
+        expect.objectContaining({ plan: "PRO", cycle: "ANNUAL" }),
       );
-      expect(attachPendingPreferenceMock).toHaveBeenCalledWith(
-        expect.objectContaining({ clubId: "club_1", mpPreferenceId: "pref_1" }),
+      expect(createMembershipPreapprovalMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          clubId: "club_1",
+          preapprovalPlanId: "plan_annual_1",
+          cycle: "ANNUAL",
+          transactionAmount: 590000,
+        }),
       );
-      expect(startTrialMock).not.toHaveBeenCalled();
+      expect(attachPendingPreapprovalMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          clubId: "club_1",
+          cycle: "ANNUAL",
+          mpPreapprovalId: "preap_annual_1",
+        }),
+      );
       expect(response.status).toBe(200);
-      expect(body.checkoutUrl).toBe("https://mp.example.com/checkout");
+      expect(body.mpPreapprovalId).toBe("preap_annual_1");
+      // No more one-time payment link for ANNUAL — it's a real preapproval now.
+      expect(body.checkoutUrl).toBeUndefined();
     });
 
-    // This is the confirmed WARNING from sdd-verify: ANNUAL never started a
-    // trial, always going straight to a one-time preference/payment link —
-    // contradicting design.md's ANNUAL-trial workaround ("keep app-tracked
-    // trialEndsAt gate, defer checkout until trial ends") and leaving the
-    // cron sweep's "ANNUAL trial expiry" branch permanently unreachable
-    // dead code. ANNUAL has no native MP "authorize without charge"
-    // primitive (unlike MONTHLY's preapproval_plan free_trial), so — per
-    // design's own workaround — starting the trial creates NO Mercado Pago
-    // object at all: no preference, no checkoutUrl, no payment method
-    // authorized upfront.
-    it("calls startTrial (not createMembershipPreference) when the tier has a free trial configured, with no MP object and no checkoutUrl", async () => {
+    it("calls startTrial (not attachPendingPreapproval) when the tier has a free trial configured — trial is authorized-but-uncharged, same as MONTHLY", async () => {
       getMembershipSubscriptionMock.mockResolvedValue(
         subscriptionRow({ cycle: "ANNUAL" }),
       );
-      trialConfigFindUniqueMock.mockResolvedValue({ trialDays: 14 });
+      getOrCreateMembershipPreapprovalPlanIdMock.mockResolvedValue({
+        id: "plan_annual_1",
+      });
+      createMembershipPreapprovalMock.mockResolvedValue({
+        id: "preap_annual_1",
+        status: "authorized",
+      });
+      trialConfigFindUniqueMock.mockResolvedValue({ trialDays: 60 });
       resolveFreeTrialConfigMock.mockReturnValue({
-        frequency: 14,
+        frequency: 60,
         frequency_type: "days",
       });
       startTrialMock.mockResolvedValue(
-        subscriptionRow({ cycle: "ANNUAL", status: "TRIALING" }),
+        subscriptionRow({
+          cycle: "ANNUAL",
+          status: "TRIALING",
+          mpPreapprovalId: "preap_annual_1",
+        }),
       );
 
-      const response = await POST(
-        makePostRequest({ plan: "PRO", cycle: "ANNUAL" }),
-      );
+      const response = await POST(makePostRequest(annualBody));
       const body = await response.json();
 
       expect(startTrialMock).toHaveBeenCalledWith(
@@ -604,77 +649,34 @@ describe("POST /api/clubs/membership", () => {
           clubId: "club_1",
           plan: "PRO",
           cycle: "ANNUAL",
-          trialOverrideDays: 14,
+          trialOverrideDays: 60,
+          mpPreapprovalId: "preap_annual_1",
         }),
       );
-      expect(createMembershipPreferenceMock).not.toHaveBeenCalled();
-      expect(attachPendingPreferenceMock).not.toHaveBeenCalled();
+      expect(attachPendingPreapprovalMock).not.toHaveBeenCalled();
       expect(response.status).toBe(200);
       expect(body.subscription.status).toBe("TRIALING");
-      expect(body.checkoutUrl).toBeUndefined();
+      // The card WAS authorized (unlike the old Checkout-Pro flow) — a real
+      // mpPreapprovalId is already on file even while TRIALING.
+      expect(body.mpPreapprovalId).toBe("preap_annual_1");
     });
 
-    it("returns 500 when Mercado Pago fails to create the preference", async () => {
+    it("returns 500 when Mercado Pago fails to create the preapproval", async () => {
       getMembershipSubscriptionMock.mockResolvedValue(
         subscriptionRow({ cycle: "ANNUAL" }),
       );
+      getOrCreateMembershipPreapprovalPlanIdMock.mockResolvedValue({
+        id: "plan_annual_1",
+      });
+      createMembershipPreapprovalMock.mockRejectedValue(new Error("MP down"));
       trialConfigFindUniqueMock.mockResolvedValue(null);
       resolveFreeTrialConfigMock.mockReturnValue(undefined);
-      createMembershipPreferenceMock.mockRejectedValue(new Error("MP down"));
 
-      const response = await POST(
-        makePostRequest({ plan: "PRO", cycle: "ANNUAL" }),
-      );
+      const response = await POST(makePostRequest(annualBody));
 
       expect(response.status).toBe(500);
-      expect(attachPendingPreferenceMock).not.toHaveBeenCalled();
-    });
-
-    // The confirmed follow-up gap: before this fix, a TRIALING ANNUAL
-    // subscription could never reach this route again (the early PENDING
-    // guard 409'd every time), so it had no way to ever generate a payment
-    // link and always expired via the cron sweep. "Pay now" skips trial
-    // resolution entirely and creates the real one-time preference, keeping
-    // status at TRIALING until the webhook confirms payment.
-    it("generates a payment preference for a TRIALING ANNUAL subscription without re-evaluating trial eligibility (pay-now)", async () => {
-      getMembershipSubscriptionMock.mockResolvedValue(
-        subscriptionRow({ status: "TRIALING", cycle: "ANNUAL" }),
-      );
-      createMembershipPreferenceMock.mockResolvedValue({
-        checkoutUrl: "https://mp.example.com/checkout",
-        preferenceId: "pref_paynow_1",
-      });
-      attachPendingPreferenceMock.mockResolvedValue(
-        subscriptionRow({
-          status: "TRIALING",
-          cycle: "ANNUAL",
-          mpPreferenceId: "pref_paynow_1",
-        }),
-      );
-
-      const response = await POST(
-        makePostRequest({ plan: "PRO", cycle: "ANNUAL" }),
-      );
-      const body = await response.json();
-
-      // No trial-eligibility check is re-run for the pay-now path — the
-      // owner is explicitly asking to pay, not to start a trial.
-      expect(trialConfigFindUniqueMock).not.toHaveBeenCalled();
-      expect(resolveFreeTrialConfigMock).not.toHaveBeenCalled();
+      expect(attachPendingPreapprovalMock).not.toHaveBeenCalled();
       expect(startTrialMock).not.toHaveBeenCalled();
-
-      expect(createMembershipPreferenceMock).toHaveBeenCalledWith(
-        expect.objectContaining({ clubId: "club_1", plan: "PRO" }),
-      );
-      expect(attachPendingPreferenceMock).toHaveBeenCalledWith(
-        expect.objectContaining({
-          clubId: "club_1",
-          mpPreferenceId: "pref_paynow_1",
-        }),
-      );
-      expect(response.status).toBe(200);
-      expect(body.checkoutUrl).toBe("https://mp.example.com/checkout");
-      expect(body.subscription.status).toBe("TRIALING");
     });
   });
 });
@@ -771,7 +773,7 @@ describe("PATCH /api/clubs/membership", () => {
 
     expect(updateMembershipPreapprovalAmountMock).toHaveBeenCalledWith(
       "preap_1",
-      50000,
+      59000,
       "ARS",
     );
     expect(changeTrialPlanMock).toHaveBeenCalledWith({
@@ -782,7 +784,46 @@ describe("PATCH /api/clubs/membership", () => {
     expect(body.subscription.plan).toBe("PRO");
   });
 
-  it("does not touch Mercado Pago for a TRIALING ANNUAL subscription with no mpPreapprovalId, and still updates the plan locally", async () => {
+  // Flipped from the old Checkout-Pro-era expectation: ANNUAL trials now
+  // also have a real, authorized-but-uncharged preapproval on file (same
+  // mechanism as MONTHLY), so a mid-trial plan change on ANNUAL must ALSO
+  // keep Mercado Pago's own amount in sync — using PLAN_DETAILS.annualPrice,
+  // not monthlyPrice.
+  it("updates the Mercado Pago preapproval amount (using the ANNUAL price) for a TRIALING ANNUAL subscription with an mpPreapprovalId set", async () => {
+    getMembershipSubscriptionMock.mockResolvedValue(
+      subscriptionRow({
+        status: "TRIALING",
+        cycle: "ANNUAL",
+        currency: "ARS",
+        plan: "BASIC",
+        mpPreapprovalId: "preap_annual_1",
+      }),
+    );
+    updateMembershipPreapprovalAmountMock.mockResolvedValue({
+      id: "preap_annual_1",
+      status: "authorized",
+    });
+    changeTrialPlanMock.mockResolvedValue(
+      subscriptionRow({ status: "TRIALING", cycle: "ANNUAL", plan: "PRO" }),
+    );
+
+    const response = await PATCH(makePatchRequest({ plan: "PRO" }));
+    const body = await response.json();
+
+    expect(updateMembershipPreapprovalAmountMock).toHaveBeenCalledWith(
+      "preap_annual_1",
+      590000,
+      "ARS",
+    );
+    expect(changeTrialPlanMock).toHaveBeenCalledWith({
+      clubId: "club_1",
+      newPlan: "PRO",
+    });
+    expect(response.status).toBe(200);
+    expect(body.subscription.plan).toBe("PRO");
+  });
+
+  it("skips the Mercado Pago amount sync (but still updates the plan locally) for the edge case of a TRIALING subscription with no mpPreapprovalId at all", async () => {
     getMembershipSubscriptionMock.mockResolvedValue(
       subscriptionRow({
         status: "TRIALING",

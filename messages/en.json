@@ -136,12 +136,16 @@
     "en": "English",
     "es": "Español"
   },
+  "HomePage": {
+    "title": "Play Padel — Book Padel Courts Online",
+    "description": "Find available padel court appointments across different clubs in one place."
+  },
   "LandingHeader": {
     "nav": {
-      "about": "About",
       "features": "Features",
       "pricing": "Pricing",
-      "getStarted": "Get Started"
+      "testimonials": "Testimonials",
+      "faq": "FAQ"
     },
     "signUp": "Sign Up",
     "logIn": "Log in",
@@ -151,135 +155,217 @@
   },
   "LandingHero": {
     "heading": {
-      "start": "Book Courts.",
-      "connect": "Connect.",
-      "run": "Run",
-      "clubLine": "Your Club with Our",
-      "platform": "Padel Platform."
+      "line1": "Run Your Padel Club",
+      "line2": "Without the Spreadsheets."
     },
-    "ctaPrimary": "Explore Clubs",
-    "ctaSecondary": "For Club Owners",
-    "description": "Real-time court booking for players, and complete club management tools for owners — all in one platform built for padel.",
-    "imageAlt": "Arrangement of padel paddles and balls"
+    "description": "Bookings, payments, and court schedules in one dashboard — built for club owners who'd rather be on the court than on the phone.",
+    "ctaPrimary": "Start Free Trial",
+    "ctaSecondary": "See Features",
+    "reassurance": "No credit card required. Cancel anytime.",
+    "mockup": {
+      "courtName": "North Court",
+      "liveLabel": "Today · live",
+      "statusBooked": "Booked",
+      "statusAvailable": "Available"
+    },
+    "floatingCards": {
+      "booking": {
+        "title": "Booking confirmed",
+        "subtitle": "Court 2 · 6:00 PM",
+        "description": "Players get instant confirmation — no one has to review it by hand."
+      },
+      "payment": {
+        "title": "Payment received",
+        "subtitle": "Mercado Pago · $8,500",
+        "description": "Payment settles automatically through Mercado Pago the moment the booking is made."
+      },
+      "courts": {
+        "title": "4 courts active",
+        "subtitle": "",
+        "description": "Every court at the club is managed from the same panel, each with its own schedule and status."
+      },
+      "nextSlot": {
+        "title": "Court 3 free in 5 min",
+        "subtitle": "",
+        "description": "The system flags in real time when a court is about to open up."
+      }
+    }
   },
-  "LandingTrusted": {
-    "badge": "By The Numbers",
-    "heading": {
-      "bold": "Whether you're booking a court or running a club",
-      "rest": "— {brand} connects players and clubs in one place, in real time."
-    },
+  "LandingStats": {
+    "heading": "The numbers club owners care about",
     "items": [
       {
         "value": "4",
-        "label": "Flexible Plans",
-        "description": "From a single-court club to a multi-court operation — pick the plan that fits, upgrade anytime."
+        "label": "Plan tiers to grow into"
       },
       {
         "value": "Real-Time",
-        "label": "Court Availability",
-        "description": "See exactly which slots are open right now — no calls, no waiting on a reply."
+        "label": "Court availability"
       },
       {
         "value": "Secure",
-        "label": "Mercado Pago Payments",
-        "description": "Pay online when you book, with automatic refunds if a reservation is cancelled."
+        "label": "Mercado Pago checkout"
+      }
+    ]
+  },
+  "LandingFeatures": {
+    "heading": "Everything a Club Needs to Run Bookings",
+    "items": [
+      {
+        "title": "Instant Booking",
+        "description": "Players reserve a court in a few taps, with availability that updates the moment a slot is taken."
+      },
+      {
+        "title": "Secure Payments",
+        "description": "Mercado Pago checkout is built directly into the booking flow, with no extra steps for the player."
+      },
+      {
+        "title": "Court & Club Management",
+        "description": "Manage courts, closures, and plan tiers from one dashboard with a full audit trail."
       }
     ]
   },
   "LandingAbout": {
-    "heading": {
-      "bold": "Built for Players and",
-      "muted": "Clubs Who Want More"
-    },
-    "badge": "Booking, Simplified",
-    "items": [
-      {
-        "title": "Real-Time Booking",
-        "description": "Browse clubs, see live court availability, and reserve your slot in seconds — no back-and-forth needed."
-      },
-      {
-        "title": "Secure Payments, Built In",
-        "description": "When a club requires prepayment, checkout happens right in the app via Mercado Pago — cancel and you're refunded automatically."
-      },
-      {
-        "title": "Built for Club Owners Too",
-        "description": "Manage courts, availability, and reservations from one dashboard, with a full audit trail of every change."
-      },
-      {
-        "title": "Your Player Profile, Your Way",
-        "description": "Track your preferred side, dominant hand, and skill category so partners and clubs know your style."
-      }
+    "heading": "Built for Clubs Ready to Grow",
+    "description": "From a single court to a multi-court operation, Play Padel gives owners one dashboard for bookings, payments, and scheduling — while players get a simple way to find and reserve a court.",
+    "imageAlts": [
+      "High-angle view of a padel court",
+      "Top-down view of a padel court",
+      "Players on a covered padel court",
+      "A padel match on an indoor court"
     ],
-    "imageAlt": "Players sharing a moment at the net after a match",
-    "learnMore": "Learn More"
+    "goToSlide": "Go to photo {index}",
+    "chips": [
+      {
+        "label": "Court Scheduling"
+      },
+      {
+        "label": "Mercado Pago Payments"
+      },
+      {
+        "label": "Player Directory"
+      },
+      {
+        "label": "Audit Log"
+      }
+    ]
   },
-  "LandingFeatures": {
-    "badge": "One Platform. Every Court.",
-    "heading": {
-      "bold": "Everything You Need",
-      "muted": "to Book and Manage"
-    },
-    "previousLabel": "Previous feature",
-    "nextLabel": "Next feature",
-    "goToFeature": "Go to feature {number}: {title}",
+  "LandingTestimonials": {
+    "heading": "Clubs Already Booking Smarter",
+    "subheading": "Here's how club owners and managers describe running their club with Play Padel.",
     "items": [
       {
-        "title": "Real-Time Availability",
-        "description": "See exactly which courts are free at any club, updated the moment a slot is booked.",
-        "imageAlt": "Two women playing padel on an outdoor court"
+        "quote": "I used to keep a spreadsheet just to cross-check who'd paid and which courts were actually free. Now availability and Mercado Pago payments live in the same booking flow, so that spreadsheet is gone for good.",
+        "name": "Martín Ibarra",
+        "role": "Owner, Cancha Norte Padel Club"
       },
       {
-        "title": "Instant Booking",
-        "description": "Reserve your court in a few taps — no phone calls, no waiting for a confirmation.",
-        "imageAlt": "High-angle view of padel paddles and balls on the court"
+        "quote": "We block a court for maintenance and players just see it's unavailable, with the reason attached. No more double-booked slots because someone forgot to call the front desk.",
+        "name": "Lucía Fernández",
+        "role": "Manager, Club Deportivo Belgrano"
       },
       {
-        "title": "Secure Online Payments",
-        "description": "Mercado Pago checkout built right into the booking flow, with automatic refunds on cancellation.",
-        "imageAlt": "People playing padel together on an indoor court"
+        "quote": "Upgrading from two courts to four didn't mean switching software — we just moved up a plan tier and kept every booking history intact.",
+        "name": "Diego Salas",
+        "role": "Owner, Punta Padel"
       },
       {
-        "title": "Court & Closure Management",
-        "description": "Owners can block a court for maintenance or an event, with a reason players see before they try to book it.",
-        "imageAlt": "Player getting ready to play padel on an indoor court"
-      },
-      {
-        "title": "Player Profiles",
-        "description": "Track your preferred side, dominant hand, and skill category — visible to partners and clubs.",
-        "imageAlt": "Players sharing a moment on an indoor padel court"
-      },
-      {
-        "title": "Plans for Every Club",
-        "description": "From a single court to a multi-court operation, pick the plan that fits and upgrade as you grow.",
-        "imageAlt": "Side view of a woman playing padel"
-      },
-      {
-        "title": "Full Audit Trail",
-        "description": "Every booking, cancellation, and change is logged, so owners always know what happened and when.",
-        "imageAlt": "Full shot of a woman playing padel"
-      },
-      {
-        "title": "Built for Argentina",
-        "description": "CUIT-formatted tax IDs, ARS pricing, and Mercado Pago — built around how clubs actually operate here.",
-        "imageAlt": "Player getting ready to play padel on an indoor court"
+        "quote": "Our members book their own slots now instead of calling during business hours. Front desk calls dropped and courts fill up faster.",
+        "name": "Valentina Rossi",
+        "role": "Owner, Set Match Padel"
       }
     ]
   },
   "LandingPricing": {
     "heading": "Simple, Transparent Pricing",
     "subheading": "Pick the plan that fits your club today, and upgrade any time as you grow.",
-    "perMonth": "/ month"
+    "monthly": "Monthly",
+    "annual": "Annual",
+    "billingCycleLabel": "Toggle monthly or annual billing",
+    "perMonth": "/ month",
+    "perYear": "/ year",
+    "welcomeFreeMonths": "{count, plural, one {# free month} other {# free months}}",
+    "annualSavings": "Save {percent}%"
   },
-  "LandingCtaBanner": {
-    "heading": {
-      "line1": "Ready to Book",
-      "line2": "Your Next Match?"
+  "PlanPricingDetails": {
+    "BASIC": {
+      "tagline": "Perfect for clubs just getting started.",
+      "features": [
+        "Up to 2 courts",
+        "Online booking & reservations",
+        "Mercado Pago payments",
+        "Court schedule management"
+      ]
     },
-    "description": "Find a club, check real-time availability, and reserve your court in minutes — or bring your own club onto {brand} and manage it all from one dashboard.",
-    "ctaPrimary": "Get Started",
-    "ctaSecondary": "Own a club? List it here"
+    "PRO": {
+      "tagline": "For growing clubs that need more room to book.",
+      "features": [
+        "Everything in Basic",
+        "Up to 4 courts",
+        "Player directory",
+        "Audit log & activity history"
+      ]
+    },
+    "PLUS": {
+      "tagline": "Built for busy clubs running at full capacity.",
+      "features": [
+        "Everything in Pro",
+        "Up to 7 courts",
+        "Priority support",
+        "Advanced reporting"
+      ]
+    },
+    "MAX": {
+      "tagline": "Custom-built for large multi-court operations.",
+      "priceNote": "Contact us",
+      "features": [
+        "Everything in Plus",
+        "Unlimited courts",
+        "Dedicated account service",
+        "Custom integrations",
+        "Enterprise support"
+      ]
+    }
+  },
+  "LandingFaq": {
+    "heading": "Common Questions",
+    "subheading": "Everything you need to know before getting started.",
+    "items": [
+      {
+        "question": "How does court booking and scheduling work?",
+        "answer": "Players see real-time availability for every court at your club and reserve a slot directly — no phone calls. Owners manage the schedule, block courts for maintenance, and see every booking on one calendar."
+      },
+      {
+        "question": "How are payments handled?",
+        "answer": "Checkout runs through Mercado Pago, built directly into the booking flow."
+      },
+      {
+        "question": "Can I manage more than one court or close a court temporarily?",
+        "answer": "Yes — add as many courts as your plan allows, and close any court for maintenance or an event with a reason players see before they try to book it."
+      },
+      {
+        "question": "What's the difference between plan tiers?",
+        "answer": "Plans scale by court count and features, from a single-court club up to a multi-court operation with priority support and advanced reporting. You can upgrade at any time as you grow."
+      },
+      {
+        "question": "What happens if a player cancels a booking?",
+        "answer": "The court slot reopens immediately for other players."
+      },
+      {
+        "question": "Can one club account manage multiple locations?",
+        "answer": "Each club account manages its own courts and schedule. For multiple locations, our Max plan supports custom, multi-court setups — contact us to talk through your setup."
+      }
+    ]
   },
   "LandingFooter": {
+    "cta": {
+      "heading": {
+        "line1": "Ready to Run Your Club",
+        "line2": "Without the Back-and-Forth?"
+      },
+      "description": "Set up your courts, connect Mercado Pago, and start taking bookings on {brand} in one afternoon.",
+      "ctaPrimary": "Get Started"
+    },
     "tagline": "The platform padel clubs and players use to book, manage, and play — without the back-and-forth.",
     "talkToUs": "Let's Talk",
     "columns": [
@@ -298,10 +384,16 @@
         ]
       },
       {
-        "title": "Support",
+        "title": "Explore",
         "links": [
           {
-            "label": "Contact"
+            "label": "Pricing"
+          },
+          {
+            "label": "Testimonials"
+          },
+          {
+            "label": "FAQ"
           }
         ]
       }
@@ -309,6 +401,18 @@
     "copyright": "© {year} {brand}. All rights reserved.",
     "privacy": "Privacy",
     "terms": "Terms & Conditions"
+  },
+  "LandingWhatsAppButton": {
+    "ariaLabel": "Chat on WhatsApp"
+  },
+  "TermsPage": {
+    "heading": "Terms and Conditions",
+    "lastUpdated": "Last updated: September 18, 2026"
+  },
+  "PrivacyPage": {
+    "heading": "Privacy Policy",
+    "lastUpdated": "Last updated: September 18, 2026",
+    "content": "1. Scope\nThis Privacy Policy describes what personal data {brand} collects when you use the app, how we use it, and which providers we share it with to deliver the service.\n\n2. Data we collect\nWhen you create an account we collect your name, email, and profile photo (via your sign-in provider). Depending on how you use the app, we may also collect your phone number, address, gender, padel category and side, and dominant hand. Club owners additionally provide their club's billing details (legal name, tax ID).\n\n3. How we use your data\nWe use your data to create and maintain your account, process bookings and payments, send you notifications about your reservations, and to run the platform generally. We do not sell your data or use it for advertising.\n\n4. Who we share your data with\nWe share data with the providers we use to run the service: Clerk (authentication), Mercado Pago (payment processing), Neon (database), Resend (transactional email), and Vercel (hosting and usage analytics). Each only accesses the data it needs to do its job.\n\n5. International transfers\nSome of these providers (Clerk, Resend, and part of our hosting infrastructure) process data outside Argentina, mainly in the United States. By using the app, you consent to this transfer, carried out solely for the purposes described in this policy.\n\n6. Your rights\nUnder Ley 25.326 (Argentina's Personal Data Protection Law), you can exercise your rights of access, rectification, and deletion of your personal data at any time by contacting us at the details below.\n\n7. Cookies\nThe app uses cookies that are strictly necessary to keep you signed in and remember your preferred language. We do not use advertising-tracking cookies.\n\n8. Changes to this policy\nThis policy may be updated at any time. Continued use of the service after a change constitutes acceptance of the revised policy.\n\n9. Contact\nQuestions about this policy can be directed to {brand} support."
   },
   "ShareButton": {
     "share": "Share",
@@ -485,7 +589,7 @@
         "subheading": "Please review and accept before continuing.",
         "confirmAge": "I confirm I am 18 years of age or older.",
         "acceptTerms": "I agree to the Terms and Conditions.",
-        "content": "1. Acceptance of Terms\nBy creating an account on {brand}, you agree to be bound by these Terms and Conditions. If you do not agree, do not proceed with registration.\n\n2. Description of Service\n{brand} connects players with padel clubs, letting players browse courts and reserve free slots, and letting club owners manage their courts' availability and reservations.\n\n3. Accounts and Responsibilities\nYou are responsible for the accuracy of the information provided during registration and for maintaining the confidentiality of your account credentials. Club owners are responsible for keeping their courts' opening hours and reservation records up to date.\n\n4. Bookings and Cancellations\nReservations are confirmed instantly at the time of booking. Players can self-cancel up to 2 hours before a reservation's start time; cancellations inside that window go through the club directly. Reservations are non-refundable: {brand} does not process refunds for any reservation, regardless of who cancels it or the reason. Any dispute, incident, or issue related to a cancelled or unfulfilled reservation must be resolved directly with the club. By booking a reservation, you accept full responsibility for any inconvenience arising from its cancellation.\n\n5. Payments\nSome clubs require online prepayment to confirm a reservation; in that case, payment is processed through Mercado Pago at the time of booking. For clubs that do not require prepayment, payment is handled in person at the club.\n\n6. Data Handling\nData you submit is stored to provide the service and is not shared with third parties except as required to operate the platform or comply with the law.\n\n7. Limitation of Liability\nThe service is provided \"as is\" without warranties of any kind. {brand} is not liable for indirect, incidental, or consequential damages arising from use of the service.\n\n8. Changes to These Terms\nThese terms are placeholder text pending legal review and may be replaced or updated at any time. Continued use of the service after changes constitutes acceptance of the revised terms.\n\n9. Contact\nQuestions about these terms can be directed to your {brand} club administrator, or to {brand} support for player accounts."
+        "content": "1. Acceptance of Terms\nBy creating an account on {brand}, you agree to be bound by these Terms and Conditions. If you do not agree, do not proceed with registration.\n\n2. Description of Service\n{brand} connects players with padel clubs, letting players browse courts and reserve free slots, and letting club owners manage their courts' availability and reservations.\n\n3. Accounts and Responsibilities\nYou are responsible for the accuracy of the information provided during registration and for maintaining the confidentiality of your account credentials. Club owners are responsible for keeping their courts' opening hours and reservation records up to date.\n\n4. Bookings and Cancellations\nReservations are confirmed instantly at the time of booking. Players can self-cancel up to 2 hours before a reservation's start time; cancellations inside that window go through the club directly. Reservations are non-refundable: {brand} does not process refunds for any reservation, regardless of who cancels it or the reason. Any dispute, incident, or issue related to a cancelled or unfulfilled reservation must be resolved directly with the club. By booking a reservation, you accept full responsibility for any inconvenience arising from its cancellation.\n\n5. Payments\nSome clubs require online prepayment to confirm a reservation; in that case, payment is processed through Mercado Pago at the time of booking. For clubs that do not require prepayment, payment is handled in person at the club.\n\n6. Data Handling\nData you submit is stored to provide the service and is not shared with third parties except as required to operate the platform or comply with the law.\n\n7. Limitation of Liability\nThe service is provided \"as is\" without warranties of any kind. {brand} is not liable for indirect, incidental, or consequential damages arising from use of the service.\n\n8. Changes to These Terms\nThese terms may be replaced or updated at any time. Continued use of the service after changes constitutes acceptance of the revised terms.\n\n9. Contact\nQuestions about these terms can be directed to your {brand} club administrator, or to {brand} support for player accounts."
       }
     }
   },

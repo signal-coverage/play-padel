@@ -34,7 +34,6 @@ import type { BillingCycle, LocalStep, PlanSelectionModalProps } from "./types";
 import { SelectPlanPanel } from "./components/SelectPlanPanel";
 import { ChangePlanDialog } from "./components/ChangePlanDialog";
 import { MembershipCheckoutDrawer } from "./components/MembershipCheckoutDrawer";
-import { AwaitingConfirmationPanel } from "./components/AwaitingConfirmationPanel";
 import { ConfirmedPanel } from "./components/ConfirmedPanel";
 
 // Shared checkout wizard consumed by three call sites (PaymentActivationScreen,
@@ -42,21 +41,18 @@ import { ConfirmedPanel } from "./components/ConfirmedPanel";
 // aside — this is the only place that ever calls
 // `POST /api/clubs/membership`. Step machine: the server snapshot decides
 // loading/error/confirmed/select; once the owner starts a checkout attempt,
-// a local step (`collect-card` for MONTHLY, `awaiting-confirmation` for
-// both cycles once a checkout call succeeds) takes over — except
-// "confirmed" always wins once the server snapshot says so, per spec's
-// "Webhook-Only State Confirmation": no local step can fake that state.
+// a local step (`collect-card`, then `awaiting-confirmation` once the
+// checkout call succeeds) takes over for BOTH billing cycles identically —
+// except "confirmed" always wins once the server snapshot says so, per
+// spec's "Webhook-Only State Confirmation": no local step can fake that
+// state.
 //
 // The plan-picker Dialog only ever shows loading/error/confirmed/select —
-// MONTHLY's card-collection ("collect-card", then its own
-// "awaiting-confirmation") never renders inside it. That whole part of the
-// flow lives in `MembershipCheckoutDrawer`, a Sheet opened alongside the
-// still-visible Dialog instead of replacing its content, per explicit
-// direction to keep the plan picker exactly where it is. ANNUAL's
-// "awaiting-confirmation" (no card collection — it opens MP's hosted
-// checkout tab directly) is unaffected and still renders in the Dialog, so
-// `billingCycle` is what tells the two "awaiting-confirmation" moments
-// apart below.
+// card-collection ("collect-card", then its own "awaiting-confirmation")
+// never renders inside it. That whole part of the flow lives in
+// `MembershipCheckoutDrawer`, a Sheet opened alongside the still-visible
+// Dialog instead of replacing its content, per explicit direction to keep
+// the plan picker exactly where it is.
 export function PlanSelectionModal({
   open,
   onOpenChange,
@@ -83,24 +79,11 @@ export function PlanSelectionModal({
   // save).
   const [saveIdentification, setSaveIdentification] = useState(true);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
-  const [openedExternalTab, setOpenedExternalTab] = useState(false);
-  const [payNowError, setPayNowError] = useState<string | null>(null);
   const [changePlanError, setChangePlanError] = useState<string | null>(null);
-  // Live-polling flag for the "Pay Now" (mid-trial ANNUAL conversion) path
-  // (sdd-verify follow-up fix): unlike the other checkout flows, "Pay Now"
-  // is triggered from the ALREADY-confirmed panel (subscription is
-  // TRIALING), so `isAwaitingConfirmation` (a LOCAL step, never entered
-  // here) can't drive polling. Without this, the confirmed panel would
-  // never learn about the webhook-driven TRIALING -> ACTIVE transition
-  // until the owner manually closed and reopened the modal — there is no
-  // "Check again" button on ConfirmedPanel.
-  const [isAwaitingPayNowConfirmation, setIsAwaitingPayNowConfirmation] =
-    useState(false);
-  const checkoutTabRef = useRef<Window | null>(null);
-  // Tracks the subscription status seen on the PREVIOUS render so the tab
-  // auto-close effect below can detect a genuine TRIALING/PENDING -> ACTIVE
-  // transition, instead of a boolean ("confirmed") that is already `true`
-  // throughout TRIALING -> ACTIVE and therefore never toggles.
+  // Tracks the subscription status seen on the PREVIOUS render so the
+  // celebration effect below can detect a genuine TRIALING/PENDING ->
+  // ACTIVE transition, instead of a boolean ("confirmed") that is already
+  // `true` throughout TRIALING -> ACTIVE and therefore never toggles.
   const previousStatusRef = useRef<string | undefined>(undefined);
   const shouldReduceMotion = useReducedMotion() ?? false;
 
@@ -113,10 +96,9 @@ export function PlanSelectionModal({
     isFetching,
   } = useMembershipSubscription({
     enabled: open,
-    refetchIntervalMs:
-      isAwaitingConfirmation || isAwaitingPayNowConfirmation
-        ? AWAITING_CONFIRMATION_POLL_INTERVAL_MS
-        : false,
+    refetchIntervalMs: isAwaitingConfirmation
+      ? AWAITING_CONFIRMATION_POLL_INTERVAL_MS
+      : false,
   });
   const initiateCheckout = useInitiateMembershipCheckout();
   const changeTrialPlan = useChangeTrialPlan();
@@ -148,13 +130,10 @@ export function PlanSelectionModal({
   });
   const isConfirmed = serverStep === "confirmed";
 
-  // MONTHLY's card-collection drawer covers both of its own local steps;
-  // ANNUAL never enters "collect-card" at all (see handleContinue), so
-  // billingCycle alone is enough to tell its "awaiting-confirmation" apart
-  // from MONTHLY's.
+  // The card-collection drawer covers both of its own local steps, for
+  // either billing cycle — both now go through the same in-app card form.
   const isDrawerFlow =
-    localStep === "collect-card" ||
-    (localStep === "awaiting-confirmation" && billingCycle === "monthly");
+    localStep === "collect-card" || localStep === "awaiting-confirmation";
 
   // The Dialog stays frozen on "select" for the whole drawer flow — it
   // never adopts "collect-card"/MONTHLY's "awaiting-confirmation" as its
@@ -181,26 +160,7 @@ export function PlanSelectionModal({
     setBillingCycle(subscription.cycle === "ANNUAL" ? "annual" : "monthly");
   }
 
-  // Best-effort auto-close of the MP checkout tab — per spec's "UI Label
-  // Reflects Confirmed Payment State" ("the payment tab SHOULD auto-close
-  // on confirmation... if technically feasible"). `checkoutTabRef` always
-  // holds the MOST RECENTLY opened tab (the original ANNUAL checkout in
-  // `handleContinue`, or a later "Pay Now" attempt in `handlePayNow` made
-  // while already TRIALING — both write to the same ref), so there's never
-  // a stale reference to worry about.
-  //
-  // sdd-verify follow-up fix: this previously watched `isConfirmed`
-  // (true for BOTH TRIALING and ACTIVE, per `isMembershipConfirmed`).
-  // That broke the "Pay Now" tab specifically: it's opened while the
-  // subscription is ALREADY TRIALING (already "confirmed"), so
-  // `isConfirmed` never toggles across the later TRIALING -> ACTIVE
-  // webhook confirmation and the effect never re-fires. Tracking the
-  // actual status transition to ACTIVE (via `previousStatusRef`) fixes
-  // both the original PENDING -> ACTIVE flow and the pay-now
-  // TRIALING -> ACTIVE flow. Also turns off "Pay Now" polling once
-  // confirmed, since there's nothing left to wait for.
-  //
-  // Also fires the same success celebration as the player's own
+  // Fires the same success celebration as the player's own
   // payment-confirmed moment (PaymentReturnView) — this IS the owner's
   // equivalent: a genuine charge just settled (ACTIVE, never TRIALING —
   // ConfirmedPanel's own copy is explicit that a trial "has made no
@@ -208,9 +168,7 @@ export function PlanSelectionModal({
   // `justBecameActive` alone doesn't: an owner simply REOPENING the
   // dialog on an already-ACTIVE membership, where `previousStatusRef`
   // starts `undefined` and would otherwise look identical to a fresh
-  // transition. The tab-close logic below doesn't need that same guard —
-  // `checkoutTabRef.current` is already null in that exact case, making
-  // it a no-op either way.
+  // transition.
   useEffect(() => {
     const currentStatus = subscription?.status;
     const hadPreviousStatus = previousStatusRef.current !== undefined;
@@ -223,16 +181,6 @@ export function PlanSelectionModal({
     if (hadPreviousStatus && !shouldReduceMotion) {
       fireSuccessCelebration();
     }
-
-    setIsAwaitingPayNowConfirmation(false);
-
-    if (!checkoutTabRef.current) return;
-    try {
-      checkoutTabRef.current.close();
-    } catch {
-      // Best-effort — the owner can close the MP tab manually.
-    }
-    checkoutTabRef.current = null;
   }, [subscription?.status, shouldReduceMotion]);
 
   // Hands the MONTHLY checkout drawer's own "awaiting-confirmation" view
@@ -255,9 +203,6 @@ export function PlanSelectionModal({
     setLocalStep(null);
     setCheckoutError(null);
     setPayerEmail("");
-    setOpenedExternalTab(false);
-    setPayNowError(null);
-    setIsAwaitingPayNowConfirmation(false);
     setChangePlanError(null);
   }
 
@@ -266,57 +211,12 @@ export function PlanSelectionModal({
     onOpenChange(next);
   }
 
+  // Both cycles now collect a card via the same drawer — see
+  // handleTokenReady below for what actually calls the checkout API.
   function handleContinue() {
     if (!selectedPlan) return;
     setCheckoutError(null);
-
-    if (billingCycle === "annual") {
-      initiateCheckout.mutate(
-        { plan: selectedPlan, cycle: "ANNUAL" },
-        {
-          onSuccess: (data) => {
-            if (data.checkoutUrl) {
-              checkoutTabRef.current = window.open(data.checkoutUrl, "_blank");
-              setOpenedExternalTab(true);
-            }
-            setLocalStep("awaiting-confirmation");
-          },
-          onError: (err) =>
-            setCheckoutError(resolveCheckoutErrorMessage(err.message)),
-        },
-      );
-      return;
-    }
-
     setLocalStep("collect-card");
-  }
-
-  // "Pay now" during an ANNUAL trial (sdd-verify follow-up fix): generates
-  // the one-time payment link for a subscription that's already TRIALING
-  // on the ANNUAL cycle — see app/api/clubs/membership/route.ts's TRIALING
-  // branch. Status stays TRIALING (only the webhook confirms payment), so
-  // this never navigates away from the confirmed panel; it just opens the
-  // MP checkout tab, same as the initial ANNUAL flow.
-  function handlePayNow() {
-    if (!subscription) return;
-    setPayNowError(null);
-    initiateCheckout.mutate(
-      { plan: subscription.plan, cycle: "ANNUAL" },
-      {
-        onSuccess: (data) => {
-          if (data.checkoutUrl) {
-            checkoutTabRef.current = window.open(data.checkoutUrl, "_blank");
-            // Start live polling so the confirmed panel picks up the
-            // webhook-driven TRIALING -> ACTIVE transition on its own —
-            // there's no "Check again" button on this panel to fall back
-            // on. Turned off by the tab-close effect above once ACTIVE.
-            setIsAwaitingPayNowConfirmation(true);
-          }
-        },
-        onError: (err) =>
-          setPayNowError(resolveCheckoutErrorMessage(err.message)),
-      },
-    );
   }
 
   // Changes plan tier IMMEDIATELY while still TRIALING (on EITHER cycle) —
@@ -372,7 +272,7 @@ export function PlanSelectionModal({
       initiateCheckout.mutate(
         {
           plan: selectedPlan,
-          cycle: "MONTHLY",
+          cycle: toCycleValue(billingCycle),
           renewalMode,
           payerEmail,
           cardTokenId,
@@ -398,6 +298,7 @@ export function PlanSelectionModal({
       renewalMode,
       payerEmail,
       saveIdentification,
+      billingCycle,
       initiateCheckout.mutate,
     ],
   );
@@ -476,13 +377,6 @@ export function PlanSelectionModal({
             <ConfirmedPanel
               onClose={() => handleOpenChange(false)}
               isTrialing={subscription?.status === "TRIALING"}
-              showPayNow={
-                subscription?.status === "TRIALING" &&
-                subscription?.cycle === "ANNUAL"
-              }
-              onPayNow={handlePayNow}
-              isPayNowLoading={initiateCheckout.isPending}
-              payNowError={payNowError}
               onChangePlan={() => setIsChangingPlan(true)}
               isChangingPlan={changeTrialPlan.isPending}
               changePlanError={changePlanError}
@@ -510,14 +404,6 @@ export function PlanSelectionModal({
               onContinue={handleContinue}
             />
           )}
-
-          {dialogStep === "awaiting-confirmation" && (
-            <AwaitingConfirmationPanel
-              onRefresh={() => refetch()}
-              isRefreshing={isFetching}
-              openedExternalTab={openedExternalTab}
-            />
-          )}
         </DialogContent>
       </Dialog>
 
@@ -537,6 +423,7 @@ export function PlanSelectionModal({
             : "awaiting-confirmation"
         }
         amount={checkoutAmount ?? 0}
+        cycle={billingCycle}
         payerEmail={payerEmail}
         defaultEmail={user?.email ?? undefined}
         identification={identification}

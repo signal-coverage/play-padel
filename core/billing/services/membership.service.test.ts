@@ -44,7 +44,6 @@ import {
   changeTrialPlan,
   findMembershipSubscriptionByPreapprovalId,
   attachPendingPreapproval,
-  attachPendingPreference,
   getMembershipSubscription,
   seedPendingMembershipSubscriptionFromClub,
   reactivateCancelledSubscription,
@@ -85,7 +84,6 @@ function row(overrides: Record<string, unknown> = {}) {
     status: "PENDING",
     currency: "ARS",
     mpPreapprovalId: null,
-    mpPreferenceId: null,
     mpCustomerId: null,
     mpCardId: null,
     trialEndsAt: null,
@@ -1274,102 +1272,6 @@ describe("attachPendingPreapproval (MONTHLY checkout — no trial configured)", 
   });
 });
 
-describe("attachPendingPreference (ANNUAL checkout)", () => {
-  it("stores the created preference id on a PENDING subscription without advancing status", async () => {
-    findUniqueMock.mockResolvedValue(
-      row({ status: "PENDING", cycle: "ANNUAL" }),
-    );
-    updateMock.mockResolvedValue(
-      row({ status: "PENDING", cycle: "ANNUAL", mpPreferenceId: "pref_1" }),
-    );
-
-    const result = await attachPendingPreference({
-      clubId: "club_1",
-      plan: "PLUS",
-      currency: "ARS",
-      mpPreferenceId: "pref_1",
-    });
-
-    expect(updateMock).toHaveBeenCalledWith({
-      where: { clubId: "club_1" },
-      data: {
-        plan: "PLUS",
-        cycle: "ANNUAL",
-        renewalMode: "AUTO",
-        currency: "ARS",
-        mpPreferenceId: "pref_1",
-      },
-    });
-    expect(result.status).toBe("PENDING");
-  });
-
-  it("rejects attaching a fresh preference when the subscription is not PENDING", async () => {
-    findUniqueMock.mockResolvedValue(row({ status: "PAST_DUE" }));
-
-    await expect(
-      attachPendingPreference({
-        clubId: "club_1",
-        plan: "PLUS",
-        currency: "ARS",
-        mpPreferenceId: "pref_1",
-      }),
-    ).rejects.toThrow(/PENDING/);
-    expect(updateMock).not.toHaveBeenCalled();
-  });
-
-  // "Pay now" follow-up fix: an ANNUAL trial starts with no MP object at
-  // all (see `startTrial`'s ANNUAL caller), so this is the only path that
-  // ever lets it reach ACTIVE before the cron sweep cancels it at
-  // `trialEndsAt`.
-  it("allows attaching a preference to a TRIALING ANNUAL subscription (pay now during trial) without advancing status", async () => {
-    findUniqueMock.mockResolvedValue(
-      row({ status: "TRIALING", cycle: "ANNUAL", trialEndsAt: new Date() }),
-    );
-    updateMock.mockResolvedValue(
-      row({
-        status: "TRIALING",
-        cycle: "ANNUAL",
-        mpPreferenceId: "pref_paynow_1",
-      }),
-    );
-
-    const result = await attachPendingPreference({
-      clubId: "club_1",
-      plan: "PLUS",
-      currency: "ARS",
-      mpPreferenceId: "pref_paynow_1",
-    });
-
-    expect(updateMock).toHaveBeenCalledWith({
-      where: { clubId: "club_1" },
-      data: {
-        plan: "PLUS",
-        cycle: "ANNUAL",
-        renewalMode: "AUTO",
-        currency: "ARS",
-        mpPreferenceId: "pref_paynow_1",
-      },
-    });
-    expect(result.status).toBe("TRIALING");
-  });
-
-  it("rejects attaching a preference to a TRIALING MONTHLY subscription (pay-now exception only applies to ANNUAL)", async () => {
-    findUniqueMock.mockResolvedValue(
-      row({ status: "TRIALING", cycle: "MONTHLY" }),
-    );
-
-    await expect(
-      attachPendingPreference({
-        clubId: "club_1",
-        plan: "PLUS",
-        currency: "ARS",
-        mpPreferenceId: "pref_1",
-      }),
-    ).rejects.toThrow(/PENDING/);
-    expect(updateMock).not.toHaveBeenCalled();
-  });
-});
-
 describe("getMembershipSubscription (read for GET /api/clubs/membership)", () => {
   it("returns the subscription snapshot for a club that has one", async () => {
     findUniqueMock.mockResolvedValue(row({ status: "ACTIVE", plan: "PRO" }));
@@ -1500,7 +1402,6 @@ describe("reactivateCancelledSubscription (owner-triggered renewal — CANCELLED
       row({
         status: "CANCELLED",
         mpPreapprovalId: "preap_old",
-        mpPreferenceId: "pref_old",
         mpCustomerId: "cust_old",
         mpCardId: "card_old",
         trialEndsAt: new Date("2026-01-01T00:00:00Z"),
@@ -1522,7 +1423,6 @@ describe("reactivateCancelledSubscription (owner-triggered renewal — CANCELLED
       data: {
         status: "PENDING",
         mpPreapprovalId: null,
-        mpPreferenceId: null,
         mpCustomerId: null,
         mpCardId: null,
         trialEndsAt: null,
@@ -1601,7 +1501,6 @@ describe("activateFreePlan (admin-only override — unblocks ClubOperationalGate
         currentPeriodStart: new Date("2026-01-01T00:00:00Z"),
         currentPeriodEnd: null,
         mpPreapprovalId: null,
-        mpPreferenceId: null,
         mpCustomerId: null,
         mpCardId: null,
         pendingPlan: null,
@@ -1646,7 +1545,6 @@ describe("activateFreePlan (admin-only override — unblocks ClubOperationalGate
         currentPeriodStart: new Date("2026-01-01T00:00:00Z"),
         currentPeriodEnd: null,
         mpPreapprovalId: null,
-        mpPreferenceId: null,
         mpCustomerId: null,
         mpCardId: null,
         pendingPlan: null,
@@ -1671,18 +1569,6 @@ describe("activateFreePlan (admin-only override — unblocks ClubOperationalGate
     expect(updateMock).not.toHaveBeenCalled();
     expect(createMock).not.toHaveBeenCalled();
     expect(clubUpdateMock).not.toHaveBeenCalled();
-  });
-
-  it("refuses to overwrite a subscription with a real mpPreferenceId when force is not passed", async () => {
-    clubFindUniqueMock.mockResolvedValue({ currency: "ARS" });
-    findUniqueMock.mockResolvedValue(
-      row({ status: "ACTIVE", plan: "PRO", mpPreferenceId: "pref_real" }),
-    );
-
-    await expect(activateFreePlan({ clubId: "club_1" })).rejects.toThrow(
-      RealSubscriptionExistsError,
-    );
-    expect(updateMock).not.toHaveBeenCalled();
   });
 
   it("succeeds despite an existing real mpPreapprovalId when force is true", async () => {
@@ -1801,7 +1687,7 @@ describe("clubHasRealMercadoPagoSubscription (read-only pre-check — scripts/me
     );
   });
 
-  it("returns false for a subscription with neither a real mpPreapprovalId nor mpPreferenceId (e.g. still PENDING, or already FREE)", async () => {
+  it("returns false for a subscription with no real mpPreapprovalId (e.g. still PENDING, or already FREE)", async () => {
     findUniqueMock.mockResolvedValue(row({ plan: "FREE", status: "ACTIVE" }));
 
     await expect(clubHasRealMercadoPagoSubscription("club_1")).resolves.toBe(
@@ -1812,16 +1698,6 @@ describe("clubHasRealMercadoPagoSubscription (read-only pre-check — scripts/me
   it("returns true when a real mpPreapprovalId is attached", async () => {
     findUniqueMock.mockResolvedValue(
       row({ plan: "PRO", mpPreapprovalId: "preap_real" }),
-    );
-
-    await expect(clubHasRealMercadoPagoSubscription("club_1")).resolves.toBe(
-      true,
-    );
-  });
-
-  it("returns true when a real mpPreferenceId is attached", async () => {
-    findUniqueMock.mockResolvedValue(
-      row({ plan: "PRO", mpPreferenceId: "pref_real" }),
     );
 
     await expect(clubHasRealMercadoPagoSubscription("club_1")).resolves.toBe(

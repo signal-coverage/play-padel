@@ -1,9 +1,14 @@
 import { PreApproval } from "mercadopago";
 import { getPlatformMercadoPagoClient } from "./platformClient";
+import {
+  resolveAutoRecurringFrequency,
+  type MembershipCycleValue,
+} from "./membershipCycle";
 
 export interface CreateMembershipPreapprovalParams {
   clubId: string;
   preapprovalPlanId: string;
+  cycle: MembershipCycleValue;
   payerEmail: string;
   cardTokenId: string;
   currency: string;
@@ -50,13 +55,14 @@ export interface MembershipPreapprovalDetail {
 }
 
 /**
- * Creates a club's monthly membership subscription as an ALREADY-AUTHORIZED
- * Mercado Pago preapproval (`status: "authorized"`, with a tokenised card on
- * file) — never a pending/unauthorized one. Matches the resolved proposal
- * decision: no trial or subscription may start without an authorized
- * payment method (see spec's "Trial Requires Pre-Authorized MP Preapproval").
- * References `preapprovalPlanId` so the plan's `auto_recurring.free_trial`
- * (see preapprovalPlans.ts) governs when the first real charge occurs.
+ * Creates a club's membership subscription (either cycle) as an
+ * ALREADY-AUTHORIZED Mercado Pago preapproval (`status: "authorized"`, with
+ * a tokenised card on file) — never a pending/unauthorized one. Matches the
+ * resolved proposal decision: no trial or subscription may start without an
+ * authorized payment method (see spec's "Trial Requires Pre-Authorized MP
+ * Preapproval"). References `preapprovalPlanId` so the plan's
+ * `auto_recurring.free_trial` (see preapprovalPlans.ts) governs when the
+ * first real charge occurs — MONTHLY every 1 month, ANNUAL every 12.
  */
 export async function createMembershipPreapproval(
   params: CreateMembershipPreapprovalParams,
@@ -72,8 +78,7 @@ export async function createMembershipPreapproval(
       back_url: params.backUrl,
       status: "authorized",
       auto_recurring: {
-        frequency: 1,
-        frequency_type: "months",
+        ...resolveAutoRecurringFrequency(params.cycle),
         transaction_amount: params.transactionAmount,
         currency_id: params.currency,
       },
@@ -121,8 +126,8 @@ export async function pauseMembershipPreapproval(
  * confirmed live against Mercado Pago's own `PUT /preapproval/{id}` docs
  * ("Modificar monto: Permite modificar el monto de una suscripción
  * existente"). Used exclusively by the immediate TRIALING plan-change flow
- * (`PATCH /api/clubs/membership`, MONTHLY cycle only): since a MONTHLY trial
- * already has an authorized preapproval on file (see
+ * (`PATCH /api/clubs/membership`, either cycle): since a TRIALING
+ * subscription already has an authorized preapproval on file (see
  * `createMembershipPreapproval`), simply overwriting the local `plan` column
  * would leave Mercado Pago's own object charging the OLD plan's amount once
  * the trial ends. This keeps the two in sync without cancelling and

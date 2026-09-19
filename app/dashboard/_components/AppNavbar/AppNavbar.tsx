@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useTheme } from "next-themes";
 import { useAuth } from "@/hooks/use-auth";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { LocaleSwitcher } from "@/components/LocaleSwitcher";
 import { NavLinks } from "./components/NavLinks";
 import { NotificationsBell } from "./components/NotificationsBell";
 import { UserMenu } from "./components/UserMenu";
@@ -58,7 +57,6 @@ export function AppNavbar() {
       </div>
 
       <div className="flex shrink-0 items-center gap-3">
-        <LocaleSwitcher />
         <ThemeToggle />
         <NotificationsBell />
         <UserMenu />
