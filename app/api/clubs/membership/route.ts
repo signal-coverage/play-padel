@@ -10,7 +10,6 @@ import {
   getMembershipSubscription,
   seedPendingMembershipSubscriptionFromClub,
   attachPendingPreapproval,
-  attachPendingPreference,
   startTrial,
   changeTrialPlan,
   saveMembershipPayerIdentification,
@@ -23,7 +22,6 @@ import {
   createMembershipPreapproval,
   updateMembershipPreapprovalAmount,
 } from "@/lib/mercadopago/membershipPreapprovals";
-import { createMembershipPreference } from "@/lib/mercadopago/platformPreferences";
 
 function requireAppUrl(): string {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL;
@@ -56,20 +54,19 @@ export async function GET() {
   return NextResponse.json({ subscription });
 }
 
-// Initiates a membership payment for the caller's own club — creates the
-// real Mercado Pago object (a MONTHLY preapproval, or an ANNUAL one-time
-// Checkout Pro preference) and records its id on the subscription row,
-// WITHOUT advancing membership status: per spec's "Webhook-Only State
-// Confirmation", only the membership webhook handling (dispatched from
-// app/api/webhooks/mercadopago/route.ts, see the NOTE below) may move a
-// subscription into ACTIVE. A tier with a configured free trial is the
-// synchronous exception for BOTH cycles — `startTrial` records TRIALING
+// Initiates a membership payment for the caller's own club — creates a real
+// Mercado Pago preapproval (a recurring subscription: MONTHLY bills every 1
+// month, ANNUAL every 12 — both cycles use the exact same mechanism, just a
+// different `auto_recurring.frequency` on the underlying plan) and records
+// its id on the subscription row, WITHOUT advancing membership status: per
+// spec's "Webhook-Only State Confirmation", only the membership webhook
+// handling (dispatched from app/api/webhooks/mercadopago/route.ts, see the
+// NOTE below) may move a subscription into ACTIVE. A tier with a configured
+// free trial is the synchronous exception — `startTrial` records TRIALING
 // right here, since spec's "Trial start" scenario confirms the trial the
-// moment authorization succeeds (MONTHLY: MP's own preapproval
-// authorization) or, for ANNUAL (no native MP "authorize without charge"
-// primitive for a one-off Checkout Pro preference), the moment this app
-// itself starts the app-tracked trial clock — see design.md's "Trial start
-// (ANNUAL)" workaround.
+// moment MP's own preapproval authorization succeeds; the card is
+// authorized but not charged until MP's own `auto_recurring.free_trial`
+// elapses.
 //
 // NOTE: the membership webhook itself is dispatched from the single,
 // consolidated `app/api/webhooks/mercadopago/route.ts` (not a dedicated
@@ -77,12 +74,6 @@ export async function GET() {
 // notification URL per environment, so this repo has no separate reachable
 // membership webhook route; see that file and
 // `lib/mercadopago/membershipWebhookHandlers.ts`.
-//
-// "Pay now" during an ANNUAL trial (sdd-verify follow-up fix): calling this
-// route again while a club is already TRIALING on the ANNUAL cycle (same
-// cycle requested) is also allowed — it's the ONLY way an ANNUAL trial can
-// ever generate the one-time payment link and reach ACTIVE, since it starts
-// with no Mercado Pago object at all. See the ANNUAL branch below.
 export async function POST(request: NextRequest) {
   const authResult = await requireOwnerClub();
   if (!authResult.ok) return authResult.response;
@@ -107,19 +98,17 @@ export async function POST(request: NextRequest) {
   } = parsed.data;
   const clubId = authResult.context.clubId;
   const planDetails = PLAN_DETAILS[plan];
+  const price =
+    cycle === "MONTHLY" ? planDetails.monthlyPrice : planDetails.annualPrice;
 
   // MAX has no fixed price for either cycle — it's the contact-us/custom
   // tier, explicitly out of scope for automated payment (see spec's
   // "Explicitly Not Covered by This Spec").
-  if (cycle === "MONTHLY" && planDetails.monthlyPrice == null) {
+  if (price == null) {
     return NextResponse.json(
-      { error: `Plan ${plan} is not available for automated monthly checkout` },
-      { status: 400 },
-    );
-  }
-  if (cycle === "ANNUAL" && planDetails.annualPrice == null) {
-    return NextResponse.json(
-      { error: `Plan ${plan} is not available for automated annual checkout` },
+      {
+        error: `Plan ${plan} is not available for automated ${cycle === "MONTHLY" ? "monthly" : "annual"} checkout`,
+      },
       { status: 400 },
     );
   }
@@ -143,142 +132,44 @@ export async function POST(request: NextRequest) {
   }
 
   if (existing.status !== "PENDING") {
-    // The one exception: a club already TRIALING on the ANNUAL cycle,
-    // requesting ANNUAL again, is a "pay now" attempt — not a redundant
-    // checkout. Any other combination (different cycle, or any other
-    // non-PENDING status) is still rejected.
-    const isAnnualTrialPayNow =
-      existing.status === "TRIALING" &&
-      existing.cycle === "ANNUAL" &&
-      cycle === "ANNUAL";
-    if (!isAnnualTrialPayNow) {
-      return NextResponse.json(
-        {
-          error: `Cannot start a new membership checkout while subscription is ${existing.status}`,
-        },
-        { status: 409 },
-      );
-    }
+    return NextResponse.json(
+      {
+        error: `Cannot start a new membership checkout while subscription is ${existing.status}`,
+      },
+      { status: 409 },
+    );
   }
 
   const currency = existing.currency;
 
   try {
-    if (cycle === "MONTHLY") {
-      const backUrl = `${requireAppUrl()}/dashboard`;
+    const backUrl = `${requireAppUrl()}/dashboard`;
 
-      // Reuses one preapproval_plan per (plan tier, currency) pair via
-      // MembershipPreapprovalPlanCache instead of creating a fresh one on
-      // every single MONTHLY checkout — see
-      // lib/mercadopago/preapprovalPlans.ts's
-      // getOrCreateMembershipPreapprovalPlanId and this batch's
-      // apply-progress notes.
-      const preapprovalPlan = await getOrCreateMembershipPreapprovalPlanId({
-        plan,
-        currency,
-        backUrl,
-      });
+    // Reuses one preapproval_plan per (plan tier, currency, cycle) triple
+    // via MembershipPreapprovalPlanCache instead of creating a fresh one on
+    // every single checkout — see lib/mercadopago/preapprovalPlans.ts's
+    // getOrCreateMembershipPreapprovalPlanId and this batch's apply-progress
+    // notes.
+    const preapprovalPlan = await getOrCreateMembershipPreapprovalPlanId({
+      plan,
+      cycle,
+      currency,
+      backUrl,
+    });
 
-      const preapproval = await createMembershipPreapproval({
-        clubId,
-        preapprovalPlanId: preapprovalPlan.id,
-        payerEmail: payerEmail!,
-        cardTokenId: cardTokenId!,
-        currency,
-        // Must match the amount the plan itself was created with (see
-        // getOrCreateMembershipPreapprovalPlanId) — Mercado Pago rejects the
-        // preapproval otherwise.
-        transactionAmount: planDetails.monthlyPrice!,
-        backUrl,
-      });
-
-      const trialConfig = await prisma.membershipTrialConfig.findUnique({
-        where: { plan },
-      });
-      const freeTrial = resolveFreeTrialConfig(
-        trialConfig?.trialDays,
-        planDetails.welcomeFreeMonths,
-      );
-
-      let subscription = freeTrial
-        ? await startTrial({
-            clubId,
-            plan,
-            cycle,
-            renewalMode: renewalMode!,
-            currency,
-            trialOverrideDays: trialConfig?.trialDays,
-            fallbackWelcomeFreeMonths: planDetails.welcomeFreeMonths,
-            mpPreapprovalId: preapproval.id,
-          })
-        : await attachPendingPreapproval({
-            clubId,
-            plan,
-            cycle,
-            renewalMode: renewalMode!,
-            currency,
-            mpPreapprovalId: preapproval.id,
-          });
-
-      // Only meaningful alongside a real card token, so this only ever runs
-      // in the MONTHLY branch — never ANNUAL. Requires BOTH the opt-in flag
-      // AND the actual identification the owner confirmed; never persists
-      // one without the other (see membershipCheckout.schema.ts).
-      if (saveIdentification === true && identification) {
-        subscription = await saveMembershipPayerIdentification(
-          clubId,
-          identification,
-        );
-      }
-
-      return NextResponse.json({
-        subscription,
-        mpPreapprovalId: preapproval.id,
-      });
-    }
-
-    // ANNUAL — one-time Checkout Pro payment, never a recurring MP object
-    // (spec's "Annual Billing Uses One-Time Payment"). Unlike MONTHLY, MP
-    // has no native "authorize without charge" primitive for a one-off
-    // Checkout Pro preference (confirmed: `auto_recurring.free_trial` only
-    // exists on `preapproval_plan`) — see design.md's "Trial start
-    // (ANNUAL)" workaround: keep an app-tracked `trialEndsAt` gate and defer
-    // checkout until the trial ends, instead of the MONTHLY-style "already
-    // authorized while trialing" flow. So a trial-eligible ANNUAL checkout
-    // records `TRIALING` via `startTrial` (mirroring the MONTHLY branch
-    // above) WITHOUT creating any Mercado Pago object — no preference, no
-    // checkoutUrl, no payment method authorized upfront.
-
-    // "Pay now" during an ANNUAL trial (sdd-verify follow-up fix): the
-    // early PENDING guard above only lets this branch run for an existing
-    // TRIALING+ANNUAL subscription when the owner explicitly asks to pay —
-    // never to (re-)evaluate trial eligibility. Skip trial resolution
-    // entirely and go straight to generating the real one-time payment
-    // link; `attachPendingPreference` leaves `status` at TRIALING (never
-    // jumps to ACTIVE itself) until the payment webhook confirms it, same
-    // "webhook-only state confirmation" rule as every other path. Without
-    // this branch, an ANNUAL trial had no way back into this route to ever
-    // generate a payment link — it was doomed to expire via the cron sweep.
-    if (existing.status === "TRIALING") {
-      const preference = await createMembershipPreference({
-        clubId,
-        plan,
-        price: planDetails.annualPrice!,
-        currency,
-      });
-
-      const subscription = await attachPendingPreference({
-        clubId,
-        plan,
-        currency,
-        mpPreferenceId: preference.preferenceId,
-      });
-
-      return NextResponse.json({
-        subscription,
-        checkoutUrl: preference.checkoutUrl,
-      });
-    }
+    const preapproval = await createMembershipPreapproval({
+      clubId,
+      preapprovalPlanId: preapprovalPlan.id,
+      cycle,
+      payerEmail: payerEmail!,
+      cardTokenId: cardTokenId!,
+      currency,
+      // Must match the amount the plan itself was created with (see
+      // getOrCreateMembershipPreapprovalPlanId) — Mercado Pago rejects the
+      // preapproval otherwise.
+      transactionAmount: price,
+      backUrl,
+    });
 
     const trialConfig = await prisma.membershipTrialConfig.findUnique({
       where: { plan },
@@ -288,37 +179,39 @@ export async function POST(request: NextRequest) {
       planDetails.welcomeFreeMonths,
     );
 
-    if (freeTrial) {
-      const subscription = await startTrial({
+    let subscription = freeTrial
+      ? await startTrial({
+          clubId,
+          plan,
+          cycle,
+          renewalMode: renewalMode!,
+          currency,
+          trialOverrideDays: trialConfig?.trialDays,
+          fallbackWelcomeFreeMonths: planDetails.welcomeFreeMonths,
+          mpPreapprovalId: preapproval.id,
+        })
+      : await attachPendingPreapproval({
+          clubId,
+          plan,
+          cycle,
+          renewalMode: renewalMode!,
+          currency,
+          mpPreapprovalId: preapproval.id,
+        });
+
+    // Requires BOTH the opt-in flag AND the actual identification the owner
+    // confirmed; never persists one without the other (see
+    // membershipCheckout.schema.ts).
+    if (saveIdentification === true && identification) {
+      subscription = await saveMembershipPayerIdentification(
         clubId,
-        plan,
-        cycle,
-        renewalMode: renewalMode ?? "AUTO",
-        currency,
-        trialOverrideDays: trialConfig?.trialDays,
-        fallbackWelcomeFreeMonths: planDetails.welcomeFreeMonths,
-      });
-
-      return NextResponse.json({ subscription });
+        identification,
+      );
     }
-
-    const preference = await createMembershipPreference({
-      clubId,
-      plan,
-      price: planDetails.annualPrice!,
-      currency,
-    });
-
-    const subscription = await attachPendingPreference({
-      clubId,
-      plan,
-      currency,
-      mpPreferenceId: preference.preferenceId,
-    });
 
     return NextResponse.json({
       subscription,
-      checkoutUrl: preference.checkoutUrl,
+      mpPreapprovalId: preapproval.id,
     });
   } catch (err) {
     const message =
@@ -336,9 +229,9 @@ export async function POST(request: NextRequest) {
 // Changes the caller's own club's plan tier IMMEDIATELY, valid ONLY while
 // the membership subscription is TRIALING — every plan tier currently has a
 // free trial, and while trialing no real charge has happened yet on EITHER
-// cycle (MONTHLY: an authorized-but-uncharged preapproval; ANNUAL: no
-// Mercado Pago object at all), so whatever the owner picks here simply
-// becomes what eventually gets charged. Deliberately separate from
+// cycle (both have only an authorized-but-uncharged preapproval), so
+// whatever the owner picks here simply becomes what eventually gets
+// charged. Deliberately separate from
 // `requestPlanChange` (core/billing/services/membership.service.ts), which
 // only applies once ACTIVE and defers to the next renewal boundary with no
 // proration — that mechanism is untouched by this route. Scope is plan tier
@@ -390,13 +283,11 @@ export async function PATCH(request: NextRequest) {
   }
 
   try {
-    // MONTHLY already has an authorized preapproval on file — its own
-    // charge amount must be kept in sync via MP's own PUT support for
-    // updating an existing subscription's amount (see
-    // updateMembershipPreapprovalAmount's doc comment). ANNUAL trials never
-    // create a Mercado Pago object at all (see `startTrial`'s ANNUAL
-    // caller above), so there is nothing to update there.
-    if (existing.cycle === "MONTHLY" && existing.mpPreapprovalId) {
+    // A TRIALING subscription already has an authorized preapproval on file
+    // (either cycle) — its charge amount must be kept in sync via MP's own
+    // PUT support for updating an existing subscription's amount (see
+    // updateMembershipPreapprovalAmount's doc comment).
+    if (existing.mpPreapprovalId) {
       await updateMembershipPreapprovalAmount(
         existing.mpPreapprovalId,
         price,

@@ -136,12 +136,16 @@
     "en": "Inglés",
     "es": "Español"
   },
+  "HomePage": {
+    "title": "Play Padel — Reservá canchas de pádel online",
+    "description": "Encontrá turnos disponibles de pádel en distintos clubes, todo en un mismo lugar."
+  },
   "LandingHeader": {
     "nav": {
-      "about": "Nosotros",
       "features": "Funcionalidades",
       "pricing": "Precios",
-      "getStarted": "Comenzar"
+      "testimonials": "Testimonios",
+      "faq": "FAQ"
     },
     "signUp": "Registrarse",
     "logIn": "Iniciar sesión",
@@ -151,135 +155,217 @@
   },
   "LandingHero": {
     "heading": {
-      "start": "Reserva canchas.",
-      "connect": "Conecta.",
-      "run": "Administra",
-      "clubLine": "tu club con nuestra",
-      "platform": "Plataforma de Pádel."
+      "line1": "Administra tu club de pádel",
+      "line2": "sin planillas de cálculo."
     },
-    "ctaPrimary": "Explorar clubes",
-    "ctaSecondary": "Para dueños de clubes",
-    "description": "Reservas de cancha en tiempo real para jugadores, y herramientas completas de gestión de club para propietarios — todo en una sola plataforma creada para el pádel.",
-    "imageAlt": "Composición de paletas y pelotas de pádel"
+    "description": "Reservas, pagos y horarios de cancha en un solo panel — pensado para dueños de club que prefieren estar en la cancha antes que al teléfono.",
+    "ctaPrimary": "Iniciar prueba gratis",
+    "ctaSecondary": "Ver funcionalidades",
+    "reassurance": "Sin tarjeta de crédito. Cancelás cuando quieras.",
+    "mockup": {
+      "courtName": "Cancha Norte",
+      "liveLabel": "Hoy · en vivo",
+      "statusBooked": "Reservada",
+      "statusAvailable": "Disponible"
+    },
+    "floatingCards": {
+      "booking": {
+        "title": "Reserva confirmada",
+        "subtitle": "Cancha 2 · 18:00",
+        "description": "Los jugadores reciben la confirmación al instante, sin que nadie tenga que revisarla a mano."
+      },
+      "payment": {
+        "title": "Pago recibido",
+        "subtitle": "Mercado Pago · $8.500",
+        "description": "El cobro se acredita automáticamente con Mercado Pago en el momento de la reserva."
+      },
+      "courts": {
+        "title": "4 canchas activas",
+        "subtitle": "",
+        "description": "Cada cancha del club se gestiona desde el mismo panel, con su propio horario y estado."
+      },
+      "nextSlot": {
+        "title": "Cancha 3 libre en 5 min",
+        "subtitle": "",
+        "description": "El sistema avisa en tiempo real cuando una cancha está por liberarse."
+      }
+    }
   },
-  "LandingTrusted": {
-    "badge": "En números",
-    "heading": {
-      "bold": "Ya sea que reserves una cancha o gestiones un club",
-      "rest": "— {brand} conecta a jugadores y clubes en un solo lugar, en tiempo real."
-    },
+  "LandingStats": {
+    "heading": "Los números que le importan a un dueño de club",
     "items": [
       {
         "value": "4",
-        "label": "Planes flexibles",
-        "description": "Desde un club de una sola cancha hasta una operación de varias canchas: elige el plan que se ajuste a tus necesidades y mejóralo cuando quieras."
+        "label": "Planes para crecer"
       },
       {
         "value": "Tiempo real",
-        "label": "Disponibilidad de canchas",
-        "description": "Mira exactamente qué horarios están disponibles en este momento, sin llamadas ni esperas de respuesta."
+        "label": "Disponibilidad de cancha"
       },
       {
         "value": "Seguro",
-        "label": "Pagos con Mercado Pago",
-        "description": "Paga en línea al reservar, con reembolsos automáticos si se cancela una reserva."
+        "label": "Pago con Mercado Pago"
+      }
+    ]
+  },
+  "LandingFeatures": {
+    "heading": "Todo lo que un club necesita para gestionar reservas",
+    "items": [
+      {
+        "title": "Reserva instantánea",
+        "description": "Los jugadores reservan una cancha en pocos toques, con disponibilidad que se actualiza en el momento en que se ocupa un horario."
+      },
+      {
+        "title": "Pagos seguros",
+        "description": "El pago con Mercado Pago está integrado directamente en el flujo de reserva, sin pasos extra para el jugador."
+      },
+      {
+        "title": "Gestión de canchas y club",
+        "description": "Administra canchas, cierres y planes desde un solo panel con un registro completo de auditoría."
       }
     ]
   },
   "LandingAbout": {
-    "heading": {
-      "bold": "Creado para jugadores y",
-      "muted": "clubes que buscan más"
-    },
-    "badge": "Reservas simplificadas",
-    "items": [
-      {
-        "title": "Reservas en tiempo real",
-        "description": "Explora clubes, consulta la disponibilidad de canchas en vivo y reserva tu turno en segundos, sin idas y vueltas."
-      },
-      {
-        "title": "Pagos seguros integrados",
-        "description": "Cuando un club requiere pago anticipado, el pago se realiza directamente en la app a través de Mercado Pago; si cancelas, se te reembolsa automáticamente."
-      },
-      {
-        "title": "Pensado también para dueños de clubes",
-        "description": "Gestiona canchas, disponibilidad y reservas desde un solo panel, con un registro completo de cada cambio."
-      },
-      {
-        "title": "Tu perfil de jugador, a tu manera",
-        "description": "Registra tu lado preferido, mano dominante y categoría de habilidad para que compañeros y clubes conozcan tu estilo de juego."
-      }
+    "heading": "Pensado para clubes listos para crecer",
+    "description": "Desde una sola cancha hasta una operación con varias, Play Padel le da a los dueños un panel único para reservas, pagos y horarios — mientras los jugadores obtienen una forma simple de encontrar y reservar una cancha.",
+    "imageAlts": [
+      "Vista aérea de una cancha de pádel",
+      "Vista superior de una cancha de pádel",
+      "Jugadores en una cancha de pádel cubierta",
+      "Partido de pádel en una cancha cubierta"
     ],
-    "imageAlt": "Jugadores compartiendo un momento junto a la red después de un partido",
-    "learnMore": "Saber más"
+    "goToSlide": "Ir a la foto {index}",
+    "chips": [
+      {
+        "label": "Horarios de cancha"
+      },
+      {
+        "label": "Pagos con Mercado Pago"
+      },
+      {
+        "label": "Directorio de jugadores"
+      },
+      {
+        "label": "Registro de auditoría"
+      }
+    ]
   },
-  "LandingFeatures": {
-    "badge": "Una plataforma. Todas las canchas.",
-    "heading": {
-      "bold": "Todo lo que necesitas",
-      "muted": "para reservar y gestionar"
-    },
-    "previousLabel": "Funcionalidad anterior",
-    "nextLabel": "Siguiente funcionalidad",
-    "goToFeature": "Ir a la funcionalidad {number}: {title}",
+  "LandingTestimonials": {
+    "heading": "Clubes que ya reservan mejor",
+    "subheading": "Así describen su experiencia los dueños y encargados que ya gestionan su club con Play Padel.",
     "items": [
       {
-        "title": "Disponibilidad en tiempo real",
-        "description": "Consulta exactamente qué canchas están libres en cualquier club, actualizado en el momento en que se reserva un turno.",
-        "imageAlt": "Dos mujeres jugando al pádel en una cancha al aire libre"
+        "quote": "Antes llevaba una planilla aparte solo para cruzar quién había pagado y qué canchas estaban realmente libres. Ahora la disponibilidad y el pago con Mercado Pago viven en el mismo flujo de reserva, así que esa planilla desapareció para siempre.",
+        "name": "Martín Ibarra",
+        "role": "Dueño, Cancha Norte Padel Club"
       },
       {
-        "title": "Reserva instantánea",
-        "description": "Reserva tu cancha en pocos toques, sin llamadas ni esperas de confirmación.",
-        "imageAlt": "Vista en ángulo alto de paletas y pelotas de pádel en la cancha"
+        "quote": "Bloqueamos una cancha por mantenimiento y los jugadores simplemente ven que no está disponible, con el motivo incluido. Se acabaron los horarios duplicados por un olvido en la recepción.",
+        "name": "Lucía Fernández",
+        "role": "Encargada, Club Deportivo Belgrano"
       },
       {
-        "title": "Pagos en línea seguros",
-        "description": "Pago con Mercado Pago integrado directamente en el flujo de reserva, con reembolsos automáticos ante una cancelación.",
-        "imageAlt": "Personas jugando al pádel juntas en una cancha cubierta"
+        "quote": "Pasar de dos canchas a cuatro no significó cambiar de software — solo subimos de plan y todo el historial de reservas quedó intacto.",
+        "name": "Diego Salas",
+        "role": "Dueño, Punta Padel"
       },
       {
-        "title": "Gestión de canchas y cierres",
-        "description": "Los propietarios pueden bloquear una cancha por mantenimiento o un evento, con un motivo que los jugadores ven antes de intentar reservarla.",
-        "imageAlt": "Jugador preparándose para jugar al pádel en una cancha cubierta"
-      },
-      {
-        "title": "Perfiles de jugador",
-        "description": "Registra tu lado preferido, mano dominante y categoría de habilidad, visibles para compañeros y clubes.",
-        "imageAlt": "Jugadores compartiendo un momento en una cancha de pádel cubierta"
-      },
-      {
-        "title": "Planes para cada club",
-        "description": "Desde una sola cancha hasta una operación de varias canchas, elige el plan que se ajuste y mejóralo a medida que creces.",
-        "imageAlt": "Vista lateral de una mujer jugando al pádel"
-      },
-      {
-        "title": "Registro de auditoría completo",
-        "description": "Cada reserva, cancelación y cambio queda registrado, para que los propietarios siempre sepan qué sucedió y cuándo.",
-        "imageAlt": "Plano completo de una mujer jugando al pádel"
-      },
-      {
-        "title": "Pensado para Argentina",
-        "description": "Identificación fiscal con formato CUIT, precios en ARS y Mercado Pago: pensado según cómo operan realmente los clubes aquí.",
-        "imageAlt": "Jugador preparándose para jugar al pádel en una cancha cubierta"
+        "quote": "Ahora nuestros socios reservan su propio horario en vez de llamar en horario de oficina. Bajaron las llamadas a recepción y las canchas se llenan más rápido.",
+        "name": "Valentina Rossi",
+        "role": "Dueña, Set Match Padel"
       }
     ]
   },
   "LandingPricing": {
     "heading": "Precios simples y transparentes",
     "subheading": "Elige el plan que se ajuste a tu club hoy, y mejóralo cuando quieras a medida que creces.",
-    "perMonth": "/ mes"
+    "monthly": "Mensual",
+    "annual": "Anual",
+    "billingCycleLabel": "Alternar entre facturación mensual o anual",
+    "perMonth": "/ mes",
+    "perYear": "/ año",
+    "welcomeFreeMonths": "{count, plural, one {# mes gratis} other {# meses gratis}}",
+    "annualSavings": "Ahorrás {percent}%"
   },
-  "LandingCtaBanner": {
-    "heading": {
-      "line1": "¿Listo para reservar",
-      "line2": "tu próximo partido?"
+  "PlanPricingDetails": {
+    "BASIC": {
+      "tagline": "Ideal para clubes que recién empiezan.",
+      "features": [
+        "Hasta 2 canchas",
+        "Reservas y turnos online",
+        "Pagos con Mercado Pago",
+        "Gestión de horarios de cancha"
+      ]
     },
-    "description": "Encuentra un club, consulta la disponibilidad en tiempo real y reserva tu cancha en minutos, o suma tu propio club a {brand} y gestiónalo todo desde un solo panel.",
-    "ctaPrimary": "Comenzar",
-    "ctaSecondary": "¿Tienes un club? Publícalo aquí"
+    "PRO": {
+      "tagline": "Para clubes en crecimiento que necesitan más lugar para reservar.",
+      "features": [
+        "Todo lo de Basic",
+        "Hasta 4 canchas",
+        "Directorio de jugadores",
+        "Registro de auditoría e historial de actividad"
+      ]
+    },
+    "PLUS": {
+      "tagline": "Pensado para clubes ocupados que trabajan a máxima capacidad.",
+      "features": [
+        "Todo lo de Pro",
+        "Hasta 7 canchas",
+        "Soporte prioritario",
+        "Reportes avanzados"
+      ]
+    },
+    "MAX": {
+      "tagline": "Hecho a medida para operaciones grandes con múltiples canchas.",
+      "priceNote": "Contactanos",
+      "features": [
+        "Todo lo de Plus",
+        "Canchas ilimitadas",
+        "Servicio de cuenta dedicado",
+        "Integraciones personalizadas",
+        "Soporte empresarial"
+      ]
+    }
+  },
+  "LandingFaq": {
+    "heading": "Preguntas frecuentes",
+    "subheading": "Todo lo que necesitás saber antes de empezar.",
+    "items": [
+      {
+        "question": "¿Cómo funciona la reserva y los horarios de cancha?",
+        "answer": "Los jugadores ven la disponibilidad en tiempo real de cada cancha del club y reservan un horario directamente, sin llamadas. Los dueños gestionan el horario, bloquean canchas por mantenimiento y ven todas las reservas en un solo calendario."
+      },
+      {
+        "question": "¿Cómo se gestionan los pagos?",
+        "answer": "El pago se procesa con Mercado Pago, integrado directamente en el flujo de reserva."
+      },
+      {
+        "question": "¿Puedo gestionar más de una cancha o cerrar una cancha temporalmente?",
+        "answer": "Sí — agrega tantas canchas como permita tu plan, y cierra cualquier cancha por mantenimiento o un evento con un motivo que los jugadores ven antes de intentar reservarla."
+      },
+      {
+        "question": "¿Cuál es la diferencia entre los planes?",
+        "answer": "Los planes escalan según la cantidad de canchas y las funcionalidades, desde un club de una sola cancha hasta una operación con varias canchas, soporte prioritario y reportes avanzados. Puedes mejorar de plan cuando quieras a medida que creces."
+      },
+      {
+        "question": "¿Qué pasa si un jugador cancela una reserva?",
+        "answer": "El horario de cancha se libera de inmediato para otros jugadores."
+      },
+      {
+        "question": "¿Una sola cuenta de club puede gestionar varias sedes?",
+        "answer": "Cada cuenta de club gestiona sus propias canchas y horarios. Para varias sedes, nuestro plan Max admite configuraciones personalizadas con varias canchas — contáctanos para conversar sobre tu caso."
+      }
+    ]
   },
   "LandingFooter": {
+    "cta": {
+      "heading": {
+        "line1": "¿Listo para gestionar tu club",
+        "line2": "sin las idas y vueltas?"
+      },
+      "description": "Configura tus canchas, conecta Mercado Pago y empieza a recibir reservas en {brand} en una sola tarde.",
+      "ctaPrimary": "Comenzar"
+    },
     "tagline": "La plataforma que clubes de pádel y jugadores usan para reservar, gestionar y jugar, sin idas y vueltas.",
     "talkToUs": "Hablemos",
     "columns": [
@@ -298,10 +384,16 @@
         ]
       },
       {
-        "title": "Soporte",
+        "title": "Explorar",
         "links": [
           {
-            "label": "Contacto"
+            "label": "Precios"
+          },
+          {
+            "label": "Testimonios"
+          },
+          {
+            "label": "Preguntas frecuentes"
           }
         ]
       }
@@ -309,6 +401,18 @@
     "copyright": "© {year} {brand}. Todos los derechos reservados.",
     "privacy": "Privacidad",
     "terms": "Términos y condiciones"
+  },
+  "LandingWhatsAppButton": {
+    "ariaLabel": "Chatear por WhatsApp"
+  },
+  "TermsPage": {
+    "heading": "Términos y condiciones",
+    "lastUpdated": "Última actualización: 18 de septiembre de 2026"
+  },
+  "PrivacyPage": {
+    "heading": "Política de privacidad",
+    "lastUpdated": "Última actualización: 18 de septiembre de 2026",
+    "content": "1. Alcance\nEsta Política de Privacidad describe qué datos personales recopila {brand} al usar la app, cómo los usamos y con qué proveedores los compartimos para poder ofrecer el servicio.\n\n2. Datos que recopilamos\nAl crear una cuenta recopilamos tu nombre, email y foto de perfil (a través de tu proveedor de inicio de sesión). Según cómo uses la app, también podemos recopilar tu teléfono, dirección, género, categoría y lado de juego en pádel, y mano dominante. Los dueños de club además proporcionan datos de facturación del club (razón social, CUIT/CUIL).\n\n3. Cómo usamos tus datos\nUsamos tus datos para crear y mantener tu cuenta, procesar reservas y pagos, enviarte notificaciones sobre tus reservas, y para el funcionamiento general de la plataforma. No vendemos tus datos ni los usamos con fines publicitarios.\n\n4. Con quién compartimos tus datos\nCompartimos datos con los proveedores que usamos para operar el servicio: Clerk (autenticación), Mercado Pago (procesamiento de pagos), Neon (base de datos), Resend (emails transaccionales) y Vercel (hosting y analítica de uso). Cada uno accede solo a los datos necesarios para cumplir su función.\n\n5. Transferencias internacionales\nAlgunos de estos proveedores (Clerk, Resend y parte de nuestra infraestructura de hosting) procesan datos fuera de Argentina, principalmente en Estados Unidos. Al usar la app, aceptás esta transferencia, realizada únicamente para los fines descriptos en esta política.\n\n6. Tus derechos\nBajo la Ley 25.326 de Protección de Datos Personales, podés ejercer tus derechos de acceso, rectificación y supresión de tus datos personales en cualquier momento, escribiéndonos a los datos de contacto que figuran abajo.\n\n7. Cookies\nLa app usa cookies estrictamente necesarias para mantener tu sesión iniciada y recordar tu idioma preferido. No usamos cookies de seguimiento publicitario.\n\n8. Cambios a esta política\nEsta política puede actualizarse en cualquier momento. El uso continuado del servicio después de un cambio implica la aceptación de la política revisada.\n\n9. Contacto\nPreguntas sobre esta política pueden dirigirse al soporte de {brand}."
   },
   "ShareButton": {
     "share": "Compartir",
@@ -485,7 +589,7 @@
         "subheading": "Por favor revísalos y acéptalos antes de continuar.",
         "confirmAge": "Confirmo que tengo 18 años de edad o más.",
         "acceptTerms": "Acepto los Términos y Condiciones.",
-        "content": "1. Aceptación de los Términos\nAl crear una cuenta en {brand}, aceptas quedar sujeto a estos Términos y Condiciones. Si no estás de acuerdo, no continúes con el registro.\n\n2. Descripción del Servicio\n{brand} conecta a jugadores con clubes de pádel, permitiendo a los jugadores explorar canchas y reservar turnos libres, y permitiendo a los dueños de clubes gestionar la disponibilidad y las reservas de sus canchas.\n\n3. Cuentas y Responsabilidades\nEres responsable de la exactitud de la información proporcionada durante el registro y de mantener la confidencialidad de las credenciales de tu cuenta. Los dueños de clubes son responsables de mantener actualizados los horarios de apertura de sus canchas y los registros de reservas.\n\n4. Reservas y Cancelaciones\nLas reservas se confirman de forma instantánea en el momento de reservar. Los jugadores pueden cancelar por su cuenta hasta 2 horas antes del horario de inicio de una reserva; las cancelaciones dentro de esa ventana deben gestionarse directamente con el club. Las reservas no son reembolsables: {brand} no procesa reembolsos por ninguna reserva, sin importar quién la cancele ni el motivo. Cualquier disputa, incidente o problema relacionado con una reserva cancelada o no cumplida debe resolverse directamente con el club. Al reservar un turno, aceptas la responsabilidad total por cualquier inconveniente derivado de su cancelación.\n\n5. Pagos\nAlgunos clubes requieren pago anticipado en línea para confirmar una reserva; en ese caso, el pago se procesa a través de Mercado Pago en el momento de reservar. Para los clubes que no requieren pago anticipado, el pago se realiza en persona en el club.\n\n6. Manejo de Datos\nLos datos que envías se almacenan para brindar el servicio y no se comparten con terceros, salvo que sea necesario para operar la plataforma o cumplir con la ley.\n\n7. Limitación de Responsabilidad\nEl servicio se ofrece \"tal cual\", sin garantías de ningún tipo. {brand} no es responsable por daños indirectos, incidentales o consecuentes que surjan del uso del servicio.\n\n8. Cambios a Estos Términos\nEstos términos son un texto provisorio pendiente de revisión legal y pueden reemplazarse o actualizarse en cualquier momento. El uso continuado del servicio después de los cambios constituye la aceptación de los términos revisados.\n\n9. Contacto\nLas preguntas sobre estos términos pueden dirigirse al administrador de tu club de {brand}, o al soporte de {brand} para cuentas de jugador."
+        "content": "1. Aceptación de los Términos\nAl crear una cuenta en {brand}, aceptas quedar sujeto a estos Términos y Condiciones. Si no estás de acuerdo, no continúes con el registro.\n\n2. Descripción del Servicio\n{brand} conecta a jugadores con clubes de pádel, permitiendo a los jugadores explorar canchas y reservar turnos libres, y permitiendo a los dueños de clubes gestionar la disponibilidad y las reservas de sus canchas.\n\n3. Cuentas y Responsabilidades\nEres responsable de la exactitud de la información proporcionada durante el registro y de mantener la confidencialidad de las credenciales de tu cuenta. Los dueños de clubes son responsables de mantener actualizados los horarios de apertura de sus canchas y los registros de reservas.\n\n4. Reservas y Cancelaciones\nLas reservas se confirman de forma instantánea en el momento de reservar. Los jugadores pueden cancelar por su cuenta hasta 2 horas antes del horario de inicio de una reserva; las cancelaciones dentro de esa ventana deben gestionarse directamente con el club. Las reservas no son reembolsables: {brand} no procesa reembolsos por ninguna reserva, sin importar quién la cancele ni el motivo. Cualquier disputa, incidente o problema relacionado con una reserva cancelada o no cumplida debe resolverse directamente con el club. Al reservar un turno, aceptas la responsabilidad total por cualquier inconveniente derivado de su cancelación.\n\n5. Pagos\nAlgunos clubes requieren pago anticipado en línea para confirmar una reserva; en ese caso, el pago se procesa a través de Mercado Pago en el momento de reservar. Para los clubes que no requieren pago anticipado, el pago se realiza en persona en el club.\n\n6. Manejo de Datos\nLos datos que envías se almacenan para brindar el servicio y no se comparten con terceros, salvo que sea necesario para operar la plataforma o cumplir con la ley.\n\n7. Limitación de Responsabilidad\nEl servicio se ofrece \"tal cual\", sin garantías de ningún tipo. {brand} no es responsable por daños indirectos, incidentales o consecuentes que surjan del uso del servicio.\n\n8. Cambios a Estos Términos\nEstos términos pueden reemplazarse o actualizarse en cualquier momento. El uso continuado del servicio después de los cambios constituye la aceptación de los términos revisados.\n\n9. Contacto\nLas preguntas sobre estos términos pueden dirigirse al administrador de tu club de {brand}, o al soporte de {brand} para cuentas de jugador."
       }
     }
   },

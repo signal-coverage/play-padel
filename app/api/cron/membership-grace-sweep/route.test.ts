@@ -68,14 +68,12 @@ function makeRequest(authHeader?: string) {
 // seed only the buckets it cares about without over-specifying call order.
 let autoStuckSubs: Array<{ clubId: string; mpPreapprovalId: string | null }> =
   [];
-let annualTrialSubs: Array<{ clubId: string }> = [];
 let manualActiveSubs: Array<{ clubId: string }> = [];
 let manualPastDueSubs: Array<{ clubId: string }> = [];
 
 beforeEach(() => {
   vi.stubEnv("CRON_SECRET", "test-cron-secret");
   autoStuckSubs = [];
-  annualTrialSubs = [];
   manualActiveSubs = [];
   manualPastDueSubs = [];
 
@@ -86,9 +84,6 @@ beforeEach(() => {
       const { where } = args;
       if (where.renewalMode === "AUTO" && where.status === "PAST_DUE") {
         return autoStuckSubs;
-      }
-      if (where.cycle === "ANNUAL" && where.status === "TRIALING") {
-        return annualTrialSubs;
       }
       if (where.renewalMode === "MANUAL" && where.status === "ACTIVE") {
         return manualActiveSubs;
@@ -202,56 +197,6 @@ describe("AUTO mode — backstop-only reconciliation", () => {
     const body = await response.json();
 
     expect(body.failed).toBe(1);
-  });
-});
-
-describe("ANNUAL trial expiry (app-tracked trialEndsAt gate)", () => {
-  it("queries ANNUAL subscriptions still TRIALING past their trialEndsAt", async () => {
-    await GET(makeRequest("Bearer test-cron-secret"));
-
-    expect(findManyMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: expect.objectContaining({
-          cycle: "ANNUAL",
-          status: "TRIALING",
-          trialEndsAt: expect.objectContaining({
-            not: null,
-            lte: expect.any(Date),
-          }),
-        }),
-      }),
-    );
-  });
-
-  // sdd-verify follow-up fix: a row with `mpPreferenceId` already set means
-  // a "Pay Now" checkout link was generated and the owner may have already
-  // paid, with the webhook confirmation simply not having landed yet before
-  // this daily cron runs. Auto-cancelling that row would wrongly cancel an
-  // already-paying customer.
-  it("excludes ANNUAL trials that already have a payment attempt in flight (mpPreferenceId set)", async () => {
-    await GET(makeRequest("Bearer test-cron-secret"));
-
-    expect(findManyMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: expect.objectContaining({
-          cycle: "ANNUAL",
-          status: "TRIALING",
-          mpPreferenceId: null,
-        }),
-      }),
-    );
-  });
-
-  it("cancels an expired-without-payment annual trial via recordAutoCancellation", async () => {
-    annualTrialSubs = [{ clubId: "club_annual_1" }];
-
-    const response = await GET(makeRequest("Bearer test-cron-secret"));
-    const body = await response.json();
-
-    expect(recordAutoCancellationMock).toHaveBeenCalledWith(
-      expect.objectContaining({ clubId: "club_annual_1" }),
-    );
-    expect(body.annualTrialsExpired).toBe(1);
   });
 });
 

@@ -1,4 +1,3 @@
-export interface AboutItem {
-  title: string;
-  description: string;
+export interface ChipTranslation {
+  label: string;
 }

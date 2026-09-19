@@ -11,7 +11,6 @@ import "@testing-library/jest-dom/vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { NextIntlClientProvider } from "next-intl";
 import messages from "@/messages/en.json";
-import { AWAITING_CONFIRMATION_POLL_INTERVAL_MS } from "./consts";
 
 // Mocked purely so the tests below can assert whether the celebration
 // fired — the real module is a plain event dispatch with no DOM/canvas
@@ -328,95 +327,13 @@ describe("PlanSelectionModal", () => {
     expect(screen.queryByText("invalid card number")).not.toBeInTheDocument();
   });
 
-  it("completes the ANNUAL flow: select plan, continue opens the checkout tab, then shows awaiting confirmation", async () => {
-    const windowOpenSpy = vi.spyOn(window, "open").mockReturnValue(null);
-
-    renderModal(async (url, init) => {
-      if (
-        url === "/api/clubs/membership" &&
-        (!init || init.method === undefined)
-      ) {
-        return {
-          ok: true,
-          json: async () => ({ subscription: PENDING_SUBSCRIPTION }),
-        };
-      }
-      if (url === "/api/clubs/membership" && init?.method === "POST") {
-        return {
-          ok: true,
-          json: async () => ({
-            subscription: PENDING_SUBSCRIPTION,
-            checkoutUrl: "https://mercadopago.example/checkout/123",
-          }),
-        };
-      }
-      throw new Error(`unexpected fetch: ${url}`);
-    });
-
-    await screen.findByRole("radio", { name: /BASIC/ });
-    fireEvent.click(screen.getByRole("button", { name: "Annual" }));
-    fireEvent.click(screen.getByRole("button", { name: /continue/i }));
-
-    await waitFor(() => {
-      expect(windowOpenSpy).toHaveBeenCalledWith(
-        "https://mercadopago.example/checkout/123",
-        "_blank",
-      );
-    });
-
-    expect(
-      await screen.findByText(/confirming your payment/i),
-    ).toBeInTheDocument();
-  });
-
-  // Confirmed sdd-verify gap fix: when the tier has a free trial configured,
-  // ANNUAL checkout now starts an app-tracked trial (no Mercado Pago object,
-  // no `checkoutUrl`) instead of always opening a payment tab — see
-  // app/api/clubs/membership/route.ts's ANNUAL branch. The modal must reach
-  // "Free Trial Active" directly, WITHOUT ever opening a tab or showing the
-  // "awaiting confirmation" step, since `isMembershipConfirmed` already
-  // treats TRIALING as confirmed the instant the checkout response lands.
-  it("completes the ANNUAL trial-start flow: continue starts a trial with no payment tab, straight to the trial-active panel", async () => {
+  // ANNUAL now goes through the exact same in-app card-collection drawer
+  // MONTHLY does (see route.ts and MembershipCheckoutDrawer's own `cycle`
+  // prop) — no more Checkout Pro tab, no more "Pay Now". This mirrors the
+  // MONTHLY flow test above almost exactly, just asserting `cycle: "ANNUAL"`
+  // in the POST body and that no tab is ever opened.
+  it("completes the ANNUAL flow: select plan, enter card, then shows the trial-active panel — no payment tab involved", async () => {
     const windowOpenSpy = vi.spyOn(window, "open");
-
-    renderModal(async (url, init) => {
-      if (
-        url === "/api/clubs/membership" &&
-        (!init || init.method === undefined)
-      ) {
-        return {
-          ok: true,
-          json: async () => ({ subscription: PENDING_SUBSCRIPTION }),
-        };
-      }
-      if (url === "/api/clubs/membership" && init?.method === "POST") {
-        return {
-          ok: true,
-          json: async () => ({
-            subscription: { ...PENDING_SUBSCRIPTION, status: "TRIALING" },
-          }),
-        };
-      }
-      throw new Error(`unexpected fetch: ${url}`);
-    });
-
-    await screen.findByRole("radio", { name: /BASIC/ });
-    fireEvent.click(screen.getByRole("button", { name: "Annual" }));
-    fireEvent.click(screen.getByRole("button", { name: /continue/i }));
-
-    expect(await screen.findByText("Free Trial Active")).toBeInTheDocument();
-    expect(windowOpenSpy).not.toHaveBeenCalled();
-    expect(
-      screen.queryByText(/confirming your payment/i),
-    ).not.toBeInTheDocument();
-  });
-
-  // sdd-verify follow-up fix: an ANNUAL trial has no way to reach ACTIVE
-  // without an explicit "Pay Now" action — before this fix, the checkout
-  // route always 409'd for a non-PENDING subscription, so there was no UI
-  // affordance to even attempt it.
-  it("shows a Pay Now button for a TRIALING ANNUAL subscription and calls the checkout route again when clicked", async () => {
-    const windowOpenSpy = vi.spyOn(window, "open").mockReturnValue(null);
 
     const fetchMock = renderModal(async (url, init) => {
       if (
@@ -425,13 +342,7 @@ describe("PlanSelectionModal", () => {
       ) {
         return {
           ok: true,
-          json: async () => ({
-            subscription: {
-              ...PENDING_SUBSCRIPTION,
-              cycle: "ANNUAL",
-              status: "TRIALING",
-            },
-          }),
+          json: async () => ({ subscription: PENDING_SUBSCRIPTION }),
         };
       }
       if (url === "/api/clubs/membership" && init?.method === "POST") {
@@ -443,14 +354,25 @@ describe("PlanSelectionModal", () => {
               cycle: "ANNUAL",
               status: "TRIALING",
             },
-            checkoutUrl: "https://mercadopago.example/checkout/paynow",
+            mpPreapprovalId: "preapproval_annual_1",
           }),
         };
       }
       throw new Error(`unexpected fetch: ${url}`);
     });
 
-    fireEvent.click(await screen.findByRole("button", { name: "Pay Now" }));
+    await screen.findByRole("radio", { name: /BASIC/ });
+    fireEvent.click(screen.getByRole("button", { name: "Annual" }));
+    fireEvent.click(screen.getByRole("button", { name: /continue/i }));
+
+    fireEvent.change(await screen.findByLabelText(/email/i), {
+      target: { value: "owner@club.com" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /verify/i }));
+
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Simulate submit" }),
+    );
 
     await waitFor(() => {
       const postCall = fetchMock.mock.calls.find(
@@ -465,196 +387,21 @@ describe("PlanSelectionModal", () => {
     expect(JSON.parse(postInit.body as string)).toEqual({
       plan: "BASIC",
       cycle: "ANNUAL",
-    });
-
-    await waitFor(() => {
-      expect(windowOpenSpy).toHaveBeenCalledWith(
-        "https://mercadopago.example/checkout/paynow",
-        "_blank",
-      );
-    });
-
-    // Still shows the trial-active panel — status never jumps to ACTIVE
-    // client-side, only a real webhook can do that.
-    expect(screen.getByText("Free Trial Active")).toBeInTheDocument();
-  });
-
-  // sdd-verify follow-up fix (post-Batch-11 UX polish): the existing
-  // tab-auto-close effect watched `isConfirmed` (true for BOTH TRIALING and
-  // ACTIVE, per isMembershipConfirmed). A tab opened via "Pay Now" is opened
-  // while `isConfirmed` is ALREADY `true` (the subscription is TRIALING),
-  // so the boolean never toggles across the later TRIALING -> ACTIVE
-  // transition and the effect never re-fires — the pay-now tab was
-  // orphaned. ConfirmedPanel has no manual "Check again" button, so the
-  // only way the client can ever learn about the webhook-driven ACTIVE
-  // transition is live polling — this test proves both the polling and the
-  // resulting tab-close happen automatically.
-  // Uses REAL timers deliberately: TanStack Query's `refetchInterval`
-  // scheduling ultimately settles via internal microtask batching that
-  // fake timers (`vi.useFakeTimers`) can't reliably drive to completion in
-  // this setup — advancing the fake clock past the interval reliably
-  // triggers the `fetch` call, but the resulting state update/re-render
-  // never lands even after draining extra ticks. Waiting out the real
-  // interval is slower but deterministic; the generous per-test/`waitFor`
-  // timeouts below account for that.
-  it(
-    "closes the Pay Now tab once live polling picks up the ACTIVE confirmation",
-    async () => {
-      const fakeCheckoutWindow = { close: vi.fn() } as unknown as Window;
-      const windowOpenSpy = vi
-        .spyOn(window, "open")
-        .mockReturnValue(fakeCheckoutWindow);
-
-      let subscriptionStatus = "TRIALING";
-      renderModal(async (url, init) => {
-        if (
-          url === "/api/clubs/membership" &&
-          (!init || init.method === undefined)
-        ) {
-          return {
-            ok: true,
-            json: async () => ({
-              subscription: {
-                ...PENDING_SUBSCRIPTION,
-                cycle: "ANNUAL",
-                status: subscriptionStatus,
-              },
-            }),
-          };
-        }
-        if (url === "/api/clubs/membership" && init?.method === "POST") {
-          return {
-            ok: true,
-            json: async () => ({
-              subscription: {
-                ...PENDING_SUBSCRIPTION,
-                cycle: "ANNUAL",
-                status: "TRIALING",
-              },
-              checkoutUrl: "https://mercadopago.example/checkout/paynow",
-            }),
-          };
-        }
-        throw new Error(`unexpected fetch: ${url}`);
-      });
-
-      fireEvent.click(await screen.findByRole("button", { name: "Pay Now" }));
-
-      await waitFor(() => {
-        expect(windowOpenSpy).toHaveBeenCalledWith(
-          "https://mercadopago.example/checkout/paynow",
-          "_blank",
-        );
-      });
-      expect(fakeCheckoutWindow.close).not.toHaveBeenCalled();
-
-      // Webhook confirms server-side; the client only learns about it via
-      // the next automatic poll tick, never a manual refresh (there is no
-      // "Check again" button on the confirmed panel).
-      subscriptionStatus = "ACTIVE";
-      await waitFor(
-        () => {
-          expect(fakeCheckoutWindow.close).toHaveBeenCalledTimes(1);
-        },
-        { timeout: AWAITING_CONFIRMATION_POLL_INTERVAL_MS + 3000 },
-      );
-      // Same genuine TRIALING -> ACTIVE transition that closes the tab
-      // above also celebrates it — this is the owner's actual payment
-      // settling, tracked live while still on the confirmed panel.
-      expect(fireSuccessCelebrationMock).toHaveBeenCalledTimes(1);
-    },
-    AWAITING_CONFIRMATION_POLL_INTERVAL_MS + 5000,
-  );
-
-  it(
-    "updates the confirmed panel's copy from 'Free Trial Active' to 'Membership Active' once polling detects ACTIVE, without closing/reopening the modal",
-    async () => {
-      vi.spyOn(window, "open").mockReturnValue({
-        close: vi.fn(),
-      } as unknown as Window);
-
-      let subscriptionStatus = "TRIALING";
-      renderModal(async (url, init) => {
-        if (
-          url === "/api/clubs/membership" &&
-          (!init || init.method === undefined)
-        ) {
-          return {
-            ok: true,
-            json: async () => ({
-              subscription: {
-                ...PENDING_SUBSCRIPTION,
-                cycle: "ANNUAL",
-                status: subscriptionStatus,
-              },
-            }),
-          };
-        }
-        if (url === "/api/clubs/membership" && init?.method === "POST") {
-          return {
-            ok: true,
-            json: async () => ({
-              subscription: {
-                ...PENDING_SUBSCRIPTION,
-                cycle: "ANNUAL",
-                status: "TRIALING",
-              },
-              checkoutUrl: "https://mercadopago.example/checkout/paynow",
-            }),
-          };
-        }
-        throw new Error(`unexpected fetch: ${url}`);
-      });
-
-      expect(await screen.findByText("Free Trial Active")).toBeInTheDocument();
-      fireEvent.click(screen.getByRole("button", { name: "Pay Now" }));
-
-      await waitFor(() => {
-        expect(window.open).toHaveBeenCalled();
-      });
-
-      // Still the SAME rendered modal instance — no unmount/remount, no
-      // close+reopen. Only the underlying query result changes once
-      // polling picks up the webhook-driven ACTIVE transition.
-      subscriptionStatus = "ACTIVE";
-      await waitFor(
-        () => {
-          expect(screen.getByText("Membership Active")).toBeInTheDocument();
-        },
-        { timeout: AWAITING_CONFIRMATION_POLL_INTERVAL_MS + 3000 },
-      );
-      expect(screen.queryByText("Free Trial Active")).not.toBeInTheDocument();
-    },
-    AWAITING_CONFIRMATION_POLL_INTERVAL_MS + 5000,
-  );
-
-  it("does not show a Pay Now button for a TRIALING MONTHLY subscription (already has an authorized preapproval)", async () => {
-    renderModal(async (url) => {
-      if (url === "/api/clubs/membership") {
-        return {
-          ok: true,
-          json: async () => ({
-            subscription: {
-              ...PENDING_SUBSCRIPTION,
-              cycle: "MONTHLY",
-              status: "TRIALING",
-            },
-          }),
-        };
-      }
-      throw new Error(`unexpected fetch: ${url}`);
+      renewalMode: "AUTO",
+      payerEmail: "owner@club.com",
+      cardTokenId: "tok_test",
     });
 
     expect(await screen.findByText("Free Trial Active")).toBeInTheDocument();
-    expect(
-      screen.queryByRole("button", { name: "Pay Now" }),
-    ).not.toBeInTheDocument();
+    expect(windowOpenSpy).not.toHaveBeenCalled();
   });
 
-  it("closes the opened checkout tab only once confirmation arrives, never while still pending", async () => {
-    const fakeCheckoutWindow = { close: vi.fn() } as unknown as Window;
-    vi.spyOn(window, "open").mockReturnValue(fakeCheckoutWindow);
-
+  // Both cycles can reach a real "authorized, no trial configured" outcome
+  // (`attachPendingPreapproval` — status stays PENDING, per spec's
+  // "Webhook-Only State Confirmation") — the drawer must show the
+  // awaiting-confirmation view and only ever hand off to the confirmed panel
+  // once the server snapshot itself says so, via a manual refresh.
+  it("shows the awaiting-confirmation view after a no-trial checkout, and reveals the confirmed panel only once a refresh reports ACTIVE", async () => {
     let subscriptionStatus = "PENDING";
     renderModal(async (url, init) => {
       if (
@@ -666,6 +413,7 @@ describe("PlanSelectionModal", () => {
           json: async () => ({
             subscription: {
               ...PENDING_SUBSCRIPTION,
+              cycle: "ANNUAL",
               status: subscriptionStatus,
             },
           }),
@@ -675,8 +423,8 @@ describe("PlanSelectionModal", () => {
         return {
           ok: true,
           json: async () => ({
-            subscription: PENDING_SUBSCRIPTION,
-            checkoutUrl: "https://mercadopago.example/checkout/123",
+            subscription: { ...PENDING_SUBSCRIPTION, cycle: "ANNUAL" },
+            mpPreapprovalId: "preapproval_annual_2",
           }),
         };
       }
@@ -687,23 +435,26 @@ describe("PlanSelectionModal", () => {
     fireEvent.click(screen.getByRole("button", { name: "Annual" }));
     fireEvent.click(screen.getByRole("button", { name: /continue/i }));
 
-    await screen.findByText(/confirming your payment/i);
-    expect(fakeCheckoutWindow.close).not.toHaveBeenCalled();
+    fireEvent.change(await screen.findByLabelText(/email/i), {
+      target: { value: "owner@club.com" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /verify/i }));
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Simulate submit" }),
+    );
 
-    // Still pending after a manual refresh — must not close the tab yet.
+    await screen.findByText(/confirming your payment/i);
+
+    // Still pending after a manual refresh — stays on awaiting-confirmation.
     fireEvent.click(screen.getByRole("button", { name: /check again/i }));
     await waitFor(() => {
       expect(screen.getByText(/confirming your payment/i)).toBeInTheDocument();
     });
-    expect(fakeCheckoutWindow.close).not.toHaveBeenCalled();
 
-    // Webhook confirms — next refresh reveals ACTIVE, which must close the tab.
+    // Webhook confirms server-side; the next manual refresh reveals it.
     subscriptionStatus = "ACTIVE";
     fireEvent.click(screen.getByRole("button", { name: /check again/i }));
 
-    await waitFor(() => {
-      expect(fakeCheckoutWindow.close).toHaveBeenCalledTimes(1);
-    });
     expect(await screen.findByText("Membership Active")).toBeInTheDocument();
   });
 

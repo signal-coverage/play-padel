@@ -3,6 +3,13 @@ import { prisma } from "@/infrastructure/db/client";
 import { PLAN_DETAILS } from "@/lib/consts/planPricing";
 import type { Plan } from "@/core/clubs/types";
 import { getPlatformMercadoPagoClient } from "./platformClient";
+import {
+  resolveAutoRecurringFrequency,
+  type MembershipCycleValue,
+} from "./membershipCycle";
+
+export type { MembershipCycleValue } from "./membershipCycle";
+export { resolveAutoRecurringFrequency } from "./membershipCycle";
 
 export type FreeTrialFrequencyType = "days" | "months";
 
@@ -34,6 +41,7 @@ export function resolveFreeTrialConfig(
 
 export interface CreateMembershipPreapprovalPlanParams {
   plan: Plan;
+  cycle: MembershipCycleValue;
   currency: string;
   backUrl: string;
 }
@@ -43,9 +51,17 @@ export interface MembershipPreapprovalPlanResult {
   initPoint?: string;
 }
 
+function resolvePlanPrice(
+  plan: Plan,
+  cycle: MembershipCycleValue,
+): number | null {
+  const details = PLAN_DETAILS[plan];
+  return cycle === "MONTHLY" ? details.monthlyPrice : details.annualPrice;
+}
+
 /**
- * Creates a `preapproval_plan` template for a club membership tier's monthly
- * billing, carrying `auto_recurring.free_trial` per `resolveFreeTrialConfig`'s
+ * Creates a `preapproval_plan` template for a club membership tier+cycle,
+ * carrying `auto_recurring.free_trial` per `resolveFreeTrialConfig`'s
  * precedence rule. Always uses the platform-scoped client (never a club's
  * OAuth token) — see design.md's "MP client for membership" decision.
  * Currency is threaded explicitly, never hardcoded (spec's "Currency
@@ -54,10 +70,10 @@ export interface MembershipPreapprovalPlanResult {
 export async function createMembershipPreapprovalPlan(
   params: CreateMembershipPreapprovalPlanParams,
 ): Promise<MembershipPreapprovalPlanResult> {
-  const planDetails = PLAN_DETAILS[params.plan];
-  if (planDetails.monthlyPrice == null) {
+  const price = resolvePlanPrice(params.plan, params.cycle);
+  if (price == null) {
     throw new Error(
-      `Plan ${params.plan} has no fixed monthly price — cannot create a Mercado Pago preapproval_plan (MAX is contact-us/custom, not automated)`,
+      `Plan ${params.plan} has no fixed ${params.cycle === "MONTHLY" ? "monthly" : "annual"} price — cannot create a Mercado Pago preapproval_plan (MAX is contact-us/custom, not automated)`,
     );
   }
 
@@ -66,19 +82,18 @@ export async function createMembershipPreapprovalPlan(
   });
   const freeTrial = resolveFreeTrialConfig(
     trialConfig?.trialDays,
-    planDetails.welcomeFreeMonths,
+    PLAN_DETAILS[params.plan].welcomeFreeMonths,
   );
 
   const client = getPlatformMercadoPagoClient();
   const preapprovalPlan = new PreApprovalPlan(client);
   const result = await preapprovalPlan.create({
     body: {
-      reason: `Club membership — ${params.plan} monthly`,
+      reason: `Club membership — ${params.plan} ${params.cycle === "MONTHLY" ? "monthly" : "annual"}`,
       back_url: params.backUrl,
       auto_recurring: {
-        frequency: 1,
-        frequency_type: "months",
-        transaction_amount: planDetails.monthlyPrice,
+        ...resolveAutoRecurringFrequency(params.cycle),
+        transaction_amount: price,
         currency_id: params.currency,
         ...(freeTrial ? { free_trial: freeTrial } : {}),
       },
@@ -94,6 +109,7 @@ export async function createMembershipPreapprovalPlan(
 
 export interface GetOrCreateMembershipPreapprovalPlanIdParams {
   plan: Plan;
+  cycle: MembershipCycleValue;
   currency: string;
   backUrl: string;
 }
@@ -108,23 +124,28 @@ function isUniqueConstraintViolation(err: unknown): boolean {
 }
 
 /**
- * Returns a reusable `preapproval_plan` id for a given (plan tier, currency)
- * pair, creating one via `createMembershipPreapprovalPlan` only the first
- * time that pair is ever checked out — see the `MembershipPreapprovalPlanCache`
- * model (prisma/schema.prisma) and this batch's apply-progress notes. This
- * is what `app/api/clubs/membership/route.ts`'s MONTHLY branch calls instead
- * of `createMembershipPreapprovalPlan` directly, so every club on the same
- * tier+currency shares one Mercado Pago plan object instead of cluttering
- * the seller's "Planes de suscripción" dashboard with near-duplicates.
+ * Returns a reusable `preapproval_plan` id for a given (plan tier, currency,
+ * cycle) triple, creating one via `createMembershipPreapprovalPlan` only the
+ * first time that triple is ever checked out — see the
+ * `MembershipPreapprovalPlanCache` model (prisma/schema.prisma) and this
+ * batch's apply-progress notes. This is what
+ * `app/api/clubs/membership/route.ts`'s POST handler calls instead of
+ * `createMembershipPreapprovalPlan` directly, so every club on the same
+ * tier+currency+cycle shares one Mercado Pago plan object instead of
+ * cluttering the seller's "Planes de suscripción" dashboard with
+ * near-duplicates.
  *
- * Cached per (plan, currency) rather than plan alone: `Club.currency` is a
- * free-form per-club field (spec's "Currency Threaded as Explicit
+ * Cached per (plan, currency, cycle) rather than plan alone: `Club.currency`
+ * is a free-form per-club field (spec's "Currency Threaded as Explicit
  * Parameter"), so a plan object created for one currency must never be
- * reused for a club billed in a different currency.
+ * reused for a club billed in a different currency — and MONTHLY vs ANNUAL
+ * are genuinely different MP plan objects (different `frequency`/amount)
+ * even for the same tier+currency, so they must never share a row either.
  *
  * Concurrency: if two checkouts race to create the cache row for the same
- * never-before-used (plan, currency) pair, the loser's `create` throws a
- * unique-constraint violation (Prisma `P2002`) on the composite `@@id`.
+ * never-before-used (plan, currency, cycle) triple, the loser's `create`
+ * throws a unique-constraint violation (Prisma `P2002`) on the composite
+ * `@@id`.
  * Rather than a distributed lock (disproportionate for a genuinely rare
  * race), the loser simply re-reads the winner's row and reuses its id.
  * Worst case in that race, one harmless orphan `preapproval_plan` object is
@@ -136,10 +157,14 @@ function isUniqueConstraintViolation(err: unknown): boolean {
 export async function getOrCreateMembershipPreapprovalPlanId(
   params: GetOrCreateMembershipPreapprovalPlanIdParams,
 ): Promise<MembershipPreapprovalPlanResult> {
-  const cacheKey = { plan: params.plan, currency: params.currency };
+  const cacheKey = {
+    plan: params.plan,
+    currency: params.currency,
+    cycle: params.cycle,
+  };
 
   const cached = await prisma.membershipPreapprovalPlanCache.findUnique({
-    where: { plan_currency: cacheKey },
+    where: { plan_currency_cycle: cacheKey },
   });
   if (cached) {
     return { id: cached.preapprovalPlanId };
@@ -155,7 +180,7 @@ export async function getOrCreateMembershipPreapprovalPlanId(
     if (!isUniqueConstraintViolation(err)) throw err;
 
     const winner = await prisma.membershipPreapprovalPlanCache.findUnique({
-      where: { plan_currency: cacheKey },
+      where: { plan_currency_cycle: cacheKey },
     });
     if (winner) {
       return { id: winner.preapprovalPlanId, initPoint: created.initPoint };
@@ -171,22 +196,23 @@ export async function getOrCreateMembershipPreapprovalPlanId(
 export interface UpdateMembershipPreapprovalPlanParams {
   preapprovalPlanId: string;
   plan: Plan;
+  cycle: MembershipCycleValue;
   currency: string;
 }
 
 /**
- * Updates an existing `preapproval_plan`'s pricing/trial fields — used by
- * the admin trial-config route (Phase 5) after `MembershipTrialConfig` is
- * changed, so already-issued plans reflect the new trial length without
- * needing a brand-new plan id.
+ * Updates an existing `preapproval_plan`'s recurrence, pricing, and trial
+ * fields. The admin trial-config route uses this after
+ * `MembershipTrialConfig` changes so cached plans reflect the new trial
+ * length without needing a new plan id.
  */
 export async function updateMembershipPreapprovalPlan(
   params: UpdateMembershipPreapprovalPlanParams,
 ): Promise<MembershipPreapprovalPlanResult> {
-  const planDetails = PLAN_DETAILS[params.plan];
-  if (planDetails.monthlyPrice == null) {
+  const price = resolvePlanPrice(params.plan, params.cycle);
+  if (price == null) {
     throw new Error(
-      `Plan ${params.plan} has no fixed monthly price — cannot update a Mercado Pago preapproval_plan`,
+      `Plan ${params.plan} has no fixed ${params.cycle === "MONTHLY" ? "monthly" : "annual"} price — cannot update a Mercado Pago preapproval_plan`,
     );
   }
 
@@ -195,7 +221,7 @@ export async function updateMembershipPreapprovalPlan(
   });
   const freeTrial = resolveFreeTrialConfig(
     trialConfig?.trialDays,
-    planDetails.welcomeFreeMonths,
+    PLAN_DETAILS[params.plan].welcomeFreeMonths,
   );
 
   const client = getPlatformMercadoPagoClient();
@@ -204,9 +230,8 @@ export async function updateMembershipPreapprovalPlan(
     id: params.preapprovalPlanId,
     updatePreApprovalPlanRequest: {
       auto_recurring: {
-        frequency: 1,
-        frequency_type: "months",
-        transaction_amount: planDetails.monthlyPrice,
+        ...resolveAutoRecurringFrequency(params.cycle),
+        transaction_amount: price,
         currency_id: params.currency,
         ...(freeTrial ? { free_trial: freeTrial } : {}),
       },

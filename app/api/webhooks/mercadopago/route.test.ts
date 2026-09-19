@@ -39,7 +39,6 @@ vi.mock("@/lib/notifications/dispatcher", () => ({
 
 vi.mock("@/lib/mercadopago/membershipWebhookHandlers", () => ({
   handleSubscriptionPreapprovalTopic: vi.fn(),
-  handleMembershipPaymentTopic: vi.fn(),
 }));
 
 import { verifyMercadoPagoSignature } from "@/lib/mercadopago/webhookSignature";
@@ -56,10 +55,7 @@ import {
 } from "@/core/billing/services/billing.service";
 import { getClubOwner } from "@/core/clubs/services/clubs.service";
 import { dispatch } from "@/lib/notifications/dispatcher";
-import {
-  handleSubscriptionPreapprovalTopic,
-  handleMembershipPaymentTopic,
-} from "@/lib/mercadopago/membershipWebhookHandlers";
+import { handleSubscriptionPreapprovalTopic } from "@/lib/mercadopago/membershipWebhookHandlers";
 import { NextResponse } from "next/server";
 import { POST } from "./route";
 
@@ -85,8 +81,6 @@ const getClubOwnerMock = getClubOwner as ReturnType<typeof vi.fn>;
 const dispatchMock = dispatch as ReturnType<typeof vi.fn>;
 const handleSubscriptionPreapprovalTopicMock =
   handleSubscriptionPreapprovalTopic as ReturnType<typeof vi.fn>;
-const handleMembershipPaymentTopicMock =
-  handleMembershipPaymentTopic as ReturnType<typeof vi.fn>;
 
 function makeRequest(params: {
   reservationId?: string;
@@ -145,7 +139,6 @@ beforeEach(() => {
   getClubOwnerMock.mockReset();
   dispatchMock.mockReset();
   handleSubscriptionPreapprovalTopicMock.mockReset();
-  handleMembershipPaymentTopicMock.mockReset();
   logSystemJobMock.mockReset();
 
   verifyMercadoPagoSignatureMock.mockReturnValue(true);
@@ -156,9 +149,6 @@ beforeEach(() => {
     email: "owner@example.com",
   });
   handleSubscriptionPreapprovalTopicMock.mockResolvedValue(
-    NextResponse.json({ ok: true }),
-  );
-  handleMembershipPaymentTopicMock.mockResolvedValue(
     NextResponse.json({ ok: true }),
   );
 });
@@ -403,10 +393,10 @@ describe("POST /api/webhooks/mercadopago", () => {
 // previously separate `app/api/webhooks/mercadopago/membership/route.ts`
 // was therefore unreachable in any real deployment. These tests cover only
 // the DISPATCH logic (which handler gets called for which `type`); the
-// handlers' own business logic is covered directly in
+// handler's own business logic is covered directly in
 // `lib/mercadopago/membershipWebhookHandlers.test.ts`.
-describe("POST /api/webhooks/mercadopago — type-based dispatch to membership handlers", () => {
-  it("returns 401 before dispatching to any membership handler when the signature is invalid", async () => {
+describe("POST /api/webhooks/mercadopago — type-based dispatch to the membership handler", () => {
+  it("returns 401 before dispatching to the membership handler when the signature is invalid", async () => {
     verifyMercadoPagoSignatureMock.mockReturnValue(false);
 
     const response = await POST(
@@ -421,7 +411,6 @@ describe("POST /api/webhooks/mercadopago — type-based dispatch to membership h
 
     expect(response.status).toBe(401);
     expect(handleSubscriptionPreapprovalTopicMock).not.toHaveBeenCalled();
-    expect(handleMembershipPaymentTopicMock).not.toHaveBeenCalled();
   });
 
   it("dispatches to handleSubscriptionPreapprovalTopic when type is subscription_preapproval in the JSON body", async () => {
@@ -440,7 +429,6 @@ describe("POST /api/webhooks/mercadopago — type-based dispatch to membership h
       "preap_1",
       "notif_1",
     );
-    expect(handleMembershipPaymentTopicMock).not.toHaveBeenCalled();
     expect(findReservationByIdMock).not.toHaveBeenCalled();
   });
 
@@ -456,24 +444,7 @@ describe("POST /api/webhooks/mercadopago — type-based dispatch to membership h
     );
   });
 
-  it("dispatches to handleMembershipPaymentTopic when type is payment and no reservationId is present (ANNUAL membership payment)", async () => {
-    const response = await POST(
-      makeRequest({
-        body: { type: "payment", data: { id: "pay_1" }, id: "notif_pay_1" },
-      }),
-    );
-
-    expect(response.status).toBe(200);
-    expect(handleMembershipPaymentTopicMock).toHaveBeenCalledWith(
-      expect.anything(),
-      "pay_1",
-      "notif_pay_1",
-    );
-    expect(handleSubscriptionPreapprovalTopicMock).not.toHaveBeenCalled();
-    expect(findReservationByIdMock).not.toHaveBeenCalled();
-  });
-
-  it("routes a payment-type notification to the reservation flow (not handleMembershipPaymentTopic) when reservationId IS present", async () => {
+  it("routes a payment-type notification to the reservation flow (membership billing never uses the payment topic anymore) when reservationId IS present", async () => {
     findReservationByIdMock.mockResolvedValue(RESERVATION);
     getMercadoPagoPaymentMock.mockResolvedValue({
       id: 12345,
@@ -490,7 +461,6 @@ describe("POST /api/webhooks/mercadopago — type-based dispatch to membership h
     );
 
     expect(response.status).toBe(200);
-    expect(handleMembershipPaymentTopicMock).not.toHaveBeenCalled();
     expect(handleSubscriptionPreapprovalTopicMock).not.toHaveBeenCalled();
     expect(findReservationByIdMock).toHaveBeenCalledWith("res_1");
   });

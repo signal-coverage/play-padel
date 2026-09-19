@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
+import { ArrowUpRight } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { ShareButton } from "@/app/_components/ShareButton";
 import { CONTACT, FOOTER_COLUMNS, ease } from "./consts";
@@ -8,6 +9,10 @@ import type { FooterColumnTranslation } from "./types";
 import { CONTAINER } from "@/lib/consts";
 import { scrollToSection } from "@/lib/utils/scroll-to-section";
 
+// A single combined footer-with-CTA composition: a top CTA banner (no photo
+// background — a thin dashed rule stands in for the "match line" motif
+// instead of a photo + gradient scrim) followed by link columns, wordmark,
+// and copyright below it.
 export function LandingFooter() {
   const t = useTranslations("LandingFooter");
   const shouldReduce = useReducedMotion();
@@ -18,7 +23,31 @@ export function LandingFooter() {
     <footer className="bg-[#0A0A0A] text-white overflow-hidden">
       <div className={`${CONTAINER} pt-20 pb-0`}>
         <motion.div
-          className="flex flex-col md:flex-row md:justify-between gap-10 mb-15"
+          className="text-center pb-16 border-b border-dashed border-white/15"
+          initial={shouldReduce ? false : { opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-60px" }}
+          transition={{ duration: 0.55, ease }}
+        >
+          <h2 className="text-[clamp(28px,4vw,44px)] font-bold tracking-[-0.02em] text-white max-w-155 mx-auto mb-5 leading-tight">
+            {t("cta.heading.line1")}
+            <br />
+            {t("cta.heading.line2")}
+          </h2>
+          <p className="text-[16px] text-white/70 max-w-120 mx-auto mb-9 leading-[1.75]">
+            {t("cta.description", { brand: "Play Padel" })}
+          </p>
+          <Link
+            href="/signup"
+            className="inline-flex items-center gap-2 bg-accent text-accent-foreground rounded-sm px-7 py-3.5 text-[15px] font-semibold hover:opacity-90 transition-opacity duration-200"
+          >
+            {t("cta.ctaPrimary")}
+            <ArrowUpRight size={15} strokeWidth={2.5} />
+          </Link>
+        </motion.div>
+
+        <motion.div
+          className="flex flex-col md:flex-row md:justify-between gap-10 my-15"
           initial={shouldReduce ? false : { opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-60px" }}

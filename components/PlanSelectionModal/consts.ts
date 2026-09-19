@@ -45,8 +45,7 @@ export const MEMBERSHIP_SUBSCRIPTION_QUERY_KEY = [
   "membership",
 ] as const;
 
-// Polling cadence while awaiting webhook confirmation (ANNUAL's hosted
-// checkout tab, or MONTHLY's no-trial preapproval waiting on its first
-// charge webhook) — frequent enough to feel responsive, not so frequent it
-// hammers the route.
+// Polling cadence while awaiting webhook confirmation (either cycle's
+// no-trial preapproval waiting on its first charge webhook) — frequent
+// enough to feel responsive, not so frequent it hammers the route.
 export const AWAITING_CONFIRMATION_POLL_INTERVAL_MS = 4000;

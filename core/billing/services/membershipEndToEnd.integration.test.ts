@@ -20,8 +20,8 @@ import { NextRequest } from "next/server";
 //     real query shape against something that behaves like a database.
 //   - `mercadopago` (the SDK) — replaced with per-call mocks, so no real
 //     HTTP call is ever made, but every `lib/mercadopago/*` wrapper module
-//     (platformClient, membershipPreapprovals, preapprovalPlans,
-//     platformPreferences) runs its REAL body-building/response-mapping code.
+//     (platformClient, membershipPreapprovals, preapprovalPlans) runs its
+//     REAL body-building/response-mapping code.
 //   - `@clerk/nextjs/server` — replaced with a fixed authenticated user, so
 //     even `requireOwnerClub` (app/api/clubs/_lib/require-owner.ts) runs for
 //     real against the in-memory `userProfile` table.
@@ -79,7 +79,6 @@ vi.mock("@/infrastructure/db/client", () => ({
           pendingCycle: null,
           renewalMode: "AUTO",
           mpPreapprovalId: null,
-          mpPreferenceId: null,
           mpCustomerId: null,
           mpCardId: null,
           trialEndsAt: null,
@@ -152,14 +151,22 @@ vi.mock("@/infrastructure/db/client", () => ({
         async ({
           where,
         }: {
-          where: { plan_currency: { plan: string; currency: string } };
+          where: {
+            plan_currency_cycle: {
+              plan: string;
+              currency: string;
+              cycle: string;
+            };
+          };
         }) => {
-          const key = `${where.plan_currency.plan}:${where.plan_currency.currency}`;
-          return preapprovalPlanCache.get(key) ?? null;
+          const { plan, currency, cycle } = where.plan_currency_cycle;
+          return (
+            preapprovalPlanCache.get(`${plan}:${currency}:${cycle}`) ?? null
+          );
         },
       ),
       create: vi.fn(async ({ data }: { data: Row }) => {
-        const key = `${data.plan}:${data.currency}`;
+        const key = `${data.plan}:${data.currency}:${data.cycle}`;
         preapprovalPlanCache.set(key, data);
         return data;
       }),
@@ -181,8 +188,7 @@ vi.mock("@clerk/nextjs/server", () => ({
 const preApprovalPlanCreateMock = vi.fn();
 const preApprovalCreateMock = vi.fn();
 const preApprovalGetMock = vi.fn();
-const preferenceCreateMock = vi.fn();
-const paymentGetMock = vi.fn();
+const preApprovalUpdateMock = vi.fn();
 
 vi.mock("mercadopago", () => ({
   MercadoPagoConfig: vi.fn().mockImplementation(function (config: unknown) {
@@ -195,14 +201,8 @@ vi.mock("mercadopago", () => ({
     return {
       create: preApprovalCreateMock,
       get: preApprovalGetMock,
-      update: vi.fn(),
+      update: preApprovalUpdateMock,
     };
-  }),
-  Preference: vi.fn().mockImplementation(function () {
-    return { create: preferenceCreateMock };
-  }),
-  Payment: vi.fn().mockImplementation(function () {
-    return { get: paymentGetMock };
   }),
 }));
 
@@ -282,25 +282,6 @@ function makePreapprovalWebhookRequest(
   });
 }
 
-function makePaymentWebhookRequest(paymentId: string, clubId: string) {
-  const url = new URL("http://localhost/api/webhooks/mercadopago");
-  url.searchParams.set("clubId", clubId);
-  return new NextRequest(url, {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      "x-signature": "ts=1,v1=abc",
-      "x-request-id": "req-1",
-    },
-    body: JSON.stringify({
-      action: "payment.updated",
-      data: { id: paymentId },
-      id: `notif_${paymentId}`,
-      type: "payment",
-    }),
-  });
-}
-
 beforeEach(() => {
   vi.stubEnv("NEXT_PUBLIC_APP_URL", "https://app.example.com");
   vi.stubEnv("MERCADOPAGO_ACCESS_TOKEN", "platform-access-token");
@@ -322,8 +303,7 @@ beforeEach(() => {
   preApprovalPlanCreateMock.mockReset();
   preApprovalCreateMock.mockReset();
   preApprovalGetMock.mockReset();
-  preferenceCreateMock.mockReset();
-  paymentGetMock.mockReset();
+  preApprovalUpdateMock.mockReset();
 });
 
 describe("End-to-end: AUTO monthly membership (onboarding -> checkout -> webhook -> connect gate)", () => {
@@ -577,28 +557,18 @@ describe("End-to-end: MANUAL monthly membership — cron-sweep lockout backstop"
   });
 });
 
-// NOTE on why there is no "ANNUAL, no free trial configured" full HTTP
-// chain test in this file (there previously was one, asserting an immediate
-// `checkoutUrl` for plan PRO): every automated-price tier (BASIC/PRO/PLUS)
-// always has a `welcomeFreeMonths` fallback in `PLAN_DETAILS`, and
-// `resolveFreeTrialConfig` only ever returns `undefined` when BOTH the
-// admin override AND that fallback are absent — there is no real config
-// shape that disables the trial for a real automated-price tier (the only
-// plan with `welcomeFreeMonths: null` is MAX, which is rejected with 400
-// before reaching this branch at all). The OLD test's "success" was itself
-// evidence of the very bug this batch fixes: it asserted an immediate
-// preference/checkoutUrl for PRO, silently relying on the trial check never
-// having been wired in the first place. This is the same structural
-// limitation already accepted for MONTHLY (this file's AUTO/MANUAL describe
-// blocks above also always go through a trial first for the same reason —
-// no full "no trial" HTTP chain test exists for MONTHLY either). The
-// no-trial preference-creation branch remains covered at the unit level in
-// `app/api/clubs/membership/route.test.ts`'s ANNUAL describe block, which
-// mocks `resolveFreeTrialConfig` directly to exercise it.
-
-describe("End-to-end: ANNUAL membership — app-tracked trial (sdd-verify WARNING #1 fix)", () => {
-  it("starts a genuine app-tracked trial with NO Mercado Pago object, then the cron sweep's previously-unreachable 'ANNUAL trial expiry' branch cancels it once trialEndsAt passes", async () => {
-    const clubId = "club_annual_trial_1";
+// ANNUAL now goes through the exact same Mercado Pago preapproval mechanism
+// MONTHLY does (see the AUTO/MANUAL describe blocks above) — the only real
+// difference is a 12-month `auto_recurring.frequency` on the underlying
+// preapproval_plan instead of MONTHLY's 1-month one, and PLAN_DETAILS's
+// annualPrice instead of monthlyPrice. There is no more "app-tracked trial
+// with no MP object" and no more "Pay Now" re-entry: the card is authorized
+// (not charged) at signup for either cycle, and only a webhook ever confirms
+// a real charge — so this block mirrors the AUTO monthly full-chain test
+// above almost exactly.
+describe("End-to-end: ANNUAL membership — real Mercado Pago preapproval, same mechanism as MONTHLY", () => {
+  it("walks the full chain from a PENDING onboarding row through trial start, webhook-confirmed charge, and an unlocked MP-connect gate — using a 12-month preapproval", async () => {
+    const clubId = "club_annual_1";
     seedOwner(clubId);
     await createPendingMembershipSubscription({
       clubId,
@@ -608,193 +578,188 @@ describe("End-to-end: ANNUAL membership — app-tracked trial (sdd-verify WARNIN
 
     expect((await connectGet()).status).toBe(403);
 
-    // Before this fix, this branch ALWAYS called `createMembershipPreference`
-    // (attaching a real MP preference and returning a `checkoutUrl`) even
-    // though PRO has a configured free trial — the confirmed sdd-verify gap.
+    preApprovalPlanCreateMock.mockResolvedValue({ id: "plan_annual_1" });
+    preApprovalCreateMock.mockResolvedValue({
+      id: "preap_annual_1",
+      status: "authorized",
+    });
+
     const checkoutResponse = await membershipPost(
-      makeCheckoutRequest({ plan: "PRO", cycle: "ANNUAL" }),
+      makeCheckoutRequest({
+        plan: "PRO",
+        cycle: "ANNUAL",
+        renewalMode: "AUTO",
+        payerEmail: "owner@example.com",
+        cardTokenId: "card_tok_1",
+      }),
     );
     expect(checkoutResponse.status).toBe(200);
     const checkoutBody = await checkoutResponse.json();
+    // No more one-time Checkout Pro payment link — it's a real preapproval.
     expect(checkoutBody.checkoutUrl).toBeUndefined();
     expect(checkoutBody.subscription.status).toBe("TRIALING");
-    // No MP object created at trial start — ANNUAL has no native
-    // "authorize without charge" primitive for a one-off Checkout Pro
-    // preference (design.md's "Trial start (ANNUAL)" workaround).
-    expect(preferenceCreateMock).not.toHaveBeenCalled();
-    const trialing = subscriptions.get(clubId)!;
-    expect(trialing.mpPreferenceId).toBeNull();
-    expect(trialing.mpPreapprovalId).toBeNull();
-    expect(trialing.trialEndsAt).toBeInstanceOf(Date);
+    expect(checkoutBody.mpPreapprovalId).toBe("preap_annual_1");
 
-    // A TRIALING subscription already counts as "confirmed" for the
-    // MP-connect gate, same as MONTHLY's trial — matches
-    // `isMembershipConfirmed`/`requireMembershipPaid` treating ACTIVE and
-    // TRIALING identically, regardless of billing cycle.
-    expect((await connectGet()).status).toBe(307);
-
-    // Fast-forward past trialEndsAt (equivalent to advancing a fake clock,
-    // same technique already used by the MANUAL cron-sweep test above).
-    subscriptions.set(clubId, {
-      ...subscriptions.get(clubId)!,
-      trialEndsAt: new Date(Date.now() - 1000),
-    });
-
-    // Before this fix, NOTHING ever created a row matching this cron
-    // query (`cycle: ANNUAL, status: TRIALING, trialEndsAt <= now`), so this
-    // branch was unreachable dead code giving false confidence the feature
-    // worked. This assertion is the actual proof it is now reachable.
-    const sweep = await cronGet(
-      new Request("https://app.example.com/api/cron/membership-grace-sweep", {
-        headers: { authorization: "Bearer test-cron-secret" },
+    // The plan created for this checkout must use a 12-month cadence and the
+    // annual price, not MONTHLY's 1-month/monthlyPrice.
+    expect(preApprovalPlanCreateMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        body: expect.objectContaining({
+          auto_recurring: expect.objectContaining({
+            frequency: 12,
+            frequency_type: "months",
+            transaction_amount: 590000,
+          }),
+        }),
       }),
     );
-    const sweepBody = await sweep.json();
-    expect(sweepBody.annualTrialsExpired).toBe(1);
-    expect(sweepBody.failed).toBe(0);
 
-    const cancelled = subscriptions.get(clubId)!;
-    expect(cancelled.status).toBe("CANCELLED");
+    const trialing = subscriptions.get(clubId)!;
+    expect(trialing.mpPreapprovalId).toBe("preap_annual_1");
+    expect(trialing.trialEndsAt).toBeInstanceOf(Date);
+
+    // The card was authorized at signup (same as MONTHLY) — connect is
+    // already unlocked before any webhook.
+    expect((await connectGet()).status).toBe(307);
+
+    // First real charge after the trial ends — confirmed only via webhook.
+    preApprovalGetMock.mockResolvedValue({
+      id: "preap_annual_1",
+      status: "authorized",
+      summarized: {
+        charged_quantity: 1,
+        pending_charge_quantity: 0,
+        last_charged_date: "2027-09-19T12:00:00.000-04:00",
+        semaphore: "green",
+      },
+    });
+    const webhookResponse = await webhookPost(
+      makePreapprovalWebhookRequest("preap_annual_1"),
+    );
+    expect(webhookResponse.status).toBe(200);
+
+    const snapshotBody = await (await membershipGet()).json();
+    expect(snapshotBody.subscription.status).toBe("ACTIVE");
+    expect(snapshotBody.subscription.currentPeriodEnd).toBeTruthy();
+    expect((await connectGet()).status).toBe(307);
+  });
+
+  it("reuses the same cached preapproval_plan for a second ANNUAL checkout of the same tier+currency, keeping it separate from the MONTHLY plan cached for that same tier+currency", async () => {
+    const clubId1 = "club_annual_2";
+    seedOwner(clubId1);
+    await createPendingMembershipSubscription({
+      clubId: clubId1,
+      plan: "PRO",
+      currency: "ARS",
+    });
+
+    preApprovalPlanCreateMock.mockResolvedValue({ id: "plan_annual_pro_ars" });
+    preApprovalCreateMock.mockResolvedValue({
+      id: "preap_annual_2a",
+      status: "authorized",
+    });
+    await membershipPost(
+      makeCheckoutRequest({
+        plan: "PRO",
+        cycle: "ANNUAL",
+        renewalMode: "AUTO",
+        payerEmail: "owner1@example.com",
+        cardTokenId: "card_tok_1",
+      }),
+    );
+    expect(preApprovalPlanCreateMock).toHaveBeenCalledTimes(1);
+
+    // A second, different club checking out the same tier+currency+cycle
+    // must reuse the cached plan, not create a new one.
+    const clubId2 = "club_annual_3";
+    seedOwner(clubId2);
+    await createPendingMembershipSubscription({
+      clubId: clubId2,
+      plan: "PRO",
+      currency: "ARS",
+    });
+    preApprovalCreateMock.mockResolvedValue({
+      id: "preap_annual_2b",
+      status: "authorized",
+    });
+    await membershipPost(
+      makeCheckoutRequest({
+        plan: "PRO",
+        cycle: "ANNUAL",
+        renewalMode: "AUTO",
+        payerEmail: "owner2@example.com",
+        cardTokenId: "card_tok_2",
+      }),
+    );
+    expect(preApprovalPlanCreateMock).toHaveBeenCalledTimes(1);
+    expect(preApprovalCreateMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("AUTO annual renewal failure (MP recycling) flips to PAST_DUE via webhook, then MP's own auto-cancellation locks the club out and closes the connect gate", async () => {
+    const clubId = "club_annual_4";
+    seedOwner(clubId);
+    await createPendingMembershipSubscription({
+      clubId,
+      plan: "PRO",
+      currency: "ARS",
+    });
+
+    preApprovalPlanCreateMock.mockResolvedValue({ id: "plan_annual_4" });
+    preApprovalCreateMock.mockResolvedValue({
+      id: "preap_annual_4",
+      status: "authorized",
+    });
+    await membershipPost(
+      makeCheckoutRequest({
+        plan: "PRO",
+        cycle: "ANNUAL",
+        renewalMode: "AUTO",
+        payerEmail: "owner@example.com",
+        cardTokenId: "card_tok_1",
+      }),
+    );
+
+    preApprovalGetMock.mockResolvedValue({
+      id: "preap_annual_4",
+      status: "authorized",
+      summarized: null,
+    });
+    await webhookPost(makePreapprovalWebhookRequest("preap_annual_4"));
+    expect((await (await membershipGet()).json()).subscription.status).toBe(
+      "ACTIVE",
+    );
+
+    preApprovalGetMock.mockResolvedValue({
+      id: "preap_annual_4",
+      status: "authorized",
+      summarized: {
+        charged_quantity: 2,
+        pending_charge_quantity: 1,
+        last_charged_date: "2028-09-19T12:00:00.000-04:00",
+        semaphore: "red",
+      },
+    });
+    await webhookPost(makePreapprovalWebhookRequest("preap_annual_4"));
+    expect((await (await membershipGet()).json()).subscription.status).toBe(
+      "PAST_DUE",
+    );
+    expect((await connectGet()).status).toBe(403);
+
+    preApprovalGetMock.mockResolvedValue({
+      id: "preap_annual_4",
+      status: "canceled",
+      summarized: null,
+    });
+    await webhookPost(makePreapprovalWebhookRequest("preap_annual_4"));
+    expect((await (await membershipGet()).json()).subscription.status).toBe(
+      "CANCELLED",
+    );
     expect(clubs.get(clubId)?.status).toBe("INACTIVE");
     expect((await connectGet()).status).toBe(403);
   });
 
-  it("pays now during an ANNUAL trial via the checkout route, activates via the confirmed payment webhook, and a later sweep leaves the paid club alone (sdd-verify follow-up fix)", async () => {
-    const clubId = "club_annual_trial_paynow_1";
-    seedOwner(clubId);
-    await createPendingMembershipSubscription({
-      clubId,
-      plan: "PRO",
-      currency: "ARS",
-    });
-
-    // Trial starts with no MP object at all (same as the test above).
-    const trialResponse = await membershipPost(
-      makeCheckoutRequest({ plan: "PRO", cycle: "ANNUAL" }),
-    );
-    expect(trialResponse.status).toBe(200);
-    expect(subscriptions.get(clubId)!.status).toBe("TRIALING");
-    expect(subscriptions.get(clubId)!.mpPreferenceId).toBeNull();
-    expect(preferenceCreateMock).not.toHaveBeenCalled();
-
-    // Before this fix, calling the checkout route again here always 409'd
-    // ("Cannot start a new membership checkout while subscription is
-    // TRIALING") — there was NO way back into this route to ever generate
-    // a payment link for an ANNUAL trial. This is the "pay now" call.
-    preferenceCreateMock.mockResolvedValue({
-      id: "pref_paynow_1",
-      init_point: "https://mp.example.com/checkout/paynow",
-    });
-
-    const payNowResponse = await membershipPost(
-      makeCheckoutRequest({ plan: "PRO", cycle: "ANNUAL" }),
-    );
-    expect(payNowResponse.status).toBe(200);
-    const payNowBody = await payNowResponse.json();
-    expect(payNowBody.checkoutUrl).toBe(
-      "https://mp.example.com/checkout/paynow",
-    );
-    // Status stays TRIALING — generating the link never jumps straight to
-    // ACTIVE, only the webhook does (spec's "Webhook-Only State
-    // Confirmation").
-    expect(payNowBody.subscription.status).toBe("TRIALING");
-    const trialingWithPreference = subscriptions.get(clubId)!;
-    expect(trialingWithPreference.status).toBe("TRIALING");
-    expect(trialingWithPreference.mpPreferenceId).toBe("pref_paynow_1");
-
-    // The webhook confirms the payment — real activation.
-    paymentGetMock.mockResolvedValue({
-      id: 888,
-      status: "approved",
-      external_reference: clubId,
-    });
-    const webhookResponse = await webhookPost(
-      makePaymentWebhookRequest("pay_888", clubId),
-    );
-    expect(webhookResponse.status).toBe(200);
-    expect(subscriptions.get(clubId)!.status).toBe("ACTIVE");
-    expect((await connectGet()).status).toBe(307);
-
-    // The cron's ANNUAL-trial-expiry query filters on `status: TRIALING` —
-    // an already-paid-during-trial subscription must never be swept/
-    // cancelled even if its stale `trialEndsAt` is in the past.
-    subscriptions.set(clubId, {
-      ...subscriptions.get(clubId)!,
-      trialEndsAt: new Date(Date.now() - 1000),
-    });
-    const sweep = await cronGet(
-      new Request("https://app.example.com/api/cron/membership-grace-sweep", {
-        headers: { authorization: "Bearer test-cron-secret" },
-      }),
-    );
-    const sweepBody = await sweep.json();
-    expect(sweepBody.annualTrialsExpired).toBe(0);
-    expect(sweepBody.failed).toBe(0);
-    expect(subscriptions.get(clubId)!.status).toBe("ACTIVE");
-    expect(clubs.get(clubId)?.status).toBe("ACTIVE");
-    expect((await connectGet()).status).toBe(307);
-  });
-
-  it("pays now during an ANNUAL trial but the sweep runs BEFORE the webhook confirms it — leaves the in-flight-payment subscription alone (sdd-verify race-condition fix)", async () => {
-    const clubId = "club_annual_trial_paynow_race_1";
-    seedOwner(clubId);
-    await createPendingMembershipSubscription({
-      clubId,
-      plan: "PRO",
-      currency: "ARS",
-    });
-
-    const trialResponse = await membershipPost(
-      makeCheckoutRequest({ plan: "PRO", cycle: "ANNUAL" }),
-    );
-    expect(trialResponse.status).toBe(200);
-    expect(subscriptions.get(clubId)!.status).toBe("TRIALING");
-
-    // Pay Now generates a real payment link — `mpPreferenceId` gets set,
-    // but status deliberately stays TRIALING (webhook-only confirmation).
-    preferenceCreateMock.mockResolvedValue({
-      id: "pref_paynow_race_1",
-      init_point: "https://mp.example.com/checkout/paynow-race",
-    });
-    const payNowResponse = await membershipPost(
-      makeCheckoutRequest({ plan: "PRO", cycle: "ANNUAL" }),
-    );
-    expect(payNowResponse.status).toBe(200);
-    const payNowBody = await payNowResponse.json();
-    expect(payNowBody.checkoutUrl).toBe(
-      "https://mp.example.com/checkout/paynow-race",
-    );
-    expect(subscriptions.get(clubId)!.status).toBe("TRIALING");
-    expect(subscriptions.get(clubId)!.mpPreferenceId).toBe(
-      "pref_paynow_race_1",
-    );
-
-    // trialEndsAt passes WHILE the webhook confirmation is still in flight —
-    // the exact narrow race window flagged by sdd-verify. Before this fix,
-    // the cron's ANNUAL-trial-expiry query only checked
-    // `cycle/status/trialEndsAt` and would wrongly cancel a subscription
-    // that already has a payment attempt in progress.
-    subscriptions.set(clubId, {
-      ...subscriptions.get(clubId)!,
-      trialEndsAt: new Date(Date.now() - 1000),
-    });
-    const sweep = await cronGet(
-      new Request("https://app.example.com/api/cron/membership-grace-sweep", {
-        headers: { authorization: "Bearer test-cron-secret" },
-      }),
-    );
-    const sweepBody = await sweep.json();
-    expect(sweepBody.annualTrialsExpired).toBe(0);
-    expect(sweepBody.failed).toBe(0);
-    // Left exactly as-is — no premature cancellation. The already-in-flight
-    // webhook (or the existing payment/webhook handling generally) is what
-    // eventually resolves this row, not this cron.
-    expect(subscriptions.get(clubId)!.status).toBe("TRIALING");
-    expect(clubs.get(clubId)?.status).toBe("ACTIVE");
-  });
-
-  it("still activates via a payment webhook that lands during the trial, before the cron sweep ever runs — and a later sweep leaves the now-ACTIVE club alone", async () => {
-    const clubId = "club_annual_trial_2";
+  it("a mid-trial plan change (PATCH) on an ANNUAL subscription keeps the real Mercado Pago preapproval amount in sync, using the annual price", async () => {
+    const clubId = "club_annual_5";
     seedOwner(clubId);
     await createPendingMembershipSubscription({
       clubId,
@@ -802,42 +767,47 @@ describe("End-to-end: ANNUAL membership — app-tracked trial (sdd-verify WARNIN
       currency: "ARS",
     });
 
+    preApprovalPlanCreateMock.mockResolvedValue({ id: "plan_annual_5" });
+    preApprovalCreateMock.mockResolvedValue({
+      id: "preap_annual_5",
+      status: "authorized",
+    });
     await membershipPost(
-      makeCheckoutRequest({ plan: "BASIC", cycle: "ANNUAL" }),
+      makeCheckoutRequest({
+        plan: "BASIC",
+        cycle: "ANNUAL",
+        renewalMode: "AUTO",
+        payerEmail: "owner@example.com",
+        cardTokenId: "card_tok_1",
+      }),
     );
     expect(subscriptions.get(clubId)!.status).toBe("TRIALING");
 
-    // `handlePaymentTopic` resolves the club purely from the `clubId` query
-    // param + the re-fetched payment's `external_reference` — it never
-    // requires a pre-attached `mpPreferenceId`, so a real one-time payment
-    // completed through any channel during the trial still confirms it.
-    paymentGetMock.mockResolvedValue({
-      id: 777,
-      status: "approved",
-      external_reference: clubId,
+    preApprovalUpdateMock.mockResolvedValue({
+      id: "preap_annual_5",
+      status: "authorized",
     });
-    const webhookResponse = await webhookPost(
-      makePaymentWebhookRequest("pay_777", clubId),
-    );
-    expect(webhookResponse.status).toBe(200);
-    expect(subscriptions.get(clubId)!.status).toBe("ACTIVE");
-    expect((await connectGet()).status).toBe(307);
 
-    // The cron's ANNUAL-trial-expiry query filters on `status: TRIALING`, so
-    // a since-activated subscription must never be swept even if its stale
-    // `trialEndsAt` is still in the past.
-    subscriptions.set(clubId, {
-      ...subscriptions.get(clubId)!,
-      trialEndsAt: new Date(Date.now() - 1000),
-    });
-    const sweep = await cronGet(
-      new Request("https://app.example.com/api/cron/membership-grace-sweep", {
-        headers: { authorization: "Bearer test-cron-secret" },
+    const { PATCH: membershipPatch } =
+      await import("@/app/api/clubs/membership/route");
+    const patchResponse = await membershipPatch(
+      new NextRequest("http://localhost/api/clubs/membership", {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ plan: "PRO" }),
       }),
     );
-    expect((await sweep.json()).annualTrialsExpired).toBe(0);
-    expect(subscriptions.get(clubId)!.status).toBe("ACTIVE");
-    expect((await connectGet()).status).toBe(307);
+    expect(patchResponse.status).toBe(200);
+    expect(preApprovalUpdateMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        body: expect.objectContaining({
+          auto_recurring: expect.objectContaining({
+            transaction_amount: 590000,
+          }),
+        }),
+      }),
+    );
+    expect(subscriptions.get(clubId)!.plan).toBe("PRO");
   });
 });
 

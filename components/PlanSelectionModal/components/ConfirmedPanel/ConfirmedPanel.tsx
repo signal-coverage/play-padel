@@ -11,17 +11,11 @@ import type { ConfirmedPanelProps } from "./types";
 // satisfied by the modal's own confirmed state simply replacing the
 // checkout wizard in place; the owner still explicitly dismisses via Close.
 // `isTrialing` swaps the copy to make clear no payment has actually been
-// taken yet — see types.ts for why this matters most for ANNUAL trials.
-// `showPayNow` additionally surfaces a "Pay Now" action for an ANNUAL
-// trial — otherwise there is no way to generate the one-time payment link
-// before the cron sweep cancels the trial at `trialEndsAt`.
+// taken yet — true for either billing cycle, since both are now an
+// authorized-but-uncharged Mercado Pago preapproval until the trial ends.
 export function ConfirmedPanel({
   onClose,
   isTrialing,
-  showPayNow,
-  onPayNow,
-  isPayNowLoading,
-  payNowError,
   onChangePlan,
   isChangingPlan,
   changePlanError,
@@ -37,21 +31,6 @@ export function ConfirmedPanel({
           ? "Your free trial is active. No payment has been made yet."
           : "Your membership payment is confirmed."}
       </p>
-      {showPayNow && (
-        <div className="flex flex-col items-center gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onPayNow}
-            disabled={isPayNowLoading}
-          >
-            {isPayNowLoading ? "Generating payment link..." : "Pay Now"}
-          </Button>
-          {payNowError && (
-            <p className="text-sm text-destructive">{payNowError}</p>
-          )}
-        </div>
-      )}
       {isTrialing && onChangePlan && (
         <div className="flex flex-col items-center gap-2">
           <Button

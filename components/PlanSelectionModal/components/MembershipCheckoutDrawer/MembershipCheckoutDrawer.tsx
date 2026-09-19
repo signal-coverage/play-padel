@@ -23,8 +23,9 @@ import { PaymentStepIndicator } from "./components/PaymentStepIndicator";
 import { MP_BRAND_BLUE, stepVariants } from "./styles";
 import type { MembershipCheckoutDrawerProps } from "./types";
 
-// MONTHLY-only step: replaces the earlier in-Dialog card-collection UI.
-// The plan-picker Dialog stays exactly where it is — this Sheet opens over
+// Card-collection step for both billing cycles: replaces the earlier
+// in-Dialog card-collection UI. The plan-picker Dialog stays exactly where
+// it is — this Sheet opens over
 // it instead, reusing the same drawer component CourtFormSheet uses
 // elsewhere, just widened for this one instance via `className` (per
 // AGENTS.md's documented wide-drawer exception) rather than touching the
@@ -45,6 +46,7 @@ export function MembershipCheckoutDrawer({
   open,
   view,
   amount,
+  cycle,
   payerEmail,
   defaultEmail,
   identification,
@@ -93,8 +95,8 @@ export function MembershipCheckoutDrawer({
         <SheetHeader>
           <SheetTitle>Add a payment method</SheetTitle>
           <SheetDescription>
-            {formatCurrency(amount)} / month — verify your email, then enter
-            your card details.
+            {formatCurrency(amount)} / {cycle === "annual" ? "year" : "month"} —
+            verify your email, then enter your card details.
           </SheetDescription>
         </SheetHeader>
 

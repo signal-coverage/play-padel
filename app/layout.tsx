@@ -11,7 +11,7 @@ import { SuccessCelebrationPortal } from "@/components/SuccessCelebration";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ThemeFavicon } from "@/components/theme-favicon";
 import { LocatorSetup } from "@/components/locator-setup";
-import { getUserLocale } from "@/i18n/locale";
+import { getRequestLocale } from "@/i18n/getRequestLocale";
 import "./globals.css";
 
 const publicSans = Public_Sans({
@@ -34,9 +34,16 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 const APP_NAME = "Play Padel";
+// Spanish-only while English is hidden site-wide (LocaleSwitcher removed,
+// /en redirects to / — see i18n/getRequestLocale.ts). Revert to the English
+// original ("Find available padel court appointments across different
+// clubs in one place.") alongside that change once the real translation
+// pass resumes and both languages are live again.
 const APP_DESCRIPTION =
-  "Find available padel court appointments across different clubs in one place.";
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+  "Encontrá turnos disponibles de pádel en distintos clubes, todo en un mismo lugar.";
+// `||`, not `??`: an unset GitHub Actions secret is interpolated as `""`
+// (not undefined), which `??` would let through straight into `new URL("")`.
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
 const structuredData = {
   "@context": "https://schema.org",
@@ -45,10 +52,9 @@ const structuredData = {
   description: APP_DESCRIPTION,
   applicationCategory: "SportsApplication",
   url: APP_URL,
-  // Cookie-based i18n (see i18n/request.ts) — the same URL renders in
-  // either language, so this lists both rather than pointing at separate
-  // localized URLs the way a `sameAs`/`workTranslation` pair normally would.
-  inLanguage: ["en", "es"],
+  // Spanish-only for now — see APP_DESCRIPTION's own comment above. Add
+  // "en" back once /en has real content again.
+  inLanguage: ["es"],
   offers: {
     "@type": "Offer",
     category: "SaaS",
@@ -58,7 +64,7 @@ const structuredData = {
 export const metadata: Metadata = {
   metadataBase: new URL(APP_URL),
   title: {
-    default: `${APP_NAME} — Book Padel Courts Online`,
+    default: `${APP_NAME} — Reservá canchas de pádel online`,
     // Lets a future non-landing route (e.g. a club's public profile page)
     // set its own <title> while keeping "Play Padel" attached, without
     // every route having to repeat the brand name itself.
@@ -79,11 +85,10 @@ export const metadata: Metadata = {
     siteName: APP_NAME,
     url: APP_URL,
     type: "website",
-    locale: "en_US",
-    // Cookie-based, not URL-based — see i18n/request.ts — so there's no
-    // second URL to list here for Spanish; this just tells crawlers the
-    // page can also render in es.
-    alternateLocale: ["es_AR"],
+    // Spanish-only for now — see APP_DESCRIPTION's own comment above. No
+    // `alternateLocale` right now since there's no second language actually
+    // live to point at; add "en_US" back alongside it.
+    locale: "es_AR",
     // No `images` here — app/opengraph-image.tsx (the file-convention
     // route) generates a real 1200x630 branded card and Next wires up the
     // og:image tags for it automatically; listing a second, smaller image
@@ -136,7 +141,7 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const locale = await getUserLocale();
+  const locale = await getRequestLocale();
 
   return (
     <html

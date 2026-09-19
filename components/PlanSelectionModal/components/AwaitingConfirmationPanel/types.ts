@@ -1,13 +1,11 @@
 export type AwaitingConfirmationPanelProps = {
   onRefresh: () => void;
   isRefreshing: boolean;
-  // True only for the ANNUAL flow, which opens Mercado Pago's hosted
-  // checkout in a new browser tab (`window.open`). MONTHLY collects the
-  // card in-place via the Brick, so no tab is ever opened for it. When
-  // true, we show a fallback message: PlanSelectionModal's own tab-close
-  // effect is best-effort (a script-opened window can normally always be
-  // closed by its opener, but this stays defensive since MP's hosted page
-  // is outside our control), so the owner needs a manual way out if it
-  // doesn't fire.
+  // Not currently passed by PlanSelectionModal — both membership billing
+  // cycles now collect the card in-place via the Brick (see
+  // MembershipCheckoutDrawer), so no external tab is ever opened for
+  // membership checkout anymore. Kept as a general-purpose prop for any
+  // other flow that does open a hosted external checkout tab and wants
+  // this same fallback message shown while waiting for it.
   openedExternalTab?: boolean;
 };

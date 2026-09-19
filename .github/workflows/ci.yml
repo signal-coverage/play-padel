@@ -36,3 +36,16 @@ jobs:
 
       - name: Test
         run: npm run test
+
+      - name: Build
+        # Catches build-time failures tsc alone doesn't (invalid route
+        # config, metadata, static generation errors, etc). Needs the same
+        # env vars .env.local provides locally — add them as repo secrets
+        # under Settings > Secrets and variables > Actions if this step
+        # fails on a missing/undefined value.
+        run: npm run build
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          NEXT_PUBLIC_APP_URL: ${{ secrets.NEXT_PUBLIC_APP_URL }}
+          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
+          CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
