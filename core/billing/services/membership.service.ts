@@ -841,7 +841,7 @@ export interface ActivateFreePlanInput {
  * transitions.
  *
  * Safety guard: refuses to overwrite an existing subscription that already
- * has a real MP preapproval/preference id unless `force` is explicitly
+ * has a real MP preapproval id unless `force` is explicitly
  * passed (see `RealSubscriptionExistsError`) — a net against accidentally
  * converting a real paying club to FREE via a mistyped `clubId`.
  */

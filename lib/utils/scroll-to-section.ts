@@ -1,5 +1,10 @@
 import type { MouseEvent } from "react";
 
+/**
+ * Smooth-scrolls a hash link to a matching element. If the target is absent
+ * outside the home page, redirects to the same hash on the home page;
+ * otherwise leaves the link's default behavior intact.
+ */
 export function scrollToSection(
   event: MouseEvent<HTMLAnchorElement>,
   href: string,

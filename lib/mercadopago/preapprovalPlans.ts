@@ -143,8 +143,9 @@ function isUniqueConstraintViolation(err: unknown): boolean {
  * even for the same tier+currency, so they must never share a row either.
  *
  * Concurrency: if two checkouts race to create the cache row for the same
- * never-before-used (plan, currency) pair, the loser's `create` throws a
- * unique-constraint violation (Prisma `P2002`) on the composite `@@id`.
+ * never-before-used (plan, currency, cycle) triple, the loser's `create`
+ * throws a unique-constraint violation (Prisma `P2002`) on the composite
+ * `@@id`.
  * Rather than a distributed lock (disproportionate for a genuinely rare
  * race), the loser simply re-reads the winner's row and reuses its id.
  * Worst case in that race, one harmless orphan `preapproval_plan` object is
@@ -200,10 +201,10 @@ export interface UpdateMembershipPreapprovalPlanParams {
 }
 
 /**
- * Updates an existing `preapproval_plan`'s pricing/trial fields — used by
- * the admin trial-config route (Phase 5) after `MembershipTrialConfig` is
- * changed, so already-issued plans reflect the new trial length without
- * needing a brand-new plan id.
+ * Updates an existing `preapproval_plan`'s recurrence, pricing, and trial
+ * fields. The admin trial-config route uses this after
+ * `MembershipTrialConfig` changes so cached plans reflect the new trial
+ * length without needing a new plan id.
  */
 export async function updateMembershipPreapprovalPlan(
   params: UpdateMembershipPreapprovalPlanParams,

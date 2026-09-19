@@ -1,5 +1,8 @@
-// First letter of the first and last word in the name, e.g. "Martín Ibarra"
-// -> "MI" — used for the avatar placeholder until real photos are added.
+/**
+ * Returns uppercase initials from the first and last whitespace-delimited
+ * words. Single-word names yield one initial; blank names yield an empty
+ * string.
+ */
 export function getInitials(name: string): string {
   const words = name.trim().split(/\s+/);
   const first = words[0]?.[0] ?? "";

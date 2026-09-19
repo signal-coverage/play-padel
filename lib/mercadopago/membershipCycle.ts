@@ -9,10 +9,10 @@
 
 export type MembershipCycleValue = "MONTHLY" | "ANNUAL";
 
-// Both cycles are real recurring Mercado Pago subscriptions — ANNUAL is
-// just a MONTHLY-shaped preapproval_plan billed every 12 months instead of
-// every 1 (confirmed accepted by a live Mercado Pago sandbox call: MP has no
-// dedicated "years" frequency_type, only "days"/"months").
+/**
+ * Maps a membership cycle to Mercado Pago's monthly recurrence shape:
+ * monthly plans recur every month and annual plans every 12 months.
+ */
 export function resolveAutoRecurringFrequency(cycle: MembershipCycleValue): {
   frequency: number;
   frequency_type: "months";
