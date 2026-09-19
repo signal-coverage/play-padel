@@ -91,11 +91,11 @@ describe("resolveServerStep", () => {
 
 describe("resolveCheckoutAmount", () => {
   it("returns the monthly price for MONTHLY", () => {
-    expect(resolveCheckoutAmount("BASIC", "MONTHLY")).toBe(30000);
+    expect(resolveCheckoutAmount("BASIC", "MONTHLY")).toBe(39000);
   });
 
   it("returns the annual price for ANNUAL", () => {
-    expect(resolveCheckoutAmount("BASIC", "ANNUAL")).toBe(300000);
+    expect(resolveCheckoutAmount("BASIC", "ANNUAL")).toBe(390000);
   });
 
   it("returns null for MAX on either cycle (no fixed price)", () => {

@@ -771,7 +771,7 @@ describe("PATCH /api/clubs/membership", () => {
 
     expect(updateMembershipPreapprovalAmountMock).toHaveBeenCalledWith(
       "preap_1",
-      50000,
+      59000,
       "ARS",
     );
     expect(changeTrialPlanMock).toHaveBeenCalledWith({
