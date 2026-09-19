@@ -41,7 +41,9 @@ const APP_NAME = "Play Padel";
 // pass resumes and both languages are live again.
 const APP_DESCRIPTION =
   "Encontrá turnos disponibles de pádel en distintos clubes, todo en un mismo lugar.";
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+// `||`, not `??`: an unset GitHub Actions secret is interpolated as `""`
+// (not undefined), which `??` would let through straight into `new URL("")`.
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
 const structuredData = {
   "@context": "https://schema.org",
