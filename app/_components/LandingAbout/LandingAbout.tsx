@@ -1,105 +1,92 @@
 "use client";
-import { useState } from "react";
 import Image from "next/image";
-import Link from "next/link";
-import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
-import { ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { motion, useReducedMotion } from "framer-motion";
 import { useTranslations } from "next-intl";
-import { ease } from "./consts";
-import type { AboutItem } from "./types";
+import { ABOUT_IMAGES, CHIP_ICONS, ease } from "./consts";
+import { CarouselDots } from "./components/CarouselDots";
+import type { ChipTranslation } from "./types";
 import { CONTAINER } from "@/lib/consts";
-import { scrollToSection } from "@/lib/utils/scroll-to-section";
-import communityImage from "@/assets/images/people-playing-padle-tennis-inside.jpg";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 
+// An asymmetric two-column layout (photo carousel on one side, heading +
+// paragraph + a row of feature-icon chips on the other), matching the
+// template's "resource allocation" section shape. The carousel stays inside
+// the same aspect-4/3 frame the old single photo used — prev/next arrows and
+// dot indicators overlay the photo itself rather than pushing the section
+// taller, so this section's footprint never changes as photos are added.
 export function LandingAbout() {
   const t = useTranslations("LandingAbout");
   const shouldReduce = useReducedMotion();
-  const [activeIndex, setActiveIndex] = useState(1);
-  const aboutItems = t.raw("items") as AboutItem[];
+  const chips = t.raw("chips") as ChipTranslation[];
+  const imageAlts = t.raw("imageAlts") as string[];
 
   return (
     <section id="about" className={`${CONTAINER} py-12`}>
-      <div className="flex flex-wrap items-start justify-between gap-6 mb-10">
-        <h2 className="text-3xl md:text-[34px] font-bold leading-tight tracking-tight">
-          <span className="text-foreground">{t("heading.bold")}</span>
-          <br />
-          <span className="text-muted-foreground">{t("heading.muted")}</span>
-        </h2>
-        <span className="inline-flex items-center bg-foreground text-background rounded-full px-4 py-2 text-[13px] font-semibold">
-          {t("badge")}
-        </span>
-      </div>
-
-      <div className="grid md:grid-cols-2 gap-10">
-        <div className="border-t border-border">
-          {aboutItems.map((item, i) => {
-            const isActive = activeIndex === i;
-            return (
-              <div key={item.title} className="border-b border-border">
-                <button
-                  type="button"
-                  onClick={() => setActiveIndex(isActive ? -1 : i)}
-                  className="w-full flex items-center justify-between gap-4 py-5 text-left"
-                >
-                  <span className="text-lg font-medium text-foreground">
-                    {item.title}
-                  </span>
-                  <span
-                    className={`shrink-0 w-9 h-9 rounded-full flex items-center justify-center transition-colors ${
-                      isActive
-                        ? "bg-accent text-accent-foreground"
-                        : "border border-border text-foreground"
-                    }`}
-                  >
-                    {isActive ? (
-                      <ArrowDownRight size={16} strokeWidth={2.25} />
-                    ) : (
-                      <ArrowUpRight size={16} strokeWidth={2.25} />
-                    )}
-                  </span>
-                </button>
-                <AnimatePresence initial={false}>
-                  {isActive && (
-                    <motion.div
-                      initial={shouldReduce ? false : { height: 0, opacity: 0 }}
-                      animate={{ height: "auto", opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.3, ease }}
-                      className="overflow-hidden"
-                    >
-                      <p className="pb-5 text-sm text-muted-foreground leading-relaxed max-w-md text-pretty">
-                        {item.description}
-                      </p>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            );
-          })}
-        </div>
-
+      <div className="grid md:grid-cols-2 gap-10 md:gap-16 items-center">
         <motion.div
-          className="relative rounded-[28px] overflow-hidden min-h-90 md:min-h-0 md:h-full"
+          className="order-2 md:order-1"
           initial={shouldReduce ? false : { opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5, ease }}
         >
-          <Image
-            src={communityImage}
-            alt={t("imageAlt")}
-            fill
-            sizes="(min-width: 768px) 50vw, 100vw"
-            className="object-cover outline outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10"
-          />
-          <Link
-            href="#appointment"
-            onClick={(e) => scrollToSection(e, "#appointment")}
-            className="absolute left-5 bottom-5 inline-flex items-center gap-1.5 bg-white/90 backdrop-blur-sm text-neutral-900 rounded-full px-4 py-2 text-sm font-semibold hover:bg-white transition-colors"
-          >
-            {t("learnMore")}
-            <ArrowUpRight size={15} strokeWidth={2.5} />
-          </Link>
+          <Carousel opts={{ loop: true }}>
+            <CarouselContent className="ml-0">
+              {ABOUT_IMAGES.map((image, i) => (
+                <CarouselItem key={imageAlts[i]} className="pl-0">
+                  <div className="relative rounded-sm overflow-hidden aspect-4/3">
+                    <Image
+                      src={image}
+                      alt={imageAlts[i]}
+                      fill
+                      sizes="(min-width: 768px) 50vw, 100vw"
+                      className="object-cover"
+                      priority={i === 0}
+                    />
+                  </div>
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+            <CarouselPrevious className="left-3 border-none bg-background/80 text-foreground opacity-80 backdrop-blur-sm hover:bg-background hover:opacity-100" />
+            <CarouselNext className="right-3 border-none bg-background/80 text-foreground opacity-80 backdrop-blur-sm hover:bg-background hover:opacity-100" />
+            <CarouselDots />
+          </Carousel>
+        </motion.div>
+
+        <motion.div
+          className="order-1 md:order-2"
+          initial={shouldReduce ? false : { opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5, delay: 0.08, ease }}
+        >
+          <h2 className="text-3xl md:text-[38px] font-extrabold leading-[1.1] tracking-[-0.03em] text-foreground">
+            {t("heading")}
+          </h2>
+          <p className="mt-5 text-[15px] text-muted-foreground leading-relaxed max-w-md text-pretty">
+            {t("description")}
+          </p>
+
+          <div className="mt-8 border-t border-dashed border-border pt-6 flex flex-wrap gap-3">
+            {chips.map((chip, i) => {
+              const Icon = CHIP_ICONS[i];
+              return (
+                <span
+                  key={chip.label}
+                  className="inline-flex items-center gap-2 rounded-sm border border-border bg-muted px-3.5 py-2 text-sm font-medium text-foreground"
+                >
+                  <Icon aria-hidden="true" className="size-4 text-primary" />
+                  {chip.label}
+                </span>
+              );
+            })}
+          </div>
         </motion.div>
       </div>
     </section>

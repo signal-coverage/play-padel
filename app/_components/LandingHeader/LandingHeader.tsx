@@ -2,14 +2,13 @@
 import { useState, type MouseEvent } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { motion, useScroll, useMotionValueEvent } from "framer-motion";
+import { motion } from "framer-motion";
 import { Menu } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { NAV, ease, SCROLL_THRESHOLD } from "./consts";
+import { NAV, ease } from "./consts";
 import { CONTAINER } from "@/lib/consts";
 import { scrollToSection } from "@/lib/utils/scroll-to-section";
 import { useAuth } from "@/hooks/use-auth";
-import { LocaleSwitcher } from "@/components/LocaleSwitcher";
 import {
   Sheet,
   SheetClose,
@@ -19,17 +18,16 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 
+// The header stays a single, always-solid floating bar: LandingHero runs a
+// centered layout with no full-bleed photo behind the header, so there is
+// no "transparent over the hero, solid once scrolled" state to track and no
+// scroll listener is needed. The auth-aware CTA and mobile Sheet logic are
+// standard reuse.
 export function LandingHeader() {
   const t = useTranslations("LandingHeader");
-  const [isScrolled, setIsScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { scrollY } = useScroll();
   const { user, loading } = useAuth();
   const isSignedIn = !loading && !!user;
-
-  useMotionValueEvent(scrollY, "change", (latest) => {
-    setIsScrolled(latest > SCROLL_THRESHOLD);
-  });
 
   function handleMobileNavLinkClick(
     e: MouseEvent<HTMLAnchorElement>,
@@ -39,27 +37,15 @@ export function LandingHeader() {
     setIsMenuOpen(false);
   }
 
+  function handleLogoClick(e: MouseEvent<HTMLAnchorElement>) {
+    e.preventDefault();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
   return (
-    <header
-      className={`fixed top-0 inset-x-0 z-50 transition-colors duration-300 ${
-        isScrolled
-          ? "bg-background/80 backdrop-blur-md border-b border-border"
-          : "bg-transparent"
-      }`}
-    >
-      {/* flex justify-between on mobile (nav below is hidden there, so it's
-          just logo + the right-hand group) — md:grid md:grid-cols-3 once nav
-          becomes visible, so it sits in its own real, equal-width center
-          column instead of wherever justify-between's equal GAPS (not equal
-          POSITIONS) happen to land it. justify-between only guarantees equal
-          gaps between items, not that the middle item ends up at the
-          container's true center — with the right-hand group (locale
-          switcher + auth buttons) wider than the bare logo on the left, that
-          pulled nav visibly off-center toward the logo side. Each child's
-          own justify-self-* below (grid-only, a no-op under mobile's flex)
-          is what actually anchors it to its column's start/center/end. */}
+    <header className="fixed top-3 inset-x-0 z-50 px-4">
       <div
-        className={`${CONTAINER} h-16 flex items-center justify-between md:grid md:grid-cols-3`}
+        className={`${CONTAINER} h-14 flex items-center justify-between md:grid md:grid-cols-3 rounded-sm border border-border bg-background/95 backdrop-blur-md px-4 sm:px-6`}
       >
         <motion.div
           className="justify-self-start"
@@ -67,18 +53,18 @@ export function LandingHeader() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.45, ease }}
         >
-          <Link href="/" className="flex items-center gap-2">
+          <Link
+            href="/"
+            onClick={handleLogoClick}
+            className="flex items-center gap-1.5"
+          >
             <Image
               src="/light/logo.svg"
               alt="Play Padel"
-              width={20}
-              height={20}
+              width={17}
+              height={17}
             />
-            <span
-              className={`font-bold text-[15px] tracking-tight transition-colors duration-300 ${
-                isScrolled ? "text-foreground" : "text-white"
-              }`}
-            >
+            <span className="font-bold text-sm tracking-tight text-foreground">
               Play Padel
             </span>
           </Link>
@@ -95,11 +81,7 @@ export function LandingHeader() {
               <Link
                 href={link.href}
                 onClick={(e) => scrollToSection(e, link.href)}
-                className={`text-sm font-medium transition-colors duration-300 ${
-                  isScrolled
-                    ? "text-foreground/70 hover:text-foreground"
-                    : "text-white/70 hover:text-white"
-                }`}
+                className="text-sm font-medium text-foreground/70 hover:text-foreground transition-colors duration-200"
               >
                 {t(`nav.${link.labelKey}`)}
               </Link>
@@ -113,19 +95,11 @@ export function LandingHeader() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.45, delay: 0.27, ease }}
         >
-          <LocaleSwitcher
-            className={
-              isScrolled
-                ? "text-foreground/70 hover:bg-muted hover:text-foreground"
-                : "text-white/70 hover:bg-white/10 hover:text-white"
-            }
-          />
-
           {!loading &&
             (isSignedIn ? (
               <Link
                 href="/dashboard"
-                className="inline-flex items-center bg-accent text-accent-foreground rounded-full px-4 sm:px-5 py-2 text-sm font-semibold transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg"
+                className="inline-flex items-center bg-accent text-accent-foreground rounded-sm px-3.5 sm:px-4 py-1.5 text-sm font-semibold border border-transparent hover:border-foreground/20 transition-colors duration-200"
               >
                 {t("goToApp")}
               </Link>
@@ -133,17 +107,13 @@ export function LandingHeader() {
               <>
                 <Link
                   href="/signup"
-                  className="inline-flex items-center bg-accent text-accent-foreground rounded-full px-4 sm:px-5 py-2 text-sm font-semibold transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg"
+                  className="inline-flex items-center bg-accent text-accent-foreground rounded-sm px-3.5 sm:px-4 py-1.5 text-sm font-semibold border border-transparent hover:border-foreground/20 transition-colors duration-200"
                 >
                   {t("signUp")}
                 </Link>
                 <Link
                   href="/login"
-                  className={`hidden md:inline-flex text-sm font-medium transition-colors duration-300 ${
-                    isScrolled
-                      ? "text-foreground/70 hover:text-foreground"
-                      : "text-white/70 hover:text-white"
-                  }`}
+                  className="hidden md:inline-flex text-sm font-medium text-foreground/70 hover:text-foreground transition-colors duration-200"
                 >
                   {t("logIn")}
                 </Link>
@@ -155,13 +125,9 @@ export function LandingHeader() {
               <button
                 type="button"
                 aria-label={t("openMenu")}
-                className={`md:hidden inline-flex items-center justify-center w-10 h-10 rounded-full border-[1.5px] transition-colors duration-300 ${
-                  isScrolled
-                    ? "border-foreground text-foreground"
-                    : "border-white text-white"
-                }`}
+                className="md:hidden inline-flex items-center justify-center w-9 h-9 rounded-sm border-[1.5px] border-foreground text-foreground"
               >
-                <Menu size={18} strokeWidth={2} />
+                <Menu size={16} strokeWidth={2} />
               </button>
             </SheetTrigger>
             <SheetContent side="right" className="w-4/5">
@@ -196,7 +162,7 @@ export function LandingHeader() {
                   <SheetClose asChild>
                     <Link
                       href={isSignedIn ? "/dashboard" : "/signup"}
-                      className="inline-flex w-full items-center justify-center bg-primary text-primary-foreground rounded-full px-5 py-3 text-sm font-semibold hover:bg-primary/90"
+                      className="inline-flex w-full items-center justify-center bg-primary text-primary-foreground rounded-sm px-5 py-3 text-sm font-semibold hover:bg-primary/90"
                     >
                       {isSignedIn ? t("goToApp") : t("tryForFree")}
                     </Link>

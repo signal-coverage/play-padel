@@ -1,1 +1,0 @@
-export { LandingTrusted } from "./LandingTrusted";

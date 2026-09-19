@@ -60,10 +60,6 @@ vi.mock("@/components/theme-toggle", () => ({
   ThemeToggle: () => <button type="button">Toggle theme</button>,
 }));
 
-vi.mock("@/components/LocaleSwitcher", () => ({
-  LocaleSwitcher: () => <button type="button">Language</button>,
-}));
-
 describe("AppNavbar layout", () => {
   it("stretches the logo+nav group and NavLinks itself to fill the header, so NavLinks' own internal flex-1 overflow container has real, viewport-stable space to claim", () => {
     vi.mocked(useAuth).mockReturnValue({
