@@ -9,7 +9,7 @@ import {
 } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/messages/en.json";
+import messages from "@/messages/es.json";
 
 const registerTeamMock = { mutate: vi.fn(), isPending: false };
 const withdrawTeamMock = { mutate: vi.fn(), isPending: false };
@@ -38,7 +38,7 @@ afterEach(() => {
 
 function renderPanel(props: React.ComponentProps<typeof RegistrationPanel>) {
   return render(
-    <NextIntlClientProvider locale="en" messages={messages}>
+    <NextIntlClientProvider locale="es" messages={messages}>
       <RegistrationPanel {...props} />
     </NextIntlClientProvider>,
   );
@@ -70,7 +70,9 @@ describe("RegistrationPanel", () => {
     renderPanel({ tournamentId: "t1", categoryId: "c1", viewerId: "me" });
 
     expect(screen.getByText("Pick Bruno")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /^register$/i })).toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: /^registrarse$/i }),
+    ).toBeDisabled();
   });
 
   it("enables Register once a partner is picked, and submits with the picked id", async () => {
@@ -79,7 +81,9 @@ describe("RegistrationPanel", () => {
     renderPanel({ tournamentId: "t1", categoryId: "c1", viewerId: "me" });
 
     fireEvent.click(screen.getByText("Pick Bruno"));
-    const registerButton = screen.getByRole("button", { name: /^register$/i });
+    const registerButton = screen.getByRole("button", {
+      name: /^registrarse$/i,
+    });
     await waitFor(() => expect(registerButton).not.toBeDisabled());
 
     fireEvent.click(registerButton);
@@ -98,10 +102,10 @@ describe("RegistrationPanel", () => {
 
     renderPanel({ tournamentId: "t1", categoryId: "c1", viewerId: "me" });
 
-    expect(screen.getByText(/you're registered with/i)).toBeInTheDocument();
+    expect(screen.getByText(/estás registrado con/i)).toBeInTheDocument();
     expect(screen.getAllByText(/bruno díaz/i).length).toBeGreaterThan(0);
     expect(
-      screen.getByRole("button", { name: /withdraw/i }),
+      screen.getByRole("button", { name: /retirarse/i }),
     ).toBeInTheDocument();
     expect(screen.queryByText("Pick Bruno")).not.toBeInTheDocument();
   });
@@ -114,7 +118,7 @@ describe("RegistrationPanel", () => {
 
     renderPanel({ tournamentId: "t1", categoryId: "c1", viewerId: "me" });
 
-    fireEvent.click(screen.getByRole("button", { name: /withdraw/i }));
+    fireEvent.click(screen.getByRole("button", { name: /retirarse/i }));
 
     expect(withdrawTeamMock.mutate).toHaveBeenCalledWith("team_1");
   });

@@ -1,6 +1,6 @@
 import { Check } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils/utils";
-import { PAYMENT_STEP_LABELS } from "./consts";
 import type { PaymentStepIndicatorProps } from "./types";
 
 // Same numbered-circle + connecting-line language as OnboardingWizard's own
@@ -11,9 +11,12 @@ import type { PaymentStepIndicatorProps } from "./types";
 // of that component's configurable N-step `flow` prop, since this drawer
 // never has more than these two.
 export function PaymentStepIndicator({ current }: PaymentStepIndicatorProps) {
+  const t = useTranslations("PaymentStepIndicator");
+  const stepLabels = t.raw("steps") as string[];
+
   return (
     <div className="flex w-full items-center px-4 pb-4">
-      {PAYMENT_STEP_LABELS.map((label, i) => {
+      {stepLabels.map((label, i) => {
         const done = current > i;
         const active = current === i;
         return (
@@ -49,7 +52,7 @@ export function PaymentStepIndicator({ current }: PaymentStepIndicatorProps) {
                 {label}
               </span>
             </div>
-            {i < PAYMENT_STEP_LABELS.length - 1 && (
+            {i < stepLabels.length - 1 && (
               <div
                 className={cn(
                   "mx-2 mb-4 h-0.5 flex-1 rounded transition-colors duration-500 ease-out",

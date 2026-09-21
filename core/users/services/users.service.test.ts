@@ -141,20 +141,20 @@ describe("getUserProfile — locale narrowing", () => {
     findUniqueMock.mockReset();
   });
 
-  it("passes through a valid locale from the row", async () => {
-    findUniqueMock.mockResolvedValue(makeRow({ locale: "en" }));
+  it("resolves to 'es' when the row's raw value is already 'es'", async () => {
+    findUniqueMock.mockResolvedValue(makeRow({ locale: "es" }));
 
     const profile = await getUserProfile("user_123");
 
-    expect(profile?.locale).toBe("en");
+    expect(profile?.locale).toBe("es");
   });
 
-  // row.locale is a plain TEXT column, not a Postgres enum — this defends
-  // against any value that isn't exactly "en"/"es" ever reaching a caller,
-  // the same defensive narrowing i18n/locale.ts's getUserLocale already
-  // does for the cookie.
-  it("falls back to the default locale ('es') when the row's raw value isn't a real Locale", async () => {
-    findUniqueMock.mockResolvedValue(makeRow({ locale: "fr" }));
+  // row.locale is a plain TEXT column, not a Postgres enum, and is
+  // vestigial now that the app is Spanish-only — this defends against any
+  // stored value other than "es" (e.g. "en", a legacy row from before
+  // English was removed, or any other garbage) ever reaching a caller.
+  it("coerces any other stored value to the default locale ('es')", async () => {
+    findUniqueMock.mockResolvedValue(makeRow({ locale: "en" }));
 
     const profile = await getUserProfile("user_123");
 

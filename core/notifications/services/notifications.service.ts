@@ -1,6 +1,6 @@
 import { toZonedTime, fromZonedTime } from "date-fns-tz";
 import { prisma } from "@/infrastructure/db/client";
-import { getUserLocale } from "@/i18n/locale";
+import { DEFAULT_LOCALE } from "@/i18n/localeConstants";
 import { resolveNotificationContent } from "@/lib/notifications/content";
 import type {
   Notification,
@@ -191,18 +191,16 @@ export async function getPendingReservationReminders(
 }
 
 // Re-resolves title/message for every notification that has `params`
-// stored, in the CURRENT request's locale (see i18n/locale.ts's
-// getUserLocale) — so switching the LocaleSwitcher immediately changes how
-// every notification reads, not just the app's own static UI copy. A row
-// with `params: null` (dispatched before this column existed, or genuinely
-// has nothing to re-render from) is left exactly as originally baked —
-// there's nothing here to regenerate it from.
+// stored, in the app's locale — the app is Spanish-only, so this always
+// resolves to DEFAULT_LOCALE. A row with `params: null` (dispatched before
+// this column existed, or genuinely has nothing to re-render from) is left
+// exactly as originally baked — there's nothing here to regenerate it from.
 async function hydrateLiveContent(
   notifications: Notification[],
 ): Promise<Notification[]> {
   if (notifications.every((n) => n.params == null)) return notifications;
 
-  const locale = await getUserLocale();
+  const locale = DEFAULT_LOCALE;
 
   return Promise.all(
     notifications.map(async (notification) => {

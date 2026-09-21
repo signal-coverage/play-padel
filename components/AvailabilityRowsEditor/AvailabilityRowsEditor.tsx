@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils/utils";
@@ -29,6 +30,8 @@ export function AvailabilityRowsEditor({
   onChange,
   layout = "stacked",
 }: AvailabilityRowsEditorProps) {
+  const t = useTranslations("DayLabels");
+  const tRows = useTranslations("AvailabilityRowsEditor");
   const shouldReduceMotion = useReducedMotion();
   // Only meaningful for the "split" layout's accordion day list below — -1
   // means every day starts collapsed; clicking a day's header expands it
@@ -65,7 +68,7 @@ export function AvailabilityRowsEditor({
     >
       <div className="flex items-center justify-between">
         <Label htmlFor={`day-${row.dayOfWeek}-active`}>
-          {DAY_LABELS[row.dayOfWeek]}
+          {t(DAY_LABELS[row.dayOfWeek])}
         </Label>
         <Switch
           id={`day-${row.dayOfWeek}-active`}
@@ -132,7 +135,7 @@ export function AvailabilityRowsEditor({
     // hides whether it's open for bookings, only its start/end inputs.
     const accordionDayRows = rows.map((row) => {
       const isExpanded = expandedDay === row.dayOfWeek;
-      const dayLabel = DAY_LABELS[row.dayOfWeek];
+      const dayLabel = t(DAY_LABELS[row.dayOfWeek]);
       return (
         <div key={row.dayOfWeek} className="border-b border-border">
           <div className="flex items-center justify-between gap-3 py-3">
@@ -155,7 +158,9 @@ export function AvailabilityRowsEditor({
                 type="button"
                 onClick={() => setExpandedDay(isExpanded ? -1 : row.dayOfWeek)}
                 aria-label={
-                  isExpanded ? `Collapse ${dayLabel}` : `Expand ${dayLabel}`
+                  isExpanded
+                    ? tRows("collapse", { day: dayLabel })
+                    : tRows("expand", { day: dayLabel })
                 }
                 className={cn(
                   "text-muted-foreground transition-transform",

@@ -58,7 +58,7 @@ describe("dispatch — locale resolution", () => {
   // this ever silently stops being forwarded, a notification would go back
   // to being frozen in whatever language it was dispatched in forever.
   it("persists the raw params alongside the resolved title/message, so the notification can be re-rendered live in a different locale later", async () => {
-    getUserProfileMock.mockResolvedValue({ locale: "en" });
+    getUserProfileMock.mockResolvedValue({ locale: "es" });
 
     await dispatch({
       type: "CLUB_APPROVED",
@@ -72,30 +72,6 @@ describe("dispatch — locale resolution", () => {
 
     expect(createNotificationMock).toHaveBeenCalledWith(
       expect.objectContaining({ params: { clubName: "Alpha Club" } }),
-    );
-  });
-
-  it("renders content in the recipient's own English locale", async () => {
-    getUserProfileMock.mockResolvedValue({ locale: "en" });
-
-    await dispatch({
-      type: "CLUB_APPROVED",
-      clubId: "club_1",
-      recipientId: "user_1",
-      recipientEmail: "user@example.com",
-      recipientName: "User",
-      params: {},
-      sendEmail: false,
-    });
-
-    expect(getUserProfileMock).toHaveBeenCalledWith("user_1");
-    expect(createNotificationMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        title: "Your club has been approved",
-        message: expect.stringContaining(
-          "Your club is now approved and can accept reservations.",
-        ),
-      }),
     );
   });
 
@@ -149,7 +125,7 @@ describe("dispatch — sendEmail: false (in-app-only notification)", () => {
     updateNotificationStatusMock.mockReset();
     sendMock.mockReset();
     getUserProfileMock.mockReset();
-    getUserProfileMock.mockResolvedValue({ locale: "en" });
+    getUserProfileMock.mockResolvedValue({ locale: "es" });
     createNotificationMock.mockResolvedValue({
       id: "notif_1",
       clubId: null,
@@ -342,7 +318,7 @@ describe("notifyAllAdmins", () => {
     sendMock.mockReset();
     listAdminRecipientsMock.mockReset();
     getUserProfileMock.mockReset();
-    getUserProfileMock.mockResolvedValue({ locale: "en" });
+    getUserProfileMock.mockResolvedValue({ locale: "es" });
     createNotificationMock.mockImplementation(
       async (data: { recipientId: string }) => ({
         id: `notif_${data.recipientId}`,
@@ -379,7 +355,7 @@ describe("notifyAllAdmins", () => {
         type: "CLUB_PENDING_APPROVAL",
         recipientId: "admin_1",
         recipientEmail: "admin1@example.com",
-        title: "A new club is pending approval",
+        title: "Hay un nuevo club pendiente de aprobación",
         message: expect.stringContaining("New Club"),
       }),
     );
@@ -389,7 +365,7 @@ describe("notifyAllAdmins", () => {
         type: "CLUB_PENDING_APPROVAL",
         recipientId: "admin_2",
         recipientEmail: "admin2@example.com",
-        title: "A new club is pending approval",
+        title: "Hay un nuevo club pendiente de aprobación",
         message: expect.stringContaining("New Club"),
       }),
     );

@@ -5,7 +5,7 @@ import "@testing-library/jest-dom/vitest";
 import { useForm } from "react-hook-form";
 import { NextIntlClientProvider } from "next-intl";
 import type { OnboardingFormValues } from "@/app/onboarding/types";
-import messages from "@/messages/en.json";
+import messages from "@/messages/es.json";
 import { ClubBasicsStep } from "./ClubBasicsStep";
 
 // Harness mirrors PhoneField.test.tsx's own convention: a bare useForm host
@@ -35,7 +35,7 @@ function Harness() {
   });
 
   return (
-    <NextIntlClientProvider locale="en" messages={messages}>
+    <NextIntlClientProvider locale="es" messages={messages}>
       <ClubBasicsStep
         register={register}
         control={control}
@@ -57,7 +57,9 @@ describe("ClubBasicsStep", () => {
 
   it("renders a required WhatsApp field distinct from the general Phone field", () => {
     const { getByText } = renderClubBasicsStep();
-    expect(getByText("Phone *")).toBeInTheDocument();
-    expect(getByText("WhatsApp (for payment receipts) *")).toBeInTheDocument();
+    expect(getByText("Teléfono *")).toBeInTheDocument();
+    expect(
+      getByText("WhatsApp (para comprobantes de pago) *"),
+    ).toBeInTheDocument();
   });
 });

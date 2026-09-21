@@ -3,7 +3,7 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/messages/en.json";
+import messages from "@/messages/es.json";
 import { ChangePlanDialog } from "./ChangePlanDialog";
 
 afterEach(() => {
@@ -22,7 +22,7 @@ function renderDialog(
     ...overrides,
   };
   render(
-    <NextIntlClientProvider locale="en" messages={messages}>
+    <NextIntlClientProvider locale="es" messages={messages}>
       <ChangePlanDialog {...props} />
     </NextIntlClientProvider>,
   );

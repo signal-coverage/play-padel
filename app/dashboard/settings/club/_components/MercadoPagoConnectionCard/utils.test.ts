@@ -1,20 +1,20 @@
 import { describe, it, expect } from "vitest";
-import en from "@/messages/en.json";
+import es from "@/messages/es.json";
 import { getMercadoPagoConnectionCopy } from "./utils";
 
-// Fake translator backed by the real en.json copy — a plain lookup, since
+// Fake translator backed by the real es.json copy — a plain lookup, since
 // this util isn't a component and can't call useTranslations() itself (see
 // MercadoPagoConnectionCard.tsx's own useTranslations("MercadoPagoConnectionCard")
 // call for the real caller).
 const t = (key: string) =>
-  (en.MercadoPagoConnectionCard as Record<string, string>)[key];
+  (es.MercadoPagoConnectionCard as Record<string, string>)[key];
 
 describe("getMercadoPagoConnectionCopy", () => {
   it("returns loading copy when status is undefined", () => {
     const copy = getMercadoPagoConnectionCopy(undefined, t);
 
-    expect(copy.badgeLabel).toBe("Loading…");
-    expect(copy.ctaLabel).toBe("Connect Mercado Pago");
+    expect(copy.badgeLabel).toBe("Cargando…");
+    expect(copy.ctaLabel).toBe("Conectar Mercado Pago");
     expect(copy.showDisconnect).toBe(false);
   });
 
@@ -27,9 +27,9 @@ describe("getMercadoPagoConnectionCopy", () => {
       t,
     );
 
-    expect(copy.badgeLabel).toBe("Not connected");
+    expect(copy.badgeLabel).toBe("No conectado");
     expect(copy.badgeVariant).toBe("destructive");
-    expect(copy.ctaLabel).toBe("Connect Mercado Pago");
+    expect(copy.ctaLabel).toBe("Conectar Mercado Pago");
     expect(copy.showDisconnect).toBe(false);
   });
 
@@ -42,9 +42,9 @@ describe("getMercadoPagoConnectionCopy", () => {
       t,
     );
 
-    expect(copy.badgeLabel).toBe("Connected");
+    expect(copy.badgeLabel).toBe("Conectado");
     expect(copy.badgeVariant).toBe("warning");
-    expect(copy.ctaLabel).toBe("Switch account");
+    expect(copy.ctaLabel).toBe("Cambiar cuenta");
     expect(copy.showDisconnect).toBe(true);
   });
 
@@ -71,9 +71,9 @@ describe("getMercadoPagoConnectionCopy", () => {
       t,
     );
 
-    expect(copy.badgeLabel).toBe("Connected");
+    expect(copy.badgeLabel).toBe("Conectado");
     expect(copy.badgeVariant).toBe("success");
-    expect(copy.ctaLabel).toBe("Switch account");
+    expect(copy.ctaLabel).toBe("Cambiar cuenta");
     expect(copy.showDisconnect).toBe(true);
   });
 

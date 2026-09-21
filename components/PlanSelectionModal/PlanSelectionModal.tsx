@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import { useReducedMotion } from "framer-motion";
 import { fireSuccessCelebration } from "@/lib/utils/celebration";
 import { useAuth } from "@/hooks/use-auth";
@@ -57,6 +58,7 @@ export function PlanSelectionModal({
   open,
   onOpenChange,
 }: PlanSelectionModalProps) {
+  const t = useTranslations("PlanSelectionModal");
   // The owner's own account email — pre-fills MembershipCheckoutDrawer's
   // email step so most owners can just click Verify instead of retyping
   // an address they're already logged in with.
@@ -346,11 +348,8 @@ export function PlanSelectionModal({
           }}
         >
           <DialogHeader>
-            <DialogTitle>Membership</DialogTitle>
-            <DialogDescription>
-              Choose a plan and billing cycle to activate your club&apos;s
-              membership.
-            </DialogDescription>
+            <DialogTitle>{t("title")}</DialogTitle>
+            <DialogDescription>{t("description")}</DialogDescription>
           </DialogHeader>
 
           {dialogStep === "loading" && (
@@ -366,9 +365,9 @@ export function PlanSelectionModal({
 
           {dialogStep === "error" && (
             <StatusBox className="flex flex-col items-center justify-center gap-3 py-16">
-              <p>We couldn&apos;t load your membership. Try again.</p>
+              <p>{t("loadError")}</p>
               <Button type="button" variant="outline" onClick={() => refetch()}>
-                Retry
+                {t("retry")}
               </Button>
             </StatusBox>
           )}

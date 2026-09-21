@@ -3,7 +3,7 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, cleanup } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/messages/en.json";
+import messages from "@/messages/es.json";
 import { HelpView } from "./HelpView";
 import { useAuth } from "@/hooks/use-auth";
 import type { AppUser } from "@/providers/auth-provider";
@@ -43,7 +43,7 @@ function mockAuth(overrides: Partial<AppUser>) {
 
 function renderHelpView() {
   return render(
-    <NextIntlClientProvider locale="en" messages={messages}>
+    <NextIntlClientProvider locale="es" messages={messages}>
       <HelpView />
     </NextIntlClientProvider>,
   );
@@ -60,10 +60,10 @@ describe("HelpView", () => {
     renderHelpView();
 
     expect(
-      screen.getByRole("heading", { name: "For players" }),
+      screen.getByRole("heading", { name: "Para jugadores" }),
     ).toBeInTheDocument();
     expect(
-      screen.queryByRole("heading", { name: "For club owners" }),
+      screen.queryByRole("heading", { name: "Para dueños de club" }),
     ).not.toBeInTheDocument();
   });
 
@@ -72,29 +72,32 @@ describe("HelpView", () => {
     renderHelpView();
 
     expect(
-      screen.getByRole("heading", { name: "For club owners" }),
+      screen.getByRole("heading", { name: "Para dueños de club" }),
     ).toBeInTheDocument();
     expect(
-      screen.queryByRole("heading", { name: "For players" }),
+      screen.queryByRole("heading", { name: "Para jugadores" }),
     ).not.toBeInTheDocument();
   });
 
-  it("always renders the account & language section, regardless of role", () => {
+  it("always renders the account help section, regardless of role", () => {
     mockAuth({ role: "player" });
     renderHelpView();
 
-    expect(
-      screen.getByRole("heading", { name: "Account & language" }),
-    ).toBeInTheDocument();
+    // Two headings, not one: the section's own Card title and its single
+    // "account" accordion item title are both "Tu cuenta" (there's no
+    // longer a second, differently-titled item to disambiguate against).
+    expect(screen.getAllByRole("heading", { name: "Tu cuenta" })).toHaveLength(
+      2,
+    );
   });
 
   it("renders the page title and description", () => {
     mockAuth({ role: "player" });
     renderHelpView();
 
-    expect(screen.getByRole("heading", { name: "Help" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Ayuda" })).toBeInTheDocument();
     expect(
-      screen.getByText("A quick guide to getting the most out of Play Padel."),
+      screen.getByText("Una guía rápida para aprovechar Play Padel al máximo."),
     ).toBeInTheDocument();
   });
 });

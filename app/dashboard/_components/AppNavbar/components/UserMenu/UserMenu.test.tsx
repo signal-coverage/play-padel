@@ -10,7 +10,7 @@ import {
 import "@testing-library/jest-dom/vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/messages/en.json";
+import messages from "@/messages/es.json";
 import { useAuth } from "@/hooks/use-auth";
 import { useClerk } from "@clerk/nextjs";
 import type { AppUser } from "@/providers/auth-provider";
@@ -72,7 +72,7 @@ function renderUserMenu(
   });
 
   render(
-    <NextIntlClientProvider locale="en" messages={messages}>
+    <NextIntlClientProvider locale="es" messages={messages}>
       <QueryClientProvider client={queryClient}>
         <UserMenu />
       </QueryClientProvider>
@@ -121,7 +121,7 @@ describe("UserMenu — Club Settings visibility", () => {
     await openMenu();
 
     expect(
-      await screen.findByRole("menuitem", { name: /club settings/i }),
+      await screen.findByRole("menuitem", { name: /configuración del club/i }),
     ).toBeInTheDocument();
   });
 
@@ -130,7 +130,7 @@ describe("UserMenu — Club Settings visibility", () => {
     await openMenu();
 
     expect(
-      await screen.findByRole("menuitem", { name: /club settings/i }),
+      await screen.findByRole("menuitem", { name: /configuración del club/i }),
     ).toBeInTheDocument();
   });
 
@@ -140,11 +140,11 @@ describe("UserMenu — Club Settings visibility", () => {
 
     await waitFor(() =>
       expect(
-        screen.getByRole("menuitem", { name: /account settings/i }),
+        screen.getByRole("menuitem", { name: /configuración de la cuenta/i }),
       ).toBeInTheDocument(),
     );
     expect(
-      screen.queryByRole("menuitem", { name: /club settings/i }),
+      screen.queryByRole("menuitem", { name: /configuración del club/i }),
     ).not.toBeInTheDocument();
   });
 
@@ -154,11 +154,11 @@ describe("UserMenu — Club Settings visibility", () => {
 
     await waitFor(() =>
       expect(
-        screen.getByRole("menuitem", { name: /account settings/i }),
+        screen.getByRole("menuitem", { name: /configuración de la cuenta/i }),
       ).toBeInTheDocument(),
     );
     expect(
-      screen.queryByRole("menuitem", { name: /club settings/i }),
+      screen.queryByRole("menuitem", { name: /configuración del club/i }),
     ).not.toBeInTheDocument();
   });
 
@@ -168,11 +168,11 @@ describe("UserMenu — Club Settings visibility", () => {
 
     await waitFor(() =>
       expect(
-        screen.getByRole("menuitem", { name: /account settings/i }),
+        screen.getByRole("menuitem", { name: /configuración de la cuenta/i }),
       ).toBeInTheDocument(),
     );
     expect(
-      screen.queryByRole("menuitem", { name: /club settings/i }),
+      screen.queryByRole("menuitem", { name: /configuración del club/i }),
     ).not.toBeInTheDocument();
   });
 
@@ -185,11 +185,11 @@ describe("UserMenu — Club Settings visibility", () => {
 
     await waitFor(() =>
       expect(
-        screen.getByRole("menuitem", { name: /account settings/i }),
+        screen.getByRole("menuitem", { name: /configuración de la cuenta/i }),
       ).toBeInTheDocument(),
     );
     expect(
-      screen.queryByRole("menuitem", { name: /club settings/i }),
+      screen.queryByRole("menuitem", { name: /configuración del club/i }),
     ).not.toBeInTheDocument();
   });
 });

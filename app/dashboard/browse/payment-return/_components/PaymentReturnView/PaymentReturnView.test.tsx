@@ -4,7 +4,7 @@ import { render, screen, cleanup } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/messages/en.json";
+import messages from "@/messages/es.json";
 
 import { PaymentReturnView } from "./PaymentReturnView";
 
@@ -58,7 +58,7 @@ function renderView(
 
   render(
     <QueryClientProvider client={queryClient}>
-      <NextIntlClientProvider locale="en" messages={messages}>
+      <NextIntlClientProvider locale="es" messages={messages}>
         <PaymentReturnView reservationId={reservationId} />
       </NextIntlClientProvider>
     </QueryClientProvider>,
@@ -78,11 +78,11 @@ describe("PaymentReturnView", () => {
     }));
 
     expect(
-      await screen.findByText("We couldn't check your payment"),
+      await screen.findByText("No pudimos verificar tu pago"),
     ).toBeInTheDocument();
     expect(
       screen.getByText(
-        "Contact the club directly to confirm your reservation.",
+        "Contactá directamente al club para confirmar tu reserva.",
       ),
     ).toBeInTheDocument();
     // Never the genuine-failure copy — a backend bug is not the same thing
@@ -109,7 +109,7 @@ describe("PaymentReturnView", () => {
     }));
 
     expect(
-      await screen.findByText("Payment didn't complete"),
+      await screen.findByText("El pago no se completó"),
     ).toBeInTheDocument();
   });
 
@@ -128,7 +128,7 @@ describe("PaymentReturnView", () => {
       }),
     }));
 
-    expect(await screen.findByText("Payment confirmed!")).toBeInTheDocument();
+    expect(await screen.findByText("¡Pago confirmado!")).toBeInTheDocument();
   });
 
   it("refetches immediately over SSE when the server signals a change, instead of waiting on the 3s poll", async () => {
@@ -151,7 +151,7 @@ describe("PaymentReturnView", () => {
     }));
 
     expect(
-      await screen.findByText("This usually takes a few seconds."),
+      await screen.findByText("Esto suele tardar unos segundos."),
     ).toBeInTheDocument();
 
     // The next fetch (triggered by the SSE-driven invalidation below, not a
@@ -160,7 +160,7 @@ describe("PaymentReturnView", () => {
     const source = MockEventSource.instances[0];
     source.emit("changed", { status: "CONFIRMED" });
 
-    expect(await screen.findByText("Payment confirmed!")).toBeInTheDocument();
+    expect(await screen.findByText("¡Pago confirmado!")).toBeInTheDocument();
   });
 
   it("closes the SSE connection when the component unmounts", async () => {
@@ -181,7 +181,7 @@ describe("PaymentReturnView", () => {
       }),
     }));
 
-    await screen.findByText("This usually takes a few seconds.");
+    await screen.findByText("Esto suele tardar unos segundos.");
     const source = MockEventSource.instances[0];
     expect(source.closed).toBe(false);
 
@@ -197,8 +197,8 @@ describe("PaymentReturnView", () => {
 
     // Two matches by design: the visible copy and its sr-only twin (see
     // PaymentReturnView.tsx's `statusMessage` live region).
-    expect(screen.getAllByText("Missing reservation reference.")).toHaveLength(
-      2,
-    );
+    expect(
+      screen.getAllByText("Falta la referencia de la reserva."),
+    ).toHaveLength(2);
   });
 });

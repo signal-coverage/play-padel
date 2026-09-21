@@ -3,7 +3,7 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/messages/en.json";
+import messages from "@/messages/es.json";
 import { CourtsTable } from "./CourtsTable";
 import type { CourtRecord } from "../../types";
 
@@ -49,7 +49,7 @@ function renderTable(
   const onToggleSelectAll = vi.fn();
 
   render(
-    <NextIntlClientProvider locale="en" messages={messages}>
+    <NextIntlClientProvider locale="es" messages={messages}>
       <CourtsTable
         courts={[COURT_A, COURT_B]}
         isLoading={false}
@@ -80,7 +80,7 @@ describe("CourtsTable selection column", () => {
     const { onToggleSelect } = renderTable();
 
     const checkboxA = screen.getByRole("checkbox", {
-      name: `Select ${COURT_A.name}`,
+      name: `Seleccionar ${COURT_A.name}`,
     });
     fireEvent.click(checkboxA);
 
@@ -91,7 +91,7 @@ describe("CourtsTable selection column", () => {
     const { onToggleSelectAll } = renderTable();
 
     const headerCheckbox = screen.getByRole("checkbox", {
-      name: /select all/i,
+      name: /seleccionar todas/i,
     });
     fireEvent.click(headerCheckbox);
 
@@ -102,10 +102,10 @@ describe("CourtsTable selection column", () => {
     renderTable({ selectedIds: new Set([COURT_A.id]) });
 
     expect(
-      screen.getByRole("checkbox", { name: `Select ${COURT_A.name}` }),
+      screen.getByRole("checkbox", { name: `Seleccionar ${COURT_A.name}` }),
     ).toHaveAttribute("aria-checked", "true");
     expect(
-      screen.getByRole("checkbox", { name: `Select ${COURT_B.name}` }),
+      screen.getByRole("checkbox", { name: `Seleccionar ${COURT_B.name}` }),
     ).toHaveAttribute("aria-checked", "false");
   });
 
@@ -113,7 +113,7 @@ describe("CourtsTable selection column", () => {
     renderTable({ selectedIds: new Set([COURT_A.id, COURT_B.id]) });
 
     expect(
-      screen.getByRole("checkbox", { name: /select all/i }),
+      screen.getByRole("checkbox", { name: /seleccionar todas/i }),
     ).toHaveAttribute("aria-checked", "true");
   });
 });

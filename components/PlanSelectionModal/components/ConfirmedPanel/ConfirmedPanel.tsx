@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { BouncingBall } from "@/components/BouncingBall";
 import { Button } from "@/components/ui/button";
 import { StatusBox } from "@/components/StatusBox";
@@ -20,17 +21,15 @@ export function ConfirmedPanel({
   isChangingPlan,
   changePlanError,
 }: ConfirmedPanelProps) {
+  const t = useTranslations("ConfirmedPanel");
+
   return (
     <StatusBox className="flex flex-col items-center gap-3 py-12">
       <BouncingBall size={32} amplitude={12} />
       <p className="text-base font-semibold text-foreground">
-        {isTrialing ? "Free Trial Active" : "Membership Active"}
+        {isTrialing ? t("freeTrialActive") : t("membershipActive")}
       </p>
-      <p>
-        {isTrialing
-          ? "Your free trial is active. No payment has been made yet."
-          : "Your membership payment is confirmed."}
-      </p>
+      <p>{isTrialing ? t("trialDescription") : t("confirmedDescription")}</p>
       {isTrialing && onChangePlan && (
         <div className="flex flex-col items-center gap-2">
           <Button
@@ -39,7 +38,7 @@ export function ConfirmedPanel({
             onClick={onChangePlan}
             disabled={isChangingPlan}
           >
-            {isChangingPlan ? "Changing plan..." : "Change Plan"}
+            {isChangingPlan ? t("changingPlan") : t("changePlan")}
           </Button>
           {changePlanError && (
             <p className="text-sm text-destructive">{changePlanError}</p>
@@ -47,7 +46,7 @@ export function ConfirmedPanel({
         </div>
       )}
       <Button type="button" onClick={onClose}>
-        Close
+        {t("close")}
       </Button>
     </StatusBox>
   );

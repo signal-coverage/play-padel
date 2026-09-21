@@ -4,7 +4,7 @@ import { render, screen, waitFor, cleanup } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/messages/en.json";
+import messages from "@/messages/es.json";
 import { ClubOperationalGate } from "./ClubOperationalGate";
 import type { ClubOperationalStatusResponse } from "./types";
 
@@ -65,7 +65,7 @@ function renderGate(
   });
 
   render(
-    <NextIntlClientProvider locale="en" messages={messages}>
+    <NextIntlClientProvider locale="es" messages={messages}>
       <QueryClientProvider client={queryClient}>
         <ClubOperationalGate>
           <button type="button">Create court</button>
@@ -100,8 +100,8 @@ describe("ClubOperationalGate", () => {
       ).toBeInTheDocument(),
     );
 
-    expect(screen.queryByText("Payment activation")).not.toBeInTheDocument();
-    expect(screen.queryByText("Renew your membership")).not.toBeInTheDocument();
+    expect(screen.queryByText("Activación de pago")).not.toBeInTheDocument();
+    expect(screen.queryByText("Renová tu membresía")).not.toBeInTheDocument();
   });
 
   it("shows a neutral loading state, neither children nor a gate, while status is loading", () => {
@@ -117,7 +117,7 @@ describe("ClubOperationalGate", () => {
     });
 
     render(
-      <NextIntlClientProvider locale="en" messages={messages}>
+      <NextIntlClientProvider locale="es" messages={messages}>
         <QueryClientProvider client={queryClient}>
           <ClubOperationalGate>
             <button type="button">Create court</button>
@@ -129,31 +129,33 @@ describe("ClubOperationalGate", () => {
     expect(
       screen.queryByRole("button", { name: "Create court" }),
     ).not.toBeInTheDocument();
-    expect(screen.queryByText("Payment activation")).not.toBeInTheDocument();
-    expect(screen.queryByText("Renew your membership")).not.toBeInTheDocument();
-    expect(screen.getByText("Loading dashboard…")).toBeInTheDocument();
+    expect(screen.queryByText("Activación de pago")).not.toBeInTheDocument();
+    expect(screen.queryByText("Renová tu membresía")).not.toBeInTheDocument();
+    expect(screen.getByText("Cargando panel…")).toBeInTheDocument();
   });
 
   it("does not mount children at all when MP_NOT_CONNECTED, and renders the payment activation screen instead", async () => {
     renderGate({ operational: false, cause: "MP_NOT_CONNECTED" });
 
     const heading = await screen.findByRole("heading", {
-      name: "Payment activation",
+      name: "Activación de pago",
     });
     expect(heading).toBeInTheDocument();
 
-    // The membership summary and "Pay Membership" action show once the
+    // The membership summary and "Pagar membresía" action show once the
     // subscription snapshot loads; the payout-method cards (Mercado
     // Pago/bank transfer) stay hidden entirely until membership is confirmed
     // (spec's "Two Separate Membership Actions").
     await waitFor(() => {
       expect(screen.getByText(/BASIC/)).toBeInTheDocument();
       expect(
-        screen.getByRole("button", { name: "Pay Membership" }),
+        screen.getByRole("button", { name: "Pagar membresía" }),
       ).toBeInTheDocument();
     });
 
-    expect(screen.queryByText("Bank Transfer")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Transferencia bancaria"),
+    ).not.toBeInTheDocument();
 
     // This is the actual point of the fix: the gated-out page content must
     // be entirely absent from the DOM, not just visually hidden — no blur
@@ -161,14 +163,14 @@ describe("ClubOperationalGate", () => {
     expect(screen.queryByText("Create court")).not.toBeInTheDocument();
     expect(document.querySelector(".blur-sm")).not.toBeInTheDocument();
 
-    expect(screen.queryByText("Renew your membership")).not.toBeInTheDocument();
+    expect(screen.queryByText("Renová tu membresía")).not.toBeInTheDocument();
   });
 
   it("does not mount children at all when CLUB_INACTIVE, and renders the disabled CTA instead", async () => {
     renderGate({ operational: false, cause: "CLUB_INACTIVE" });
 
     const heading = await screen.findByRole("heading", {
-      name: "Renew your membership",
+      name: "Renová tu membresía",
     });
     expect(heading).toBeInTheDocument();
 
@@ -178,10 +180,10 @@ describe("ClubOperationalGate", () => {
     // The CTA is no longer a permanent dead end — it triggers the
     // CANCELLED -> PENDING reactivation flow, so it must render enabled
     // (see ClubInactiveCard.test.tsx for the click-through behavior).
-    const cta = screen.getByRole("button", { name: "Renew membership" });
+    const cta = screen.getByRole("button", { name: "Renovar membresía" });
     expect(cta).not.toBeDisabled();
 
-    expect(screen.queryByText("Payment activation")).not.toBeInTheDocument();
+    expect(screen.queryByText("Activación de pago")).not.toBeInTheDocument();
   });
 
   it("shows the MP_NOT_CONNECTED screen, not the inactive one, when both causes would apply", async () => {
@@ -190,16 +192,16 @@ describe("ClubOperationalGate", () => {
     // whatever single cause it receives without re-deriving precedence.
     renderGate({ operational: false, cause: "MP_NOT_CONNECTED" });
 
-    await screen.findByRole("heading", { name: "Payment activation" });
+    await screen.findByRole("heading", { name: "Activación de pago" });
 
-    expect(screen.queryByText("Renew your membership")).not.toBeInTheDocument();
+    expect(screen.queryByText("Renová tu membresía")).not.toBeInTheDocument();
   });
 
   it("does not mount children at all when PENDING_APPROVAL, and renders the informational pending-approval screen instead", async () => {
     renderGate({ operational: false, cause: "PENDING_APPROVAL" });
 
     const heading = await screen.findByRole("heading", {
-      name: "Your club is under review",
+      name: "Tu club está en revisión",
     });
     expect(heading).toBeInTheDocument();
 
@@ -209,8 +211,8 @@ describe("ClubOperationalGate", () => {
     // Purely informational — no action button, unlike the other two causes.
     expect(screen.queryByRole("button")).not.toBeInTheDocument();
 
-    expect(screen.queryByText("Payment activation")).not.toBeInTheDocument();
-    expect(screen.queryByText("Renew your membership")).not.toBeInTheDocument();
+    expect(screen.queryByText("Activación de pago")).not.toBeInTheDocument();
+    expect(screen.queryByText("Renová tu membresía")).not.toBeInTheDocument();
   });
 
   // No FREE-plan bypass (deliberately removed): connecting a real payout
@@ -224,7 +226,7 @@ describe("ClubOperationalGate", () => {
     );
 
     const heading = await screen.findByRole("heading", {
-      name: "Payment activation",
+      name: "Activación de pago",
     });
     expect(heading).toBeInTheDocument();
     expect(screen.queryByText("Create court")).not.toBeInTheDocument();

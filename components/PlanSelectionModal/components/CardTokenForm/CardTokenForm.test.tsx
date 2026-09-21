@@ -2,6 +2,8 @@
 import { describe, it, expect, vi, afterEach, beforeEach } from "vitest";
 import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
+import { NextIntlClientProvider } from "next-intl";
+import messages from "@/messages/es.json";
 
 const { initMercadoPagoMock, receivedBrickProps } = vi.hoisted(() => ({
   initMercadoPagoMock: vi.fn(),
@@ -90,6 +92,25 @@ vi.mock("@mercadopago/sdk-react", () => ({
 
 import { CardTokenForm } from "./CardTokenForm";
 
+function renderForm(ui: React.ReactElement) {
+  return render(
+    <NextIntlClientProvider locale="es" messages={messages}>
+      {ui}
+    </NextIntlClientProvider>,
+  );
+}
+
+function rerenderForm(
+  rerender: (ui: React.ReactElement) => void,
+  ui: React.ReactElement,
+) {
+  rerender(
+    <NextIntlClientProvider locale="es" messages={messages}>
+      {ui}
+    </NextIntlClientProvider>,
+  );
+}
+
 afterEach(() => {
   cleanup();
   vi.unstubAllEnvs();
@@ -103,7 +124,7 @@ beforeEach(() => {
 
 describe("CardTokenForm", () => {
   it("initializes Mercado Pago with the configured public key", () => {
-    render(
+    renderForm(
       <CardTokenForm amount={30000} onTokenReady={vi.fn()} onError={vi.fn()} />,
     );
 
@@ -114,7 +135,7 @@ describe("CardTokenForm", () => {
   });
 
   it("passes amount and payerEmail through to the Brick's initialization", () => {
-    render(
+    renderForm(
       <CardTokenForm
         amount={50000}
         payerEmail="owner@club.com"
@@ -130,7 +151,7 @@ describe("CardTokenForm", () => {
   });
 
   it("passes identification through to the Brick's initialization.payer", () => {
-    render(
+    renderForm(
       <CardTokenForm
         amount={50000}
         payerEmail="owner@club.com"
@@ -150,7 +171,7 @@ describe("CardTokenForm", () => {
 
   it("calls onTokenReady with the identification confirmed in the Brick's onSubmit", () => {
     const onTokenReady = vi.fn();
-    render(
+    renderForm(
       <CardTokenForm
         amount={30000}
         identification={{ type: "CUIT", number: "30-12345678-9" }}
@@ -169,7 +190,7 @@ describe("CardTokenForm", () => {
 
   it("calls onTokenReady with the token from the Brick's onSubmit", () => {
     const onTokenReady = vi.fn();
-    render(
+    renderForm(
       <CardTokenForm
         amount={30000}
         onTokenReady={onTokenReady}
@@ -184,7 +205,7 @@ describe("CardTokenForm", () => {
 
   it("calls onError with the Brick's error message", () => {
     const onError = vi.fn();
-    render(
+    renderForm(
       <CardTokenForm amount={30000} onTokenReady={vi.fn()} onError={onError} />,
     );
 
@@ -197,7 +218,7 @@ describe("CardTokenForm", () => {
 
   it("translates a raw, unmapped MP cause code into friendly copy", () => {
     const onError = vi.fn();
-    render(
+    renderForm(
       <CardTokenForm amount={30000} onTokenReady={vi.fn()} onError={onError} />,
     );
 
@@ -206,7 +227,7 @@ describe("CardTokenForm", () => {
     );
 
     expect(onError).toHaveBeenCalledWith(
-      "We don't recognize that card. Double-check the number, or try a different card.",
+      "No reconocemos esa tarjeta. Revisá el número, o probá con otra tarjeta.",
     );
   });
 
@@ -222,7 +243,7 @@ describe("CardTokenForm", () => {
   it("keeps the Brick's initialization/onSubmit/onError references stable across an unrelated re-render", () => {
     const onTokenReady = vi.fn();
     const onError = vi.fn();
-    const { rerender } = render(
+    const { rerender } = renderForm(
       <CardTokenForm
         amount={30000}
         payerEmail="owner@club.com"
@@ -234,7 +255,8 @@ describe("CardTokenForm", () => {
     expect(receivedBrickProps).toHaveLength(1);
     const first = receivedBrickProps[0];
 
-    rerender(
+    rerenderForm(
+      rerender,
       <CardTokenForm
         amount={30000}
         payerEmail="owner@club.com"
@@ -254,7 +276,7 @@ describe("CardTokenForm", () => {
     vi.stubEnv("NEXT_PUBLIC_MERCADOPAGO_PUBLIC_KEY", "");
     const onError = vi.fn();
 
-    render(
+    renderForm(
       <CardTokenForm amount={30000} onTokenReady={vi.fn()} onError={onError} />,
     );
 
@@ -262,7 +284,7 @@ describe("CardTokenForm", () => {
       screen.queryByTestId("mock-card-payment-brick"),
     ).not.toBeInTheDocument();
     expect(onError).toHaveBeenCalledWith(
-      expect.stringContaining("not configured"),
+      expect.stringContaining("no están configurados"),
     );
   });
 });

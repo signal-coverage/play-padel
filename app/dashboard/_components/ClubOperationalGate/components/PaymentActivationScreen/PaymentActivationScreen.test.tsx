@@ -10,7 +10,7 @@ import {
 import "@testing-library/jest-dom/vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/messages/en.json";
+import messages from "@/messages/es.json";
 
 // next/image's default loader calls out to Next's build-time image
 // optimization config, which doesn't exist under Vitest — MercadoPagoConnectionCard
@@ -81,7 +81,7 @@ function renderScreen(subscription: object = PENDING_SUBSCRIPTION) {
   });
 
   render(
-    <NextIntlClientProvider locale="en" messages={messages}>
+    <NextIntlClientProvider locale="es" messages={messages}>
       <QueryClientProvider client={queryClient}>
         <PaymentActivationScreen />
       </QueryClientProvider>
@@ -110,21 +110,23 @@ describe("PaymentActivationScreen", () => {
 
     expect(await screen.findByText(/BASIC/)).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: "Pay Membership" }),
+      screen.getByRole("button", { name: "Pagar membresía" }),
     ).toBeInTheDocument();
 
     expect(screen.queryByText("Mercado Pago")).not.toBeInTheDocument();
-    expect(screen.queryByText("Bank Transfer")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Transferencia bancaria"),
+    ).not.toBeInTheDocument();
   });
 
   it("opens the plan-selection modal when Pay Membership is clicked", async () => {
     renderScreen();
 
     await screen.findByText(/BASIC/);
-    fireEvent.click(screen.getByRole("button", { name: "Pay Membership" }));
+    fireEvent.click(screen.getByRole("button", { name: "Pagar membresía" }));
 
     expect(
-      await screen.findByRole("heading", { name: "Membership" }),
+      await screen.findByRole("heading", { name: "Membresía" }),
     ).toBeInTheDocument();
   });
 
@@ -138,19 +140,19 @@ describe("PaymentActivationScreen", () => {
     // equally absent while still loading, so asserting on its absence alone
     // would pass before the ACTIVE data even arrives.
     await waitFor(() => {
-      expect(screen.getByText("Bank Transfer")).toBeInTheDocument();
+      expect(screen.getByText("Transferencia bancaria")).toBeInTheDocument();
     });
     expect(
-      screen.queryByRole("button", { name: "Pay Membership" }),
+      screen.queryByRole("button", { name: "Pagar membresía" }),
     ).not.toBeInTheDocument();
     expect(
-      screen.getByText("Payment method").closest("[data-step]"),
+      screen.getByText("Método de pago").closest("[data-step]"),
     ).toHaveAttribute("aria-current", "step");
-    // MercadoPagoConnectionCard renders its own "Connect Mercado Pago" CTA
+    // MercadoPagoConnectionCard renders its own "Conectar Mercado Pago" CTA
     // when not yet connected.
     await waitFor(() => {
       expect(
-        screen.getByRole("link", { name: "Connect Mercado Pago" }),
+        screen.getByRole("link", { name: "Conectar Mercado Pago" }),
       ).toBeInTheDocument();
     });
   });
@@ -159,9 +161,9 @@ describe("PaymentActivationScreen", () => {
     renderScreen({ ...PENDING_SUBSCRIPTION, status: "TRIALING" });
 
     await waitFor(() => {
-      expect(screen.getByText("Bank Transfer")).toBeInTheDocument();
+      expect(screen.getByText("Transferencia bancaria")).toBeInTheDocument();
       expect(
-        screen.getByRole("link", { name: "Connect Mercado Pago" }),
+        screen.getByRole("link", { name: "Conectar Mercado Pago" }),
       ).toBeInTheDocument();
     });
   });
@@ -172,7 +174,7 @@ describe("PaymentActivationScreen", () => {
   // while a background refetch is already in flight. `isLoading` alone is
   // only true when there's no cached data at all — it stays false here since
   // stale data already exists — so without also checking `isFetching`, the
-  // stale PENDING snapshot briefly renders as step 0 ("Pay Membership")
+  // stale PENDING snapshot briefly renders as step 0 ("Pagar membresía")
   // before correcting itself once the fresh ACTIVE data arrives.
   it("never flashes step-0 Pay Membership when the cache holds a stale non-confirmed snapshot while a confirmed refetch is in flight", async () => {
     const queryClient = new QueryClient({
@@ -212,7 +214,7 @@ describe("PaymentActivationScreen", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     render(
-      <NextIntlClientProvider locale="en" messages={messages}>
+      <NextIntlClientProvider locale="es" messages={messages}>
         <QueryClientProvider client={queryClient}>
           <PaymentActivationScreen />
         </QueryClientProvider>
@@ -223,15 +225,15 @@ describe("PaymentActivationScreen", () => {
     // snapshot must never surface as step 0 — only the skeleton while the
     // confirmed refetch is in flight.
     expect(
-      screen.queryByRole("button", { name: "Pay Membership" }),
+      screen.queryByRole("button", { name: "Pagar membresía" }),
     ).not.toBeInTheDocument();
 
     await waitFor(() => {
-      expect(screen.getByText("Bank Transfer")).toBeInTheDocument();
+      expect(screen.getByText("Transferencia bancaria")).toBeInTheDocument();
     });
 
     expect(
-      screen.queryByRole("button", { name: "Pay Membership" }),
+      screen.queryByRole("button", { name: "Pagar membresía" }),
     ).not.toBeInTheDocument();
   });
 
@@ -277,7 +279,7 @@ describe("PaymentActivationScreen", () => {
     });
 
     render(
-      <NextIntlClientProvider locale="en" messages={messages}>
+      <NextIntlClientProvider locale="es" messages={messages}>
         <QueryClientProvider client={queryClient}>
           <PaymentActivationScreen />
         </QueryClientProvider>
@@ -285,15 +287,15 @@ describe("PaymentActivationScreen", () => {
     );
 
     expect(
-      await screen.findByText(/couldn't load your membership/i),
+      await screen.findByText(/no pudimos cargar tu membresía/i),
     ).toBeInTheDocument();
 
     shouldFail = false;
-    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+    fireEvent.click(screen.getByRole("button", { name: "Reintentar" }));
 
     await screen.findByText(/BASIC/);
     expect(
-      screen.queryByText(/couldn't load your membership/i),
+      screen.queryByText(/no pudimos cargar tu membresía/i),
     ).not.toBeInTheDocument();
   });
 });

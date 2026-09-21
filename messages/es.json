@@ -131,11 +131,6 @@
       }
     }
   },
-  "LocaleSwitcher": {
-    "label": "Idioma",
-    "en": "Inglés",
-    "es": "Español"
-  },
   "HomePage": {
     "title": "Play Padel — Reservá canchas de pádel online",
     "description": "Encontrá turnos disponibles de pádel en distintos clubes, todo en un mismo lugar."
@@ -647,6 +642,75 @@
     "perMonth": "/ mes",
     "billedAnnually": "{price} facturado anualmente"
   },
+  "SelectPlanPanel": {
+    "changePlan": "Cambiar plan",
+    "contactUsTier": "{plan} es un plan a medida — contactá a nuestro equipo para configurarlo.",
+    "startingCheckout": "Iniciando el pago…",
+    "continue": "Continuar"
+  },
+  "RenewalModeToggle": {
+    "ariaLabel": "Modo de renovación",
+    "autoLabel": "Renovación automática",
+    "autoDescription": "Te cobramos la tarjeta automáticamente cada ciclo.",
+    "manualLabel": "Renovación manual",
+    "manualDescription": "Confirmás y pagás cada ciclo vos mismo."
+  },
+  "BillingCycleToggle": {
+    "monthly": "Mensual",
+    "annual": "Anual",
+    "annualSavingsNote": "Ahorrá 2 meses con la facturación anual"
+  },
+  "ChangePlanDialog": {
+    "title": "Cambiar plan",
+    "description": "Elegí un nuevo plan para la membresía de tu club.",
+    "planGroupAriaLabel": "Plan"
+  },
+  "UpgradeMembershipButton": {
+    "upgrade": "Mejorar plan"
+  },
+  "PlanSelectionModal": {
+    "title": "Membresía",
+    "description": "Elegí un plan y un ciclo de facturación para activar la membresía de tu club.",
+    "loadError": "No pudimos cargar tu membresía. Intentá de nuevo.",
+    "retry": "Reintentar"
+  },
+  "ConfirmedPanel": {
+    "freeTrialActive": "Prueba gratuita activa",
+    "membershipActive": "Membresía activa",
+    "trialDescription": "Tu prueba gratuita está activa. Todavía no se realizó ningún pago.",
+    "confirmedDescription": "El pago de tu membresía está confirmado.",
+    "changingPlan": "Cambiando de plan…",
+    "changePlan": "Cambiar plan",
+    "close": "Cerrar"
+  },
+  "MembershipCheckoutDrawer": {
+    "title": "Agregar un método de pago",
+    "description": "{amount} / {period} — verificá tu email y después ingresá los datos de tu tarjeta.",
+    "monthly": "mes",
+    "annual": "año",
+    "saveIdLabel": "Guardar este dato para futuros pagos",
+    "back": "Atrás"
+  },
+  "CardCollectionPanel": {
+    "emailLabel": "Email",
+    "emailPlaceholder": "duenio@club.com",
+    "changeEmail": "Cambiar email",
+    "verify": "Verificar"
+  },
+  "CardTokenForm": {
+    "notConfigured": "Los pagos con tarjeta no están configurados para este entorno. Contactá a soporte.",
+    "notAvailable": "Los pagos con tarjeta no están disponibles en este momento. Intentá de nuevo más tarde.",
+    "unrecognizedCard": "No reconocemos esa tarjeta. Revisá el número, o probá con otra tarjeta.",
+    "genericCardError": "No pudimos validar tu tarjeta. Intentá de nuevo."
+  },
+  "AwaitingConfirmationPanel": {
+    "confirming": "Estamos confirmando tu pago con Mercado Pago. Esto suele tardar menos de un minuto.",
+    "closingTabHint": "Vamos a cerrar la pestaña de Mercado Pago automáticamente en cuanto se confirme tu pago. Si queda abierta, podés cerrarla vos mismo.",
+    "checkAgain": "Volver a comprobar"
+  },
+  "PaymentStepIndicator": {
+    "steps": ["Email", "Tarjeta"]
+  },
   "AppNavbar": {
     "navItems": {
       "dashboard": "Panel",
@@ -661,7 +725,9 @@
       "browseCourts": "Buscar canchas",
       "myReservations": "Mis reservas",
       "players": "Jugadores",
-      "tournaments": "Torneos"
+      "tournaments": "Torneos",
+      "manageTournaments": "Torneos",
+      "manageTournamentsAdmin": "Gestión de torneos"
     },
     "more": "Más",
     "admin": "Admin"
@@ -839,7 +905,7 @@
     "winRatePrefix": "{percent}% de victorias"
   },
   "BrowseCourts": {
-    "title": "Explorar canchas",
+    "title": "Buscar canchas",
     "description": "Elegí un club, después una cancha y un horario libre para reservar.",
     "backToClubs": "Volver a los clubes",
     "backToCourts": "Volver a las canchas",
@@ -872,6 +938,26 @@
     "carpet": "Alfombra",
     "indoor": "Techada",
     "outdoor": "Descubierta"
+  },
+  "DayLabels": {
+    "sunday": "Domingo",
+    "monday": "Lunes",
+    "tuesday": "Martes",
+    "wednesday": "Miércoles",
+    "thursday": "Jueves",
+    "friday": "Viernes",
+    "saturday": "Sábado"
+  },
+  "AvailabilityRowsEditor": {
+    "expand": "Expandir {day}",
+    "collapse": "Colapsar {day}"
+  },
+  "QuickSetupPanel": {
+    "title": "Configuración rápida",
+    "description": "Aplicá el mismo horario a los días seleccionados.",
+    "start": "Desde",
+    "end": "Hasta",
+    "apply": "Aplicar"
   },
   "CourtsTable": {
     "selectAll": "Seleccionar todas las canchas",
@@ -1123,7 +1209,7 @@
     "paymentConfirmedStatus": "Pago confirmado. Tu reserva está hecha.",
     "checkFailedStatus": "No pudimos verificar el estado de tu pago. Contactá al club para confirmar tu reserva.",
     "paymentFailedStatus": "El pago no se completó. Tu horario reservado expiró.",
-    "backToBrowse": "Volver a Explorar canchas",
+    "backToBrowse": "Volver a Buscar canchas",
     "checkFailedTitle": "No pudimos verificar tu pago",
     "contactClub": "Contactá directamente al club para confirmar tu reserva.",
     "viewMyReservations": "Ver mis reservas",
@@ -1438,6 +1524,9 @@
     "freePlanActivated": "Club activado en el plan GRATUITO",
     "courtLimitUpdated": "Límite de canchas actualizado"
   },
+  "AdminTournamentsView": {
+    "selectClubPlaceholder": "Seleccioná un club para gestionar sus torneos."
+  },
   "AdminClubList": {
     "columnHeader": "Club",
     "freeBadge": "Gratis",
@@ -1713,7 +1802,9 @@
     "groupsLocked": "Grupos bloqueados",
     "scoreEntered": "Resultado cargado",
     "walkoverRecorded": "Walkover registrado",
-    "knockoutBracketGenerated": "Llave de eliminación generada"
+    "knockoutBracketGenerated": "Llave de eliminación generada",
+    "tournamentCreated": "Torneo creado",
+    "tournamentPublished": "Torneo publicado"
   },
   "CategoryWorkspace": {
     "matches": "Partidos",
@@ -1797,7 +1888,56 @@
     "teamWins": "Gana {teamLabel}"
   },
   "TournamentsList": {
-    "emptyState": "Todavía no hay torneos. Crear un torneo todavía no está disponible en esta vista — usá la API directamente, o esperá a que se agregue la función de creación."
+    "emptyState": "Todavía no hay torneos. Creá el primero con el botón de arriba.",
+    "createTournament": "Crear torneo"
+  },
+  "TournamentRow": {
+    "publish": "Publicar",
+    "publishing": "Publicando…"
+  },
+  "CreateTournamentSheet": {
+    "title": "Crear torneo",
+    "description": "El torneo se crea en borrador — revisá los datos y publicalo después para abrir la inscripción.",
+    "nameLabel": "Nombre",
+    "namePlaceholder": "Torneo de Verano",
+    "descriptionLabel": "Descripción",
+    "descriptionPlaceholder": "Detalles opcionales para los jugadores",
+    "registrationOpensAtLabel": "Apertura de inscripción",
+    "registrationClosesAtLabel": "Cierre de inscripción",
+    "startDateLabel": "Fecha de inicio",
+    "endDateLabel": "Fecha de fin",
+    "categoriesLegend": "Categorías",
+    "cancel": "Cancelar",
+    "create": "Crear torneo",
+    "creating": "Creando…"
+  },
+  "CreateTournamentSheetValidation": {
+    "nameRequired": "El nombre es obligatorio",
+    "registrationOpensAtRequired": "La fecha de apertura de inscripción es obligatoria",
+    "registrationClosesAtRequired": "La fecha de cierre de inscripción es obligatoria",
+    "registrationCloseMustBeAfterOpen": "El cierre de inscripción debe ser posterior a la apertura",
+    "endDateMustBeAfterStart": "La fecha de fin debe ser igual o posterior a la fecha de inicio",
+    "atLeastOneCategoryRequired": "Se necesita al menos una categoría",
+    "categoryNameRequired": "El nombre de la categoría es obligatorio",
+    "groupCountRequired": "La cantidad de grupos es obligatoria",
+    "groupCountMustBePositive": "La cantidad de grupos debe ser positiva",
+    "advancesPerGroupRequired": "La cantidad de clasificados es obligatoria",
+    "advancesPerGroupMustBePositive": "La cantidad de clasificados debe ser positiva",
+    "maxTeamsMustBePositive": "El máximo de equipos debe ser positivo",
+    "categoryLevelOutOfRange": "El nivel de categoría está fuera de rango",
+    "categoryLevelRangeInvalid": "El nivel mínimo debe ser menor o igual al nivel máximo"
+  },
+  "CategoryFieldsArray": {
+    "categoryNumber": "Categoría {number}",
+    "removeCategory": "Quitar categoría",
+    "addCategory": "Agregar categoría",
+    "nameLabel": "Nombre de la categoría",
+    "namePlaceholder": "Cuarta categoría",
+    "groupCountLabel": "Cantidad de grupos",
+    "advancesPerGroupLabel": "Clasificados por grupo",
+    "minCategoryLevelLabel": "Nivel mínimo (opcional)",
+    "maxCategoryLevelLabel": "Nivel máximo (opcional)",
+    "maxTeamsLabel": "Máximo de equipos (opcional)"
   },
   "StandingsTable": {
     "emptyState": "Todavía no hay posiciones — no se jugaron partidos.",
@@ -1846,11 +1986,11 @@
     "items": {
       "browsing": {
         "title": "Buscar un club y una cancha",
-        "body": "Abrí Explorar canchas para ver los clubes cercanos, elegir una cancha y consultar la disponibilidad en tiempo real para cualquier día."
+        "body": "Abrí <link>Buscar canchas</link> para ver los clubes cercanos, elegir una cancha y consultar la disponibilidad en tiempo real para cualquier día."
       },
       "booking": {
         "title": "Reservar un turno y pagar online",
-        "body": "Tocá un horario disponible para reservarlo. Si la cancha es gratuita, tu reserva se confirma al instante. Si el club cobra una tarifa de reserva, el turno queda retenido por un tiempo corto mientras pagás con Mercado Pago o transferencia bancaria, según lo que acepte el club. Si no completás el pago a tiempo, la retención se libera automáticamente y el turno vuelve a estar disponible."
+        "body": "Tocá un horario disponible para reservarlo. Si el club ofrece esa cancha sin cargo — por ejemplo, por la inauguración del club o de la cancha, o algún evento especial — tu reserva se confirma al instante. Si el club cobra una tarifa de reserva, el turno queda retenido por un tiempo corto mientras pagás con Mercado Pago o transferencia bancaria, según lo que acepte el club. Ese pago funciona como seña y no es reembolsable: cualquier inconveniente con la reserva lo tenés que resolver directamente con el club. Si no completás el pago a tiempo, la retención se libera automáticamente y el turno vuelve a estar disponible."
       },
       "myReservations": {
         "title": "Gestionar tus reservas",
@@ -1862,11 +2002,11 @@
       },
       "profile": {
         "title": "Tu perfil de jugador",
-        "body": "Tu categoría de pádel, lado preferido y mano dominante se definen cuando te registrás. Podés actualizar tu lado preferido y mano dominante en cualquier momento desde el ícono de lápiz junto a tu estilo de juego, en el inicio de tu Dashboard."
+        "body": "Tu categoría de pádel, lado preferido y mano dominante se definen cuando te registrás. Podés actualizar tu lado preferido y mano dominante en cualquier momento desde el ícono de lápiz junto a tu estilo de juego, en el inicio de tu Panel."
       },
       "playersDirectory": {
         "title": "Encontrar a otros jugadores",
-        "body": "Jugadores lista a todas las personas registradas para que puedas buscar compañeros y ver su categoría, lado preferido y mano dominante."
+        "body": "La sección Jugadores reúne a todas las personas registradas para que puedas buscar compañeros y ver su categoría, lado preferido y mano dominante."
       }
     }
   },
@@ -1875,7 +2015,7 @@
     "items": {
       "onboarding": {
         "title": "Configurar tu club",
-        "body": "Definís los datos básicos de tu club (nombre, contacto, datos legales y de facturación) al registrarte como dueño. Podés revisar y editar la mayoría de esos datos después desde Configuración del club."
+        "body": "Definís los datos básicos de tu club (nombre, contacto, datos legales y de facturación) al registrarte como dueño. Podés revisar y editar la mayoría de esos datos después desde <link>Configuración del club</link>."
       },
       "gate": {
         "title": "Antes de poder aceptar reservas",
@@ -1883,15 +2023,15 @@
       },
       "courts": {
         "title": "Gestionar canchas y cierres",
-        "body": "Canchas es donde agregás y editás las canchas de tu club (superficie, paredes, red, fotos, precio) y cerrás canchas puntuales por mantenimiento. Para cerrar todo el club — un feriado, por ejemplo — usá Cierres dentro de Configuración del club."
+        "body": "<courtsLink>Canchas</courtsLink> es donde agregás y editás las canchas de tu club (superficie, paredes, red, fotos, precio) y cerrás canchas puntuales por mantenimiento. Para cerrar todo el club — un feriado, por ejemplo — usá Cierres dentro de <settingsLink>Configuración del club</settingsLink>."
       },
       "reservations": {
         "title": "Gestionar reservas",
-        "body": "Reservas muestra una grilla día por día con las reservas de cada cancha. Hacé clic en un turno para ver el detalle de esa reserva y gestionarla."
+        "body": "<link>Reservas</link> muestra una grilla día por día con las reservas de cada cancha. Hacé clic en un turno para ver el detalle de esa reserva y gestionarla."
       },
       "clubSettings": {
         "title": "Configuración del club",
-        "body": "Configuración del club se organiza en pestañas: Datos básicos, Horarios, Cierres, Mercado Pago y Transferencia bancaria — todo lo relacionado con cómo funciona tu club y cómo cobrás está ahí."
+        "body": "<link>Configuración del club</link> se organiza en pestañas: información básica, Horario, Cierres, Mercado Pago y Transferencia bancaria — todo lo relacionado con cómo funciona tu club y cómo cobrás está ahí."
       },
       "tournaments": {
         "title": "Organizar torneos",
@@ -1899,16 +2039,12 @@
       }
     }
   },
-  "AccountLanguageHelpSection": {
-    "title": "Cuenta e idioma",
+  "AccountHelpSection": {
+    "title": "Tu cuenta",
     "items": {
       "account": {
         "title": "Tu cuenta",
         "body": "Configuración de la cuenta, en el menú debajo de tu avatar, abre tu perfil — email, contraseña y seguridad — gestionado por Clerk."
-      },
-      "language": {
-        "title": "Cambiar de idioma",
-        "body": "Usá el selector de bandera en la barra de navegación para cambiar {brand} entre español e inglés. El mismo selector está disponible en el encabezado antes de iniciar sesión."
       }
     }
   },

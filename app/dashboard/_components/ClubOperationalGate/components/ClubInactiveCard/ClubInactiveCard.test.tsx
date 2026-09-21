@@ -10,7 +10,7 @@ import {
 import "@testing-library/jest-dom/vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/messages/en.json";
+import messages from "@/messages/es.json";
 import { ClubInactiveCard } from "./ClubInactiveCard";
 
 // This card mounts PlanSelectionModal once reactivation succeeds, which
@@ -62,7 +62,7 @@ function renderCard(
   });
 
   render(
-    <NextIntlClientProvider locale="en" messages={messages}>
+    <NextIntlClientProvider locale="es" messages={messages}>
       <QueryClientProvider client={queryClient}>
         <ClubInactiveCard />
       </QueryClientProvider>
@@ -85,18 +85,18 @@ describe("ClubInactiveCard", () => {
     renderCard();
 
     expect(
-      screen.getByRole("heading", { name: "Renew your membership" }),
+      screen.getByRole("heading", { name: "Renová tu membresía" }),
     ).toBeInTheDocument();
 
     expect(
-      screen.getByRole("button", { name: "Renew membership" }),
+      screen.getByRole("button", { name: "Renovar membresía" }),
     ).not.toBeDisabled();
   });
 
   it("calls the reactivate mutation and opens PlanSelectionModal on success when clicked", async () => {
     const fetchMock = renderCard();
 
-    fireEvent.click(screen.getByRole("button", { name: "Renew membership" }));
+    fireEvent.click(screen.getByRole("button", { name: "Renovar membresía" }));
 
     await waitFor(() =>
       expect(fetchMock).toHaveBeenCalledWith(
@@ -105,7 +105,7 @@ describe("ClubInactiveCard", () => {
       ),
     );
 
-    expect(await screen.findByText("Membership")).toBeInTheDocument();
+    expect(await screen.findByText("Membresía")).toBeInTheDocument();
   });
 
   it("surfaces an error and does not open the modal when reactivation fails", async () => {
@@ -116,12 +116,12 @@ describe("ClubInactiveCard", () => {
       }),
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Renew membership" }));
+    fireEvent.click(screen.getByRole("button", { name: "Renovar membresía" }));
 
     await waitFor(() =>
       expect(screen.getByText(/something went wrong/i)).toBeInTheDocument(),
     );
 
-    expect(screen.queryByText("Membership")).not.toBeInTheDocument();
+    expect(screen.queryByText("Membresía")).not.toBeInTheDocument();
   });
 });

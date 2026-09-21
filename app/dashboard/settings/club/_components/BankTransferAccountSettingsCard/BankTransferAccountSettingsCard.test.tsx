@@ -11,7 +11,7 @@ import {
 import "@testing-library/jest-dom/vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/messages/en.json";
+import messages from "@/messages/es.json";
 import { BankTransferAccountSettingsCard } from "./BankTransferAccountSettingsCard";
 import type { ClubBankTransferAccount } from "./types";
 
@@ -53,7 +53,7 @@ function renderCard(
   });
 
   const utils = render(
-    <NextIntlClientProvider locale="en" messages={messages}>
+    <NextIntlClientProvider locale="es" messages={messages}>
       <QueryClientProvider client={queryClient}>
         <BankTransferAccountSettingsCard {...props} />
       </QueryClientProvider>
@@ -78,12 +78,12 @@ describe("BankTransferAccountSettingsCard", () => {
     renderCard(null);
 
     await waitFor(() =>
-      expect(screen.getByLabelText(/bank name/i)).toBeInTheDocument(),
+      expect(screen.getByLabelText(/banco/i)).toBeInTheDocument(),
     );
-    expect(screen.getByLabelText(/bank name/i)).toHaveValue("");
+    expect(screen.getByLabelText(/banco/i)).toHaveValue("");
     expect(screen.getByLabelText(/^cbu/i)).toHaveValue("");
     expect(
-      screen.getByRole("button", { name: /save changes/i }),
+      screen.getByRole("button", { name: /guardar cambios/i }),
     ).toBeDisabled();
   });
 
@@ -104,7 +104,7 @@ describe("BankTransferAccountSettingsCard", () => {
     expect(screen.getByDisplayValue("club.padel.mp")).toBeInTheDocument();
     expect(screen.getByDisplayValue("Club Padel Norte SA")).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: /save changes/i }),
+      screen.getByRole("button", { name: /guardar cambios/i }),
     ).not.toBeDisabled();
   });
 
@@ -112,17 +112,17 @@ describe("BankTransferAccountSettingsCard", () => {
     const { fetchMock } = renderCard(null);
 
     await waitFor(() =>
-      expect(screen.getByLabelText(/bank name/i)).toBeInTheDocument(),
+      expect(screen.getByLabelText(/banco/i)).toBeInTheDocument(),
     );
 
-    fireEvent.change(screen.getByLabelText(/bank name/i), {
+    fireEvent.change(screen.getByLabelText(/banco/i), {
       target: { value: "Banco Nación" },
     });
     fireEvent.change(screen.getByLabelText(/^cbu/i), {
       target: { value: "0000000000000000000000" },
     });
 
-    fireEvent.click(screen.getByRole("button", { name: /save changes/i }));
+    fireEvent.click(screen.getByRole("button", { name: /guardar cambios/i }));
 
     await waitFor(() =>
       expect(
@@ -151,10 +151,10 @@ describe("BankTransferAccountSettingsCard", () => {
     const { fetchMock } = renderCard(null);
 
     await waitFor(() =>
-      expect(screen.getByLabelText(/bank name/i)).toBeInTheDocument(),
+      expect(screen.getByLabelText(/banco/i)).toBeInTheDocument(),
     );
 
-    fireEvent.change(screen.getByLabelText(/bank name/i), {
+    fireEvent.change(screen.getByLabelText(/banco/i), {
       target: { value: "Banco Nación" },
     });
     fireEvent.change(screen.getByLabelText(/^cbu/i), {
@@ -162,13 +162,13 @@ describe("BankTransferAccountSettingsCard", () => {
     });
 
     expect(
-      screen.getByText(/cbu must be exactly 22 digits/i),
+      screen.getByText(/el cbu debe tener exactamente 22 dígitos/i),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: /save changes/i }),
+      screen.getByRole("button", { name: /guardar cambios/i }),
     ).toBeDisabled();
 
-    fireEvent.click(screen.getByRole("button", { name: /save changes/i }));
+    fireEvent.click(screen.getByRole("button", { name: /guardar cambios/i }));
 
     expect(
       fetchMock.mock.calls.some(([, init]) => init?.method === "PUT"),
@@ -183,10 +183,12 @@ describe("BankTransferAccountSettingsCard", () => {
     });
 
     await waitFor(() =>
-      expect(screen.getByLabelText(/bank name/i)).toBeInTheDocument(),
+      expect(screen.getByLabelText(/banco/i)).toBeInTheDocument(),
     );
 
-    const submitButton = screen.getByRole("button", { name: /save changes/i });
+    const submitButton = screen.getByRole("button", {
+      name: /guardar cambios/i,
+    });
     expect(submitButton).not.toBeDisabled();
 
     fireEvent.click(submitButton);
@@ -216,10 +218,10 @@ describe("BankTransferAccountSettingsCard", () => {
     });
 
     await waitFor(() =>
-      expect(screen.getByLabelText(/bank name/i)).toBeInTheDocument(),
+      expect(screen.getByLabelText(/banco/i)).toBeInTheDocument(),
     );
 
-    fireEvent.change(screen.getByLabelText(/bank name/i), {
+    fireEvent.change(screen.getByLabelText(/banco/i), {
       target: { value: "Banco Nación" },
     });
     fireEvent.change(screen.getByLabelText(/^cbu/i), {

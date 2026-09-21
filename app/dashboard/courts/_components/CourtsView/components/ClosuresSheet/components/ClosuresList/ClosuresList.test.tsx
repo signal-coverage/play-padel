@@ -3,7 +3,7 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, cleanup, act } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/messages/en.json";
+import messages from "@/messages/es.json";
 import { ClosuresList } from "./ClosuresList";
 import type { CourtClosure } from "@/core/courts/types";
 
@@ -25,13 +25,13 @@ function makeClosure(overrides: Partial<CourtClosure> = {}): CourtClosure {
 }
 
 describe("ClosuresList", () => {
-  it('flips a closure from "Active" to "Past" on its own once its endsAt passes, with no prop change or remount', async () => {
+  it('flips a closure from "Activo" to "Pasado" on its own once its endsAt passes, with no prop change or remount', async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-01-01T11:00:00.000Z")); // before endsAt
 
     const closure = makeClosure();
     render(
-      <NextIntlClientProvider locale="en" messages={messages}>
+      <NextIntlClientProvider locale="es" messages={messages}>
         <ClosuresList
           closures={[closure]}
           onCancel={vi.fn()}
@@ -40,7 +40,7 @@ describe("ClosuresList", () => {
       </NextIntlClientProvider>,
     );
 
-    expect(screen.getByText("Active")).toBeInTheDocument();
+    expect(screen.getByText("Activo")).toBeInTheDocument();
 
     // Time passes well beyond endsAt while the sheet stays open — same
     // component instance, same closures array, no re-render triggered by
@@ -50,10 +50,10 @@ describe("ClosuresList", () => {
       await vi.advanceTimersByTimeAsync(30_000);
     });
 
-    expect(screen.getByText("Past")).toBeInTheDocument();
-    expect(screen.queryByText("Active")).not.toBeInTheDocument();
+    expect(screen.getByText("Pasado")).toBeInTheDocument();
+    expect(screen.queryByText("Activo")).not.toBeInTheDocument();
     expect(
-      screen.queryByRole("button", { name: /cancel/i }),
+      screen.queryByRole("button", { name: /cancelar/i }),
     ).not.toBeInTheDocument();
   });
 });

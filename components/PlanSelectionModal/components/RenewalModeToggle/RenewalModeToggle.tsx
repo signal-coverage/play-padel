@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils/utils";
 import { Button } from "@/components/ui/button";
 import { RENEWAL_MODE_OPTIONS } from "../../consts";
@@ -12,10 +13,12 @@ import type { RenewalModeToggleProps } from "./types";
 // description both inside the button and left-aligned — a taller variant
 // of the same button, not a separate info card next to it.
 export function RenewalModeToggle({ value, onChange }: RenewalModeToggleProps) {
+  const t = useTranslations("RenewalModeToggle");
+
   return (
     <div
       role="radiogroup"
-      aria-label="Renewal mode"
+      aria-label={t("ariaLabel")}
       className="flex flex-col gap-2"
     >
       {RENEWAL_MODE_OPTIONS.map((option) => {
@@ -30,7 +33,9 @@ export function RenewalModeToggle({ value, onChange }: RenewalModeToggleProps) {
             onClick={() => onChange(option.value)}
             className="h-auto flex-col items-start gap-0.5 px-3 py-2 text-left whitespace-normal"
           >
-            <span className="text-sm font-medium">{option.label}</span>
+            <span className="text-sm font-medium">
+              {t(option.value === "AUTO" ? "autoLabel" : "manualLabel")}
+            </span>
             <span
               className={cn(
                 "text-xs font-normal",
@@ -39,7 +44,11 @@ export function RenewalModeToggle({ value, onChange }: RenewalModeToggleProps) {
                   : "text-muted-foreground",
               )}
             >
-              {option.description}
+              {t(
+                option.value === "AUTO"
+                  ? "autoDescription"
+                  : "manualDescription",
+              )}
             </span>
           </Button>
         );

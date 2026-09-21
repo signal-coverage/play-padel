@@ -4,12 +4,12 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/messages/en.json";
+import messages from "@/messages/es.json";
 import { NewClubClosureForm } from "./NewClubClosureForm";
 
 function renderWithIntl(ui: React.ReactElement) {
   return render(
-    <NextIntlClientProvider locale="en" messages={messages}>
+    <NextIntlClientProvider locale="es" messages={messages}>
       {ui}
     </NextIntlClientProvider>,
   );
@@ -34,16 +34,16 @@ describe("NewClubClosureForm", () => {
       <NewClubClosureForm onSubmit={onSubmit} isSubmitting={false} />,
     );
 
-    fireEvent.change(screen.getByLabelText(/starts/i), {
+    fireEvent.change(screen.getByLabelText(/comienza/i), {
       target: { value: "2026-10-01T10:00" },
     });
-    fireEvent.change(screen.getByLabelText(/ends/i), {
+    fireEvent.change(screen.getByLabelText(/termina/i), {
       target: { value: "2099-10-01T18:00" },
     });
-    fireEvent.change(screen.getByLabelText(/reason/i), {
+    fireEvent.change(screen.getByLabelText(/motivo/i), {
       target: { value: "Club rented for a tournament" },
     });
-    fireEvent.click(screen.getByRole("button", { name: /close the club/i }));
+    fireEvent.click(screen.getByRole("button", { name: /cerrar el club/i }));
 
     await vi.waitFor(() =>
       expect(onSubmit).toHaveBeenCalledWith({
@@ -60,16 +60,16 @@ describe("NewClubClosureForm", () => {
       <NewClubClosureForm onSubmit={onSubmit} isSubmitting={false} />,
     );
 
-    fireEvent.change(screen.getByLabelText(/starts/i), {
+    fireEvent.change(screen.getByLabelText(/comienza/i), {
       target: { value: "2026-10-01T10:00" },
     });
-    fireEvent.change(screen.getByLabelText(/ends/i), {
+    fireEvent.change(screen.getByLabelText(/termina/i), {
       target: { value: "2099-10-01T18:00" },
     });
-    fireEvent.click(screen.getByRole("button", { name: /close the club/i }));
+    fireEvent.click(screen.getByRole("button", { name: /cerrar el club/i }));
 
     await vi.waitFor(() =>
-      expect(screen.getByText(/reason is required/i)).toBeInTheDocument(),
+      expect(screen.getByText(/el motivo es obligatorio/i)).toBeInTheDocument(),
     );
     expect(onSubmit).not.toHaveBeenCalled();
   });
@@ -79,6 +79,6 @@ describe("NewClubClosureForm", () => {
       <NewClubClosureForm onSubmit={vi.fn()} isSubmitting={true} />,
     );
 
-    expect(screen.getByRole("button", { name: /closing/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /cerrando/i })).toBeDisabled();
   });
 });

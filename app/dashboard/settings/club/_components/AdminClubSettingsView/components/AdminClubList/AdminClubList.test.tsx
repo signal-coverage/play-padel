@@ -4,13 +4,13 @@ import { describe, it, expect, afterEach, vi } from "vitest";
 import { render, screen, cleanup } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/messages/en.json";
+import messages from "@/messages/es.json";
 import { AdminClubList } from "./AdminClubList";
 import type { AdminClubListItem } from "../../types";
 
 function renderWithIntl(ui: React.ReactElement) {
   return render(
-    <NextIntlClientProvider locale="en" messages={messages}>
+    <NextIntlClientProvider locale="es" messages={messages}>
       {ui}
     </NextIntlClientProvider>,
   );
@@ -52,7 +52,7 @@ describe("AdminClubList health indicator", () => {
     );
 
     expect(
-      screen.queryByTitle(/mercado pago|membership|operating hours/i),
+      screen.queryByTitle(/mercado pago|membresía|horarios de atención/i),
     ).not.toBeInTheDocument();
   });
 
@@ -71,7 +71,7 @@ describe("AdminClubList health indicator", () => {
       />,
     );
 
-    expect(screen.getByTitle("Membership past due")).toBeInTheDocument();
+    expect(screen.getByTitle("Membresía vencida")).toBeInTheDocument();
   });
 
   it("renders a warning icon with a comma-joined message when multiple health issues apply", () => {
@@ -93,7 +93,7 @@ describe("AdminClubList health indicator", () => {
 
     expect(
       screen.getByTitle(
-        "Mercado Pago token expired, Membership past due, No operating hours configured",
+        "El token de Mercado Pago expiró, Membresía vencida, Sin horarios de atención configurados",
       ),
     ).toBeInTheDocument();
   });
@@ -110,7 +110,7 @@ describe("AdminClubList health summary", () => {
       />,
     );
 
-    expect(screen.queryByText(/needs? attention/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/necesitan? atención/i)).not.toBeInTheDocument();
   });
 
   it("renders a count of clubs needing attention when one or more health flags apply", () => {
@@ -134,7 +134,7 @@ describe("AdminClubList health summary", () => {
       />,
     );
 
-    expect(screen.getByText("2 clubs need attention")).toBeInTheDocument();
+    expect(screen.getByText("2 clubes necesitan atención")).toBeInTheDocument();
   });
 });
 
@@ -149,7 +149,7 @@ describe("AdminClubList free-plan badge", () => {
       />,
     );
 
-    expect(screen.queryByText("Free")).not.toBeInTheDocument();
+    expect(screen.queryByText("Gratis")).not.toBeInTheDocument();
   });
 
   // plan is deliberately left as "BASIC" (not "FREE") here: isFreePlan
@@ -174,7 +174,7 @@ describe("AdminClubList free-plan badge", () => {
 
     expect(screen.getByText("ACTIVE")).toBeInTheDocument();
     expect(screen.getByText("BASIC")).toBeInTheDocument();
-    expect(screen.getByText("Free")).toBeInTheDocument();
+    expect(screen.getByText("Gratis")).toBeInTheDocument();
   });
 });
 

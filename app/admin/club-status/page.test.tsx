@@ -9,7 +9,7 @@ import {
 } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/messages/en.json";
+import messages from "@/messages/es.json";
 
 // Mocked the same way BulkEditCourtsSheet.test.tsx mocks it, so
 // toast.success/error calls made on save can be asserted on.
@@ -44,7 +44,7 @@ function stubFetch(
 
 function renderPage() {
   return render(
-    <NextIntlClientProvider locale="en" messages={messages}>
+    <NextIntlClientProvider locale="es" messages={messages}>
       <ClubStatusAdminPage />
     </NextIntlClientProvider>,
   );
@@ -62,7 +62,7 @@ const CLUB = {
 // app/admin/layout.tsx has already confirmed a real Clerk admin session, and
 // every fetch here rides the same-origin session cookie automatically.
 function fillLookupInputs(clubId = "club_1") {
-  fireEvent.change(screen.getByLabelText(/club id/i), {
+  fireEvent.change(screen.getByLabelText(/id del club/i), {
     target: { value: clubId },
   });
 }
@@ -100,12 +100,12 @@ describe("ClubStatusAdminPage", () => {
 
     renderPage();
     fillLookupInputs();
-    fireEvent.click(screen.getByRole("button", { name: /look up/i }));
+    fireEvent.click(screen.getByRole("button", { name: /buscar/i }));
 
     await waitFor(() => {
       expect(screen.getByText("Test Padel Club")).toBeInTheDocument();
     });
-    expect(screen.getByText("Current status: Active")).toBeInTheDocument();
+    expect(screen.getByText("Estado actual: Activo")).toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
@@ -118,7 +118,7 @@ describe("ClubStatusAdminPage", () => {
 
     renderPage();
     fillLookupInputs();
-    fireEvent.click(screen.getByRole("button", { name: /look up/i }));
+    fireEvent.click(screen.getByRole("button", { name: /buscar/i }));
 
     await waitFor(() => {
       expect(screen.getByText("Club not found")).toBeInTheDocument();
@@ -153,19 +153,19 @@ describe("ClubStatusAdminPage", () => {
 
     renderPage();
     fillLookupInputs();
-    fireEvent.click(screen.getByRole("button", { name: /look up/i }));
+    fireEvent.click(screen.getByRole("button", { name: /buscar/i }));
     await waitFor(() => {
       expect(screen.getByText("Test Padel Club")).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByRole("combobox", { name: /new status/i }));
-    fireEvent.click(await screen.findByRole("option", { name: "Suspended" }));
+    fireEvent.click(screen.getByRole("combobox", { name: /nuevo estado/i }));
+    fireEvent.click(await screen.findByRole("option", { name: "Suspendido" }));
 
-    fireEvent.change(screen.getByLabelText(/updated by/i), {
+    fireEvent.change(screen.getByLabelText(/actualizado por/i), {
       target: { value: "admin@example.com" },
     });
 
-    fireEvent.click(screen.getByRole("button", { name: /^save$/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^guardar$/i }));
 
     await waitFor(() => {
       expect(toastMock.success).toHaveBeenCalled();
@@ -201,13 +201,13 @@ describe("ClubStatusAdminPage", () => {
 
     renderPage();
     fillLookupInputs();
-    fireEvent.click(screen.getByRole("button", { name: /look up/i }));
+    fireEvent.click(screen.getByRole("button", { name: /buscar/i }));
     await waitFor(() => {
       expect(screen.getByText("Test Padel Club")).toBeInTheDocument();
     });
 
     fireEvent.click(
-      screen.getByRole("button", { name: /activate free membership/i }),
+      screen.getByRole("button", { name: /activar membresía gratuita/i }),
     );
 
     await waitFor(() => {
@@ -230,13 +230,13 @@ describe("ClubStatusAdminPage", () => {
 
     renderPage();
     fillLookupInputs();
-    fireEvent.click(screen.getByRole("button", { name: /look up/i }));
+    fireEvent.click(screen.getByRole("button", { name: /buscar/i }));
     await waitFor(() => {
       expect(screen.getByText("Test Padel Club")).toBeInTheDocument();
     });
 
     fireEvent.click(
-      screen.getByRole("button", { name: /activate free membership/i }),
+      screen.getByRole("button", { name: /activar membresía gratuita/i }),
     );
 
     expect(fetchMock).toHaveBeenCalledTimes(1); // lookup only
@@ -263,13 +263,13 @@ describe("ClubStatusAdminPage", () => {
 
     renderPage();
     fillLookupInputs();
-    fireEvent.click(screen.getByRole("button", { name: /look up/i }));
+    fireEvent.click(screen.getByRole("button", { name: /buscar/i }));
     await waitFor(() => {
       expect(screen.getByText("Test Padel Club")).toBeInTheDocument();
     });
 
     fireEvent.click(
-      screen.getByRole("button", { name: /activate free membership/i }),
+      screen.getByRole("button", { name: /activar membresía gratuita/i }),
     );
 
     await waitFor(() => {
@@ -284,11 +284,11 @@ describe("ClubStatusAdminPage", () => {
 
     renderPage();
     fillLookupInputs();
-    fireEvent.click(screen.getByRole("button", { name: /look up/i }));
+    fireEvent.click(screen.getByRole("button", { name: /buscar/i }));
     await waitFor(() => {
       expect(screen.getByText("Test Padel Club")).toBeInTheDocument();
     });
 
-    expect(screen.getByRole("button", { name: /^save$/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /^guardar$/i })).toBeDisabled();
   });
 });

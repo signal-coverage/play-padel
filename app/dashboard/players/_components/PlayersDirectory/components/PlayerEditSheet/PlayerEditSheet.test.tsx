@@ -9,7 +9,7 @@ import {
 } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/messages/en.json";
+import messages from "@/messages/es.json";
 import { PlayerEditSheet } from "./PlayerEditSheet";
 import type { PlayerListItem } from "../../types";
 
@@ -39,7 +39,7 @@ function renderSheet(
   const onSubmit = vi.fn().mockResolvedValue(undefined);
 
   render(
-    <NextIntlClientProvider locale="en" messages={messages}>
+    <NextIntlClientProvider locale="es" messages={messages}>
       <PlayerEditSheet
         open
         onOpenChange={onOpenChange}
@@ -64,19 +64,19 @@ describe("PlayerEditSheet", () => {
   it("pre-fills the form with the player's current data", () => {
     renderSheet();
 
-    expect(screen.getByLabelText(/name/i)).toHaveValue("Juan Perez");
+    expect(screen.getByLabelText(/nombre/i)).toHaveValue("Juan Perez");
     expect(screen.getByLabelText(/email/i)).toHaveValue("juan@example.com");
-    expect(screen.getByLabelText(/phone/i)).toHaveValue("+541100000000");
+    expect(screen.getByLabelText(/teléfono/i)).toHaveValue("+541100000000");
   });
 
   it("submits the converted patch input for the edited player", async () => {
     const { onSubmit, onOpenChange } = renderSheet();
 
-    fireEvent.change(screen.getByLabelText(/name/i), {
+    fireEvent.change(screen.getByLabelText(/nombre/i), {
       target: { value: "Juan Updated" },
     });
 
-    fireEvent.click(screen.getByRole("button", { name: /save changes/i }));
+    fireEvent.click(screen.getByRole("button", { name: /guardar cambios/i }));
 
     await waitFor(() => {
       expect(onSubmit).toHaveBeenCalledWith(
@@ -102,7 +102,7 @@ describe("PlayerEditSheet", () => {
 
     renderSheet({ onSubmit, onOpenChange });
 
-    fireEvent.click(screen.getByRole("button", { name: /save changes/i }));
+    fireEvent.click(screen.getByRole("button", { name: /guardar cambios/i }));
 
     await waitFor(() => {
       expect(onSubmit).toHaveBeenCalled();

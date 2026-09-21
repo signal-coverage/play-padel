@@ -45,12 +45,21 @@ const KNOCKOUT_OR_LATER_STATUSES = new Set(["KNOCKOUT", "COMPLETED"]);
 export function CategoryWorkspace({
   tournamentId,
   category,
+  clubId,
 }: CategoryWorkspaceProps) {
   const t = useTranslations("CategoryWorkspace");
-  const { data: teams = [] } = useCategoryTeams(tournamentId, category.id);
-  const { data: groups = [] } = useCategoryGroups(tournamentId, category.id);
-  const setGroups = useSetGroups(tournamentId, category.id);
-  const lockGroups = useLockGroups(tournamentId, category.id);
+  const { data: teams = [] } = useCategoryTeams(
+    tournamentId,
+    category.id,
+    clubId,
+  );
+  const { data: groups = [] } = useCategoryGroups(
+    tournamentId,
+    category.id,
+    clubId,
+  );
+  const setGroups = useSetGroups(tournamentId, category.id, clubId);
+  const lockGroups = useLockGroups(tournamentId, category.id, clubId);
 
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
   const activeGroupId = selectedGroupId ?? groups[0]?.id ?? null;
@@ -59,21 +68,25 @@ export function CategoryWorkspace({
     tournamentId,
     category.id,
     activeGroupId,
+    clubId,
   );
   const { data: standings = [] } = useGroupStandings(
     tournamentId,
     category.id,
     activeGroupId,
+    clubId,
   );
   const enterMatchScore = useEnterMatchScore(
     tournamentId,
     category.id,
     activeGroupId ?? "",
+    clubId,
   );
   const recordWalkover = useRecordWalkover(
     tournamentId,
     category.id,
     activeGroupId ?? "",
+    clubId,
   );
 
   const [scoreDialogMatch, setScoreDialogMatch] = useState<GroupMatch | null>(
@@ -104,6 +117,7 @@ export function CategoryWorkspace({
     tournamentId,
     category.id,
     groupIds,
+    clubId,
   );
   const groupStageComplete =
     groups.length > 0 &&
@@ -116,18 +130,22 @@ export function CategoryWorkspace({
   const { data: knockoutMatches = [] } = useKnockoutMatches(
     tournamentId,
     category.id,
+    clubId,
   );
   const generateKnockoutBracket = useGenerateKnockoutBracket(
     tournamentId,
     category.id,
+    clubId,
   );
   const enterKnockoutMatchScore = useEnterKnockoutMatchScore(
     tournamentId,
     category.id,
+    clubId,
   );
   const recordKnockoutWalkover = useRecordKnockoutWalkover(
     tournamentId,
     category.id,
+    clubId,
   );
 
   const [knockoutScoreDialogMatch, setKnockoutScoreDialogMatch] =

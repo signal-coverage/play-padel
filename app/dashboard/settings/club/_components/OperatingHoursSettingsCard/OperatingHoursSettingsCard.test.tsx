@@ -10,7 +10,7 @@ import {
 import "@testing-library/jest-dom/vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/messages/en.json";
+import messages from "@/messages/es.json";
 import { OperatingHoursSettingsCard } from "./OperatingHoursSettingsCard";
 import type { AvailabilityEntry } from "@/core/courts/types";
 
@@ -38,7 +38,7 @@ function renderCard(getEntries: AvailabilityEntry[]) {
   });
 
   const utils = render(
-    <NextIntlClientProvider locale="en" messages={messages}>
+    <NextIntlClientProvider locale="es" messages={messages}>
       <QueryClientProvider client={queryClient}>
         <OperatingHoursSettingsCard />
       </QueryClientProvider>
@@ -51,7 +51,7 @@ function renderCard(getEntries: AvailabilityEntry[]) {
 // The card now renders AvailabilityRowsEditor in its "split" (accordion) day
 // list: a day's Start/End TimeInputs only mount once that day's row is
 // expanded, by clicking the day-name button in its header. This helper finds
-// that button by its accessible name (the plain day label, e.g. "Monday")
+// that button by its accessible name (the plain day label, e.g. "Lunes")
 // rather than the chevron toggle button (accessible name "Expand Monday" /
 // "Collapse Monday"), which sits right next to it in the same row.
 function expandDay(dayLabel: string) {
@@ -71,11 +71,11 @@ describe("OperatingHoursSettingsCard", () => {
     renderCard([{ dayOfWeek: 1, startTime: "08:00", endTime: "18:00" }]);
 
     await waitFor(() =>
-      expect(screen.getByRole("switch", { name: "Monday" })).toBeChecked(),
+      expect(screen.getByRole("switch", { name: "Lunes" })).toBeChecked(),
     );
-    expect(screen.getByRole("switch", { name: "Sunday" })).not.toBeChecked();
+    expect(screen.getByRole("switch", { name: "Domingo" })).not.toBeChecked();
 
-    expandDay("Monday");
+    expandDay("Lunes");
 
     expect(screen.getByDisplayValue("08:00")).toBeInTheDocument();
     expect(screen.getByDisplayValue("18:00")).toBeInTheDocument();
@@ -86,12 +86,12 @@ describe("OperatingHoursSettingsCard", () => {
 
     await waitFor(() =>
       expect(
-        screen.getByRole("switch", { name: "Sunday" }),
+        screen.getByRole("switch", { name: "Domingo" }),
       ).toBeInTheDocument(),
     );
 
-    fireEvent.click(screen.getByRole("switch", { name: "Sunday" }));
-    fireEvent.click(screen.getByRole("button", { name: /save changes/i }));
+    fireEvent.click(screen.getByRole("switch", { name: "Domingo" }));
+    fireEvent.click(screen.getByRole("button", { name: /guardar cambios/i }));
 
     await waitFor(() =>
       expect(
@@ -118,13 +118,13 @@ describe("OperatingHoursSettingsCard", () => {
     ]);
 
     await waitFor(() =>
-      expect(screen.getByRole("switch", { name: "Monday" })).toBeChecked(),
+      expect(screen.getByRole("switch", { name: "Lunes" })).toBeChecked(),
     );
-    expandDay("Monday");
+    expandDay("Lunes");
 
     expect(container.querySelector("#day-1-end")).toHaveValue("21:00");
     expect(
-      screen.getByRole("button", { name: /save changes/i }),
+      screen.getByRole("button", { name: /guardar cambios/i }),
     ).not.toBeDisabled();
 
     const mondayEndInput = container.querySelector("#day-1-end");
@@ -134,7 +134,7 @@ describe("OperatingHoursSettingsCard", () => {
     });
 
     expect(
-      screen.getByRole("button", { name: /save changes/i }),
+      screen.getByRole("button", { name: /guardar cambios/i }),
     ).not.toBeDisabled();
   });
 
@@ -144,9 +144,9 @@ describe("OperatingHoursSettingsCard", () => {
     ]);
 
     await waitFor(() =>
-      expect(screen.getByRole("switch", { name: "Monday" })).toBeChecked(),
+      expect(screen.getByRole("switch", { name: "Lunes" })).toBeChecked(),
     );
-    expandDay("Monday");
+    expandDay("Lunes");
 
     expect(container.querySelector("#day-1-end")).toHaveValue("21:00");
 
@@ -157,7 +157,7 @@ describe("OperatingHoursSettingsCard", () => {
     });
 
     expect(
-      screen.getByRole("button", { name: /save changes/i }),
+      screen.getByRole("button", { name: /guardar cambios/i }),
     ).toBeDisabled();
   });
 });

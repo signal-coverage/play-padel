@@ -1,16 +1,16 @@
 import { describe, it, expect } from "vitest";
-import enMessages from "@/messages/en.json";
+import esMessages from "@/messages/es.json";
 import {
   buildMatchScoreFormSchema,
   toMatchScoreSets,
   DEFAULT_VALUES,
 } from "./consts";
 
-// Built from the REAL English message catalog (not re-typed literals) so
-// this test can never silently drift from what messages/en.json actually
+// Built from the REAL Spanish message catalog (not re-typed literals) so
+// this test can never silently drift from what messages/es.json actually
 // ships — same convention as app/onboarding/types.test.ts's own t stub.
 const t = (key: string): string =>
-  (enMessages.MatchScoreEntryValidation as Record<string, string>)[key] ?? key;
+  (esMessages.MatchScoreEntryValidation as Record<string, string>)[key] ?? key;
 const matchScoreFormSchema = buildMatchScoreFormSchema(t);
 
 describe("matchScoreFormSchema", () => {

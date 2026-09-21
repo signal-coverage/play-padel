@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, type KeyboardEvent } from "react";
+import { useTranslations } from "next-intl";
 import {
   Dialog,
   DialogContent,
@@ -41,6 +42,7 @@ export function ChangePlanDialog({
   onOpenChange,
   onSelectPlan,
 }: ChangePlanDialogProps) {
+  const t = useTranslations("ChangePlanDialog");
   const cardRefs = useRef<Partial<Record<Plan, HTMLButtonElement | null>>>({});
 
   function handleGroupKeyDown(event: KeyboardEvent<HTMLDivElement>) {
@@ -64,15 +66,13 @@ export function ChangePlanDialog({
         onPointerDownOutside={(e) => e.preventDefault()}
       >
         <DialogHeader>
-          <DialogTitle>Change Plan</DialogTitle>
-          <DialogDescription>
-            Pick a new plan for your club&apos;s membership.
-          </DialogDescription>
+          <DialogTitle>{t("title")}</DialogTitle>
+          <DialogDescription>{t("description")}</DialogDescription>
         </DialogHeader>
 
         <div
           role="radiogroup"
-          aria-label="Plan"
+          aria-label={t("planGroupAriaLabel")}
           onKeyDown={handleGroupKeyDown}
           className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4"
         >

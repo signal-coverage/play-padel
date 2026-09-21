@@ -3,6 +3,8 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { NextIntlClientProvider } from "next-intl";
+import messages from "@/messages/es.json";
 import { UpgradeMembershipButton } from "./UpgradeMembershipButton";
 
 // This button mounts PlanSelectionModal, which reads the owner's own email
@@ -44,9 +46,11 @@ function renderButton() {
   });
 
   render(
-    <QueryClientProvider client={queryClient}>
-      <UpgradeMembershipButton />
-    </QueryClientProvider>,
+    <NextIntlClientProvider locale="es" messages={messages}>
+      <QueryClientProvider client={queryClient}>
+        <UpgradeMembershipButton />
+      </QueryClientProvider>
+    </NextIntlClientProvider>,
   );
 }
 
@@ -60,15 +64,15 @@ describe("UpgradeMembershipButton", () => {
     renderButton();
 
     expect(
-      screen.getByRole("button", { name: /upgrade/i }),
+      screen.getByRole("button", { name: /mejorar plan/i }),
     ).toBeInTheDocument();
   });
 
   it("opens the shared PlanSelectionModal when clicked, without navigating", () => {
     renderButton();
 
-    fireEvent.click(screen.getByRole("button", { name: /upgrade/i }));
+    fireEvent.click(screen.getByRole("button", { name: /mejorar plan/i }));
 
-    expect(screen.getByText("Membership")).toBeInTheDocument();
+    expect(screen.getByText("Membresía")).toBeInTheDocument();
   });
 });

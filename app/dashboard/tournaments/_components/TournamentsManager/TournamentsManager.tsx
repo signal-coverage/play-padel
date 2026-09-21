@@ -6,17 +6,23 @@ import { Button } from "@/components/ui/button";
 import { useManagedTournaments, useTournamentDetail } from "./hooks";
 import { TournamentsList } from "./components/TournamentsList";
 import { CategoryWorkspace } from "./components/CategoryWorkspace";
+import type { TournamentsManagerProps } from "./types";
 
 /**
- * Minimal owner tournament management page for this slice ("Owner group +
- * scoring tools"). Deliberately no "create tournament" Sheet — see
- * TournamentsList's own comment; this view focuses on the new group-
- * building and score-entry tools the slice actually asked for, using
- * whatever tournaments/categories slice 1's API already exposes.
+ * Owner tournament management page: create/publish tournaments (see
+ * TournamentsList) and, once one is selected, build its groups and enter
+ * scores per category (see CategoryWorkspace).
+ *
+ * `clubId` is optional and only ever passed by AdminTournamentsView, which
+ * renders this exact same component scoped to whichever club an admin has
+ * selected — every hook call below routes through the admin-gated
+ * /api/admin/clubs/[clubId]/tournaments/** endpoints instead of the
+ * owner-only ones once it's set (see ./hooks.ts). Omitted (the owner's own
+ * page), this is byte-identical to the original owner-only behavior.
  */
-export function TournamentsManager() {
+export function TournamentsManager({ clubId }: TournamentsManagerProps = {}) {
   const t = useTranslations("TournamentsManager");
-  const { data: tournaments = [], isLoading } = useManagedTournaments();
+  const { data: tournaments = [], isLoading } = useManagedTournaments(clubId);
   const [selectedTournamentId, setSelectedTournamentId] = useState<
     string | null
   >(null);
@@ -24,7 +30,10 @@ export function TournamentsManager() {
     null,
   );
 
-  const { data: tournamentDetail } = useTournamentDetail(selectedTournamentId);
+  const { data: tournamentDetail } = useTournamentDetail(
+    selectedTournamentId,
+    clubId,
+  );
 
   function selectTournament(tournamentId: string) {
     setSelectedTournamentId(tournamentId);
@@ -55,6 +64,7 @@ export function TournamentsManager() {
           tournaments={tournaments}
           selectedTournamentId={selectedTournamentId}
           onSelect={selectTournament}
+          clubId={clubId}
         />
       )}
 
@@ -80,6 +90,7 @@ export function TournamentsManager() {
             <CategoryWorkspace
               tournamentId={tournamentDetail.id}
               category={selectedCategory}
+              clubId={clubId}
             />
           )}
         </div>

@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/messages/en.json";
+import messages from "@/messages/es.json";
 import { AdminStatusRecentActivity } from "./AdminStatusRecentActivity";
 import type { SystemJobLogRecord } from "../../types";
 import type { ComponentProps } from "react";
@@ -37,7 +37,7 @@ function renderComponent(
   props: ComponentProps<typeof AdminStatusRecentActivity>,
 ) {
   return render(
-    <NextIntlClientProvider locale="en" messages={messages}>
+    <NextIntlClientProvider locale="es" messages={messages}>
       <AdminStatusRecentActivity {...props} />
     </NextIntlClientProvider>,
   );
@@ -80,10 +80,10 @@ describe("AdminStatusRecentActivity", () => {
       screen.getByRole("button", { name: "Signature verification failed" }),
     );
 
-    expect(screen.getByText("Error details")).toBeInTheDocument();
+    expect(screen.getByText("Detalles del error")).toBeInTheDocument();
     // The dialog's own subtitle — distinct from the table's separate "Job"
     // column cell, which also just says "Clerk webhook" on its own.
-    expect(screen.getByText(/Clerk webhook ·/)).toBeInTheDocument();
+    expect(screen.getByText(/Webhook de Clerk ·/)).toBeInTheDocument();
   });
 
   it("closes the modal again when Close is clicked", () => {
@@ -92,10 +92,10 @@ describe("AdminStatusRecentActivity", () => {
     fireEvent.click(
       screen.getByRole("button", { name: "Signature verification failed" }),
     );
-    expect(screen.getByText("Error details")).toBeInTheDocument();
+    expect(screen.getByText("Detalles del error")).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: "Close" }));
+    fireEvent.click(screen.getByRole("button", { name: "Cerrar" }));
 
-    expect(screen.queryByText("Error details")).not.toBeInTheDocument();
+    expect(screen.queryByText("Detalles del error")).not.toBeInTheDocument();
   });
 });

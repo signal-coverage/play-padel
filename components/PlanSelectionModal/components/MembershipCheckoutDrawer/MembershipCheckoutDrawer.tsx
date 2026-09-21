@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Lock } from "lucide-react";
 import { BouncingBall } from "@/components/BouncingBall";
@@ -62,6 +63,7 @@ export function MembershipCheckoutDrawer({
   onBack,
   onRefresh,
 }: MembershipCheckoutDrawerProps) {
+  const t = useTranslations("MembershipCheckoutDrawer");
   const [direction, setDirection] = useState(1);
   const shouldReduceMotion = useReducedMotion() ?? false;
   const isCardStep = payerEmail !== "";
@@ -93,10 +95,12 @@ export function MembershipCheckoutDrawer({
         onPointerDownOutside={(e) => e.preventDefault()}
       >
         <SheetHeader>
-          <SheetTitle>Add a payment method</SheetTitle>
+          <SheetTitle>{t("title")}</SheetTitle>
           <SheetDescription>
-            {formatCurrency(amount)} / {cycle === "annual" ? "year" : "month"} —
-            verify your email, then enter your card details.
+            {t("description", {
+              amount: formatCurrency(amount),
+              period: cycle === "annual" ? t("annual") : t("monthly"),
+            })}
           </SheetDescription>
         </SheetHeader>
 
@@ -207,7 +211,7 @@ export function MembershipCheckoutDrawer({
                           htmlFor="save-identification"
                           className="text-xs font-normal text-muted-foreground"
                         >
-                          Save this ID for future payments
+                          {t("saveIdLabel")}
                         </Label>
                       </div>
                     )}
@@ -262,7 +266,7 @@ export function MembershipCheckoutDrawer({
               onClick={handleBack}
               disabled={isSubmitting}
             >
-              Back
+              {t("back")}
             </Button>
           </SheetFooter>
         )}
