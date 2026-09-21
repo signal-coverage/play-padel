@@ -73,6 +73,7 @@
     "@locator/babel-jsx": "^0.5.1",
     "@locator/runtime": "^0.5.1",
     "@locator/webpack-loader": "^0.5.1",
+    "@next/bundle-analyzer": "^16.3.5",
     "@prisma/client": "^7.9.1",
     "@tailwindcss/postcss": "^4.3.3",
     "@testing-library/jest-dom": "^7.0.1",

@@ -3,7 +3,7 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/messages/en.json";
+import messages from "@/messages/es.json";
 
 const useOpenTournamentsMock = vi.fn();
 vi.mock("./hooks", () => ({
@@ -30,7 +30,7 @@ const TOURNAMENTS = [
 
 function renderHub() {
   return render(
-    <NextIntlClientProvider locale="en" messages={messages}>
+    <NextIntlClientProvider locale="es" messages={messages}>
       <TournamentsHub />
     </NextIntlClientProvider>,
   );
@@ -45,7 +45,7 @@ describe("TournamentsHub", () => {
 
     renderHub();
 
-    expect(screen.getByText(/loading/i)).toBeInTheDocument();
+    expect(screen.getByText(/cargando/i)).toBeInTheDocument();
   });
 
   it("shows an empty state when nothing is open", () => {
@@ -53,7 +53,7 @@ describe("TournamentsHub", () => {
 
     renderHub();
 
-    expect(screen.getByText(/no tournaments/i)).toBeInTheDocument();
+    expect(screen.getByText(/no hay torneos/i)).toBeInTheDocument();
   });
 
   it("renders one row per tournament with the name as title and club as subtitle", () => {

@@ -10,7 +10,7 @@ import {
 import "@testing-library/jest-dom/vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/messages/en.json";
+import messages from "@/messages/es.json";
 
 // Mocked the same way CourtsView.test.tsx mocks it, so toast.success/error
 // calls made from the aggregate summary logic can be asserted on.
@@ -49,7 +49,7 @@ function renderSheet(
 
   render(
     <QueryClientProvider client={queryClient}>
-      <NextIntlClientProvider locale="en" messages={messages}>
+      <NextIntlClientProvider locale="es" messages={messages}>
         <BulkEditCourtsSheet
           open
           onOpenChange={onOpenChange}
@@ -91,18 +91,18 @@ describe("BulkEditCourtsSheet", () => {
       },
     );
 
-    fireEvent.click(screen.getByRole("checkbox", { name: "Reservation fee" }));
+    fireEvent.click(screen.getByRole("checkbox", { name: "Seña de reserva" }));
     fireEvent.change(
-      screen.getByRole("spinbutton", { name: "Reservation fee" }),
+      screen.getByRole("spinbutton", { name: "Seña de reserva" }),
       {
         target: { value: "6000" },
       },
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /apply changes/i }));
+    fireEvent.click(screen.getByRole("button", { name: /aplicar cambios/i }));
 
     await waitFor(() => {
-      expect(toastMock.success).toHaveBeenCalledWith("Updated 2 courts");
+      expect(toastMock.success).toHaveBeenCalledWith("2 canchas actualizadas");
     });
     // Only the aggregate summary toast should fire — not a "Court updated"
     // toast per court from useUpdateCourt's own onSuccess, which would stack
@@ -127,11 +127,11 @@ describe("BulkEditCourtsSheet", () => {
       throw new Error("fetch should not be called");
     });
 
-    fireEvent.click(screen.getByRole("button", { name: /apply changes/i }));
+    fireEvent.click(screen.getByRole("button", { name: /aplicar cambios/i }));
 
     await waitFor(() => {
       expect(toastMock.error).toHaveBeenCalledWith(
-        "Select at least one field to change",
+        "Seleccioná al menos un campo para cambiar",
       );
     });
     expect(fetchMock).not.toHaveBeenCalled();
@@ -147,14 +147,14 @@ describe("BulkEditCourtsSheet", () => {
       };
     });
 
-    fireEvent.click(screen.getByRole("checkbox", { name: "Reservation fee" }));
+    fireEvent.click(screen.getByRole("checkbox", { name: "Seña de reserva" }));
     fireEvent.change(
-      screen.getByRole("spinbutton", { name: "Reservation fee" }),
+      screen.getByRole("spinbutton", { name: "Seña de reserva" }),
       {
         target: { value: "6000" },
       },
     );
-    fireEvent.click(screen.getByRole("button", { name: /apply changes/i }));
+    fireEvent.click(screen.getByRole("button", { name: /aplicar cambios/i }));
 
     await waitFor(() => {
       expect(toastMock.error).toHaveBeenCalledWith("Something went wrong");
@@ -171,18 +171,18 @@ describe("BulkEditCourtsSheet", () => {
       return { ok: false, json: async () => ({ error: "Conflict" }) };
     });
 
-    fireEvent.click(screen.getByRole("checkbox", { name: "Reservation fee" }));
+    fireEvent.click(screen.getByRole("checkbox", { name: "Seña de reserva" }));
     fireEvent.change(
-      screen.getByRole("spinbutton", { name: "Reservation fee" }),
+      screen.getByRole("spinbutton", { name: "Seña de reserva" }),
       {
         target: { value: "6000" },
       },
     );
-    fireEvent.click(screen.getByRole("button", { name: /apply changes/i }));
+    fireEvent.click(screen.getByRole("button", { name: /aplicar cambios/i }));
 
     await waitFor(() => {
       expect(toastMock.error).toHaveBeenCalledWith(
-        "Updated 1 of 2 courts. 1 failed.",
+        "Se actualizaron 1 de 2 canchas. 1 fallaron.",
       );
     });
     expect(onSuccess).not.toHaveBeenCalled();

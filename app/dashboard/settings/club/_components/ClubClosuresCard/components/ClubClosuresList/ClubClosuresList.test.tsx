@@ -4,13 +4,13 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/messages/en.json";
+import messages from "@/messages/es.json";
 import { ClubClosuresList } from "./ClubClosuresList";
 import type { ClubClosure } from "../../types";
 
 function renderWithIntl(ui: React.ReactElement) {
   return render(
-    <NextIntlClientProvider locale="en" messages={messages}>
+    <NextIntlClientProvider locale="es" messages={messages}>
       {ui}
     </NextIntlClientProvider>,
   );
@@ -46,7 +46,7 @@ describe("ClubClosuresList", () => {
       />,
     );
 
-    expect(screen.getByText(/no closures yet/i)).toBeInTheDocument();
+    expect(screen.getByText(/todavía no hay cierres/i)).toBeInTheDocument();
   });
 
   it("renders each closure's reason and owning court name", () => {
@@ -87,7 +87,7 @@ describe("ClubClosuresList", () => {
       />,
     );
 
-    expect(screen.getByText("Active")).toBeInTheDocument();
+    expect(screen.getByText("Activo")).toBeInTheDocument();
   });
 
   it("badges a closure whose endsAt has already passed as Past", () => {
@@ -104,7 +104,7 @@ describe("ClubClosuresList", () => {
       />,
     );
 
-    expect(screen.getByText("Past")).toBeInTheDocument();
+    expect(screen.getByText("Pasado")).toBeInTheDocument();
   });
 
   it("badges a cancelled closure as Cancelled even if it hasn't ended yet", () => {
@@ -122,7 +122,7 @@ describe("ClubClosuresList", () => {
       />,
     );
 
-    expect(screen.getByText("Cancelled")).toBeInTheDocument();
+    expect(screen.getByText("Cancelado")).toBeInTheDocument();
   });
 
   it("shows a Cancel button only for an active closure", () => {
@@ -145,7 +145,9 @@ describe("ClubClosuresList", () => {
       />,
     );
 
-    expect(screen.getAllByRole("button", { name: /cancel/i })).toHaveLength(1);
+    expect(screen.getAllByRole("button", { name: /cancelar/i })).toHaveLength(
+      1,
+    );
   });
 
   it("calls onCancel with the closure id when its Cancel button is clicked", () => {
@@ -164,7 +166,7 @@ describe("ClubClosuresList", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /cancel/i }));
+    fireEvent.click(screen.getByRole("button", { name: /cancelar/i }));
 
     expect(onCancel).toHaveBeenCalledWith("closure_active");
   });
@@ -184,7 +186,7 @@ describe("ClubClosuresList", () => {
       />,
     );
 
-    const button = screen.getByRole("button", { name: /cancelling/i });
+    const button = screen.getByRole("button", { name: /cancelando/i });
     expect(button).toBeDisabled();
   });
 });

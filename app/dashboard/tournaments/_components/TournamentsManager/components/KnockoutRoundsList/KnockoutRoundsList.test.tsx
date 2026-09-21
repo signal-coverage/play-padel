@@ -3,7 +3,7 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, fireEvent, cleanup } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/messages/en.json";
+import messages from "@/messages/es.json";
 import { KnockoutRoundsList } from "./KnockoutRoundsList";
 import type { GroupMatch } from "../../types";
 
@@ -18,7 +18,7 @@ const TEAM_LABELS = {
 
 function renderList(props: React.ComponentProps<typeof KnockoutRoundsList>) {
   return render(
-    <NextIntlClientProvider locale="en" messages={messages}>
+    <NextIntlClientProvider locale="es" messages={messages}>
       <KnockoutRoundsList {...props} />
     </NextIntlClientProvider>,
   );
@@ -32,7 +32,9 @@ describe("KnockoutRoundsList", () => {
       onEnterScore: vi.fn(),
       onRecordWalkover: vi.fn(),
     });
-    expect(screen.getByText(/no knockout bracket yet/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/todavía no hay llave de eliminación/i),
+    ).toBeInTheDocument();
   });
 
   it("groups matches under their round label, in play order", () => {
@@ -78,7 +80,7 @@ describe("KnockoutRoundsList", () => {
       onEnterScore: vi.fn(),
       onRecordWalkover: vi.fn(),
     });
-    expect(screen.getByText("TBD vs TBD")).toBeInTheDocument();
+    expect(screen.getByText("A definir vs A definir")).toBeInTheDocument();
   });
 
   it("shows action buttons for a ready match and calls the right callback", () => {
@@ -98,7 +100,7 @@ describe("KnockoutRoundsList", () => {
       onRecordWalkover,
     });
 
-    fireEvent.click(screen.getByRole("button", { name: /enter score/i }));
+    fireEvent.click(screen.getByRole("button", { name: /cargar resultado/i }));
     expect(onEnterScore).toHaveBeenCalledWith(match);
 
     fireEvent.click(screen.getByRole("button", { name: /walkover/i }));
@@ -123,9 +125,9 @@ describe("KnockoutRoundsList", () => {
     });
 
     expect(
-      screen.queryByRole("button", { name: /enter score/i }),
+      screen.queryByRole("button", { name: /cargar resultado/i }),
     ).not.toBeInTheDocument();
-    expect(screen.getByText(/winner: alice \/ ana/i)).toBeInTheDocument();
+    expect(screen.getByText(/ganador: alice \/ ana/i)).toBeInTheDocument();
   });
 
   it("never shows action buttons in readOnly mode, even for a ready match", () => {
@@ -144,7 +146,7 @@ describe("KnockoutRoundsList", () => {
     });
 
     expect(
-      screen.queryByRole("button", { name: /enter score/i }),
+      screen.queryByRole("button", { name: /cargar resultado/i }),
     ).not.toBeInTheDocument();
   });
 });

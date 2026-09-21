@@ -11,7 +11,7 @@ import {
 import "@testing-library/jest-dom/vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/messages/en.json";
+import messages from "@/messages/es.json";
 import { PlayersDirectory } from "./PlayersDirectory";
 import { useAuth } from "@/hooks/use-auth";
 import type { AppUser } from "@/providers/auth-provider";
@@ -112,7 +112,7 @@ function renderDirectory(
   });
 
   render(
-    <NextIntlClientProvider locale="en" messages={messages}>
+    <NextIntlClientProvider locale="es" messages={messages}>
       <QueryClientProvider client={queryClient}>
         <PlayersDirectory />
       </QueryClientProvider>
@@ -144,9 +144,9 @@ describe("PlayersDirectory admin actions", () => {
 
     await screen.findByText("Ana Garcia");
 
-    expect(screen.queryByText("Actions")).not.toBeInTheDocument();
+    expect(screen.queryByText("Acciones")).not.toBeInTheDocument();
     expect(
-      screen.queryByRole("button", { name: /edit ana garcia/i }),
+      screen.queryByRole("button", { name: /editar a ana garcia/i }),
     ).not.toBeInTheDocument();
   });
 
@@ -157,7 +157,7 @@ describe("PlayersDirectory admin actions", () => {
     await screen.findByText("Ana Garcia");
 
     expect(
-      screen.queryByRole("link", { name: /export csv/i }),
+      screen.queryByRole("link", { name: /exportar csv/i }),
     ).not.toBeInTheDocument();
   });
 
@@ -167,7 +167,7 @@ describe("PlayersDirectory admin actions", () => {
 
     await screen.findByText("Ana Garcia");
 
-    const exportLink = screen.getByRole("link", { name: /export csv/i });
+    const exportLink = screen.getByRole("link", { name: /exportar csv/i });
     expect(exportLink).toHaveAttribute("href", "/api/admin/export/players");
   });
 
@@ -231,10 +231,10 @@ describe("PlayersDirectory admin actions", () => {
     await screen.findByText("Ana Garcia");
 
     expect(
-      screen.getByRole("button", { name: /edit ana garcia/i }),
+      screen.getByRole("button", { name: /editar a ana garcia/i }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: /delete ana garcia/i }),
+      screen.getByRole("button", { name: /eliminar a ana garcia/i }),
     ).toBeInTheDocument();
   });
 
@@ -262,13 +262,15 @@ describe("PlayersDirectory admin actions", () => {
 
     await screen.findByText("Ana Garcia");
 
-    fireEvent.click(screen.getByRole("button", { name: /edit ana garcia/i }));
+    fireEvent.click(
+      screen.getByRole("button", { name: /editar a ana garcia/i }),
+    );
 
-    const nameInput = await screen.findByLabelText(/^name/i);
+    const nameInput = await screen.findByLabelText(/^nombre/i);
     expect(nameInput).toHaveValue("Ana Garcia");
 
     fireEvent.change(nameInput, { target: { value: "Ana Updated" } });
-    fireEvent.click(screen.getByRole("button", { name: /save changes/i }));
+    fireEvent.click(screen.getByRole("button", { name: /guardar cambios/i }));
 
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledWith(
@@ -301,11 +303,13 @@ describe("PlayersDirectory admin actions", () => {
 
     await screen.findByText("Ana Garcia");
 
-    fireEvent.click(screen.getByRole("button", { name: /delete ana garcia/i }));
+    fireEvent.click(
+      screen.getByRole("button", { name: /eliminar a ana garcia/i }),
+    );
 
     expect(await screen.findByRole("alertdialog")).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: /^delete$/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^eliminar$/i }));
 
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledWith(
@@ -326,7 +330,7 @@ describe("PlayersDirectory admin actions", () => {
     await screen.findByText("Ana Garcia");
 
     expect(
-      screen.queryByRole("button", { name: /impersonate ana garcia/i }),
+      screen.queryByRole("button", { name: /suplantar a ana garcia/i }),
     ).not.toBeInTheDocument();
   });
 
@@ -337,7 +341,7 @@ describe("PlayersDirectory admin actions", () => {
     await screen.findByText("Ana Garcia");
 
     expect(
-      screen.getByRole("button", { name: /impersonate ana garcia/i }),
+      screen.getByRole("button", { name: /suplantar a ana garcia/i }),
     ).toBeInTheDocument();
   });
 
@@ -359,7 +363,7 @@ describe("PlayersDirectory admin actions", () => {
     await screen.findByText("Ana Garcia");
 
     fireEvent.click(
-      screen.getByRole("button", { name: /impersonate ana garcia/i }),
+      screen.getByRole("button", { name: /suplantar a ana garcia/i }),
     );
 
     await waitFor(() => {
@@ -400,7 +404,7 @@ describe("PlayersDirectory admin actions", () => {
     await screen.findByText("Ana Garcia");
 
     fireEvent.click(
-      screen.getByRole("button", { name: /impersonate ana garcia/i }),
+      screen.getByRole("button", { name: /suplantar a ana garcia/i }),
     );
 
     await waitFor(() => {
@@ -416,7 +420,7 @@ describe("PlayersDirectory admin actions", () => {
 
     await screen.findByText("Ana Garcia");
 
-    expect(screen.queryByText("Role")).not.toBeInTheDocument();
+    expect(screen.queryByText("Rol")).not.toBeInTheDocument();
   });
 
   it("shows a Role column with Admin/Player badges for an admin viewer", async () => {
@@ -425,7 +429,7 @@ describe("PlayersDirectory admin actions", () => {
 
     await screen.findByText("Ana Garcia");
 
-    expect(screen.getByText("Role")).toBeInTheDocument();
+    expect(screen.getByText("Rol")).toBeInTheDocument();
     // Scoped per row — both badges' labels are generic enough to otherwise
     // collide across rows.
     const anaRow = screen.getByText("Ana Garcia").closest("tr");
@@ -433,7 +437,7 @@ describe("PlayersDirectory admin actions", () => {
     expect(anaRow).not.toBeNull();
     expect(carlaRow).not.toBeNull();
     if (!anaRow || !carlaRow) throw new Error("Row not found");
-    expect(within(anaRow).getByText("Player")).toBeInTheDocument();
+    expect(within(anaRow).getByText("Jugador")).toBeInTheDocument();
     expect(within(carlaRow).getByText("Admin")).toBeInTheDocument();
   });
 
@@ -444,10 +448,10 @@ describe("PlayersDirectory admin actions", () => {
     await screen.findByText("Ana Garcia");
 
     expect(
-      screen.getByRole("button", { name: /impersonate ana garcia/i }),
+      screen.getByRole("button", { name: /suplantar a ana garcia/i }),
     ).not.toBeDisabled();
     expect(
-      screen.getByRole("button", { name: /impersonate carla lopez/i }),
+      screen.getByRole("button", { name: /suplantar a carla lopez/i }),
     ).toBeDisabled();
   });
 
@@ -460,19 +464,19 @@ describe("PlayersDirectory admin actions", () => {
     await screen.findByText("Ana Garcia");
 
     expect(
-      screen.getByRole("button", { name: /impersonate ana garcia/i }),
+      screen.getByRole("button", { name: /suplantar a ana garcia/i }),
     ).toBeDisabled();
     expect(
-      screen.getByRole("button", { name: /delete ana garcia/i }),
+      screen.getByRole("button", { name: /eliminar a ana garcia/i }),
     ).toBeDisabled();
 
     // Bruno isn't the signed-in admin and isn't an admin himself — neither
     // button should be affected by this guard.
     expect(
-      screen.getByRole("button", { name: /impersonate bruno diaz/i }),
+      screen.getByRole("button", { name: /suplantar a bruno diaz/i }),
     ).not.toBeDisabled();
     expect(
-      screen.getByRole("button", { name: /delete bruno diaz/i }),
+      screen.getByRole("button", { name: /eliminar a bruno diaz/i }),
     ).not.toBeDisabled();
   });
 
@@ -486,9 +490,9 @@ describe("PlayersDirectory admin actions", () => {
     // (isAdmin guard) — both disable Delete and/or Impersonate, so both are
     // real cases this wrapper has to cover.
     const disabledButtons = [
-      screen.getByRole("button", { name: /delete ana garcia/i }),
-      screen.getByRole("button", { name: /impersonate ana garcia/i }),
-      screen.getByRole("button", { name: /impersonate carla lopez/i }),
+      screen.getByRole("button", { name: /eliminar a ana garcia/i }),
+      screen.getByRole("button", { name: /suplantar a ana garcia/i }),
+      screen.getByRole("button", { name: /suplantar a carla lopez/i }),
     ];
 
     for (const button of disabledButtons) {
@@ -517,14 +521,14 @@ describe("PlayersDirectory current-user badge", () => {
     expect(anaRow).not.toBeNull();
     expect(brunoRow).not.toBeNull();
     if (!anaRow || !brunoRow) throw new Error("Row not found");
-    const youBadge = within(anaRow).getByText("You");
+    const youBadge = within(anaRow).getByText("Vos");
     expect(youBadge).toBeInTheDocument();
     // Accent, not the neutral outline every other badge in this table
     // uses (Role/Category) — this one calls out "that's you", not status
     // info, so it should stand out rather than blend in.
     expect(youBadge.className).toMatch(/\bbg-accent\b/);
     expect(youBadge.className).toMatch(/\btext-accent-foreground\b/);
-    expect(within(brunoRow).queryByText("You")).not.toBeInTheDocument();
+    expect(within(brunoRow).queryByText("Vos")).not.toBeInTheDocument();
   });
 
   it("shows no You badge at all when the signed-in user isn't in the visible player list", async () => {
@@ -533,6 +537,6 @@ describe("PlayersDirectory current-user badge", () => {
 
     await screen.findByText("Ana Garcia");
 
-    expect(screen.queryByText("You")).not.toBeInTheDocument();
+    expect(screen.queryByText("Vos")).not.toBeInTheDocument();
   });
 });

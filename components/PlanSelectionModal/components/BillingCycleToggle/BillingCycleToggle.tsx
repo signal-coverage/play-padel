@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils/utils";
 import { BILLING_CYCLE_OPTIONS } from "../../consts";
 import type { BillingCycleToggleProps } from "./types";
@@ -15,6 +16,8 @@ export function BillingCycleToggle({
   value,
   onChange,
 }: BillingCycleToggleProps) {
+  const t = useTranslations("BillingCycleToggle");
+
   return (
     <div className="flex items-center gap-2">
       <div className="inline-flex w-fit rounded-full border border-border p-1">
@@ -30,12 +33,12 @@ export function BillingCycleToggle({
                 : "text-muted-foreground hover:text-foreground",
             )}
           >
-            {option.label}
+            {t(option.value)}
           </button>
         ))}
       </div>
       <span className="text-xs font-medium text-success">
-        Save 2 months with annual billing
+        {t("annualSavingsNote")}
       </span>
     </div>
   );

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -14,7 +15,7 @@ export function PlayerHelpSection() {
   const t = useTranslations("PlayerHelpSection");
 
   return (
-    <Card>
+    <Card className="shrink-0">
       <CardHeader>
         <CardTitle>{t("title")}</CardTitle>
       </CardHeader>
@@ -23,7 +24,15 @@ export function PlayerHelpSection() {
           {PLAYER_HELP_ITEM_KEYS.map((key) => (
             <AccordionItem key={key} value={key}>
               <AccordionTrigger>{t(`items.${key}.title`)}</AccordionTrigger>
-              <AccordionContent>{t(`items.${key}.body`)}</AccordionContent>
+              <AccordionContent>
+                {key === "browsing"
+                  ? t.rich("items.browsing.body", {
+                      link: (chunks) => (
+                        <Link href="/dashboard/browse">{chunks}</Link>
+                      ),
+                    })
+                  : t(`items.${key}.body`)}
+              </AccordionContent>
             </AccordionItem>
           ))}
         </Accordion>

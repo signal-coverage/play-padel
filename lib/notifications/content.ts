@@ -1,10 +1,7 @@
-import { createTranslator } from "use-intl/core";
-import {
-  DEFAULT_LOCALE,
-  isValidLocale,
-  type Locale,
-} from "@/i18n/localeConstants";
+import { createTranslator, type AbstractIntlMessages } from "use-intl/core";
+import type { Locale } from "@/i18n/localeConstants";
 import type { NotificationType } from "@/core/notifications/types";
+import messages from "@/messages/es.json";
 
 export interface ResolvedNotificationContent {
   subject: string;
@@ -72,29 +69,34 @@ function resolveMessageKey(
 
 /**
  * Renders the subject/html for a notification in the RECIPIENT's own
- * locale — never the triggering session's. Dynamically imports the right
- * messages/<locale>.json file (same pattern as i18n/request.ts) and reads
- * the "NotificationContent" namespace via use-intl's createTranslator,
- * which works with zero Next.js request context — exactly what a
- * background job (a cron sweep, a webhook, an admin action affecting a
- * different user) needs.
+ * locale — never the triggering session's. Statically imports
+ * messages/es.json (the app is Spanish-only) and reads the
+ * "NotificationContent" namespace via use-intl's createTranslator, which
+ * works with zero Next.js request context — exactly what a background job
+ * (a cron sweep, a webhook, an admin action affecting a different user)
+ * needs.
  */
 export async function resolveNotificationContent(
   type: NotificationType,
   locale: Locale,
   params: Record<string, string | number> = {},
 ): Promise<ResolvedNotificationContent> {
-  const safeLocale = isValidLocale(locale) ? locale : DEFAULT_LOCALE;
-  const messages = (await import(`../../messages/${safeLocale}.json`)).default;
-
+  // `messages` cast through `unknown` to `AbstractIntlMessages` here — the
+  // JSON import's literal shape (e.g. LandingStats.items is an array) has
+  // properties that don't structurally satisfy AbstractIntlMessages'
+  // recursive `string | AbstractIntlMessages` shape, so TS refuses the
+  // direct cast; the "${key}.subject"/"${key}.body" lookups below are built
+  // from a runtime NotificationType + optional variant, not a namespace/key
+  // literal next-intl can statically narrow against, so `t` also needs its
+  // params argument typed loosely via the same `unknown` detour.
   const t = createTranslator({
-    locale: safeLocale,
-    messages,
+    locale,
+    messages: messages as unknown as AbstractIntlMessages,
     namespace: "NotificationContent",
-  });
+  }) as (key: string, params?: Record<string, string | number>) => string;
 
   const key = resolveMessageKey(type, params);
-  const interpolationParams = deriveParams(safeLocale, params);
+  const interpolationParams = deriveParams(locale, params);
 
   const subject = t(`${key}.subject`, interpolationParams);
   const body = t(`${key}.body`, interpolationParams);

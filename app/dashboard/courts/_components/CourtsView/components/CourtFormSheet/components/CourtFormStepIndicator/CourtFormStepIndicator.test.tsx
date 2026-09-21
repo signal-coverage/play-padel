@@ -3,7 +3,7 @@ import { describe, it, expect, afterEach } from "vitest";
 import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/messages/en.json";
+import messages from "@/messages/es.json";
 import { CourtFormStepIndicator } from "./CourtFormStepIndicator";
 
 afterEach(() => {
@@ -12,7 +12,7 @@ afterEach(() => {
 
 function renderIndicator(current: 0 | 1 | 2 | 3) {
   return render(
-    <NextIntlClientProvider locale="en" messages={messages}>
+    <NextIntlClientProvider locale="es" messages={messages}>
       <CourtFormStepIndicator current={current} />
     </NextIntlClientProvider>,
   );
@@ -48,10 +48,10 @@ describe("CourtFormStepIndicator", () => {
   it("always shows all four step labels", () => {
     renderIndicator(0);
 
-    expect(screen.getByText("Details")).toBeInTheDocument();
-    expect(screen.getByText("Attributes")).toBeInTheDocument();
-    expect(screen.getByText("Pricing")).toBeInTheDocument();
-    expect(screen.getByText("Availability")).toBeInTheDocument();
+    expect(screen.getByText("Detalles")).toBeInTheDocument();
+    expect(screen.getByText("Atributos")).toBeInTheDocument();
+    expect(screen.getByText("Precios")).toBeInTheDocument();
+    expect(screen.getByText("Disponibilidad")).toBeInTheDocument();
   });
 
   // Global convention (see PaymentStepIndicator/ActivationStepIndicator/
@@ -60,14 +60,14 @@ describe("CourtFormStepIndicator", () => {
   it("is not clickable — clicking a step label does nothing, there is no button to click", () => {
     renderIndicator(0);
 
-    const availabilityLabel = screen.getByText("Availability");
+    const availabilityLabel = screen.getByText("Disponibilidad");
     expect(
-      screen.queryByRole("button", { name: /availability/i }),
+      screen.queryByRole("button", { name: /disponibilidad/i }),
     ).not.toBeInTheDocument();
 
     expect(() => fireEvent.click(availabilityLabel)).not.toThrow();
     expect(
-      screen.getByText("Details").closest('[data-step="details"]'),
+      screen.getByText("Detalles").closest('[data-step="details"]'),
     ).toHaveAttribute("aria-current", "step");
   });
 });

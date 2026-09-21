@@ -10,7 +10,7 @@ import {
 import "@testing-library/jest-dom/vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/messages/en.json";
+import messages from "@/messages/es.json";
 import { AdminSearchView } from "./AdminSearchView";
 import { ADMIN_SEARCH_DEBOUNCE_MS } from "./consts";
 
@@ -38,7 +38,7 @@ function renderView(fetchMock: ReturnType<typeof vi.fn>) {
   });
 
   return render(
-    <NextIntlClientProvider locale="en" messages={messages}>
+    <NextIntlClientProvider locale="es" messages={messages}>
       <QueryClientProvider client={queryClient}>
         <AdminSearchView />
       </QueryClientProvider>
@@ -67,14 +67,16 @@ describe("AdminSearchView", () => {
   it("renders the search input", () => {
     renderView(vi.fn());
 
-    expect(screen.getByPlaceholderText(/search/i)).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/buscar/i)).toBeInTheDocument();
   });
 
   it("shows an empty-query state before any input, without calling the API", async () => {
     const fetchMock = vi.fn().mockResolvedValue(emptyResultsResponse());
     renderView(fetchMock);
 
-    expect(screen.getByText(/start typing to search/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/empezá a escribir para buscar/i),
+    ).toBeInTheDocument();
 
     await Promise.resolve();
     expect(fetchMock).not.toHaveBeenCalled();
@@ -84,7 +86,7 @@ describe("AdminSearchView", () => {
     const fetchMock = vi.fn().mockResolvedValue(emptyResultsResponse());
     renderView(fetchMock);
 
-    const input = screen.getByPlaceholderText(/search/i);
+    const input = screen.getByPlaceholderText(/buscar/i);
     fireEvent.change(input, { target: { value: "j" } });
     fireEvent.change(input, { target: { value: "ju" } });
     fireEvent.change(input, { target: { value: "juan" } });
@@ -131,7 +133,7 @@ describe("AdminSearchView", () => {
     });
     renderView(fetchMock);
 
-    fireEvent.change(screen.getByPlaceholderText(/search/i), {
+    fireEvent.change(screen.getByPlaceholderText(/buscar/i), {
       target: { value: "Juan" },
     });
 
@@ -160,15 +162,17 @@ describe("AdminSearchView", () => {
     });
     renderView(fetchMock);
 
-    fireEvent.change(screen.getByPlaceholderText(/search/i), {
+    fireEvent.change(screen.getByPlaceholderText(/buscar/i), {
       target: { value: "Norte" },
     });
 
     await waitFor(() =>
       expect(screen.getByText("Padel Norte")).toBeInTheDocument(),
     );
-    expect(screen.getByText(/no players found/i)).toBeInTheDocument();
-    expect(screen.getByText(/no reservations found/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/no se encontraron jugadores/i),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/no se encontraron reservas/i)).toBeInTheDocument();
   });
 
   it("clicking a club result navigates to the club settings page scoped to it", async () => {
@@ -190,7 +194,7 @@ describe("AdminSearchView", () => {
     });
     renderView(fetchMock);
 
-    fireEvent.change(screen.getByPlaceholderText(/search/i), {
+    fireEvent.change(screen.getByPlaceholderText(/buscar/i), {
       target: { value: "Norte" },
     });
 
@@ -230,7 +234,7 @@ describe("AdminSearchView", () => {
     });
     renderView(fetchMock);
 
-    fireEvent.change(screen.getByPlaceholderText(/search/i), {
+    fireEvent.change(screen.getByPlaceholderText(/buscar/i), {
       target: { value: "Juan" },
     });
 

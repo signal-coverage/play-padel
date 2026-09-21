@@ -2,24 +2,34 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
+import { NextIntlClientProvider } from "next-intl";
+import messages from "@/messages/es.json";
 import { ConfirmedPanel } from "./ConfirmedPanel";
 
 afterEach(() => {
   cleanup();
 });
 
+function renderPanel(props: React.ComponentProps<typeof ConfirmedPanel>) {
+  return render(
+    <NextIntlClientProvider locale="es" messages={messages}>
+      <ConfirmedPanel {...props} />
+    </NextIntlClientProvider>,
+  );
+}
+
 describe("ConfirmedPanel", () => {
   it("shows the confirmed-state label", () => {
-    render(<ConfirmedPanel onClose={vi.fn()} />);
+    renderPanel({ onClose: vi.fn() });
 
-    expect(screen.getByText("Membership Active")).toBeInTheDocument();
+    expect(screen.getByText("Membresía activa")).toBeInTheDocument();
   });
 
   it("calls onClose when the close button is clicked", () => {
     const onClose = vi.fn();
-    render(<ConfirmedPanel onClose={onClose} />);
+    renderPanel({ onClose });
 
-    fireEvent.click(screen.getByRole("button", { name: /close/i }));
+    fireEvent.click(screen.getByRole("button", { name: /cerrar/i }));
 
     expect(onClose).toHaveBeenCalled();
   });
@@ -33,78 +43,70 @@ describe("ConfirmedPanel", () => {
   // one DOES have an authorized card, but the copy is about the STATUS —
   // TRIALING — not the cycle, so it stays uniform).
   it("shows trial-specific copy (not 'payment is confirmed') when isTrialing is true", () => {
-    render(<ConfirmedPanel onClose={vi.fn()} isTrialing />);
+    renderPanel({ onClose: vi.fn(), isTrialing: true });
 
-    expect(screen.getByText("Free Trial Active")).toBeInTheDocument();
+    expect(screen.getByText("Prueba gratuita activa")).toBeInTheDocument();
     expect(
-      screen.queryByText("Your membership payment is confirmed."),
+      screen.queryByText("El pago de tu membresía está confirmado."),
     ).not.toBeInTheDocument();
   });
 
   it("still shows the paid-confirmation copy when isTrialing is false/omitted", () => {
-    render(<ConfirmedPanel onClose={vi.fn()} isTrialing={false} />);
+    renderPanel({ onClose: vi.fn(), isTrialing: false });
 
     expect(
-      screen.getByText("Your membership payment is confirmed."),
+      screen.getByText("El pago de tu membresía está confirmado."),
     ).toBeInTheDocument();
-    expect(screen.queryByText("Free Trial Active")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Prueba gratuita activa"),
+    ).not.toBeInTheDocument();
   });
 
   // Lets the owner change plan tier IMMEDIATELY while on a free trial —
   // both MONTHLY and ANNUAL trials qualify, since neither has been charged
   // yet (both cycles get only an authorized-but-uncharged preapproval).
   it("shows a Change Plan button when isTrialing and onChangePlan are both provided", () => {
-    render(
-      <ConfirmedPanel onClose={vi.fn()} isTrialing onChangePlan={vi.fn()} />,
-    );
+    renderPanel({ onClose: vi.fn(), isTrialing: true, onChangePlan: vi.fn() });
 
     expect(
-      screen.getByRole("button", { name: "Change Plan" }),
+      screen.getByRole("button", { name: "Cambiar plan" }),
     ).toBeInTheDocument();
   });
 
   it("calls onChangePlan when the Change Plan button is clicked", () => {
     const onChangePlan = vi.fn();
-    render(
-      <ConfirmedPanel
-        onClose={vi.fn()}
-        isTrialing
-        onChangePlan={onChangePlan}
-      />,
-    );
+    renderPanel({ onClose: vi.fn(), isTrialing: true, onChangePlan });
 
-    fireEvent.click(screen.getByRole("button", { name: "Change Plan" }));
+    fireEvent.click(screen.getByRole("button", { name: "Cambiar plan" }));
 
     expect(onChangePlan).toHaveBeenCalled();
   });
 
   it("does not show a Change Plan button when onChangePlan is omitted", () => {
-    render(<ConfirmedPanel onClose={vi.fn()} isTrialing />);
+    renderPanel({ onClose: vi.fn(), isTrialing: true });
 
     expect(
-      screen.queryByRole("button", { name: "Change Plan" }),
+      screen.queryByRole("button", { name: "Cambiar plan" }),
     ).not.toBeInTheDocument();
   });
 
   it("does not show a Change Plan button when not trialing, even if onChangePlan is provided (already-paying clubs use requestPlanChange instead)", () => {
-    render(<ConfirmedPanel onClose={vi.fn()} onChangePlan={vi.fn()} />);
+    renderPanel({ onClose: vi.fn(), onChangePlan: vi.fn() });
 
     expect(
-      screen.queryByRole("button", { name: "Change Plan" }),
+      screen.queryByRole("button", { name: "Cambiar plan" }),
     ).not.toBeInTheDocument();
   });
 
   it("disables the Change Plan button and shows a loading label while isChangingPlan is true", () => {
-    render(
-      <ConfirmedPanel
-        onClose={vi.fn()}
-        isTrialing
-        onChangePlan={vi.fn()}
-        isChangingPlan
-      />,
-    );
+    renderPanel({
+      onClose: vi.fn(),
+      isTrialing: true,
+      onChangePlan: vi.fn(),
+      isChangingPlan: true,
+    });
 
-    const button = screen.getByRole("button", { name: /changing plan/i });
+    const button = screen.getByRole("button", { name: /cambiando de plan/i });
     expect(button).toBeDisabled();
   });
 });

@@ -10,7 +10,7 @@ import {
 import "@testing-library/jest-dom/vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/messages/en.json";
+import messages from "@/messages/es.json";
 import { AdminDashboardHome } from "./AdminDashboardHome";
 
 function renderWithClient(fetchMock: ReturnType<typeof vi.fn>) {
@@ -19,7 +19,7 @@ function renderWithClient(fetchMock: ReturnType<typeof vi.fn>) {
     defaultOptions: { queries: { retry: false } },
   });
   return render(
-    <NextIntlClientProvider locale="en" messages={messages}>
+    <NextIntlClientProvider locale="es" messages={messages}>
       <QueryClientProvider client={queryClient}>
         <AdminDashboardHome />
       </QueryClientProvider>
@@ -59,10 +59,10 @@ describe("AdminDashboardHome", () => {
     expect(screen.getByText("730")).toBeInTheDocument();
 
     expect(fetchMock).toHaveBeenCalledWith("/api/admin/metrics");
-    expect(screen.getByText("Total Clubs")).toBeInTheDocument();
-    expect(screen.getByText("Total Courts")).toBeInTheDocument();
-    expect(screen.getByText("Total Players")).toBeInTheDocument();
-    expect(screen.getByText("Reservations Booked")).toBeInTheDocument();
+    expect(screen.getByText("Total de clubes")).toBeInTheDocument();
+    expect(screen.getByText("Total de canchas")).toBeInTheDocument();
+    expect(screen.getByText("Total de jugadores")).toBeInTheDocument();
+    expect(screen.getByText("Reservas realizadas")).toBeInTheDocument();
   });
 
   it("breaks the Total Clubs card down into active/inactive/pending approval before the overall total", async () => {
@@ -84,17 +84,17 @@ describe("AdminDashboardHome", () => {
     renderWithClient(fetchMock);
 
     await waitFor(() => {
-      expect(screen.getByText("Active")).toBeInTheDocument();
+      expect(screen.getByText("Activos")).toBeInTheDocument();
     });
-    expect(screen.getByText("Inactive")).toBeInTheDocument();
-    expect(screen.getByText("Pending approval")).toBeInTheDocument();
+    expect(screen.getByText("Inactivos")).toBeInTheDocument();
+    expect(screen.getByText("Pendientes de aprobación")).toBeInTheDocument();
     expect(screen.getByText("Total")).toBeInTheDocument();
 
     // Scoped to the Total Clubs card only — "8"/"3"/"1"/"12" could
     // otherwise collide with other cards' own values in a differently
     // shaped fixture.
     const totalClubsCard = screen
-      .getByText("Total Clubs")
+      .getByText("Total de clubes")
       .closest<HTMLElement>('[data-slot="card"]');
     expect(totalClubsCard).not.toBeNull();
     if (!totalClubsCard) throw new Error("Total Clubs card not found");
@@ -123,10 +123,10 @@ describe("AdminDashboardHome", () => {
     renderWithClient(fetchMock);
 
     await waitFor(() => {
-      expect(screen.getByText("Reservations Booked")).toBeInTheDocument();
+      expect(screen.getByText("Reservas realizadas")).toBeInTheDocument();
     });
 
-    const exportLink = screen.getByRole("link", { name: /export csv/i });
+    const exportLink = screen.getByRole("link", { name: /exportar csv/i });
     expect(exportLink).toHaveAttribute(
       "href",
       "/api/admin/export/reservations",
@@ -152,7 +152,7 @@ describe("AdminDashboardHome", () => {
     renderWithClient(fetchMock);
 
     const exportLink = await screen.findByRole("link", {
-      name: /export csv/i,
+      name: /exportar csv/i,
     });
     // The Button itself (not just the inner <a>) carries the alignment —
     // self-end (cross-axis, within CardContent's flex-col) pushes it to the

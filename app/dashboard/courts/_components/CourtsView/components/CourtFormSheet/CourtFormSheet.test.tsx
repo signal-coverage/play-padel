@@ -11,7 +11,7 @@ import {
 import "@testing-library/jest-dom/vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/messages/en.json";
+import messages from "@/messages/es.json";
 
 import { CourtFormSheet } from "./CourtFormSheet";
 import { MAX_COURT_PHOTO_SIZE_BYTES } from "@/core/courts/validation";
@@ -44,7 +44,7 @@ function renderModal(
 
   const { container } = render(
     <QueryClientProvider client={queryClient}>
-      <NextIntlClientProvider locale="en" messages={messages}>
+      <NextIntlClientProvider locale="es" messages={messages}>
         <CourtFormSheet
           open
           onOpenChange={onOpenChange}
@@ -68,31 +68,33 @@ function renderModal(
 // it to actually be enabled before clicking, rather than firing blind.
 async function clickNext() {
   await waitFor(() =>
-    expect(screen.getByRole("button", { name: /^next$/i })).not.toBeDisabled(),
+    expect(
+      screen.getByRole("button", { name: /^siguiente$/i }),
+    ).not.toBeDisabled(),
   );
-  fireEvent.click(screen.getByRole("button", { name: /^next$/i }));
+  fireEvent.click(screen.getByRole("button", { name: /^siguiente$/i }));
 }
 
 // Fills only the one field each step actually requires to advance. Color
 // and slot duration already default to a valid value, so only Surface and
 // Reservation fee need filling on steps 1 and 2.
 function fillStep0Required() {
-  fireEvent.change(screen.getByLabelText(/^name/i), {
+  fireEvent.change(screen.getByLabelText(/^nombre/i), {
     target: { value: "Court 1" },
   });
 }
 
 function fillStep1Required() {
   fireEvent.click(
-    within(screen.getByRole("group", { name: /^surface/i })).getByRole(
+    within(screen.getByRole("group", { name: /^superficie/i })).getByRole(
       "radio",
-      { name: "Concrete" },
+      { name: "Concreto" },
     ),
   );
 }
 
 function fillStep2Required() {
-  fireEvent.change(screen.getByLabelText(/reservation fee/i), {
+  fireEvent.change(screen.getByLabelText(/seña de reserva/i), {
     target: { value: "5000" },
   });
 }
@@ -121,25 +123,25 @@ async function fillMinimumFieldsAndReachLastStep() {
   // Step 0 — Details: name + photo.
   fillStep0Required();
   const file = new File(["photo"], "court.jpg", { type: "image/jpeg" });
-  fireEvent.change(screen.getByLabelText("Upload picture"), {
+  fireEvent.change(screen.getByLabelText("Subir foto"), {
     target: { files: [file] },
   });
   await clickNext();
 
   // Step 1 — Attributes: surface.
-  await screen.findByText("Court type");
+  await screen.findByText("Tipo de cancha");
   fillStep1Required();
   await clickNext();
 
   // Step 2 — Pricing: reservation fee.
-  await screen.findByText("Court price");
+  await screen.findByText("Precio de la cancha");
   fillStep2Required();
   await clickNext();
 
   // Step 3 — Availability (last step).
   await waitFor(() => {
     expect(
-      screen.getByRole("button", { name: /create court/i }),
+      screen.getByRole("button", { name: /crear cancha/i }),
     ).not.toBeDisabled();
   });
 }
@@ -186,7 +188,7 @@ describe("CourtFormSheet", () => {
     process.on("unhandledRejection", onUnhandledRejection);
 
     try {
-      fireEvent.click(screen.getByRole("button", { name: /create court/i }));
+      fireEvent.click(screen.getByRole("button", { name: /crear cancha/i }));
 
       await waitFor(() => {
         expect(onSubmit).toHaveBeenCalledTimes(1);
@@ -203,7 +205,7 @@ describe("CourtFormSheet", () => {
     // The modal does not close on a failed submit.
     expect(onOpenChange).not.toHaveBeenCalledWith(false);
     expect(
-      screen.getByRole("heading", { name: "New court" }),
+      screen.getByRole("heading", { name: "Nueva cancha" }),
     ).toBeInTheDocument();
 
     // Still has the staged photo intact — every step stays mounted the
@@ -224,7 +226,7 @@ describe("CourtFormSheet", () => {
 
     const expectedMb = MAX_COURT_PHOTO_SIZE_BYTES / (1024 * 1024);
     expect(
-      screen.getByText(new RegExp(`max ${expectedMb}MB`, "i")),
+      screen.getByText(new RegExp(`máx ${expectedMb}MB`, "i")),
     ).toBeInTheDocument();
   });
 
@@ -237,7 +239,7 @@ describe("CourtFormSheet", () => {
     });
 
     await fillMinimumFieldsAndReachLastStep();
-    fireEvent.click(screen.getByRole("button", { name: /create court/i }));
+    fireEvent.click(screen.getByRole("button", { name: /crear cancha/i }));
 
     await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
     expect(onSubmit.mock.calls[0][0].courtNumber).toBeUndefined();
@@ -251,11 +253,11 @@ describe("CourtFormSheet", () => {
       throw new Error(`unexpected fetch: ${url}`);
     });
 
-    fireEvent.change(screen.getByLabelText(/court number/i), {
+    fireEvent.change(screen.getByLabelText(/número de cancha/i), {
       target: { value: "3" },
     });
     await fillMinimumFieldsAndReachLastStep();
-    fireEvent.click(screen.getByRole("button", { name: /create court/i }));
+    fireEvent.click(screen.getByRole("button", { name: /crear cancha/i }));
 
     await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
     expect(onSubmit.mock.calls[0][0].courtNumber).toBe(3);
@@ -274,8 +276,8 @@ describe("CourtFormSheet", () => {
     it("shows only Name and Photo on step 0 — no attributes or pricing fields", () => {
       renderOnStep0();
 
-      expect(screen.getByLabelText(/^name/i)).toBeInTheDocument();
-      expect(screen.getByLabelText("Upload picture")).toBeInTheDocument();
+      expect(screen.getByLabelText(/^nombre/i)).toBeInTheDocument();
+      expect(screen.getByLabelText("Subir foto")).toBeInTheDocument();
       // Every step's <form> stays mounted (see CourtFormSheet.tsx's own
       // comment — visibility toggles via the `hidden` class instead of
       // conditional rendering, specifically so PhotoField's own local
@@ -285,47 +287,49 @@ describe("CourtFormSheet", () => {
       // toBeVisible() can't see a class-driven display:none either; this
       // asserts on the class directly instead.
       expect(formFor("Color")).toHaveClass("hidden");
-      expect(formFor("Wall type")).toHaveClass("hidden");
-      expect(formFor(/reservation fee/i, "label")).toHaveClass("hidden");
+      expect(formFor("Tipo de pared")).toHaveClass("hidden");
+      expect(formFor(/seña de reserva/i, "label")).toHaveClass("hidden");
     });
 
     it("has no Back button on step 0, and mutates Next -> Next -> Next -> Create court while advancing", async () => {
       renderOnStep0();
 
       expect(
-        screen.queryByRole("button", { name: /^back$/i }),
+        screen.queryByRole("button", { name: /^atrás$/i }),
       ).not.toBeInTheDocument();
       expect(
-        screen.getByRole("button", { name: /^next$/i }),
+        screen.getByRole("button", { name: /^siguiente$/i }),
       ).toBeInTheDocument();
-      expect(formFor(/^name/i, "label")).not.toHaveClass("hidden");
+      expect(formFor(/^nombre/i, "label")).not.toHaveClass("hidden");
 
       fillStep0Required();
       await clickNext();
-      expect(formFor(/^name/i, "label")).toHaveClass("hidden");
-      expect(formFor("Court type")).not.toHaveClass("hidden");
+      expect(formFor(/^nombre/i, "label")).toHaveClass("hidden");
+      expect(formFor("Tipo de cancha")).not.toHaveClass("hidden");
       expect(
-        screen.getByRole("button", { name: /^back$/i }),
+        screen.getByRole("button", { name: /^atrás$/i }),
       ).toBeInTheDocument();
       expect(
-        screen.getByRole("button", { name: /^next$/i }),
+        screen.getByRole("button", { name: /^siguiente$/i }),
       ).toBeInTheDocument();
 
       fillStep1Required();
       await clickNext();
-      expect(formFor("Court type")).toHaveClass("hidden");
-      expect(formFor("Court price")).not.toHaveClass("hidden");
+      expect(formFor("Tipo de cancha")).toHaveClass("hidden");
+      expect(formFor("Precio de la cancha")).not.toHaveClass("hidden");
 
       fillStep2Required();
       await clickNext();
-      expect(formFor("Court price")).toHaveClass("hidden");
-      expect(screen.getByRole("button", { name: "Apply" })).toBeInTheDocument();
+      expect(formFor("Precio de la cancha")).toHaveClass("hidden");
+      expect(
+        screen.getByRole("button", { name: "Aplicar" }),
+      ).toBeInTheDocument();
       // Last step: the primary button is now "Create court", not "Next".
       expect(
-        screen.queryByRole("button", { name: /^next$/i }),
+        screen.queryByRole("button", { name: /^siguiente$/i }),
       ).not.toBeInTheDocument();
       expect(
-        screen.getByRole("button", { name: /create court/i }),
+        screen.getByRole("button", { name: /crear cancha/i }),
       ).toBeInTheDocument();
     });
 
@@ -336,12 +340,12 @@ describe("CourtFormSheet", () => {
       await clickNext();
       fillStep1Required();
       await clickNext();
-      expect(formFor("Court price")).not.toHaveClass("hidden");
+      expect(formFor("Precio de la cancha")).not.toHaveClass("hidden");
 
-      fireEvent.click(screen.getByRole("button", { name: /^back$/i }));
+      fireEvent.click(screen.getByRole("button", { name: /^atrás$/i }));
 
-      expect(formFor("Court type")).not.toHaveClass("hidden");
-      expect(formFor("Court price")).toHaveClass("hidden");
+      expect(formFor("Tipo de cancha")).not.toHaveClass("hidden");
+      expect(formFor("Precio de la cancha")).toHaveClass("hidden");
     });
 
     it("shows the Availability step as a split layout: Quick setup and the day list separated by a vertical Separator", async () => {
@@ -354,9 +358,11 @@ describe("CourtFormSheet", () => {
       fillStep2Required();
       await clickNext();
 
-      expect(screen.getByRole("button", { name: "Apply" })).toBeInTheDocument();
       expect(
-        screen.getByRole("switch", { name: "Sunday" }),
+        screen.getByRole("button", { name: "Aplicar" }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("switch", { name: "Domingo" }),
       ).toBeInTheDocument();
       // Radix's Dialog renders its content into a portal, outside RTL's own
       // `container` — same reason the fixed-size check below queries
@@ -377,11 +383,11 @@ describe("CourtFormSheet", () => {
       await clickNext();
 
       const createButton = screen.getByRole("button", {
-        name: /create court/i,
+        name: /crear cancha/i,
       });
       expect(createButton.querySelector("svg")).toBeInTheDocument();
       expect(
-        screen.queryByRole("button", { name: /^next$/i }),
+        screen.queryByRole("button", { name: /^siguiente$/i }),
       ).not.toBeInTheDocument();
     });
 
@@ -412,7 +418,7 @@ describe("CourtFormSheet", () => {
       await fillMinimumFieldsAndReachLastStep();
 
       expect(
-        screen.getByRole("button", { name: /create court/i }),
+        screen.getByRole("button", { name: /crear cancha/i }),
       ).not.toBeDisabled();
     });
 
@@ -428,7 +434,7 @@ describe("CourtFormSheet", () => {
 
         await waitFor(() =>
           expect(
-            screen.getByRole("button", { name: /^next$/i }),
+            screen.getByRole("button", { name: /^siguiente$/i }),
           ).toBeDisabled(),
         );
 
@@ -436,7 +442,7 @@ describe("CourtFormSheet", () => {
 
         await waitFor(() =>
           expect(
-            screen.getByRole("button", { name: /^next$/i }),
+            screen.getByRole("button", { name: /^siguiente$/i }),
           ).not.toBeDisabled(),
         );
       });
@@ -446,15 +452,15 @@ describe("CourtFormSheet", () => {
 
         await waitFor(() =>
           expect(
-            screen.getByRole("button", { name: /^next$/i }),
+            screen.getByRole("button", { name: /^siguiente$/i }),
           ).toBeDisabled(),
         );
 
-        fireEvent.submit(formFor(/^name/i, "label"));
+        fireEvent.submit(formFor(/^nombre/i, "label"));
 
         // Still on step 0 — Court type (step 1's own content) never shows.
-        expect(formFor("Court type")).toHaveClass("hidden");
-        expect(formFor(/^name/i, "label")).not.toHaveClass("hidden");
+        expect(formFor("Tipo de cancha")).toHaveClass("hidden");
+        expect(formFor(/^nombre/i, "label")).not.toHaveClass("hidden");
       });
 
       it("disables Next on step 1 until Surface is chosen, then enables it", async () => {
@@ -464,7 +470,7 @@ describe("CourtFormSheet", () => {
 
         await waitFor(() =>
           expect(
-            screen.getByRole("button", { name: /^next$/i }),
+            screen.getByRole("button", { name: /^siguiente$/i }),
           ).toBeDisabled(),
         );
 
@@ -472,7 +478,7 @@ describe("CourtFormSheet", () => {
 
         await waitFor(() =>
           expect(
-            screen.getByRole("button", { name: /^next$/i }),
+            screen.getByRole("button", { name: /^siguiente$/i }),
           ).not.toBeDisabled(),
         );
       });
@@ -486,7 +492,7 @@ describe("CourtFormSheet", () => {
 
         await waitFor(() =>
           expect(
-            screen.getByRole("button", { name: /^next$/i }),
+            screen.getByRole("button", { name: /^siguiente$/i }),
           ).toBeDisabled(),
         );
 
@@ -494,7 +500,7 @@ describe("CourtFormSheet", () => {
 
         await waitFor(() =>
           expect(
-            screen.getByRole("button", { name: /^next$/i }),
+            screen.getByRole("button", { name: /^siguiente$/i }),
           ).not.toBeDisabled(),
         );
       });

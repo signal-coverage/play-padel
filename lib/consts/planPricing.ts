@@ -75,10 +75,9 @@ export const PLAN_EMPHASIS: Record<Plan, PlanEmphasis> = {
 
 // Numeric pricing data for each plan tier, shown by PlanOptionCard
 // (dashboard payment-activation gate) and LandingPricing. Marketing copy
-// (tagline, feature bullets, MAX's "contact us" note) is locale-dependent
-// and lives in i18n instead, under the "PlanPricingDetails" namespace keyed
-// by plan — see messages/en.json / messages/es.json. This file only holds
-// locale-independent numbers, so it never needs to change per-language. MAX
+// (tagline, feature bullets, MAX's "contact us" note) lives in i18n instead,
+// under the "PlanPricingDetails" namespace keyed by plan — see
+// messages/es.json. This file only holds the numbers themselves. MAX
 // has no fixed price (custom/enterprise), so its price and
 // welcome-free-months fields are null.
 export type PlanDetails = {

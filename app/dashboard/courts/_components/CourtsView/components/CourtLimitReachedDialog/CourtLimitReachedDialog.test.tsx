@@ -3,7 +3,7 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, cleanup } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/messages/en.json";
+import messages from "@/messages/es.json";
 import { CourtLimitReachedDialog } from "./CourtLimitReachedDialog";
 
 afterEach(() => {
@@ -14,7 +14,7 @@ function renderDialog(
   props: React.ComponentProps<typeof CourtLimitReachedDialog>,
 ) {
   return render(
-    <NextIntlClientProvider locale="en" messages={messages}>
+    <NextIntlClientProvider locale="es" messages={messages}>
       <CourtLimitReachedDialog {...props} />
     </NextIntlClientProvider>,
   );
@@ -29,7 +29,9 @@ describe("CourtLimitReachedDialog", () => {
       limit: 2,
     });
 
-    expect(screen.queryByText(/court limit reached/i)).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/límite de canchas alcanzado/i),
+    ).not.toBeInTheDocument();
   });
 
   it("explains the plan's court limit when open", () => {
@@ -40,9 +42,11 @@ describe("CourtLimitReachedDialog", () => {
       limit: 2,
     });
 
-    expect(screen.getByText(/court limit reached/i)).toBeInTheDocument();
     expect(
-      screen.getByText(/BASIC plan allows up to 2 courts/i),
+      screen.getByText(/límite de canchas alcanzado/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/tu plan basic permite hasta 2 canchas/i),
     ).toBeInTheDocument();
   });
 
@@ -55,7 +59,7 @@ describe("CourtLimitReachedDialog", () => {
     });
 
     expect(
-      screen.getByText(/MAX plan allows up to 1 court\b/i),
+      screen.getByText(/tu plan max permite hasta 1 cancha\b/i),
     ).toBeInTheDocument();
   });
 
@@ -67,7 +71,7 @@ describe("CourtLimitReachedDialog", () => {
       limit: 2,
     });
 
-    const link = screen.getByRole("link", { name: /go to dashboard/i });
+    const link = screen.getByRole("link", { name: /ir al panel/i });
     expect(link).toHaveAttribute("href", "/dashboard");
   });
 
@@ -80,7 +84,7 @@ describe("CourtLimitReachedDialog", () => {
       limit: 2,
     });
 
-    screen.getByRole("button", { name: /close/i }).click();
+    screen.getByRole("button", { name: /cerrar/i }).click();
 
     expect(onOpenChange).toHaveBeenCalledWith(false);
   });

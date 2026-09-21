@@ -11,7 +11,6 @@ import { SuccessCelebrationPortal } from "@/components/SuccessCelebration";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ThemeFavicon } from "@/components/theme-favicon";
 import { LocatorSetup } from "@/components/locator-setup";
-import { getRequestLocale } from "@/i18n/getRequestLocale";
 import "./globals.css";
 
 const publicSans = Public_Sans({
@@ -34,11 +33,7 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 const APP_NAME = "Play Padel";
-// Spanish-only while English is hidden site-wide (LocaleSwitcher removed,
-// /en redirects to / — see i18n/getRequestLocale.ts). Revert to the English
-// original ("Find available padel court appointments across different
-// clubs in one place.") alongside that change once the real translation
-// pass resumes and both languages are live again.
+// Spanish-only — English support has been removed site-wide.
 const APP_DESCRIPTION =
   "Encontrá turnos disponibles de pádel en distintos clubes, todo en un mismo lugar.";
 // `||`, not `??`: an unset GitHub Actions secret is interpolated as `""`
@@ -52,8 +47,6 @@ const structuredData = {
   description: APP_DESCRIPTION,
   applicationCategory: "SportsApplication",
   url: APP_URL,
-  // Spanish-only for now — see APP_DESCRIPTION's own comment above. Add
-  // "en" back once /en has real content again.
   inLanguage: ["es"],
   offers: {
     "@type": "Offer",
@@ -85,9 +78,7 @@ export const metadata: Metadata = {
     siteName: APP_NAME,
     url: APP_URL,
     type: "website",
-    // Spanish-only for now — see APP_DESCRIPTION's own comment above. No
-    // `alternateLocale` right now since there's no second language actually
-    // live to point at; add "en_US" back alongside it.
+    // Spanish-only — no `alternateLocale` since there is no second language.
     locale: "es_AR",
     // No `images` here — app/opengraph-image.tsx (the file-convention
     // route) generates a real 1200x630 branded card and Next wires up the
@@ -141,11 +132,9 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const locale = await getRequestLocale();
-
   return (
     <html
-      lang={locale}
+      lang="es"
       className={`${publicSans.variable} ${jetbrainsMono.variable} ${spaceGrotesk.variable} antialiased`}
       suppressHydrationWarning
     >

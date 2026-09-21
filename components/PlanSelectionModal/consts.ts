@@ -12,27 +12,17 @@ export { PLAN_DETAILS } from "@/lib/consts/planPricing";
 
 export const PLAN_ORDER: Plan[] = ["BASIC", "PRO", "PLUS", "MAX"];
 
-export const BILLING_CYCLE_OPTIONS: { value: BillingCycle; label: string }[] = [
-  { value: "monthly", label: "Monthly" },
-  { value: "annual", label: "Annual" },
+// Labels/descriptions are looked up via useTranslations in each option's own
+// component (BillingCycleToggle/RenewalModeToggle) — these arrays only carry
+// the values, same convention as CourtFormSheet's COURT_SURFACE_OPTIONS.
+export const BILLING_CYCLE_OPTIONS: { value: BillingCycle }[] = [
+  { value: "monthly" },
+  { value: "annual" },
 ];
 
 export const RENEWAL_MODE_OPTIONS: {
   value: MembershipRenewalModeValue;
-  label: string;
-  description: string;
-}[] = [
-  {
-    value: "AUTO",
-    label: "Auto-renew",
-    description: "We charge your card automatically every cycle.",
-  },
-  {
-    value: "MANUAL",
-    label: "Manual renewal",
-    description: "You confirm and pay each cycle yourself.",
-  },
-];
+}[] = [{ value: "AUTO" }, { value: "MANUAL" }];
 
 // Same TanStack Query key convention as CLUB_PLAN_QUERY_KEY /
 // MERCADOPAGO_STATUS_QUERY_KEY — sharing this key across every consumer of

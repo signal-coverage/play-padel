@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useTranslations } from "next-intl";
 import { CardPayment, initMercadoPago } from "@mercadopago/sdk-react";
 import { StatusBox } from "@/components/StatusBox";
 import { resolveCardErrorMessage, resolvePublicKey } from "./utils";
@@ -55,6 +56,7 @@ export function CardTokenForm({
   onTokenReady,
   onError,
 }: CardTokenFormProps) {
+  const t = useTranslations("CardTokenForm");
   const publicKey = resolvePublicKey();
   const hasReportedMissingKey = useRef(false);
 
@@ -67,10 +69,8 @@ export function CardTokenForm({
   useEffect(() => {
     if (publicKey || hasReportedMissingKey.current) return;
     hasReportedMissingKey.current = true;
-    onError(
-      "Card payments are not configured for this environment. Contact support.",
-    );
-  }, [publicKey, onError]);
+    onError(t("notConfigured"));
+  }, [publicKey, onError, t]);
 
   // `CardPayment`'s own effect tears down and rebuilds the Brick's iframe
   // (its cleanup calls `.unmount()`) whenever `initialization`/`onSubmit`/
@@ -116,15 +116,21 @@ export function CardTokenForm({
 
   const handleError = useCallback(
     (param: { cause?: string; message?: string }) => {
-      onError(resolveCardErrorMessage(param));
+      onError(resolveCardErrorMessage(param, t));
     },
+    // `t`'s reference churns every render (next-intl doesn't memoize it),
+    // but the app has exactly one locale for its whole runtime lifetime, so
+    // the strings it resolves never actually change — including it here
+    // would defeat the whole point of this useCallback (see this file's own
+    // top comment on why the Brick's props must stay reference-stable).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [onError],
   );
 
   if (!publicKey) {
     return (
       <StatusBox className="text-sm text-muted-foreground">
-        Card payments are not available right now. Please try again later.
+        {t("notAvailable")}
       </StatusBox>
     );
   }
@@ -134,7 +140,7 @@ export function CardTokenForm({
       initialization={initialization}
       onSubmit={handleSubmit}
       onError={handleError}
-      locale="en-US"
+      locale="es-AR"
     />
   );
 }

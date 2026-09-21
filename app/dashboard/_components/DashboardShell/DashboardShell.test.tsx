@@ -16,7 +16,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, waitFor, cleanup } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/messages/en.json";
+import messages from "@/messages/es.json";
 import { DashboardShell } from "./DashboardShell";
 import { useAuth } from "@/hooks/use-auth";
 import type { AppUser } from "@/providers/auth-provider";
@@ -102,7 +102,7 @@ describe("DashboardShell — ClubOperationalGate regression vs. DashboardGuard",
     vi.stubGlobal("fetch", fetchMock);
 
     render(
-      <NextIntlClientProvider locale="en" messages={messages}>
+      <NextIntlClientProvider locale="es" messages={messages}>
         <DashboardShell>
           <div>Dashboard page content</div>
         </DashboardShell>
@@ -127,7 +127,7 @@ describe("DashboardShell — ClubOperationalGate regression vs. DashboardGuard",
     vi.stubGlobal("fetch", fetchMock);
 
     render(
-      <NextIntlClientProvider locale="en" messages={messages}>
+      <NextIntlClientProvider locale="es" messages={messages}>
         <DashboardShell>
           <div>Dashboard page content</div>
         </DashboardShell>
@@ -193,14 +193,14 @@ describe("DashboardShell — ClubOperationalGate regression vs. DashboardGuard",
     vi.stubGlobal("fetch", fetchMock);
 
     render(
-      <NextIntlClientProvider locale="en" messages={messages}>
+      <NextIntlClientProvider locale="es" messages={messages}>
         <DashboardShell>
           <div>Dashboard page content</div>
         </DashboardShell>
       </NextIntlClientProvider>,
     );
 
-    await screen.findByRole("heading", { name: "Payment activation" });
+    await screen.findByRole("heading", { name: "Activación de pago" });
 
     expect(replaceMock).not.toHaveBeenCalledWith("/onboarding");
     // The page is not mounted at all (that's the point of the gate) — it's
@@ -220,7 +220,7 @@ describe("DashboardShell — ClubOperationalGate regression vs. DashboardGuard",
     vi.stubGlobal("fetch", fetchMock);
 
     render(
-      <NextIntlClientProvider locale="en" messages={messages}>
+      <NextIntlClientProvider locale="es" messages={messages}>
         <DashboardShell>
           <div>Dashboard page content</div>
         </DashboardShell>
@@ -232,7 +232,7 @@ describe("DashboardShell — ClubOperationalGate regression vs. DashboardGuard",
     );
 
     expect(replaceMock).not.toHaveBeenCalledWith("/onboarding");
-    expect(screen.queryByText("Payment activation")).not.toBeInTheDocument();
+    expect(screen.queryByText("Activación de pago")).not.toBeInTheDocument();
     expect(screen.queryByText("Renew your membership")).not.toBeInTheDocument();
   });
 
@@ -242,7 +242,7 @@ describe("DashboardShell — ClubOperationalGate regression vs. DashboardGuard",
     vi.stubGlobal("fetch", fetchMock);
 
     render(
-      <NextIntlClientProvider locale="en" messages={messages}>
+      <NextIntlClientProvider locale="es" messages={messages}>
         <DashboardShell>
           <div>Dashboard page content</div>
         </DashboardShell>
@@ -288,7 +288,7 @@ describe("DashboardShell — ClubOperationalGate regression vs. DashboardGuard",
     vi.stubGlobal("fetch", fetchMock);
 
     render(
-      <NextIntlClientProvider locale="en" messages={messages}>
+      <NextIntlClientProvider locale="es" messages={messages}>
         <DashboardShell>
           <div>Dashboard page content</div>
         </DashboardShell>
@@ -300,7 +300,7 @@ describe("DashboardShell — ClubOperationalGate regression vs. DashboardGuard",
     );
 
     await waitFor(() =>
-      expect(screen.getByText("Mercado Pago connected!")).toBeInTheDocument(),
+      expect(screen.getByText("¡Mercado Pago conectado!")).toBeInTheDocument(),
     );
 
     expect(replaceMock).toHaveBeenCalledWith("/dashboard/courts");
@@ -313,7 +313,7 @@ describe("DashboardShell — ClubOperationalGate regression vs. DashboardGuard",
     vi.stubGlobal("fetch", fetchMock);
 
     render(
-      <NextIntlClientProvider locale="en" messages={messages}>
+      <NextIntlClientProvider locale="es" messages={messages}>
         <DashboardShell>
           <div>Dashboard page content</div>
         </DashboardShell>
@@ -325,7 +325,7 @@ describe("DashboardShell — ClubOperationalGate regression vs. DashboardGuard",
     );
 
     expect(
-      screen.queryByText("Mercado Pago connected!"),
+      screen.queryByText("¡Mercado Pago conectado!"),
     ).not.toBeInTheDocument();
   });
 });

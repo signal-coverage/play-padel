@@ -3,14 +3,14 @@ import { describe, it, expect, afterEach } from "vitest";
 import { render, screen, cleanup } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/messages/en.json";
+import messages from "@/messages/es.json";
 import { RegisteredTeamsList } from "./RegisteredTeamsList";
 
 afterEach(cleanup);
 
 function renderList(props: React.ComponentProps<typeof RegisteredTeamsList>) {
   return render(
-    <NextIntlClientProvider locale="en" messages={messages}>
+    <NextIntlClientProvider locale="es" messages={messages}>
       <RegisteredTeamsList {...props} />
     </NextIntlClientProvider>,
   );
@@ -20,13 +20,15 @@ describe("RegisteredTeamsList", () => {
   it("shows a loading state", () => {
     renderList({ teams: [], isLoading: true });
 
-    expect(screen.getByText(/loading/i)).toBeInTheDocument();
+    expect(screen.getByText(/cargando/i)).toBeInTheDocument();
   });
 
   it("shows an empty state when nothing is registered yet", () => {
     renderList({ teams: [], isLoading: false });
 
-    expect(screen.getByText(/no teams registered/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/todavía no hay equipos registrados/i),
+    ).toBeInTheDocument();
   });
 
   it("lists each team as player1 / player2", () => {

@@ -33,13 +33,10 @@ export interface UserProfile {
   // player-edit route. Owners never set these.
   preferredSide?: PreferredSide | null;
   dominantHand?: DominantHand | null;
-  // Persisted mirror of the "locale" cookie (see
-  // i18n/localeActions.ts's setUserLocale) — see
-  // prisma/schema.prisma's UserProfile.locale doc comment for why this
-  // exists separately from the cookie. Narrowed from the raw DB TEXT column
-  // to Locale in toUserProfile (core/users/services/users.service.ts), the
-  // same defensive narrowing i18n/locale.ts's getUserLocale already does
-  // for the cookie.
+  // Vestigial now that the app is Spanish-only — see prisma/schema.prisma's
+  // UserProfile.locale doc comment. Always DEFAULT_LOCALE in practice;
+  // toUserProfile (core/users/services/users.service.ts) coerces the raw DB
+  // TEXT column to Locale regardless of what's actually stored.
   locale: Locale;
   lastLogin?: Date;
   createdAt: Date;

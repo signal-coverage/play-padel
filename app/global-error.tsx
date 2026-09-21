@@ -1,33 +1,12 @@
 "use client"; // Error boundaries must be Client Components
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { RotateCw } from "lucide-react";
 import { NextIntlClientProvider, useTranslations } from "next-intl";
-import enMessages from "@/messages/en.json";
 import esMessages from "@/messages/es.json";
-import {
-  DEFAULT_LOCALE,
-  LOCALE_COOKIE_NAME,
-  isValidLocale,
-  type Locale,
-} from "@/i18n/localeConstants";
 import "./globals.css";
 
 const SUPPORT_EMAIL = "signal.coverage.lead@gmail.com";
-
-// None of RootLayout's providers (fonts, theme, auth, NextIntlClientProvider)
-// are available here — this file entirely replaces the root layout when it
-// throws, so it must define its own <html>/<body> and can't reach the
-// cookie-based locale the normal server-rendered path uses. Instead it reads
-// the same "locale" cookie directly on the client and stands up its own
-// minimal NextIntlClientProvider around just this page's copy.
-function readLocaleCookie(): Locale {
-  if (typeof document === "undefined") return DEFAULT_LOCALE;
-  const match = document.cookie.match(
-    new RegExp(`(?:^|; )${LOCALE_COOKIE_NAME}=([^;]+)`),
-  );
-  return isValidLocale(match?.[1]) ? match[1] : DEFAULT_LOCALE;
-}
 
 function GlobalErrorContent({ reset }: { reset: () => void }) {
   const t = useTranslations("GlobalError");
@@ -72,6 +51,10 @@ function GlobalErrorContent({ reset }: { reset: () => void }) {
 // This replaces the root layout entirely when an error is thrown within it,
 // so it must define its own <html>/<body> and re-import global styles —
 // none of RootLayout's providers (fonts, theme, auth) are available here.
+// The app is Spanish-only, so this hardcodes "es" directly rather than
+// resolving a locale — there is no per-request/per-user value to read here
+// anyway, since none of RootLayout's normal locale-resolution path is
+// reachable from this standalone error boundary.
 export default function GlobalError({
   error,
   reset,
@@ -79,21 +62,13 @@ export default function GlobalError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
-  // Lazy initializer (not an effect + setState) — the cookie only needs to
-  // be read once, on mount; reading it here avoids the extra cascading
-  // render an effect-driven setState would trigger.
-  const [locale] = useState<Locale>(() => readLocaleCookie());
-
   useEffect(() => {
     console.error(error);
   }, [error]);
 
   return (
-    <html lang={locale}>
-      <NextIntlClientProvider
-        locale={locale}
-        messages={locale === "es" ? esMessages : enMessages}
-      >
+    <html lang="es">
+      <NextIntlClientProvider locale="es" messages={esMessages}>
         <GlobalErrorContent reset={reset} />
       </NextIntlClientProvider>
     </html>

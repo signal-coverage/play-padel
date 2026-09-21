@@ -4,7 +4,7 @@ import { render, screen, waitFor, cleanup } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/messages/en.json";
+import messages from "@/messages/es.json";
 import { AdminStatusView } from "./AdminStatusView";
 
 // jsdom doesn't implement ResizeObserver, but DataTable relies on it
@@ -25,7 +25,7 @@ function renderView(fetchMock: ReturnType<typeof vi.fn>) {
   });
 
   return render(
-    <NextIntlClientProvider locale="en" messages={messages}>
+    <NextIntlClientProvider locale="es" messages={messages}>
       <QueryClientProvider client={queryClient}>
         <AdminStatusView />
       </QueryClientProvider>
@@ -58,7 +58,7 @@ describe("AdminStatusView", () => {
     );
 
     expect(
-      screen.getByRole("heading", { name: /system status/i }),
+      screen.getByRole("heading", { name: /estado del sistema/i }),
     ).toBeInTheDocument();
   });
 
@@ -72,10 +72,12 @@ describe("AdminStatusView", () => {
     );
 
     await waitFor(() =>
-      expect(screen.getAllByText(/never run/i).length).toBeGreaterThan(0),
+      expect(screen.getAllByText(/nunca se ejecutó/i).length).toBeGreaterThan(
+        0,
+      ),
     );
     // 4 crons + 2 webhooks.
-    expect(screen.getAllByText(/never run/i)).toHaveLength(6);
+    expect(screen.getAllByText(/nunca se ejecutó/i)).toHaveLength(6);
   });
 
   it("shows a SUCCESS badge and the last-run timestamp for a job that has run", async () => {
@@ -97,9 +99,9 @@ describe("AdminStatusView", () => {
     );
 
     await waitFor(() =>
-      expect(screen.getByText(/success/i)).toBeInTheDocument(),
+      expect(screen.getByText(/correcto/i)).toBeInTheDocument(),
     );
-    expect(screen.getAllByText(/never run/i)).toHaveLength(5);
+    expect(screen.getAllByText(/nunca se ejecutó/i)).toHaveLength(5);
   });
 
   it("renders the recent activity list, newest first, including a failure's error message", async () => {
@@ -143,7 +145,7 @@ describe("AdminStatusView", () => {
     );
 
     await waitFor(() =>
-      expect(screen.getByText(/could not load/i)).toBeInTheDocument(),
+      expect(screen.getByText(/no se pudo cargar/i)).toBeInTheDocument(),
     );
   });
 
@@ -170,11 +172,11 @@ describe("AdminStatusView", () => {
 
     // Same fix as PlayersDirectory's table (see its own comments for the
     // full explanation) — scoped to the "Recent activity" table only, via
-    // its "When" header (unique to it; AdminStatusSummary's own small,
+    // its "Cuándo" header (unique to it; AdminStatusSummary's own small,
     // naturally-sized table above it is untouched, since it never tried to
     // stretch full-height in the first place).
-    await waitFor(() => expect(screen.getByText("When")).toBeInTheDocument());
-    const table = screen.getByText("When").closest("table");
+    await waitFor(() => expect(screen.getByText("Cuándo")).toBeInTheDocument());
+    const table = screen.getByText("Cuándo").closest("table");
     const wrapper = table?.closest(".rounded-sm.border");
     expect(wrapper?.className).toContain("min-h-[60svh]");
     expect(wrapper?.className).toMatch(/\bmd:min-h-0\b/);

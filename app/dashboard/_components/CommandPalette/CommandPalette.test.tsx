@@ -10,7 +10,7 @@ import {
 import "@testing-library/jest-dom/vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/messages/en.json";
+import messages from "@/messages/es.json";
 import { CommandPalette } from "./CommandPalette";
 import type { SystemRole } from "@/providers/auth-provider";
 
@@ -44,7 +44,7 @@ function renderCommandPalette(
   });
 
   render(
-    <NextIntlClientProvider locale="en" messages={messages}>
+    <NextIntlClientProvider locale="es" messages={messages}>
       <QueryClientProvider client={queryClient}>
         <CommandPalette role={role} />
       </QueryClientProvider>
@@ -76,13 +76,15 @@ describe("CommandPalette", () => {
     renderCommandPalette("owner", fetchMock);
 
     await waitFor(() =>
-      expect(screen.queryByText("Courts")).not.toBeInTheDocument(),
+      expect(screen.queryByText("Canchas")).not.toBeInTheDocument(),
     );
 
-    expect(screen.getByText("Dashboard")).toBeInTheDocument();
-    expect(screen.queryByText("Reservations")).not.toBeInTheDocument();
-    expect(screen.queryByText("Club Settings")).not.toBeInTheDocument();
-    expect(screen.queryByText("Audit Log")).not.toBeInTheDocument();
+    expect(screen.getByText("Panel")).toBeInTheDocument();
+    expect(screen.queryByText("Reservas")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Configuración del club"),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText("Registro de auditoría")).not.toBeInTheDocument();
   });
 
   it("never fetches operational status for a player, and lists the full player nav", async () => {
@@ -92,8 +94,8 @@ describe("CommandPalette", () => {
     });
     renderCommandPalette("player", fetchMock);
 
-    expect(screen.getByText("Dashboard")).toBeInTheDocument();
-    expect(screen.getByText("Browse Courts")).toBeInTheDocument();
+    expect(screen.getByText("Panel")).toBeInTheDocument();
+    expect(screen.getByText("Buscar canchas")).toBeInTheDocument();
 
     await Promise.resolve();
     expect(fetchMock).not.toHaveBeenCalledWith(
@@ -109,7 +111,7 @@ describe("CommandPalette", () => {
     renderCommandPalette("player", fetchMock);
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalled());
-    expect(screen.queryByText("Tournaments")).not.toBeInTheDocument();
+    expect(screen.queryByText("Torneos")).not.toBeInTheDocument();
   });
 
   it("shows Tournaments for a player once at least one tournament is open (⌘K parity with the navbar)", async () => {
@@ -122,7 +124,7 @@ describe("CommandPalette", () => {
     renderCommandPalette("player", fetchMock);
 
     await waitFor(() =>
-      expect(screen.getByText("Tournaments")).toBeInTheDocument(),
+      expect(screen.getByText("Torneos")).toBeInTheDocument(),
     );
   });
 });

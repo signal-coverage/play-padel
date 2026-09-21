@@ -1,36 +1,30 @@
-"use client";
-import { motion, useReducedMotion } from "framer-motion";
-import { useTranslations } from "next-intl";
-import { FEATURE_ICONS, ease } from "./consts";
+import { getTranslations } from "next-intl/server";
+import { FadeInSection } from "@/components/FadeInSection";
+import { FEATURE_ICONS } from "./consts";
 import type { FeatureTranslation } from "./types";
 import { CONTAINER } from "@/lib/consts";
 
 // Three columns inside one bordered container separated by thin dividers —
 // the "match line" motif — each column a plain icon + title + one-line
-// description with no photography.
-export function LandingFeatures() {
-  const t = useTranslations("LandingFeatures");
-  const shouldReduce = useReducedMotion();
+// description with no photography. No real interactivity, so this is a
+// pure Server Component; FadeInSection (not framer-motion) drives the
+// scroll-in fade.
+export async function LandingFeatures() {
+  const t = await getTranslations("LandingFeatures");
   const items = t.raw("items") as FeatureTranslation[];
 
   return (
     <section id="features" className={`${CONTAINER} py-12`}>
-      <motion.h2
+      <FadeInSection
+        as="h2"
         className="text-3xl md:text-[38px] font-extrabold leading-[1.1] tracking-[-0.03em] text-foreground max-w-xl mb-10"
-        initial={shouldReduce ? false : { opacity: 0, y: 12 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.5, ease }}
       >
         {t("heading")}
-      </motion.h2>
+      </FadeInSection>
 
-      <motion.div
+      <FadeInSection
         className="grid sm:grid-cols-3 rounded-sm border border-border divide-y sm:divide-y-0 sm:divide-x divide-border"
-        initial={shouldReduce ? false : { opacity: 0, y: 16 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.5, delay: 0.08, ease }}
+        delayMs={80}
       >
         {items.map((item, i) => {
           const Icon = FEATURE_ICONS[i];
@@ -48,7 +42,7 @@ export function LandingFeatures() {
             </div>
           );
         })}
-      </motion.div>
+      </FadeInSection>
     </section>
   );
 }

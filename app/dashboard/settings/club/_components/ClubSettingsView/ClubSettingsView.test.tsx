@@ -10,7 +10,7 @@ import {
 import "@testing-library/jest-dom/vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/messages/en.json";
+import messages from "@/messages/es.json";
 import { ClubSettingsView } from "./ClubSettingsView";
 
 const { toastMock } = vi.hoisted(() => ({
@@ -87,7 +87,7 @@ function renderView(
   });
 
   const utils = render(
-    <NextIntlClientProvider locale="en" messages={messages}>
+    <NextIntlClientProvider locale="es" messages={messages}>
       <QueryClientProvider client={queryClient}>
         <ClubSettingsView {...props} />
       </QueryClientProvider>
@@ -126,7 +126,7 @@ describe("ClubSettingsView", () => {
         expect(screen.getByDisplayValue("My Own Club")).toBeInTheDocument(),
       );
 
-      screen.getByRole("button", { name: /save changes/i }).click();
+      screen.getByRole("button", { name: /guardar cambios/i }).click();
 
       await waitFor(() =>
         expect(
@@ -174,7 +174,7 @@ describe("ClubSettingsView", () => {
         expect(screen.getByDisplayValue("Other Club")).toBeInTheDocument(),
       );
 
-      screen.getByRole("button", { name: /save changes/i }).click();
+      screen.getByRole("button", { name: /guardar cambios/i }).click();
 
       await waitFor(() =>
         expect(
@@ -222,7 +222,7 @@ describe("ClubSettingsView", () => {
       });
 
       const { rerender } = render(
-        <NextIntlClientProvider locale="en" messages={messages}>
+        <NextIntlClientProvider locale="es" messages={messages}>
           <QueryClientProvider client={queryClient}>
             <ClubSettingsView clubId="club_a" />
           </QueryClientProvider>
@@ -234,7 +234,7 @@ describe("ClubSettingsView", () => {
       );
 
       rerender(
-        <NextIntlClientProvider locale="en" messages={messages}>
+        <NextIntlClientProvider locale="es" messages={messages}>
           <QueryClientProvider client={queryClient}>
             <ClubSettingsView clubId="club_b" />
           </QueryClientProvider>
@@ -253,14 +253,14 @@ describe("ClubSettingsView", () => {
       renderView({ "/api/clubs": makeClub() });
 
       expect(
-        await screen.findByRole("heading", { name: /basic information/i }),
+        await screen.findByRole("heading", { name: /información básica/i }),
       ).toBeInTheDocument();
     });
 
     it("no longer renders an editable Logo URL input", async () => {
       renderView({ "/api/clubs": makeClub() });
 
-      await screen.findByText(/basic information/i);
+      await screen.findByText(/información básica/i);
       expect(screen.queryByLabelText(/logo url/i)).not.toBeInTheDocument();
     });
 
@@ -281,22 +281,22 @@ describe("ClubSettingsView", () => {
         ).toBeInTheDocument(),
       );
       expect(screen.getByDisplayValue("1642")).toBeInTheDocument();
-      expect(screen.getByText("Country")).toBeInTheDocument();
-      expect(screen.getByText("Province / State")).toBeInTheDocument();
-      expect(screen.getByText("City")).toBeInTheDocument();
+      expect(screen.getByText("País")).toBeInTheDocument();
+      expect(screen.getByText("Provincia / Estado")).toBeInTheDocument();
+      expect(screen.getByText("Ciudad")).toBeInTheDocument();
     });
 
     it("renders Legal name and Tax ID in the right column, separated from the left column fields", async () => {
       const { container } = renderView({ "/api/clubs": makeClub() });
 
-      await screen.findByText(/basic information/i);
+      await screen.findByText(/información básica/i);
 
       const separator = container.querySelector('[data-slot="separator"]');
       expect(separator).toBeInTheDocument();
 
-      const legalNameLabel = screen.getByText(/legal name/i);
-      const taxIdLabel = screen.getByText(/tax id/i);
-      const clubNameLabel = screen.getByText("Name *");
+      const legalNameLabel = screen.getByText(/razón social/i);
+      const taxIdLabel = screen.getByText(/cuit/i);
+      const clubNameLabel = screen.getByText("Nombre *");
 
       // Club name (left column) comes before the separator; Legal name/Tax ID
       // (right column) come after it.
@@ -329,12 +329,12 @@ describe("ClubSettingsView", () => {
         ).toBeInTheDocument(),
       );
 
-      const addressInput = screen.getByLabelText(/address/i);
+      const addressInput = screen.getByLabelText(/dirección/i);
       fireEvent.change(addressInput, {
         target: { value: "Av. Corrientes 1234" },
       });
 
-      screen.getByRole("button", { name: /save changes/i }).click();
+      screen.getByRole("button", { name: /guardar cambios/i }).click();
 
       await waitFor(() => {
         const patchCall = fetchMock.mock.calls.find(
@@ -355,16 +355,16 @@ describe("ClubSettingsView", () => {
       renderView({ "/api/clubs": makeClub() });
 
       const basicHeading = await screen.findByRole("heading", {
-        name: /basic information/i,
+        name: /información básica/i,
       });
       const legalHeading = await screen.findByRole("heading", {
-        name: /legal information/i,
+        name: /información legal/i,
       });
 
       expect(legalHeading.tagName).toBe(basicHeading.tagName);
       expect(legalHeading.className).toBe(basicHeading.className);
       expect(
-        screen.getByText(/used for invoices and tax documents/i),
+        screen.getByText(/se usa para facturas y documentos impositivos/i),
       ).toBeInTheDocument();
     });
   });
@@ -373,13 +373,13 @@ describe("ClubSettingsView", () => {
     it("renders an optional WhatsApp field (no required asterisk) distinct from the general Phone field", async () => {
       renderView({ "/api/clubs": makeClub() });
 
-      await screen.findByText(/basic information/i);
-      expect(screen.getByText("Phone *")).toBeInTheDocument();
+      await screen.findByText(/información básica/i);
+      expect(screen.getByText("Teléfono *")).toBeInTheDocument();
       expect(
-        screen.getByText("WhatsApp (for payment receipts)"),
+        screen.getByText("WhatsApp (para comprobantes de pago)"),
       ).toBeInTheDocument();
       expect(
-        screen.queryByText("WhatsApp (for payment receipts) *"),
+        screen.queryByText("WhatsApp (para comprobantes de pago) *"),
       ).not.toBeInTheDocument();
     });
 
@@ -408,7 +408,7 @@ describe("ClubSettingsView", () => {
         target: { value: "1123456789" },
       });
 
-      screen.getByRole("button", { name: /save changes/i }).click();
+      screen.getByRole("button", { name: /guardar cambios/i }).click();
 
       await waitFor(() => {
         const patchCall = fetchMock.mock.calls.find(

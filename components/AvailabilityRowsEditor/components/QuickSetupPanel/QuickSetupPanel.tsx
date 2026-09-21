@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { Zap } from "lucide-react";
 import { cn } from "@/lib/utils/utils";
 import { Button } from "@/components/ui/button";
@@ -14,6 +15,8 @@ import type { QuickSetupPanelProps } from "./types";
 const ALL_DAYS_OF_WEEK = [0, 1, 2, 3, 4, 5, 6];
 
 export function QuickSetupPanel({ onApply, className }: QuickSetupPanelProps) {
+  const t = useTranslations("QuickSetupPanel");
+  const tDays = useTranslations("DayLabels");
   const [startTime, setStartTime] = useState(DEFAULT_QUICK_SETUP_START);
   const [endTime, setEndTime] = useState(DEFAULT_QUICK_SETUP_END);
   const [selectedDays, setSelectedDays] = useState<number[]>(ALL_DAYS_OF_WEEK);
@@ -34,11 +37,9 @@ export function QuickSetupPanel({ onApply, className }: QuickSetupPanelProps) {
       <div className="flex flex-col gap-0.5">
         <div className="flex items-center gap-1.5">
           <Zap className="size-4 text-primary" aria-hidden="true" />
-          <p className="text-sm font-semibold">Quick setup</p>
+          <p className="text-sm font-semibold">{t("title")}</p>
         </div>
-        <p className="text-xs text-muted-foreground">
-          Apply the same open hours to the selected days.
-        </p>
+        <p className="text-xs text-muted-foreground">{t("description")}</p>
       </div>
 
       <div className="flex flex-wrap items-end gap-3">
@@ -47,7 +48,7 @@ export function QuickSetupPanel({ onApply, className }: QuickSetupPanelProps) {
             htmlFor="quick-setup-start"
             className="text-xs text-muted-foreground"
           >
-            Start
+            {t("start")}
           </Label>
           <TimeInput
             id="quick-setup-start"
@@ -60,7 +61,7 @@ export function QuickSetupPanel({ onApply, className }: QuickSetupPanelProps) {
             htmlFor="quick-setup-end"
             className="text-xs text-muted-foreground"
           >
-            End
+            {t("end")}
           </Label>
           <TimeInput
             id="quick-setup-end"
@@ -76,7 +77,7 @@ export function QuickSetupPanel({ onApply, className }: QuickSetupPanelProps) {
         disabled={selectedDays.length === 0}
         onClick={() => onApply(startTime, endTime, selectedDays)}
       >
-        Apply
+        {t("apply")}
       </Button>
 
       <div className="grid grid-cols-[repeat(auto-fit,minmax(2.5rem,1fr))] gap-x-3 gap-y-2">
@@ -92,7 +93,7 @@ export function QuickSetupPanel({ onApply, className }: QuickSetupPanelProps) {
                 }
               />
               <Label htmlFor={id} className="text-xs text-muted-foreground">
-                {DAY_LABELS[dayOfWeek].slice(0, 2)}
+                {tDays(DAY_LABELS[dayOfWeek]).slice(0, 2)}
               </Label>
             </div>
           );

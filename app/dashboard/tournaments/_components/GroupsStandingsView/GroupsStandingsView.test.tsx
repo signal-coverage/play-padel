@@ -3,7 +3,7 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, cleanup } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/messages/en.json";
+import messages from "@/messages/es.json";
 
 vi.mock("./hooks", () => ({
   useCategoryStandingsDetail: vi.fn(),
@@ -20,7 +20,7 @@ afterEach(cleanup);
 
 function renderView(props: React.ComponentProps<typeof GroupsStandingsView>) {
   return render(
-    <NextIntlClientProvider locale="en" messages={messages}>
+    <NextIntlClientProvider locale="es" messages={messages}>
       <GroupsStandingsView {...props} />
     </NextIntlClientProvider>,
   );
@@ -35,7 +35,7 @@ describe("GroupsStandingsView", () => {
 
     renderView({ tournamentId: "t1", categoryId: "c1" });
 
-    expect(screen.getByText(/loading/i)).toBeInTheDocument();
+    expect(screen.getByText(/cargando/i)).toBeInTheDocument();
   });
 
   it("renders each group's matches/standings read-only, with no action buttons", () => {
@@ -88,7 +88,7 @@ describe("GroupsStandingsView", () => {
     expect(screen.getByText("Group A")).toBeInTheDocument();
     expect(screen.getByText("Alice / Ana vs Bob / Ben")).toBeInTheDocument();
     expect(
-      screen.queryByRole("button", { name: /enter score/i }),
+      screen.queryByRole("button", { name: /cargar resultado/i }),
     ).not.toBeInTheDocument();
   });
 
@@ -133,7 +133,7 @@ describe("GroupsStandingsView", () => {
     expect(screen.getByText("Final")).toBeInTheDocument();
     expect(screen.getByText("Alice / Ana vs Bob / Ben")).toBeInTheDocument();
     expect(
-      screen.queryByRole("button", { name: /enter score/i }),
+      screen.queryByRole("button", { name: /cargar resultado/i }),
     ).not.toBeInTheDocument();
   });
 });

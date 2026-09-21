@@ -4,7 +4,7 @@ import { render, screen, cleanup } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/messages/en.json";
+import messages from "@/messages/es.json";
 import { ClubSettingsTabs } from "./ClubSettingsTabs";
 
 vi.mock("sonner", () => ({
@@ -32,7 +32,7 @@ function renderTabs() {
     defaultOptions: { queries: { retry: false } },
   });
   return render(
-    <NextIntlClientProvider locale="en" messages={messages}>
+    <NextIntlClientProvider locale="es" messages={messages}>
       <QueryClientProvider client={queryClient}>
         <ClubSettingsTabs />
       </QueryClientProvider>
@@ -49,10 +49,10 @@ describe("ClubSettingsTabs", () => {
     renderTabs();
 
     expect(
-      screen.getByRole("tab", { name: /club settings/i }),
+      screen.getByRole("tab", { name: /configuración del club/i }),
     ).toBeInTheDocument();
     expect(
-      screen.queryByRole("tab", { name: /^basic information$/i }),
+      screen.queryByRole("tab", { name: /^información básica$/i }),
     ).not.toBeInTheDocument();
   });
 
@@ -60,8 +60,8 @@ describe("ClubSettingsTabs", () => {
     renderTabs();
 
     const tabs = screen.getAllByRole("tab").map((tab) => tab.textContent);
-    const scheduleIndex = tabs.findIndex((label) => label === "Schedule");
-    const closuresIndex = tabs.findIndex((label) => label === "Closures");
+    const scheduleIndex = tabs.findIndex((label) => label === "Horario");
+    const closuresIndex = tabs.findIndex((label) => label === "Cierres");
 
     expect(scheduleIndex).toBeGreaterThanOrEqual(0);
     expect(closuresIndex).toBe(scheduleIndex + 1);

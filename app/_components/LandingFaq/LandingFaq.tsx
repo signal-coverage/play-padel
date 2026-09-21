@@ -1,7 +1,6 @@
-"use client";
-import { motion, useReducedMotion } from "framer-motion";
-import { useTranslations } from "next-intl";
-import { FAQ_IDS, ease } from "./consts";
+import { getTranslations } from "next-intl/server";
+import { FadeInSection } from "@/components/FadeInSection";
+import { FAQ_IDS } from "./consts";
 import { CONTAINER } from "@/lib/consts";
 import {
   Accordion,
@@ -18,35 +17,27 @@ interface FaqTranslation {
 // Copy is grounded in the app's real feature set (booking/scheduling,
 // Mercado Pago payments, court/club management, plan tiers, cancellations)
 // but is placeholder example copy for the user to refine — see
-// messages/*.json's LandingFaq namespace comment.
-export function LandingFaq() {
-  const t = useTranslations("LandingFaq");
-  const shouldReduce = useReducedMotion();
+// messages/*.json's LandingFaq namespace comment. Accordion's
+// open/collapse state lives inside Radix's own component, so this section
+// needs no client state of its own and renders on the server.
+export async function LandingFaq() {
+  const t = await getTranslations("LandingFaq");
   const items = t.raw("items") as FaqTranslation[];
 
   return (
     <section id="faq" className={`${CONTAINER} py-12`}>
-      <motion.div
-        className="flex flex-col items-center text-center gap-3 mb-10"
-        initial={shouldReduce ? false : { opacity: 0, y: 12 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.5, ease }}
-      >
+      <FadeInSection className="flex flex-col items-center text-center gap-3 mb-10">
         <h2 className="text-3xl md:text-[38px] font-extrabold leading-[1.1] tracking-[-0.03em] text-foreground">
           {t("heading")}
         </h2>
         <p className="max-w-lg text-sm text-muted-foreground leading-relaxed text-pretty">
           {t("subheading")}
         </p>
-      </motion.div>
+      </FadeInSection>
 
-      <motion.div
+      <FadeInSection
         className="max-w-2xl mx-auto rounded-sm border border-border px-6"
-        initial={shouldReduce ? false : { opacity: 0, y: 16 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.5, delay: 0.08, ease }}
+        delayMs={80}
       >
         <Accordion type="single" collapsible>
           {FAQ_IDS.map((id, i) => (
@@ -60,7 +51,7 @@ export function LandingFaq() {
             </AccordionItem>
           ))}
         </Accordion>
-      </motion.div>
+      </FadeInSection>
     </section>
   );
 }

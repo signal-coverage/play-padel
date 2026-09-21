@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type KeyboardEvent } from "react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,6 +20,7 @@ export function CardCollectionPanel({
   defaultEmail,
   onPayerEmailChange,
 }: CardCollectionPanelProps) {
+  const t = useTranslations("CardCollectionPanel");
   // Pre-fills from the owner's own account email — falls back to
   // `payerEmail` (empty on first mount) only so re-mounting after "Change
   // email" doesn't lose whatever the field held. Seeded once at mount, not
@@ -50,7 +52,7 @@ export function CardCollectionPanel({
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-3">
-        <Label htmlFor="plan-selection-payer-email">Email</Label>
+        <Label htmlFor="plan-selection-payer-email">{t("emailLabel")}</Label>
         <Input
           className="rounded-sm"
           id="plan-selection-payer-email"
@@ -58,7 +60,7 @@ export function CardCollectionPanel({
           value={isVerified ? payerEmail : draftEmail}
           onChange={(event) => setDraftEmail(event.target.value)}
           onKeyDown={handleEmailKeyDown}
-          placeholder="owner@club.com"
+          placeholder={t("emailPlaceholder")}
           disabled={isVerified}
           autoFocus
         />
@@ -71,7 +73,7 @@ export function CardCollectionPanel({
           className="self-start rounded-sm"
           onClick={handleChangeEmail}
         >
-          Change email
+          {t("changeEmail")}
         </Button>
       ) : (
         <Button
@@ -80,7 +82,7 @@ export function CardCollectionPanel({
           onClick={handleVerify}
           disabled={!canVerify}
         >
-          Verify
+          {t("verify")}
         </Button>
       )}
     </div>

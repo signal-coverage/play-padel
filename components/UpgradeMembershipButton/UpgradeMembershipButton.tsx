@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PlanSelectionModal } from "@/components/PlanSelectionModal";
@@ -16,6 +17,7 @@ import type { UpgradeMembershipButtonProps } from "./types";
 export function UpgradeMembershipButton({
   className,
 }: UpgradeMembershipButtonProps) {
+  const t = useTranslations("UpgradeMembershipButton");
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   return (
@@ -27,7 +29,7 @@ export function UpgradeMembershipButton({
         onClick={() => setIsModalOpen(true)}
       >
         <Sparkles className="h-4 w-4" />
-        Upgrade
+        {t("upgrade")}
       </Button>
       <PlanSelectionModal open={isModalOpen} onOpenChange={setIsModalOpen} />
     </>

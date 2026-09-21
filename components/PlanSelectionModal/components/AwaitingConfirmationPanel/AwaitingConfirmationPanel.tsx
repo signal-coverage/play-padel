@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { BouncingBall } from "@/components/BouncingBall";
 import { Button } from "@/components/ui/button";
 import { StatusBox } from "@/components/StatusBox";
@@ -15,18 +16,14 @@ export function AwaitingConfirmationPanel({
   isRefreshing,
   openedExternalTab,
 }: AwaitingConfirmationPanelProps) {
+  const t = useTranslations("AwaitingConfirmationPanel");
+
   return (
     <StatusBox className="flex flex-col items-center gap-3 py-12">
       <BouncingBall size={32} amplitude={16} />
-      <p>
-        We&apos;re confirming your payment with Mercado Pago. This usually takes
-        less than a minute.
-      </p>
+      <p>{t("confirming")}</p>
       {openedExternalTab && (
-        <p className="text-xs text-muted-foreground">
-          We&apos;ll close the Mercado Pago tab automatically once your payment
-          is confirmed. If it stays open, you can close that tab yourself.
-        </p>
+        <p className="text-xs text-muted-foreground">{t("closingTabHint")}</p>
       )}
       <Button
         type="button"
@@ -34,7 +31,7 @@ export function AwaitingConfirmationPanel({
         onClick={onRefresh}
         disabled={isRefreshing}
       >
-        Check again
+        {t("checkAgain")}
       </Button>
     </StatusBox>
   );

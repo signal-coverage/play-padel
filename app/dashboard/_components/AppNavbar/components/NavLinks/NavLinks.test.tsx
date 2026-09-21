@@ -10,7 +10,7 @@ import {
 import "@testing-library/jest-dom/vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/messages/en.json";
+import messages from "@/messages/es.json";
 import { NavLinks } from "./NavLinks";
 import type { SystemRole } from "@/providers/auth-provider";
 
@@ -30,7 +30,7 @@ function renderNavLinks(
   });
 
   render(
-    <NextIntlClientProvider locale="en" messages={messages}>
+    <NextIntlClientProvider locale="es" messages={messages}>
       <QueryClientProvider client={queryClient}>
         <NavLinks role={role} isAdmin={isAdmin} />
       </QueryClientProvider>
@@ -106,13 +106,15 @@ describe("NavLinks", () => {
     const fetchMock = vi.fn(() => new Promise(() => {}));
     renderNavLinks("owner", fetchMock);
 
-    expect(screen.getByText("Dashboard")).toBeInTheDocument();
+    expect(screen.getByText("Panel")).toBeInTheDocument();
     // Not yet confirmed operational — must not flash items that might
     // immediately need to disappear once the query resolves.
-    expect(screen.queryByText("Courts")).not.toBeInTheDocument();
-    expect(screen.queryByText("Reservations")).not.toBeInTheDocument();
-    expect(screen.queryByText("Club Settings")).not.toBeInTheDocument();
-    expect(screen.queryByText("Audit Log")).not.toBeInTheDocument();
+    expect(screen.queryByText("Canchas")).not.toBeInTheDocument();
+    expect(screen.queryByText("Reservas")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Configuración del club"),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText("Registro de auditoría")).not.toBeInTheDocument();
   });
 
   it("shows the full owner nav once the club is confirmed operational", async () => {
@@ -122,12 +124,14 @@ describe("NavLinks", () => {
     });
     renderNavLinks("owner", fetchMock);
 
-    await waitFor(() => expect(screen.getByText("Courts")).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByText("Canchas")).toBeInTheDocument(),
+    );
 
-    expect(screen.getByText("Dashboard")).toBeInTheDocument();
-    expect(screen.getByText("Reservations")).toBeInTheDocument();
-    expect(screen.getByText("Club Settings")).toBeInTheDocument();
-    expect(screen.queryByText("Audit Log")).not.toBeInTheDocument();
+    expect(screen.getByText("Panel")).toBeInTheDocument();
+    expect(screen.getByText("Reservas")).toBeInTheDocument();
+    expect(screen.getByText("Configuración del club")).toBeInTheDocument();
+    expect(screen.queryByText("Registro de auditoría")).not.toBeInTheDocument();
   });
 
   it("hides Audit Log for a non-admin owner even when explicitly passed isAdmin={false}", async () => {
@@ -137,10 +141,8 @@ describe("NavLinks", () => {
     });
     renderNavLinks("owner", fetchMock, false);
 
-    await waitFor(() =>
-      expect(screen.getByText("Dashboard")).toBeInTheDocument(),
-    );
-    expect(screen.queryByText("Audit Log")).not.toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText("Panel")).toBeInTheDocument());
+    expect(screen.queryByText("Registro de auditoría")).not.toBeInTheDocument();
   });
 
   it("shows Audit Log for an admin owner", async () => {
@@ -154,7 +156,7 @@ describe("NavLinks", () => {
     fireEvent.click(screen.getByText("Admin"));
 
     expect(
-      await screen.findByRole("menuitem", { name: "Audit Log" }),
+      await screen.findByRole("menuitem", { name: "Registro de auditoría" }),
     ).toBeInTheDocument();
   });
 
@@ -168,7 +170,7 @@ describe("NavLinks", () => {
     fireEvent.click(await screen.findByText("Admin"));
 
     expect(
-      await screen.findByRole("menuitem", { name: "Audit Log" }),
+      await screen.findByRole("menuitem", { name: "Registro de auditoría" }),
     ).toBeInTheDocument();
   });
 
@@ -187,13 +189,13 @@ describe("NavLinks", () => {
 
     await screen.findByText("Admin");
     expect(
-      screen.queryByRole("link", { name: "Club Settings" }),
+      screen.queryByRole("link", { name: "Configuración del club" }),
     ).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByText("Admin"));
 
     expect(
-      await screen.findByRole("menuitem", { name: "Club Settings" }),
+      await screen.findByRole("menuitem", { name: "Configuración del club" }),
     ).toHaveAttribute("href", "/dashboard/settings/club");
   });
 
@@ -205,13 +207,15 @@ describe("NavLinks", () => {
     renderNavLinks("owner", fetchMock);
 
     await waitFor(() =>
-      expect(screen.queryByText("Courts")).not.toBeInTheDocument(),
+      expect(screen.queryByText("Canchas")).not.toBeInTheDocument(),
     );
 
-    expect(screen.getByText("Dashboard")).toBeInTheDocument();
-    expect(screen.queryByText("Reservations")).not.toBeInTheDocument();
-    expect(screen.queryByText("Club Settings")).not.toBeInTheDocument();
-    expect(screen.queryByText("Audit Log")).not.toBeInTheDocument();
+    expect(screen.getByText("Panel")).toBeInTheDocument();
+    expect(screen.queryByText("Reservas")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Configuración del club"),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText("Registro de auditoría")).not.toBeInTheDocument();
   });
 
   it("never fetches operational status for a player, and shows the full player nav", async () => {
@@ -221,10 +225,10 @@ describe("NavLinks", () => {
     });
     renderNavLinks("player", fetchMock);
 
-    expect(screen.getByText("Dashboard")).toBeInTheDocument();
-    expect(screen.getByText("Browse Courts")).toBeInTheDocument();
-    expect(screen.getByText("My Reservations")).toBeInTheDocument();
-    expect(screen.getByText("Players")).toBeInTheDocument();
+    expect(screen.getByText("Panel")).toBeInTheDocument();
+    expect(screen.getByText("Buscar canchas")).toBeInTheDocument();
+    expect(screen.getByText("Mis reservas")).toBeInTheDocument();
+    expect(screen.getByText("Jugadores")).toBeInTheDocument();
 
     // A player does fetch open-tournaments status (for the Tournaments nav
     // item's visibility/badge) — only the owner-only operational-status
@@ -247,10 +251,10 @@ describe("NavLinks", () => {
     await waitFor(() =>
       expect(fetchMock).toHaveBeenCalledWith("/api/tournaments/open"),
     );
-    expect(screen.queryByText("Tournaments")).not.toBeInTheDocument();
+    expect(screen.queryByText("Torneos")).not.toBeInTheDocument();
   });
 
-  it('shows the Tournaments nav item with an "Open" badge when a tournament is open and not recently published', async () => {
+  it('shows the Tournaments nav item with an "Abierto" badge when a tournament is open and not recently published', async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => ({
@@ -268,11 +272,11 @@ describe("NavLinks", () => {
     });
     renderNavLinks("player", fetchMock);
 
-    expect(await screen.findByText("Tournaments")).toBeInTheDocument();
-    expect(screen.getByText("Open")).toBeInTheDocument();
+    expect(await screen.findByText("Torneos")).toBeInTheDocument();
+    expect(screen.getByText("Abierto")).toBeInTheDocument();
   });
 
-  it('shows the Tournaments nav item with a "New" badge when a tournament was published under 48h ago', async () => {
+  it('shows the Tournaments nav item with a "Nuevo" badge when a tournament was published under 48h ago', async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => ({
@@ -288,8 +292,8 @@ describe("NavLinks", () => {
     });
     renderNavLinks("player", fetchMock);
 
-    expect(await screen.findByText("Tournaments")).toBeInTheDocument();
-    expect(screen.getByText("New")).toBeInTheDocument();
+    expect(await screen.findByText("Torneos")).toBeInTheDocument();
+    expect(screen.getByText("Nuevo")).toBeInTheDocument();
   });
 
   // Real measured-width wiring — not the pure arithmetic (see
@@ -316,17 +320,17 @@ describe("NavLinks", () => {
       renderNavLinks("owner", fetchMock, false);
 
       await waitFor(() =>
-        expect(screen.getByText("Courts")).toBeInTheDocument(),
+        expect(screen.getByText("Canchas")).toBeInTheDocument(),
       );
-      expect(screen.getByText("Reservations")).toBeInTheDocument();
-      expect(screen.getByText("Club Settings")).toBeInTheDocument();
+      expect(screen.getByText("Reservas")).toBeInTheDocument();
+      expect(screen.getByText("Configuración del club")).toBeInTheDocument();
       // Role-based, not getByText: the hidden measurement clone (see
-      // NavLinks.tsx's own comment) always renders a "More" trigger for
+      // NavLinks.tsx's own comment) always renders a "Más" trigger for
       // width purposes even when nothing has overflowed — aria-hidden
       // correctly excludes it from the accessibility tree, so a role query
       // is what actually asserts "the real, visible trigger isn't shown".
       expect(
-        screen.queryByRole("button", { name: "More" }),
+        screen.queryByRole("button", { name: "Más" }),
       ).not.toBeInTheDocument();
     });
 
@@ -335,8 +339,8 @@ describe("NavLinks", () => {
         ok: true,
         json: async () => ({ operational: true }),
       });
-      // Only "Courts" (80px) + the trigger (60px) fit in 150px; Reservations
-      // and Club Settings overflow into "More".
+      // Only "Canchas" (80px) + the trigger (60px) fit in 150px; Reservations
+      // and Club Settings overflow into "Más".
       stubOffsetWidths({
         containerWidth: 150,
         itemWidths: {
@@ -349,25 +353,25 @@ describe("NavLinks", () => {
       renderNavLinks("owner", fetchMock, false);
 
       await waitFor(() =>
-        expect(screen.getByText("Courts")).toBeInTheDocument(),
+        expect(screen.getByText("Canchas")).toBeInTheDocument(),
       );
       // Role-based — see the previous test's comment: the hidden
       // measurement clone renders the overflowed items' text too (needed to
       // measure them), so a plain getByText would find that copy.
       expect(
-        screen.queryByRole("link", { name: "Reservations" }),
+        screen.queryByRole("link", { name: "Reservas" }),
       ).not.toBeInTheDocument();
       expect(
-        screen.queryByRole("link", { name: "Club Settings" }),
+        screen.queryByRole("link", { name: "Configuración del club" }),
       ).not.toBeInTheDocument();
 
-      const moreButton = await screen.findByRole("button", { name: "More" });
+      const moreButton = await screen.findByRole("button", { name: "Más" });
       // The visible trigger sits right after the fitted items, inside the
       // same measured container — not pushed out to the far right next to
       // Admin (that container is flex-1 and absorbs all of nav's leftover
       // width; a sibling placed AFTER it would render at ITS right edge,
       // flush against Admin, instead of immediately following Courts et
-      // al. — see this file's "More" positioning comment). The container
+      // al. — see this file's "Más" positioning comment). The container
       // must NOT have overflow-hidden either — jsdom doesn't compute real
       // CSS clipping, so a dropdown that opens but stays invisible (its
       // menu is position: absolute and needs to escape an overflow-hidden
@@ -380,10 +384,10 @@ describe("NavLinks", () => {
       fireEvent.click(moreButton);
 
       expect(
-        await screen.findByRole("menuitem", { name: "Reservations" }),
+        await screen.findByRole("menuitem", { name: "Reservas" }),
       ).toHaveAttribute("href", "/dashboard/reservations");
       expect(
-        screen.getByRole("menuitem", { name: "Club Settings" }),
+        screen.getByRole("menuitem", { name: "Configuración del club" }),
       ).toHaveAttribute("href", "/dashboard/settings/club");
     });
 
@@ -404,11 +408,9 @@ describe("NavLinks", () => {
       renderNavLinks("owner", fetchMock, false);
 
       await waitFor(() =>
-        expect(
-          screen.getByRole("button", { name: "More" }),
-        ).toBeInTheDocument(),
+        expect(screen.getByRole("button", { name: "Más" })).toBeInTheDocument(),
       );
-      expect(screen.getByText("Dashboard")).toBeInTheDocument();
+      expect(screen.getByText("Panel")).toBeInTheDocument();
     });
   });
 });
