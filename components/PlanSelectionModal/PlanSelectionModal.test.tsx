@@ -10,7 +10,7 @@ import {
 import "@testing-library/jest-dom/vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/messages/en.json";
+import messages from "@/messages/es.json";
 
 // Mocked purely so the tests below can assert whether the celebration
 // fired — the real module is a plain event dispatch with no DOM/canvas
@@ -120,7 +120,7 @@ function renderModal(
   });
 
   render(
-    <NextIntlClientProvider locale="en" messages={messages}>
+    <NextIntlClientProvider locale="es" messages={messages}>
       <QueryClientProvider client={queryClient}>
         <PlanSelectionModal open onOpenChange={vi.fn()} />
       </QueryClientProvider>
@@ -180,7 +180,7 @@ describe("PlanSelectionModal", () => {
     });
 
     await screen.findByRole("radio", { name: /BASIC/ });
-    fireEvent.click(screen.getByRole("button", { name: /continue/i }));
+    fireEvent.click(screen.getByRole("button", { name: /continuar/i }));
 
     expect(await screen.findByLabelText(/email/i)).toHaveValue(
       "owner@club.com",
@@ -200,7 +200,7 @@ describe("PlanSelectionModal", () => {
       throw new Error(`unexpected fetch: ${url}`);
     });
 
-    expect(await screen.findByText("Membership Active")).toBeInTheDocument();
+    expect(await screen.findByText("Membresía activa")).toBeInTheDocument();
     // The celebration marks a payment JUST settling, not the owner merely
     // reopening a dialog that's already been ACTIVE all along.
     expect(fireSuccessCelebrationMock).not.toHaveBeenCalled();
@@ -214,7 +214,7 @@ describe("PlanSelectionModal", () => {
       throw new Error(`unexpected fetch: ${url}`);
     });
 
-    expect(await screen.findByText(/couldn't load/i)).toBeInTheDocument();
+    expect(await screen.findByText(/no pudimos cargar/i)).toBeInTheDocument();
   });
 
   it("completes the MONTHLY flow: select plan, enter card, then shows awaiting/confirmed", async () => {
@@ -248,12 +248,12 @@ describe("PlanSelectionModal", () => {
     });
 
     await screen.findByRole("radio", { name: /BASIC/ });
-    fireEvent.click(screen.getByRole("button", { name: /continue/i }));
+    fireEvent.click(screen.getByRole("button", { name: /continuar/i }));
 
     fireEvent.change(await screen.findByLabelText(/email/i), {
       target: { value: "owner@club.com" },
     });
-    fireEvent.click(screen.getByRole("button", { name: /verify/i }));
+    fireEvent.click(screen.getByRole("button", { name: /verificar/i }));
 
     fireEvent.click(
       await screen.findByRole("button", { name: "Simulate submit" }),
@@ -280,16 +280,16 @@ describe("PlanSelectionModal", () => {
     // Final state is TRIALING (MONTHLY's synchronous trial-start
     // confirmation, see route.ts), so the trial-specific copy shows instead
     // of the paid-confirmation copy — see ConfirmedPanel's `isTrialing`.
-    expect(await screen.findByText("Free Trial Active")).toBeInTheDocument();
+    expect(
+      await screen.findByText("Prueba gratuita activa"),
+    ).toBeInTheDocument();
     // Regression: the checkout drawer's own "awaiting confirmation" view
     // must hand off to the confirmed panel once the server snapshot says
     // so, same as the Dialog step already does — otherwise the Sheet stays
     // open forever on top of it (`isDrawerFlow` only ever checked
     // `localStep`/`billingCycle`, never `isConfirmed`), stuck polling with
     // no way out short of a manual close.
-    expect(
-      screen.queryByText(/confirming your payment/i),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByText(/confirmando tu pago/i)).not.toBeInTheDocument();
   });
 
   // The Brick already renders its own error UI for its own validation
@@ -313,12 +313,12 @@ describe("PlanSelectionModal", () => {
     });
 
     await screen.findByRole("radio", { name: /BASIC/ });
-    fireEvent.click(screen.getByRole("button", { name: /continue/i }));
+    fireEvent.click(screen.getByRole("button", { name: /continuar/i }));
 
     fireEvent.change(await screen.findByLabelText(/email/i), {
       target: { value: "owner@club.com" },
     });
-    fireEvent.click(screen.getByRole("button", { name: /verify/i }));
+    fireEvent.click(screen.getByRole("button", { name: /verificar/i }));
 
     fireEvent.click(
       await screen.findByRole("button", { name: "Simulate brick error" }),
@@ -362,13 +362,13 @@ describe("PlanSelectionModal", () => {
     });
 
     await screen.findByRole("radio", { name: /BASIC/ });
-    fireEvent.click(screen.getByRole("button", { name: "Annual" }));
-    fireEvent.click(screen.getByRole("button", { name: /continue/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Anual" }));
+    fireEvent.click(screen.getByRole("button", { name: /continuar/i }));
 
     fireEvent.change(await screen.findByLabelText(/email/i), {
       target: { value: "owner@club.com" },
     });
-    fireEvent.click(screen.getByRole("button", { name: /verify/i }));
+    fireEvent.click(screen.getByRole("button", { name: /verificar/i }));
 
     fireEvent.click(
       await screen.findByRole("button", { name: "Simulate submit" }),
@@ -392,7 +392,9 @@ describe("PlanSelectionModal", () => {
       cardTokenId: "tok_test",
     });
 
-    expect(await screen.findByText("Free Trial Active")).toBeInTheDocument();
+    expect(
+      await screen.findByText("Prueba gratuita activa"),
+    ).toBeInTheDocument();
     expect(windowOpenSpy).not.toHaveBeenCalled();
   });
 
@@ -432,30 +434,34 @@ describe("PlanSelectionModal", () => {
     });
 
     await screen.findByRole("radio", { name: /BASIC/ });
-    fireEvent.click(screen.getByRole("button", { name: "Annual" }));
-    fireEvent.click(screen.getByRole("button", { name: /continue/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Anual" }));
+    fireEvent.click(screen.getByRole("button", { name: /continuar/i }));
 
     fireEvent.change(await screen.findByLabelText(/email/i), {
       target: { value: "owner@club.com" },
     });
-    fireEvent.click(screen.getByRole("button", { name: /verify/i }));
+    fireEvent.click(screen.getByRole("button", { name: /verificar/i }));
     fireEvent.click(
       await screen.findByRole("button", { name: "Simulate submit" }),
     );
 
-    await screen.findByText(/confirming your payment/i);
+    await screen.findByText(/confirmando tu pago/i);
 
     // Still pending after a manual refresh — stays on awaiting-confirmation.
-    fireEvent.click(screen.getByRole("button", { name: /check again/i }));
+    fireEvent.click(
+      screen.getByRole("button", { name: /volver a comprobar/i }),
+    );
     await waitFor(() => {
-      expect(screen.getByText(/confirming your payment/i)).toBeInTheDocument();
+      expect(screen.getByText(/confirmando tu pago/i)).toBeInTheDocument();
     });
 
     // Webhook confirms server-side; the next manual refresh reveals it.
     subscriptionStatus = "ACTIVE";
-    fireEvent.click(screen.getByRole("button", { name: /check again/i }));
+    fireEvent.click(
+      screen.getByRole("button", { name: /volver a comprobar/i }),
+    );
 
-    expect(await screen.findByText("Membership Active")).toBeInTheDocument();
+    expect(await screen.findByText("Membresía activa")).toBeInTheDocument();
   });
 
   // The gap this fix closes: a TRIALING owner previously had no way to
@@ -496,8 +502,10 @@ describe("PlanSelectionModal", () => {
       throw new Error(`unexpected fetch: ${url}`);
     });
 
-    expect(await screen.findByText("Free Trial Active")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Change Plan" }));
+    expect(
+      await screen.findByText("Prueba gratuita activa"),
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Cambiar plan" }));
 
     fireEvent.click(await screen.findByRole("radio", { name: /PRO/ }));
 
@@ -514,12 +522,12 @@ describe("PlanSelectionModal", () => {
     expect(JSON.parse(patchInit.body as string)).toEqual({ plan: "PRO" });
 
     // Never enters the checkout wizard — stays on the confirmed trial panel.
-    expect(screen.getByText("Free Trial Active")).toBeInTheDocument();
+    expect(screen.getByText("Prueba gratuita activa")).toBeInTheDocument();
     expect(screen.queryByLabelText(/email/i)).not.toBeInTheDocument();
 
     // Reopening Change Plan reflects the newly-applied plan as checked,
     // proving the confirmed subscription's plan actually updated.
-    fireEvent.click(screen.getByRole("button", { name: "Change Plan" }));
+    fireEvent.click(screen.getByRole("button", { name: "Cambiar plan" }));
     expect(await screen.findByRole("radio", { name: /PRO/ })).toHaveAttribute(
       "aria-checked",
       "true",
@@ -563,12 +571,12 @@ describe("PlanSelectionModal", () => {
     });
 
     await screen.findByRole("radio", { name: /BASIC/ });
-    fireEvent.click(screen.getByRole("button", { name: /continue/i }));
+    fireEvent.click(screen.getByRole("button", { name: /continuar/i }));
 
     fireEvent.change(await screen.findByLabelText(/email/i), {
       target: { value: "owner@club.com" },
     });
-    fireEvent.click(screen.getByRole("button", { name: /verify/i }));
+    fireEvent.click(screen.getByRole("button", { name: /verificar/i }));
 
     expect(await screen.findByRole("checkbox")).toBeChecked();
     expect(await screen.findByTestId("brick-identification")).toHaveTextContent(
@@ -627,12 +635,12 @@ describe("PlanSelectionModal", () => {
     });
 
     await screen.findByRole("radio", { name: /BASIC/ });
-    fireEvent.click(screen.getByRole("button", { name: /continue/i }));
+    fireEvent.click(screen.getByRole("button", { name: /continuar/i }));
 
     fireEvent.change(await screen.findByLabelText(/email/i), {
       target: { value: "owner@club.com" },
     });
-    fireEvent.click(screen.getByRole("button", { name: /verify/i }));
+    fireEvent.click(screen.getByRole("button", { name: /verificar/i }));
 
     expect(await screen.findByTestId("brick-identification")).toHaveTextContent(
       "DNI:12345678",
@@ -669,12 +677,12 @@ describe("PlanSelectionModal", () => {
     });
 
     await screen.findByRole("radio", { name: /BASIC/ });
-    fireEvent.click(screen.getByRole("button", { name: /continue/i }));
+    fireEvent.click(screen.getByRole("button", { name: /continuar/i }));
 
     fireEvent.change(await screen.findByLabelText(/email/i), {
       target: { value: "owner@club.com" },
     });
-    fireEvent.click(screen.getByRole("button", { name: /verify/i }));
+    fireEvent.click(screen.getByRole("button", { name: /verificar/i }));
 
     fireEvent.click(await screen.findByRole("checkbox"));
 
@@ -709,10 +717,10 @@ describe("PlanSelectionModal", () => {
     });
 
     await screen.findByRole("radio", { name: /BASIC/ });
-    fireEvent.click(screen.getByRole("button", { name: /continue/i }));
+    fireEvent.click(screen.getByRole("button", { name: /continuar/i }));
     expect(await screen.findByLabelText(/email/i)).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: /back/i }));
+    fireEvent.click(screen.getByRole("button", { name: /atrás/i }));
 
     expect(
       await screen.findByRole("radio", { name: /BASIC/ }),

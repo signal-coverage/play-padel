@@ -10,7 +10,7 @@ import {
 import "@testing-library/jest-dom/vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/messages/en.json";
+import messages from "@/messages/es.json";
 import { ClubClosuresCard } from "./ClubClosuresCard";
 
 const toastSuccess = vi.fn();
@@ -97,7 +97,7 @@ function renderCard({
   });
 
   const utils = render(
-    <NextIntlClientProvider locale="en" messages={messages}>
+    <NextIntlClientProvider locale="es" messages={messages}>
       <QueryClientProvider client={queryClient}>
         <ClubClosuresCard />
       </QueryClientProvider>
@@ -108,16 +108,16 @@ function renderCard({
 }
 
 function fillAndSubmit() {
-  fireEvent.change(screen.getByLabelText(/starts/i), {
+  fireEvent.change(screen.getByLabelText(/comienza/i), {
     target: { value: "2026-10-01T10:00" },
   });
-  fireEvent.change(screen.getByLabelText(/ends/i), {
+  fireEvent.change(screen.getByLabelText(/termina/i), {
     target: { value: "2099-10-01T18:00" },
   });
-  fireEvent.change(screen.getByLabelText(/reason/i), {
+  fireEvent.change(screen.getByLabelText(/motivo/i), {
     target: { value: "Club rented for a tournament" },
   });
-  fireEvent.click(screen.getByRole("button", { name: /close the club/i }));
+  fireEvent.click(screen.getByRole("button", { name: /cerrar el club/i }));
 }
 
 describe("ClubClosuresCard", () => {
@@ -132,7 +132,7 @@ describe("ClubClosuresCard", () => {
     renderCard();
 
     expect(
-      screen.getByRole("heading", { name: /closures/i }),
+      screen.getByRole("heading", { name: /cierres/i }),
     ).toBeInTheDocument();
   });
 
@@ -164,7 +164,7 @@ describe("ClubClosuresCard", () => {
     renderCard({ closures: [] });
 
     await waitFor(() =>
-      expect(screen.getByText(/no closures yet/i)).toBeInTheDocument(),
+      expect(screen.getByText(/todavía no hay cierres/i)).toBeInTheDocument(),
     );
   });
 
@@ -179,12 +179,12 @@ describe("ClubClosuresCard", () => {
     // so submitting before it resolves would spuriously look like "no active
     // courts".
     await waitFor(() =>
-      expect(screen.getByText(/no closures yet/i)).toBeInTheDocument(),
+      expect(screen.getByText(/todavía no hay cierres/i)).toBeInTheDocument(),
     );
     fillAndSubmit();
 
     await waitFor(() =>
-      expect(toastSuccess).toHaveBeenCalledWith("Closure created for 2 courts"),
+      expect(toastSuccess).toHaveBeenCalledWith("Cierre creado para 2 canchas"),
     );
 
     const createCalls = fetchMock.mock.calls.filter(
@@ -210,7 +210,7 @@ describe("ClubClosuresCard", () => {
     });
 
     await waitFor(() =>
-      expect(screen.getByText(/no closures yet/i)).toBeInTheDocument(),
+      expect(screen.getByText(/todavía no hay cierres/i)).toBeInTheDocument(),
     );
     fillAndSubmit();
 
@@ -225,7 +225,7 @@ describe("ClubClosuresCard", () => {
     const { fetchMock } = renderCard({ courts: [] });
 
     await waitFor(() =>
-      expect(screen.getByLabelText(/starts/i)).toBeInTheDocument(),
+      expect(screen.getByLabelText(/comienza/i)).toBeInTheDocument(),
     );
     fillAndSubmit();
 
@@ -259,11 +259,11 @@ describe("ClubClosuresCard", () => {
       ).toBeInTheDocument(),
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /^cancel$/i }));
-    fireEvent.click(screen.getByRole("button", { name: /cancel closure/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^cancelar$/i }));
+    fireEvent.click(screen.getByRole("button", { name: /cancelar cierre/i }));
 
     await waitFor(() =>
-      expect(toastSuccess).toHaveBeenCalledWith("Closure cancelled"),
+      expect(toastSuccess).toHaveBeenCalledWith("Cierre cancelado"),
     );
     expect(fetchMock).toHaveBeenCalledWith(
       "/api/clubs/courts/court_1/closures/closure_1/cancel",

@@ -2,6 +2,8 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
+import { NextIntlClientProvider } from "next-intl";
+import messages from "@/messages/es.json";
 
 vi.mock("../CardTokenForm", () => ({
   CardTokenForm: (props: {
@@ -64,7 +66,11 @@ function renderDrawer(
     onRefresh: vi.fn(),
     ...overrides,
   };
-  render(<MembershipCheckoutDrawer {...props} />);
+  render(
+    <NextIntlClientProvider locale="es" messages={messages}>
+      <MembershipCheckoutDrawer {...props} />
+    </NextIntlClientProvider>,
+  );
   return props;
 }
 
@@ -114,7 +120,7 @@ describe("MembershipCheckoutDrawer", () => {
     renderDrawer({ payerEmail: "owner@club.com", identification: undefined });
 
     expect(
-      screen.queryByText(/save this id for future payments/i),
+      screen.queryByText(/guardar este dato para futuros pagos/i),
     ).not.toBeInTheDocument();
   });
 
@@ -125,7 +131,7 @@ describe("MembershipCheckoutDrawer", () => {
     });
 
     expect(
-      screen.getByText(/save this id for future payments/i),
+      screen.getByText(/guardar este dato para futuros pagos/i),
     ).toBeInTheDocument();
     expect(screen.getByTestId("card-form-identification")).toHaveTextContent(
       "CUIT:30-12345678-9",
@@ -147,7 +153,7 @@ describe("MembershipCheckoutDrawer", () => {
   it("calls onBack when Back is clicked on the email step", () => {
     const props = renderDrawer({ payerEmail: "" });
 
-    fireEvent.click(screen.getByRole("button", { name: /back/i }));
+    fireEvent.click(screen.getByRole("button", { name: /atrás/i }));
 
     expect(props.onBack).toHaveBeenCalled();
   });
@@ -157,7 +163,7 @@ describe("MembershipCheckoutDrawer", () => {
   it("returns to the email step, instead of exiting, when Back is clicked on the card step", () => {
     const props = renderDrawer({ payerEmail: "owner@club.com" });
 
-    fireEvent.click(screen.getByRole("button", { name: /back/i }));
+    fireEvent.click(screen.getByRole("button", { name: /atrás/i }));
 
     expect(props.onPayerEmailChange).toHaveBeenCalledWith("");
     expect(props.onBack).not.toHaveBeenCalled();
@@ -170,7 +176,7 @@ describe("MembershipCheckoutDrawer", () => {
       screen.getByTestId("mock-awaiting-confirmation"),
     ).toBeInTheDocument();
     expect(
-      screen.queryByRole("button", { name: /^back$/i }),
+      screen.queryByRole("button", { name: /^atrás$/i }),
     ).not.toBeInTheDocument();
   });
 
@@ -189,14 +195,14 @@ describe("MembershipCheckoutDrawer", () => {
   it("shows '/ month' copy for a MONTHLY checkout", () => {
     renderDrawer({ cycle: "monthly" });
 
-    expect(screen.getByText(/\/ month/)).toBeInTheDocument();
-    expect(screen.queryByText(/\/ year/)).not.toBeInTheDocument();
+    expect(screen.getByText(/\/ mes/)).toBeInTheDocument();
+    expect(screen.queryByText(/\/ año/)).not.toBeInTheDocument();
   });
 
   it("shows '/ year' copy for an ANNUAL checkout", () => {
     renderDrawer({ cycle: "annual" });
 
-    expect(screen.getByText(/\/ year/)).toBeInTheDocument();
-    expect(screen.queryByText(/\/ month/)).not.toBeInTheDocument();
+    expect(screen.getByText(/\/ año/)).toBeInTheDocument();
+    expect(screen.queryByText(/\/ mes/)).not.toBeInTheDocument();
   });
 });

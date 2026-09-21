@@ -3,7 +3,7 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, cleanup } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/messages/en.json";
+import messages from "@/messages/es.json";
 import { ReservationRow } from "./ReservationRow";
 import type { PlayerReservation } from "../../types";
 
@@ -34,7 +34,7 @@ afterEach(() => {
 
 function renderRow(props: React.ComponentProps<typeof ReservationRow>) {
   return render(
-    <NextIntlClientProvider locale="en" messages={messages}>
+    <NextIntlClientProvider locale="es" messages={messages}>
       <ReservationRow {...props} />
     </NextIntlClientProvider>,
   );
@@ -45,10 +45,10 @@ describe("ReservationRow ticket actions", () => {
     renderRow({ reservation: makeReservation(), onCancel: vi.fn() });
 
     expect(
-      screen.getByRole("link", { name: /preview ticket/i }),
+      screen.getByRole("link", { name: /vista previa del ticket/i }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("link", { name: /download ticket/i }),
+      screen.getByRole("link", { name: /descargar ticket/i }),
     ).toBeInTheDocument();
   });
 
@@ -59,17 +59,19 @@ describe("ReservationRow ticket actions", () => {
     });
 
     expect(
-      screen.queryByRole("link", { name: /preview ticket/i }),
+      screen.queryByRole("link", { name: /vista previa del ticket/i }),
     ).not.toBeInTheDocument();
     expect(
-      screen.queryByRole("link", { name: /download ticket/i }),
+      screen.queryByRole("link", { name: /descargar ticket/i }),
     ).not.toBeInTheDocument();
   });
 
   it("links the download button to the ticket route without a preview param, using the download attribute", () => {
     renderRow({ reservation: makeReservation(), onCancel: vi.fn() });
 
-    const downloadLink = screen.getByRole("link", { name: /download ticket/i });
+    const downloadLink = screen.getByRole("link", {
+      name: /descargar ticket/i,
+    });
     expect(downloadLink).toHaveAttribute(
       "href",
       "/api/player/reservations/res_1/ticket",
@@ -81,7 +83,9 @@ describe("ReservationRow ticket actions", () => {
   it("links the preview button to the ticket route with ?preview=1, opening in a new tab", () => {
     renderRow({ reservation: makeReservation(), onCancel: vi.fn() });
 
-    const previewLink = screen.getByRole("link", { name: /preview ticket/i });
+    const previewLink = screen.getByRole("link", {
+      name: /vista previa del ticket/i,
+    });
     expect(previewLink).toHaveAttribute(
       "href",
       "/api/player/reservations/res_1/ticket?preview=1",
@@ -95,7 +99,9 @@ describe("ReservationRow ticket actions", () => {
       onCancel: vi.fn(),
     });
 
-    const receiptLink = screen.getByRole("link", { name: /download receipt/i });
+    const receiptLink = screen.getByRole("link", {
+      name: /descargar comprobante/i,
+    });
     expect(receiptLink).toHaveAttribute(
       "href",
       "/api/player/reservations/res_1/receipt",
@@ -110,7 +116,7 @@ describe("ReservationRow ticket actions", () => {
     });
 
     expect(
-      screen.queryByRole("link", { name: /download receipt/i }),
+      screen.queryByRole("link", { name: /descargar comprobante/i }),
     ).not.toBeInTheDocument();
   });
 
@@ -122,7 +128,7 @@ describe("ReservationRow ticket actions", () => {
     });
 
     expect(
-      screen.getByRole("button", { name: /cancel reservation/i }),
+      screen.getByRole("button", { name: /cancelar reserva/i }),
     ).toBeInTheDocument();
   });
 
@@ -133,7 +139,7 @@ describe("ReservationRow ticket actions", () => {
     });
 
     expect(
-      screen.queryByRole("button", { name: /cancel reservation/i }),
+      screen.queryByRole("button", { name: /cancelar reserva/i }),
     ).not.toBeInTheDocument();
   });
 });

@@ -2,6 +2,12 @@
 // dates arrive as strings) — kept intentionally minimal, only the fields
 // this management UI actually renders.
 
+export interface TournamentsManagerProps {
+  // Set only by AdminTournamentsView — see TournamentsManager.tsx's own
+  // comment. Omitted, this is the owner's own page.
+  clubId?: string;
+}
+
 export interface OwnerCategorySummary {
   id: string;
   name: string;

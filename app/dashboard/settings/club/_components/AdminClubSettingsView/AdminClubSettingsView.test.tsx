@@ -10,7 +10,7 @@ import {
 import "@testing-library/jest-dom/vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/messages/en.json";
+import messages from "@/messages/es.json";
 import { AdminClubSettingsView } from "./AdminClubSettingsView";
 
 const { toastMock } = vi.hoisted(() => ({
@@ -155,7 +155,7 @@ function renderView(
 
   return {
     ...render(
-      <NextIntlClientProvider locale="en" messages={messages}>
+      <NextIntlClientProvider locale="es" messages={messages}>
         <QueryClientProvider client={queryClient}>
           <AdminClubSettingsView />
         </QueryClientProvider>
@@ -221,7 +221,7 @@ describe("AdminClubSettingsView", () => {
 
     await waitFor(() => expect(screen.getByText("Club A")).toBeInTheDocument());
     expect(
-      screen.getByText(/select a club to view its settings/i),
+      screen.getByText(/seleccioná un club para ver su configuración/i),
     ).toBeInTheDocument();
   });
 
@@ -263,7 +263,7 @@ describe("AdminClubSettingsView", () => {
       await waitFor(() =>
         expect(screen.getByText("Club A")).toBeInTheDocument(),
       );
-      const exportLink = screen.getByRole("link", { name: /export csv/i });
+      const exportLink = screen.getByRole("link", { name: /exportar csv/i });
       expect(exportLink).toHaveAttribute("href", "/api/admin/export/clubs");
       // The button now lives in AdminClubSettingsView's own top bar, not
       // nested inside AdminClubList's list column — this is what
@@ -285,7 +285,7 @@ describe("AdminClubSettingsView", () => {
       await waitFor(() =>
         expect(screen.getByDisplayValue("Club A")).toBeInTheDocument(),
       );
-      const exportLink = screen.getByRole("link", { name: /export csv/i });
+      const exportLink = screen.getByRole("link", { name: /exportar csv/i });
       expect(exportLink).toHaveAttribute("href", "/api/admin/export/clubs");
       expect(
         exportLink.closest('[data-testid="admin-club-settings-list-column"]'),
@@ -307,7 +307,7 @@ describe("AdminClubSettingsView", () => {
       // The placeholder never shows — the club is selected from the start,
       // not clicked into afterward.
       expect(
-        screen.queryByText(/select a club to view its settings/i),
+        screen.queryByText(/seleccioná un club para ver su configuración/i),
       ).not.toBeInTheDocument();
     });
 
@@ -319,7 +319,7 @@ describe("AdminClubSettingsView", () => {
         expect(screen.getByText("Club A")).toBeInTheDocument(),
       );
       expect(
-        screen.getByText(/select a club to view its settings/i),
+        screen.getByText(/seleccioná un club para ver su configuración/i),
       ).toBeInTheDocument();
     });
 
@@ -330,7 +330,7 @@ describe("AdminClubSettingsView", () => {
         expect(screen.getByText("Club A")).toBeInTheDocument(),
       );
       expect(
-        screen.getByText(/select a club to view its settings/i),
+        screen.getByText(/seleccioná un club para ver su configuración/i),
       ).toBeInTheDocument();
     });
   });
@@ -343,7 +343,7 @@ describe("AdminClubSettingsView", () => {
         expect(screen.getByText("Club A")).toBeInTheDocument(),
       );
       expect(
-        screen.queryByRole("button", { name: /impersonate owner/i }),
+        screen.queryByRole("button", { name: /suplantar propietario/i }),
       ).not.toBeInTheDocument();
     });
 
@@ -356,7 +356,7 @@ describe("AdminClubSettingsView", () => {
       screen.getByText("Club A").click();
 
       expect(
-        await screen.findByRole("button", { name: /impersonate owner/i }),
+        await screen.findByRole("button", { name: /suplantar propietario/i }),
       ).toBeInTheDocument();
     });
 
@@ -376,7 +376,7 @@ describe("AdminClubSettingsView", () => {
       screen.getByText("Club A").click();
 
       const button = await screen.findByRole("button", {
-        name: /impersonate owner/i,
+        name: /suplantar propietario/i,
       });
       button.click();
 
@@ -411,14 +411,16 @@ describe("AdminClubSettingsView", () => {
         expect(screen.getByText("Club A")).toBeInTheDocument(),
       );
       screen.getByText("Club A").click();
-      await screen.findByRole("button", { name: /impersonate owner/i });
+      await screen.findByRole("button", { name: /suplantar propietario/i });
 
       screen.getByText("Club B").click();
       await waitFor(() =>
         expect(screen.getByDisplayValue("Club B")).toBeInTheDocument(),
       );
 
-      const button = screen.getByRole("button", { name: /impersonate owner/i });
+      const button = screen.getByRole("button", {
+        name: /suplantar propietario/i,
+      });
       button.click();
 
       await waitFor(() => {
@@ -442,7 +444,7 @@ describe("AdminClubSettingsView", () => {
       screen.getByText("Club A").click();
 
       expect(
-        await screen.findByRole("button", { name: /activate free plan/i }),
+        await screen.findByRole("button", { name: /activar plan gratuito/i }),
       ).toBeInTheDocument();
     });
 
@@ -473,7 +475,7 @@ describe("AdminClubSettingsView", () => {
         expect(screen.getByDisplayValue("Club A")).toBeInTheDocument(),
       );
       expect(
-        screen.queryByRole("button", { name: /activate free plan/i }),
+        screen.queryByRole("button", { name: /activar plan gratuito/i }),
       ).not.toBeInTheDocument();
     });
 
@@ -496,7 +498,7 @@ describe("AdminClubSettingsView", () => {
       screen.getByText("Club A").click();
 
       expect(
-        await screen.findByRole("button", { name: /activate free plan/i }),
+        await screen.findByRole("button", { name: /activar plan gratuito/i }),
       ).toBeInTheDocument();
     });
 
@@ -509,7 +511,7 @@ describe("AdminClubSettingsView", () => {
       );
       screen.getByText("Club A").click();
       const button = await screen.findByRole("button", {
-        name: /activate free plan/i,
+        name: /activar plan gratuito/i,
       });
       button.click();
 
@@ -534,7 +536,7 @@ describe("AdminClubSettingsView", () => {
       );
       screen.getByText("Club A").click();
       const button = await screen.findByRole("button", {
-        name: /activate free plan/i,
+        name: /activar plan gratuito/i,
       });
       button.click();
 
@@ -568,7 +570,7 @@ describe("AdminClubSettingsView", () => {
       );
       screen.getByText("Club A").click();
       const button = await screen.findByRole("button", {
-        name: /activate free plan/i,
+        name: /activar plan gratuito/i,
       });
       button.click();
 
@@ -592,7 +594,9 @@ describe("AdminClubSettingsView", () => {
       await waitFor(() =>
         expect(screen.getByDisplayValue("Club A")).toBeInTheDocument(),
       );
-      expect(screen.queryByLabelText(/court limit/i)).not.toBeInTheDocument();
+      expect(
+        screen.queryByLabelText(/límite de canchas/i),
+      ).not.toBeInTheDocument();
     });
 
     it("shows a court limit input pre-filled with the club's current override for a MAX-plan club", async () => {
@@ -614,7 +618,9 @@ describe("AdminClubSettingsView", () => {
       );
       screen.getByText("Club A").click();
 
-      expect(await screen.findByLabelText(/court limit/i)).toHaveValue(15);
+      expect(await screen.findByLabelText(/límite de canchas/i)).toHaveValue(
+        15,
+      );
     });
 
     it("shows an empty court limit input when a MAX-plan club has no override set yet", async () => {
@@ -636,7 +642,9 @@ describe("AdminClubSettingsView", () => {
       );
       screen.getByText("Club A").click();
 
-      expect(await screen.findByLabelText(/court limit/i)).toHaveValue(null);
+      expect(await screen.findByLabelText(/límite de canchas/i)).toHaveValue(
+        null,
+      );
     });
 
     it("saves the entered court limit via PATCH /api/admin/clubs/[clubId], and shows a success toast", async () => {
@@ -663,9 +671,9 @@ describe("AdminClubSettingsView", () => {
       );
       screen.getByText("Club A").click();
 
-      const input = await screen.findByLabelText(/court limit/i);
+      const input = await screen.findByLabelText(/límite de canchas/i);
       fireEvent.change(input, { target: { value: "20" } });
-      screen.getByRole("button", { name: /save limit/i }).click();
+      screen.getByRole("button", { name: /guardar límite/i }).click();
 
       await waitFor(() =>
         expect(fetchMock).toHaveBeenCalledWith(
@@ -702,8 +710,8 @@ describe("AdminClubSettingsView", () => {
         expect(screen.getByText("Club A")).toBeInTheDocument(),
       );
       screen.getByText("Club A").click();
-      await screen.findByLabelText(/court limit/i);
-      screen.getByRole("button", { name: /save limit/i }).click();
+      await screen.findByLabelText(/límite de canchas/i);
+      screen.getByRole("button", { name: /guardar límite/i }).click();
 
       await waitFor(() =>
         expect(toastMock.error).toHaveBeenCalledWith("Failed to update club"),

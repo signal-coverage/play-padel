@@ -3,7 +3,7 @@ import { describe, it, expect, afterEach } from "vitest";
 import { render, screen, cleanup } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/messages/en.json";
+import messages from "@/messages/es.json";
 import { PendingApprovalCard } from "./PendingApprovalCard";
 
 describe("PendingApprovalCard", () => {
@@ -16,16 +16,16 @@ describe("PendingApprovalCard", () => {
 
   it("renders an informational heading and description, with no action button", () => {
     render(
-      <NextIntlClientProvider locale="en" messages={messages}>
+      <NextIntlClientProvider locale="es" messages={messages}>
         <PendingApprovalCard />
       </NextIntlClientProvider>,
     );
 
     expect(
-      screen.getByRole("heading", { name: "Your club is under review" }),
+      screen.getByRole("heading", { name: "Tu club está en revisión" }),
     ).toBeInTheDocument();
     expect(
-      screen.getByText(/we'll notify you once it's approved/i),
+      screen.getByText(/te avisaremos apenas sea aprobado/i),
     ).toBeInTheDocument();
 
     // Informational only — an owner can't self-approve, so there is no

@@ -3,14 +3,14 @@ import { describe, it, expect, afterEach } from "vitest";
 import { render, screen, cleanup, within } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/messages/en.json";
+import messages from "@/messages/es.json";
 import { StandingsTable } from "./StandingsTable";
 
 afterEach(cleanup);
 
 function renderTable(props: React.ComponentProps<typeof StandingsTable>) {
   return render(
-    <NextIntlClientProvider locale="en" messages={messages}>
+    <NextIntlClientProvider locale="es" messages={messages}>
       <StandingsTable {...props} />
     </NextIntlClientProvider>,
   );
@@ -19,7 +19,7 @@ function renderTable(props: React.ComponentProps<typeof StandingsTable>) {
 describe("StandingsTable", () => {
   it("shows an empty state with no rows", () => {
     renderTable({ rows: [], teamLabels: {} });
-    expect(screen.getByText(/no standings yet/i)).toBeInTheDocument();
+    expect(screen.getByText(/todavía no hay posiciones/i)).toBeInTheDocument();
   });
 
   it("renders one row per team with wins, set diff, and game diff", () => {

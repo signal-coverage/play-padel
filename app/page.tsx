@@ -2,13 +2,11 @@ import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { LandingPage } from "@/app/_components/LandingPage";
 
-// Overrides the root layout's (English) default title/description with the
-// real Spanish copy for this, the actual page real visitors land on — the
-// layout defaults were never localized, so Google was showing an English
-// snippet for a Spanish-market page. No `languages` hreflang block right
-// now: /en just redirects here while English is hidden (see
-// i18n/getRequestLocale.ts) — add it back once that page has real content
-// again.
+// Overrides the root layout's default title/description with the real
+// Spanish copy for this, the actual page real visitors land on — the
+// layout defaults were never localized, so Google was showing a generic
+// snippet for a Spanish-market page. No `languages` hreflang block: the app
+// is Spanish-only, there is no second language to alternate to.
 export async function generateMetadata(): Promise<Metadata> {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
   const t = await getTranslations("HomePage");

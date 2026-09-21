@@ -4,7 +4,7 @@ import { render, screen, waitFor, cleanup } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/messages/en.json";
+import messages from "@/messages/es.json";
 import { ClubListPanel } from "./ClubListPanel";
 import type { ClubBrowseSummary } from "../../types";
 
@@ -85,7 +85,7 @@ function renderPanel(clubs: ClubBrowseSummary[]) {
     />,
     {
       wrapper: ({ children }) => (
-        <NextIntlClientProvider locale="en" messages={messages}>
+        <NextIntlClientProvider locale="es" messages={messages}>
           <NuqsTestingAdapter>{children}</NuqsTestingAdapter>
         </NextIntlClientProvider>
       ),

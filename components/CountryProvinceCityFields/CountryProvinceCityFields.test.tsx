@@ -5,7 +5,7 @@ import { render, screen, waitFor, cleanup } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { useForm } from "react-hook-form";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/messages/en.json";
+import messages from "@/messages/es.json";
 import { useCountryProvinceCityFields } from "./CountryProvinceCityFields";
 import type { CountryProvinceCityFieldsValues } from "./types";
 
@@ -41,7 +41,7 @@ function TestHost({ seed }: { seed: CountryProvinceCityFieldsValues | null }) {
 
 function renderTestHost(seed: CountryProvinceCityFieldsValues | null) {
   return (
-    <NextIntlClientProvider locale="en" messages={messages}>
+    <NextIntlClientProvider locale="es" messages={messages}>
       <TestHost seed={seed} />
     </NextIntlClientProvider>
   );
@@ -61,7 +61,7 @@ describe("useCountryProvinceCityFields", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByRole("combobox", { name: /^country/i }),
+        screen.getByRole("combobox", { name: /^país/i }),
       ).toHaveTextContent("Argentina");
     });
 
@@ -70,11 +70,11 @@ describe("useCountryProvinceCityFields", () => {
     // also fire here and unconditionally clear province/city, even though
     // reset() had just set them to real, correct values in the same update.
     expect(
-      screen.getByRole("combobox", { name: /province/i }),
+      screen.getByRole("combobox", { name: /provincia/i }),
     ).toHaveTextContent("Buenos Aires");
-    expect(screen.getByRole("combobox", { name: /^city/i })).toHaveTextContent(
-      "Buenos Aires",
-    );
+    expect(
+      screen.getByRole("combobox", { name: /^ciudad/i }),
+    ).toHaveTextContent("Buenos Aires");
   });
 
   it("still clears province and city when the country genuinely changes from an external source (e.g. PhoneField's calling-code picker)", async () => {
@@ -88,7 +88,7 @@ describe("useCountryProvinceCityFields", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByRole("combobox", { name: /province/i }),
+        screen.getByRole("combobox", { name: /provincia/i }),
       ).toHaveTextContent("Buenos Aires");
     });
 
@@ -96,14 +96,14 @@ describe("useCountryProvinceCityFields", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByRole("combobox", { name: /^country/i }),
+        screen.getByRole("combobox", { name: /^país/i }),
       ).toHaveTextContent("Uruguay");
     });
     expect(
-      screen.getByRole("combobox", { name: /province/i }),
-    ).toHaveTextContent("Select a province");
-    expect(screen.getByRole("combobox", { name: /^city/i })).toHaveTextContent(
-      "Select a province first",
-    );
+      screen.getByRole("combobox", { name: /provincia/i }),
+    ).toHaveTextContent("Seleccioná una provincia");
+    expect(
+      screen.getByRole("combobox", { name: /^ciudad/i }),
+    ).toHaveTextContent("Seleccioná primero una provincia");
   });
 });

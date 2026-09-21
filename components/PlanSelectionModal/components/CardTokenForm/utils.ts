@@ -7,6 +7,11 @@ export function resolvePublicKey(): string | null {
   return process.env.NEXT_PUBLIC_MERCADOPAGO_PUBLIC_KEY ?? null;
 }
 
+// `t` comes from the caller's own useTranslations("CardTokenForm") result —
+// this is a plain util, not a component, so it can't call useTranslations
+// itself (same convention as MercadoPagoConnectionCard/utils.ts).
+export type CardTokenFormT = (key: string) => string;
+
 // The Brick's own `IBrickError.message` is NOT guaranteed to be human
 // text. `cause` is a broad, documented bucket (e.g.
 // `missing_payment_information` — MP's own docs: "Incomplete payment
@@ -19,19 +24,16 @@ export function resolvePublicKey(): string | null {
 // actually seen arrive this way (as a raw snake_case code, not prose);
 // every other Brick error's `.message` is real prose already (e.g.
 // "invalid card number"), so it's left untouched.
-const KNOWN_ERROR_MESSAGES: Record<string, string> = {
-  no_payment_method_for_provided_bin:
-    "We don't recognize that card. Double-check the number, or try a different card.",
+const KNOWN_ERROR_MESSAGE_KEYS: Record<string, string> = {
+  no_payment_method_for_provided_bin: "unrecognizedCard",
 };
 
-export function resolveCardErrorMessage(error: {
-  cause?: string;
-  message?: string;
-}): string {
-  const mapped = error.message
-    ? KNOWN_ERROR_MESSAGES[error.message]
+export function resolveCardErrorMessage(
+  error: { cause?: string; message?: string },
+  t: CardTokenFormT,
+): string {
+  const mappedKey = error.message
+    ? KNOWN_ERROR_MESSAGE_KEYS[error.message]
     : undefined;
-  return (
-    mapped ?? error.message ?? "We couldn't validate your card. Try again."
-  );
+  return mappedKey ? t(mappedKey) : (error.message ?? t("genericCardError"));
 }

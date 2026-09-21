@@ -3,7 +3,7 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, fireEvent, cleanup } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/messages/en.json";
+import messages from "@/messages/es.json";
 import { GroupMatchesList } from "./GroupMatchesList";
 import type { GroupMatch } from "../../types";
 
@@ -13,7 +13,7 @@ const TEAM_LABELS = { t1: "Alice / Ana", t2: "Bob / Ben" };
 
 function renderList(props: React.ComponentProps<typeof GroupMatchesList>) {
   return render(
-    <NextIntlClientProvider locale="en" messages={messages}>
+    <NextIntlClientProvider locale="es" messages={messages}>
       <GroupMatchesList {...props} />
     </NextIntlClientProvider>,
   );
@@ -27,7 +27,7 @@ describe("GroupMatchesList", () => {
       onEnterScore: vi.fn(),
       onRecordWalkover: vi.fn(),
     });
-    expect(screen.getByText(/no matches yet/i)).toBeInTheDocument();
+    expect(screen.getByText(/todavía no hay partidos/i)).toBeInTheDocument();
   });
 
   it("shows action buttons for a scheduled match and calls the right callback", () => {
@@ -47,7 +47,7 @@ describe("GroupMatchesList", () => {
     });
 
     expect(screen.getByText("Alice / Ana vs Bob / Ben")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: /enter score/i }));
+    fireEvent.click(screen.getByRole("button", { name: /cargar resultado/i }));
     expect(onEnterScore).toHaveBeenCalledWith(match);
 
     fireEvent.click(screen.getByRole("button", { name: /walkover/i }));
@@ -71,9 +71,9 @@ describe("GroupMatchesList", () => {
     });
 
     expect(
-      screen.queryByRole("button", { name: /enter score/i }),
+      screen.queryByRole("button", { name: /cargar resultado/i }),
     ).not.toBeInTheDocument();
-    expect(screen.getByText(/winner: alice \/ ana/i)).toBeInTheDocument();
+    expect(screen.getByText(/ganador: alice \/ ana/i)).toBeInTheDocument();
   });
 
   it("never shows action buttons in readOnly mode, even for a scheduled match", () => {
@@ -86,7 +86,7 @@ describe("GroupMatchesList", () => {
     });
 
     expect(
-      screen.queryByRole("button", { name: /enter score/i }),
+      screen.queryByRole("button", { name: /cargar resultado/i }),
     ).not.toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: /walkover/i }),

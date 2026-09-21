@@ -9,8 +9,32 @@ import {
 } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/messages/en.json";
-import { LandingPricing } from "./LandingPricing";
+import { createTranslator } from "use-intl/core";
+import messages from "@/messages/es.json";
+
+// LandingPricing is now an async Server Component (getTranslations from
+// "next-intl/server" is inherently async, unlike the client "next-intl"
+// useTranslations hook). There's no request context to read a locale from
+// in a Vitest/jsdom run, so this mocks getTranslations with use-intl's own
+// createTranslator — the same translator next-intl's server/client
+// entrypoints build on internally — rather than inventing an ad hoc stub.
+// The nested PricingToggleGrid client island still calls the real
+// client-side useTranslations hook, hence the NextIntlClientProvider below.
+vi.mock("next-intl/server", () => ({
+  getTranslations: async (namespace: string) =>
+    // next-intl's generated global Messages type makes createTranslator's
+    // params a strict literal-key union inferred from messages/es.json —
+    // this mock accepts any namespace string at the call site (each Server
+    // Component passes its own), so the strict inference is deliberately
+    // bypassed here rather than fought with per-property casts.
+    createTranslator({
+      locale: "es",
+      messages,
+      namespace,
+    } as Parameters<typeof createTranslator>[0]),
+}));
+
+const { LandingPricing } = await import("./LandingPricing");
 
 beforeEach(() => {
   vi.stubGlobal(
@@ -28,17 +52,18 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-function renderPricing() {
+async function renderPricing() {
+  const ui = await LandingPricing();
   render(
-    <NextIntlClientProvider locale="en" messages={messages}>
-      <LandingPricing />
+    <NextIntlClientProvider locale="es" messages={messages}>
+      {ui}
     </NextIntlClientProvider>,
   );
 }
 
 describe("LandingPricing", () => {
-  it("renders every customer plan and defaults to monthly pricing", () => {
-    renderPricing();
+  it("renders every customer plan and defaults to monthly pricing", async () => {
+    await renderPricing();
 
     expect(screen.getByRole("heading", { name: "BASIC" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "PRO" })).toBeInTheDocument();
@@ -47,15 +72,15 @@ describe("LandingPricing", () => {
     expect(screen.getByText("$39.000")).toBeInTheDocument();
     expect(screen.getByText("$59.000")).toBeInTheDocument();
     expect(screen.getByText("$79.000")).toBeInTheDocument();
-    expect(screen.getByText("Contact us")).toBeInTheDocument();
-    expect(screen.queryByText("Save 17%")).not.toBeInTheDocument();
+    expect(screen.getByText("Contactanos")).toBeInTheDocument();
+    expect(screen.queryByText("Ahorrás 17%")).not.toBeInTheDocument();
   });
 
   it("switches all fixed-price cards to annual totals and shows computed savings", async () => {
-    renderPricing();
+    await renderPricing();
 
     const toggle = screen.getByRole("switch", {
-      name: "Toggle monthly or annual billing",
+      name: "Alternar entre facturación mensual o anual",
     });
     fireEvent.click(toggle);
 
@@ -65,8 +90,8 @@ describe("LandingPricing", () => {
       expect(screen.getByText("$590.000")).toBeInTheDocument();
       expect(screen.getByText("$790.000")).toBeInTheDocument();
     });
-    expect(screen.getAllByText("/ year")).toHaveLength(3);
-    expect(screen.getAllByText("Save 17%")).toHaveLength(3);
-    expect(screen.getByText("Contact us")).toBeInTheDocument();
+    expect(screen.getAllByText("/ año")).toHaveLength(3);
+    expect(screen.getAllByText("Ahorrás 17%")).toHaveLength(3);
+    expect(screen.getByText("Contactanos")).toBeInTheDocument();
   });
 });

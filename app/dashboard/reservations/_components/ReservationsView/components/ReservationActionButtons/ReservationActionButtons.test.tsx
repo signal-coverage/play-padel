@@ -3,7 +3,7 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/messages/en.json";
+import messages from "@/messages/es.json";
 import { ReservationActionButtons } from "./ReservationActionButtons";
 
 afterEach(() => cleanup());
@@ -12,7 +12,7 @@ function renderButtons(
   props: React.ComponentProps<typeof ReservationActionButtons>,
 ) {
   return render(
-    <NextIntlClientProvider locale="en" messages={messages}>
+    <NextIntlClientProvider locale="es" messages={messages}>
       <ReservationActionButtons {...props} />
     </NextIntlClientProvider>,
   );
@@ -26,10 +26,10 @@ describe("ReservationActionButtons", () => {
       isPending: false,
     });
     expect(
-      screen.getByRole("button", { name: "Complete" }),
+      screen.getByRole("button", { name: "Completar" }),
     ).toBeInTheDocument();
     expect(
-      screen.queryByRole("button", { name: /confirm transfer/i }),
+      screen.queryByRole("button", { name: /confirmar transferencia/i }),
     ).not.toBeInTheDocument();
   });
 
@@ -41,7 +41,9 @@ describe("ReservationActionButtons", () => {
       isPending: false,
       showConfirmTransfer: true,
     });
-    fireEvent.click(screen.getByRole("button", { name: /confirm transfer/i }));
+    fireEvent.click(
+      screen.getByRole("button", { name: /confirmar transferencia/i }),
+    );
     expect(onAction).toHaveBeenCalledWith("res-1", "confirmTransfer");
   });
 });

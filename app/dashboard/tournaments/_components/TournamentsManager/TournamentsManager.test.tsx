@@ -10,7 +10,7 @@ import {
 import "@testing-library/jest-dom/vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/messages/en.json";
+import messages from "@/messages/es.json";
 
 const { toastMock } = vi.hoisted(() => ({
   toastMock: { success: vi.fn(), error: vi.fn() },
@@ -137,7 +137,7 @@ function renderManager() {
   });
 
   render(
-    <NextIntlClientProvider locale="en" messages={messages}>
+    <NextIntlClientProvider locale="es" messages={messages}>
       <QueryClientProvider client={queryClient}>
         <TournamentsManager />
       </QueryClientProvider>
@@ -176,31 +176,88 @@ describe("TournamentsManager", () => {
     );
     await waitFor(() =>
       expect(
-        screen.getByRole("button", { name: /generate groups automatically/i }),
+        screen.getByRole("button", { name: /generar grupos automáticamente/i }),
       ).not.toBeDisabled(),
     );
     fireEvent.click(
-      screen.getByRole("button", { name: /generate groups automatically/i }),
+      screen.getByRole("button", { name: /generar grupos automáticamente/i }),
     );
 
     await waitFor(() =>
       expect(
-        screen.getByRole("button", { name: /enter score/i }),
+        screen.getByRole("button", { name: /cargar resultado/i }),
       ).toBeInTheDocument(),
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /enter score/i }));
+    fireEvent.click(screen.getByRole("button", { name: /cargar resultado/i }));
 
-    const teamAInputs = screen.getAllByLabelText("Team A games");
-    const teamBInputs = screen.getAllByLabelText("Team B games");
+    const teamAInputs = screen.getAllByLabelText("Games del equipo A");
+    const teamBInputs = screen.getAllByLabelText("Games del equipo B");
     fireEvent.change(teamAInputs[0], { target: { value: "6" } });
     fireEvent.change(teamBInputs[0], { target: { value: "4" } });
     fireEvent.change(teamAInputs[1], { target: { value: "6" } });
     fireEvent.change(teamBInputs[1], { target: { value: "2" } });
-    fireEvent.click(screen.getByRole("button", { name: /save score/i }));
+    fireEvent.click(screen.getByRole("button", { name: /guardar resultado/i }));
 
     await waitFor(() =>
-      expect(toastMock.success).toHaveBeenCalledWith("Score entered"),
+      expect(toastMock.success).toHaveBeenCalledWith("Resultado cargado"),
+    );
+  });
+
+  it("routes every request through the admin-scoped club endpoints when clubId is provided", async () => {
+    const fetchMock = vi.fn(async (url: string) => {
+      if (url === "/api/admin/clubs/club_1/tournaments") {
+        return jsonResponse({
+          tournaments: [
+            {
+              id: "tourney_1",
+              name: "Summer Open",
+              status: "REGISTRATION_OPEN",
+            },
+          ],
+        });
+      }
+      if (url === "/api/admin/clubs/club_1/tournaments/tourney_1") {
+        return jsonResponse({ tournament: TOURNAMENT_DETAIL });
+      }
+      throw new Error(`unexpected fetch: ${url}`);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const queryClient = new QueryClient({
+      defaultOptions: {
+        queries: { retry: false },
+        mutations: { retry: false },
+      },
+    });
+
+    render(
+      <NextIntlClientProvider locale="es" messages={messages}>
+        <QueryClientProvider client={queryClient}>
+          <TournamentsManager clubId="club_1" />
+        </QueryClientProvider>
+      </NextIntlClientProvider>,
+    );
+
+    await waitFor(() =>
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/admin/clubs/club_1/tournaments",
+        undefined,
+      ),
+    );
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: /summer open/i }),
+      ).toBeInTheDocument(),
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /summer open/i }));
+
+    await waitFor(() =>
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/admin/clubs/club_1/tournaments/tourney_1",
+        undefined,
+      ),
     );
   });
 });

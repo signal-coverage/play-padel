@@ -1,38 +1,31 @@
-"use client";
-import { motion, useReducedMotion } from "framer-motion";
-import { useTranslations } from "next-intl";
-import { ease } from "@/lib/consts/animation";
+import { getTranslations } from "next-intl/server";
+import { FadeInSection } from "@/components/FadeInSection";
 import type { Stat } from "./types";
 import { CONTAINER } from "@/lib/consts";
 
 // Replaces the template's client-logo wall (play-padel has no client logos
 // to show) with a row of stat data, styled as a single horizontal row
 // divided by thin vertical rules — the "match line" motif applied
-// sideways.
-export function LandingStats() {
-  const t = useTranslations("LandingStats");
-  const shouldReduce = useReducedMotion();
+// sideways. Pure copy + no real interactivity, so this renders fully on
+// the server; the scroll-in fade is FadeInSection (IntersectionObserver),
+// not framer-motion.
+export async function LandingStats() {
+  const t = await getTranslations("LandingStats");
   const stats = t.raw("items") as Stat[];
 
   return (
     <section className="py-16 border-y border-border">
       <div className={CONTAINER}>
-        <motion.p
+        <FadeInSection
+          as="p"
           className="text-center text-sm font-medium text-muted-foreground mb-10"
-          initial={shouldReduce ? false : { opacity: 0, y: 10 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5, ease }}
         >
           {t("heading")}
-        </motion.p>
+        </FadeInSection>
 
-        <motion.div
+        <FadeInSection
           className="flex flex-col sm:flex-row sm:divide-x sm:divide-border"
-          initial={shouldReduce ? false : { opacity: 0, y: 12 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5, delay: 0.08, ease }}
+          delayMs={80}
         >
           {stats.map((stat) => (
             <div
@@ -47,7 +40,7 @@ export function LandingStats() {
               </span>
             </div>
           ))}
-        </motion.div>
+        </FadeInSection>
       </div>
     </section>
   );

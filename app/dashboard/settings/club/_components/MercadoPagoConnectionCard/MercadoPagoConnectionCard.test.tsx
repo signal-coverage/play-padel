@@ -10,7 +10,7 @@ import {
 import "@testing-library/jest-dom/vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/messages/en.json";
+import messages from "@/messages/es.json";
 
 // next/image's default loader calls out to Next's build-time image
 // optimization config, which doesn't exist under Vitest — swap it for a
@@ -51,7 +51,7 @@ function renderCard(
   });
 
   render(
-    <NextIntlClientProvider locale="en" messages={messages}>
+    <NextIntlClientProvider locale="es" messages={messages}>
       <QueryClientProvider client={queryClient}>
         <MercadoPagoConnectionCard />
       </QueryClientProvider>
@@ -86,11 +86,11 @@ describe("MercadoPagoConnectionCard", () => {
 
     await waitFor(() =>
       expect(
-        screen.getByRole("link", { name: "Connect Mercado Pago" }),
+        screen.getByRole("link", { name: "Conectar Mercado Pago" }),
       ).toBeInTheDocument(),
     );
     expect(
-      screen.queryByRole("button", { name: "Unlink" }),
+      screen.queryByRole("button", { name: "Desvincular" }),
     ).not.toBeInTheDocument();
   });
 
@@ -99,10 +99,12 @@ describe("MercadoPagoConnectionCard", () => {
 
     await waitFor(() =>
       expect(
-        screen.getByRole("button", { name: "Switch account" }),
+        screen.getByRole("button", { name: "Cambiar cuenta" }),
       ).toBeInTheDocument(),
     );
-    expect(screen.getByRole("button", { name: "Unlink" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Desvincular" }),
+    ).toBeInTheDocument();
   });
 
   it("shows the connected account's nickname and email when connected", async () => {
@@ -115,7 +117,7 @@ describe("MercadoPagoConnectionCard", () => {
 
     await waitFor(() =>
       expect(
-        screen.getByText("Account: clubowner (owner@club.com)"),
+        screen.getByText("Cuenta: clubowner (owner@club.com)"),
       ).toBeInTheDocument(),
     );
   });
@@ -125,10 +127,12 @@ describe("MercadoPagoConnectionCard", () => {
 
     await waitFor(() =>
       expect(
-        screen.getByRole("button", { name: "Switch account" }),
+        screen.getByRole("button", { name: "Cambiar cuenta" }),
       ).toBeInTheDocument(),
     );
-    expect(screen.getByRole("button", { name: "Unlink" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Desvincular" }),
+    ).toBeInTheDocument();
   });
 
   it("opens a confirmation dialog before disconnecting, and does not call the disconnect route on cancel", async () => {
@@ -136,21 +140,21 @@ describe("MercadoPagoConnectionCard", () => {
 
     await waitFor(() =>
       expect(
-        screen.getByRole("button", { name: "Unlink" }),
+        screen.getByRole("button", { name: "Desvincular" }),
       ).toBeInTheDocument(),
     );
-    fireEvent.click(screen.getByRole("button", { name: "Unlink" }));
+    fireEvent.click(screen.getByRole("button", { name: "Desvincular" }));
 
     const dialogHeading = await screen.findByRole("heading", {
-      name: "Unlink Mercado Pago?",
+      name: "¿Desvincular Mercado Pago?",
     });
     expect(dialogHeading).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: "Keep connected" }));
+    fireEvent.click(screen.getByRole("button", { name: "Mantener conectado" }));
 
     await waitFor(() =>
       expect(
-        screen.queryByRole("heading", { name: "Unlink Mercado Pago?" }),
+        screen.queryByRole("heading", { name: "¿Desvincular Mercado Pago?" }),
       ).not.toBeInTheDocument(),
     );
     expect(
@@ -165,13 +169,13 @@ describe("MercadoPagoConnectionCard", () => {
 
     await waitFor(() =>
       expect(
-        screen.getByRole("button", { name: "Unlink" }),
+        screen.getByRole("button", { name: "Desvincular" }),
       ).toBeInTheDocument(),
     );
-    fireEvent.click(screen.getByRole("button", { name: "Unlink" }));
+    fireEvent.click(screen.getByRole("button", { name: "Desvincular" }));
 
-    await screen.findByRole("heading", { name: "Unlink Mercado Pago?" });
-    fireEvent.click(screen.getByRole("button", { name: "Unlink" }));
+    await screen.findByRole("heading", { name: "¿Desvincular Mercado Pago?" });
+    fireEvent.click(screen.getByRole("button", { name: "Desvincular" }));
 
     await waitFor(() => {
       expect(
@@ -195,7 +199,7 @@ describe("MercadoPagoConnectionCard", () => {
 
     await waitFor(() =>
       expect(
-        screen.queryByRole("heading", { name: "Unlink Mercado Pago?" }),
+        screen.queryByRole("heading", { name: "¿Desvincular Mercado Pago?" }),
       ).not.toBeInTheDocument(),
     );
   });
@@ -205,21 +209,23 @@ describe("MercadoPagoConnectionCard", () => {
 
     await waitFor(() =>
       expect(
-        screen.getByRole("button", { name: "Switch account" }),
+        screen.getByRole("button", { name: "Cambiar cuenta" }),
       ).toBeInTheDocument(),
     );
-    fireEvent.click(screen.getByRole("button", { name: "Switch account" }));
+    fireEvent.click(screen.getByRole("button", { name: "Cambiar cuenta" }));
 
     const dialogHeading = await screen.findByRole("heading", {
-      name: "Switch Mercado Pago account?",
+      name: "¿Cambiar de cuenta de Mercado Pago?",
     });
     expect(dialogHeading).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    fireEvent.click(screen.getByRole("button", { name: "Cancelar" }));
 
     await waitFor(() =>
       expect(
-        screen.queryByRole("heading", { name: "Switch Mercado Pago account?" }),
+        screen.queryByRole("heading", {
+          name: "¿Cambiar de cuenta de Mercado Pago?",
+        }),
       ).not.toBeInTheDocument(),
     );
     expect(window.location.href).toBe("");
@@ -230,15 +236,15 @@ describe("MercadoPagoConnectionCard", () => {
 
     await waitFor(() =>
       expect(
-        screen.getByRole("button", { name: "Switch account" }),
+        screen.getByRole("button", { name: "Cambiar cuenta" }),
       ).toBeInTheDocument(),
     );
-    fireEvent.click(screen.getByRole("button", { name: "Switch account" }));
+    fireEvent.click(screen.getByRole("button", { name: "Cambiar cuenta" }));
 
     await screen.findByRole("heading", {
-      name: "Switch Mercado Pago account?",
+      name: "¿Cambiar de cuenta de Mercado Pago?",
     });
-    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+    fireEvent.click(screen.getByRole("button", { name: "Continuar" }));
 
     await waitFor(() =>
       expect(window.location.href).toBe("/api/clubs/mercadopago/connect"),

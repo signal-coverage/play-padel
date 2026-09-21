@@ -4,7 +4,7 @@ import { render, screen, waitFor, cleanup } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/messages/en.json";
+import messages from "@/messages/es.json";
 import { AuditLogsView } from "./AuditLogsView";
 
 // jsdom doesn't implement ResizeObserver, but DataTable relies on it
@@ -25,7 +25,7 @@ function renderView(fetchMock: ReturnType<typeof vi.fn>) {
   });
 
   return render(
-    <NextIntlClientProvider locale="en" messages={messages}>
+    <NextIntlClientProvider locale="es" messages={messages}>
       <QueryClientProvider client={queryClient}>
         <AuditLogsView />
       </QueryClientProvider>
@@ -72,7 +72,7 @@ describe("AuditLogsView", () => {
     expect(wrapper?.className).toContain("min-h-[60svh]");
     expect(wrapper?.className).toMatch(/\bmd:min-h-0\b/);
 
-    const pageFooter = screen.getByText(/page 1 of 1/i).closest("div");
+    const pageFooter = screen.getByText(/página 1 de 1/i).closest("div");
     const spacer = pageFooter?.nextElementSibling as HTMLElement | null;
     expect(spacer).not.toBeNull();
     expect(spacer?.getAttribute("aria-hidden")).toBe("true");

@@ -10,7 +10,7 @@ import {
 import "@testing-library/jest-dom/vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/messages/en.json";
+import messages from "@/messages/es.json";
 import { NotificationsBell } from "./NotificationsBell";
 import { notificationsQueryKey } from "./hooks";
 
@@ -140,7 +140,7 @@ function renderNotificationsBell(fetchMock: ReturnType<typeof vi.fn>) {
   });
 
   render(
-    <NextIntlClientProvider locale="en" messages={messages}>
+    <NextIntlClientProvider locale="es" messages={messages}>
       <QueryClientProvider client={queryClient}>
         <NotificationsBell />
       </QueryClientProvider>
@@ -202,14 +202,14 @@ async function renderAndAwaitBaseline(
   const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
 
   render(
-    <NextIntlClientProvider locale="en" messages={messages}>
+    <NextIntlClientProvider locale="es" messages={messages}>
       <QueryClientProvider client={queryClient}>
         <NotificationsBell />
       </QueryClientProvider>
     </NextIntlClientProvider>,
   );
 
-  await screen.findByRole("button", { name: "Notifications" });
+  await screen.findByRole("button", { name: "Notificaciones" });
   await waitFor(() => expect(call).toBe(1));
 
   return { queryClient, invalidateSpy };
@@ -239,7 +239,7 @@ describe("NotificationsBell", () => {
     renderNotificationsBell(fetchMock);
 
     const button = await screen.findByRole("button", {
-      name: "Notifications",
+      name: "Notificaciones",
     });
     expect(button).not.toBeDisabled();
   });
@@ -282,7 +282,7 @@ describe("NotificationsBell", () => {
     const initialBounceCount =
       initialIndicator.getAttribute("data-bounce-count");
 
-    const button = screen.getByRole("button", { name: "Notifications" });
+    const button = screen.getByRole("button", { name: "Notificaciones" });
     fireEvent.mouseEnter(button);
 
     // A hover-triggered replay remounts the indicator (see
@@ -305,7 +305,7 @@ describe("NotificationsBell", () => {
       .mockResolvedValue(jsonResponse({ notifications: [], unreadCount: 0 }));
     renderNotificationsBell(fetchMock);
 
-    await screen.findByRole("button", { name: "Notifications" });
+    await screen.findByRole("button", { name: "Notificaciones" });
     expect(
       screen.queryByTestId("notifications-unread-indicator"),
     ).not.toBeInTheDocument();
@@ -345,7 +345,7 @@ describe("NotificationsBell", () => {
     renderNotificationsBell(fetchMock);
 
     const button = await screen.findByRole("button", {
-      name: "Notifications",
+      name: "Notificaciones",
     });
     fireEvent.click(button);
 
@@ -377,7 +377,7 @@ describe("NotificationsBell", () => {
     renderNotificationsBell(fetchMock);
 
     fireEvent.click(
-      await screen.findByRole("button", { name: "Notifications" }),
+      await screen.findByRole("button", { name: "Notificaciones" }),
     );
 
     // --accent and --foreground/--muted-foreground are the same or a
@@ -438,7 +438,7 @@ describe("NotificationsBell", () => {
     renderNotificationsBell(fetchMock);
 
     fireEvent.click(
-      await screen.findByRole("button", { name: "Notifications" }),
+      await screen.findByRole("button", { name: "Notificaciones" }),
     );
 
     expect(
@@ -476,7 +476,7 @@ describe("NotificationsBell", () => {
     renderNotificationsBell(fetchMock);
 
     fireEvent.click(
-      await screen.findByRole("button", { name: "Notifications" }),
+      await screen.findByRole("button", { name: "Notificaciones" }),
     );
     const link = await screen.findByRole("link", {
       name: /your reservation is tomorrow/i,
@@ -519,7 +519,7 @@ describe("NotificationsBell", () => {
     renderNotificationsBell(fetchMock);
 
     fireEvent.click(
-      await screen.findByRole("button", { name: "Notifications" }),
+      await screen.findByRole("button", { name: "Notificaciones" }),
     );
     const link = await screen.findByRole("link", {
       name: /your reservation is tomorrow/i,
@@ -559,7 +559,7 @@ describe("NotificationsBell", () => {
     renderNotificationsBell(fetchMock);
 
     fireEvent.click(
-      await screen.findByRole("button", { name: "Notifications" }),
+      await screen.findByRole("button", { name: "Notificaciones" }),
     );
     const link = await screen.findByRole("link", {
       name: /payment confirmed/i,
@@ -585,11 +585,13 @@ describe("NotificationsBell", () => {
     renderNotificationsBell(fetchMock);
 
     const button = await screen.findByRole("button", {
-      name: "Notifications",
+      name: "Notificaciones",
     });
     fireEvent.click(button);
 
-    expect(await screen.findByText("No notifications yet")).toBeInTheDocument();
+    expect(
+      await screen.findByText("Todavía no tenés notificaciones"),
+    ).toBeInTheDocument();
   });
 
   it("calls PATCH /api/notifications/read-all when Mark all as read is clicked", async () => {
@@ -619,11 +621,11 @@ describe("NotificationsBell", () => {
     renderNotificationsBell(fetchMock);
 
     const button = await screen.findByRole("button", {
-      name: "Notifications",
+      name: "Notificaciones",
     });
     fireEvent.click(button);
     const markAllButton = await screen.findByRole("button", {
-      name: "Mark all as read",
+      name: "Marcar todas como leídas",
     });
     fireEvent.click(markAllButton);
 
@@ -669,10 +671,10 @@ describe("NotificationsBell", () => {
       ).toBeInTheDocument(),
     );
 
-    const button = screen.getByRole("button", { name: "Notifications" });
+    const button = screen.getByRole("button", { name: "Notificaciones" });
     fireEvent.click(button);
     const markAllButton = await screen.findByRole("button", {
-      name: "Mark all as read",
+      name: "Marcar todas como leídas",
     });
     fireEvent.click(markAllButton);
 
@@ -718,10 +720,10 @@ describe("NotificationsBell", () => {
       ).toBeInTheDocument(),
     );
 
-    const button = screen.getByRole("button", { name: "Notifications" });
+    const button = screen.getByRole("button", { name: "Notificaciones" });
     fireEvent.click(button);
     const markAllButton = await screen.findByRole("button", {
-      name: "Mark all as read",
+      name: "Marcar todas como leídas",
     });
     fireEvent.click(markAllButton);
 
@@ -782,14 +784,14 @@ describe("NotificationsBell", () => {
     const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
 
     render(
-      <NextIntlClientProvider locale="en" messages={messages}>
+      <NextIntlClientProvider locale="es" messages={messages}>
         <QueryClientProvider client={queryClient}>
           <NotificationsBell />
         </QueryClientProvider>
       </NextIntlClientProvider>,
     );
 
-    await screen.findByRole("button", { name: "Notifications" });
+    await screen.findByRole("button", { name: "Notificaciones" });
     // Wait for the FIRST fetch to actually resolve and get processed (its
     // own effect run establishes the "nothing new yet" baseline) before
     // triggering a second one — otherwise the manual refetchQueries below
@@ -863,14 +865,14 @@ describe("NotificationsBell", () => {
     const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
 
     render(
-      <NextIntlClientProvider locale="en" messages={messages}>
+      <NextIntlClientProvider locale="es" messages={messages}>
         <QueryClientProvider client={queryClient}>
           <NotificationsBell />
         </QueryClientProvider>
       </NextIntlClientProvider>,
     );
 
-    await screen.findByRole("button", { name: "Notifications" });
+    await screen.findByRole("button", { name: "Notificaciones" });
     await waitFor(() => expect(call).toBe(1));
     expect(invalidateSpy).not.toHaveBeenCalledWith(
       expect.objectContaining({
@@ -927,14 +929,14 @@ describe("NotificationsBell", () => {
     const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
 
     render(
-      <NextIntlClientProvider locale="en" messages={messages}>
+      <NextIntlClientProvider locale="es" messages={messages}>
         <QueryClientProvider client={queryClient}>
           <NotificationsBell />
         </QueryClientProvider>
       </NextIntlClientProvider>,
     );
 
-    await screen.findByRole("button", { name: "Notifications" });
+    await screen.findByRole("button", { name: "Notificaciones" });
     await waitFor(() => expect(call).toBe(1));
     expect(invalidateSpy).not.toHaveBeenCalledWith(
       expect.objectContaining({ queryKey: PENDING_CLUBS_QUERY_KEY }),
@@ -987,14 +989,14 @@ describe("NotificationsBell", () => {
     const invalidateSpy = vi.spyOn(queryClient, "invalidateQueries");
 
     render(
-      <NextIntlClientProvider locale="en" messages={messages}>
+      <NextIntlClientProvider locale="es" messages={messages}>
         <QueryClientProvider client={queryClient}>
           <NotificationsBell />
         </QueryClientProvider>
       </NextIntlClientProvider>,
     );
 
-    await screen.findByRole("button", { name: "Notifications" });
+    await screen.findByRole("button", { name: "Notificaciones" });
     await waitFor(() => expect(call).toBe(1));
 
     await queryClient.refetchQueries({ queryKey: notificationsQueryKey });
@@ -1045,14 +1047,14 @@ describe("NotificationsBell", () => {
     });
 
     render(
-      <NextIntlClientProvider locale="en" messages={messages}>
+      <NextIntlClientProvider locale="es" messages={messages}>
         <QueryClientProvider client={queryClient}>
           <NotificationsBell />
         </QueryClientProvider>
       </NextIntlClientProvider>,
     );
 
-    await screen.findByRole("button", { name: "Notifications" });
+    await screen.findByRole("button", { name: "Notificaciones" });
     await waitFor(() => expect(call).toBe(1));
     expect(refetchProfileMock).not.toHaveBeenCalled();
 
@@ -1098,14 +1100,14 @@ describe("NotificationsBell", () => {
     });
 
     render(
-      <NextIntlClientProvider locale="en" messages={messages}>
+      <NextIntlClientProvider locale="es" messages={messages}>
         <QueryClientProvider client={queryClient}>
           <NotificationsBell />
         </QueryClientProvider>
       </NextIntlClientProvider>,
     );
 
-    await screen.findByRole("button", { name: "Notifications" });
+    await screen.findByRole("button", { name: "Notificaciones" });
     await waitFor(() => expect(call).toBe(1));
 
     await queryClient.refetchQueries({ queryKey: notificationsQueryKey });
@@ -1151,14 +1153,14 @@ describe("NotificationsBell", () => {
     });
 
     render(
-      <NextIntlClientProvider locale="en" messages={messages}>
+      <NextIntlClientProvider locale="es" messages={messages}>
         <QueryClientProvider client={queryClient}>
           <NotificationsBell />
         </QueryClientProvider>
       </NextIntlClientProvider>,
     );
 
-    await screen.findByRole("button", { name: "Notifications" });
+    await screen.findByRole("button", { name: "Notificaciones" });
     await waitFor(() => expect(call).toBe(1));
     expect(refetchProfileMock).not.toHaveBeenCalled();
 
@@ -1204,14 +1206,14 @@ describe("NotificationsBell", () => {
     });
 
     render(
-      <NextIntlClientProvider locale="en" messages={messages}>
+      <NextIntlClientProvider locale="es" messages={messages}>
         <QueryClientProvider client={queryClient}>
           <NotificationsBell />
         </QueryClientProvider>
       </NextIntlClientProvider>,
     );
 
-    await screen.findByRole("button", { name: "Notifications" });
+    await screen.findByRole("button", { name: "Notificaciones" });
     await waitFor(() => expect(call).toBe(1));
     expect(fireSuccessCelebrationMock).not.toHaveBeenCalled();
 
@@ -1259,14 +1261,14 @@ describe("NotificationsBell", () => {
     });
 
     render(
-      <NextIntlClientProvider locale="en" messages={messages}>
+      <NextIntlClientProvider locale="es" messages={messages}>
         <QueryClientProvider client={queryClient}>
           <NotificationsBell />
         </QueryClientProvider>
       </NextIntlClientProvider>,
     );
 
-    await screen.findByRole("button", { name: "Notifications" });
+    await screen.findByRole("button", { name: "Notificaciones" });
     await waitFor(() => expect(call).toBe(1));
 
     await queryClient.refetchQueries({ queryKey: notificationsQueryKey });
@@ -1313,14 +1315,14 @@ describe("NotificationsBell", () => {
     });
 
     render(
-      <NextIntlClientProvider locale="en" messages={messages}>
+      <NextIntlClientProvider locale="es" messages={messages}>
         <QueryClientProvider client={queryClient}>
           <NotificationsBell />
         </QueryClientProvider>
       </NextIntlClientProvider>,
     );
 
-    await screen.findByRole("button", { name: "Notifications" });
+    await screen.findByRole("button", { name: "Notificaciones" });
     await waitFor(() => expect(call).toBe(1));
 
     await queryClient.refetchQueries({ queryKey: notificationsQueryKey });
@@ -1335,7 +1337,7 @@ describe("NotificationsBell", () => {
       .mockResolvedValue(jsonResponse({ notifications: [], unreadCount: 0 }));
     renderNotificationsBell(fetchMock);
 
-    await screen.findByRole("button", { name: "Notifications" });
+    await screen.findByRole("button", { name: "Notificaciones" });
     await waitFor(() =>
       expect(MockEventSource.instances.length).toBeGreaterThan(0),
     );
@@ -1383,7 +1385,7 @@ describe("NotificationsBell", () => {
       .mockResolvedValue(jsonResponse({ notifications: [], unreadCount: 0 }));
     renderNotificationsBell(fetchMock);
 
-    await screen.findByRole("button", { name: "Notifications" });
+    await screen.findByRole("button", { name: "Notificaciones" });
     await waitFor(() =>
       expect(MockEventSource.instances.length).toBeGreaterThan(0),
     );

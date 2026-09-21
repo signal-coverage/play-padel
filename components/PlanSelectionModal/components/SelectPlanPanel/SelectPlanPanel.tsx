@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { PlanOptionCard } from "@/app/dashboard/_components/ClubOperationalGate/components/PaymentActivationScreen/components/PlanOptionCard";
 import { isAutomatedCheckoutAvailable } from "../../utils";
@@ -30,6 +31,8 @@ export function SelectPlanPanel({
   onChangePlan,
   onContinue,
 }: SelectPlanPanelProps) {
+  const t = useTranslations("SelectPlanPanel");
+
   if (!selectedPlan) return null;
 
   const canCheckout = isAutomatedCheckoutAvailable(selectedPlan);
@@ -56,7 +59,7 @@ export function SelectPlanPanel({
 
         <div className="flex flex-col justify-between">
           <Button type="button" className="h-14" onClick={onChangePlan}>
-            Change Plan
+            {t("changePlan")}
           </Button>
 
           <RenewalModeToggle
@@ -68,8 +71,7 @@ export function SelectPlanPanel({
 
       {!canCheckout && (
         <p className="text-xs text-muted-foreground">
-          {selectedPlan} is a custom, contact-us tier — reach out to our team to
-          get set up.
+          {t("contactUsTier", { plan: selectedPlan })}
         </p>
       )}
 
@@ -85,7 +87,7 @@ export function SelectPlanPanel({
           onClick={onContinue}
           disabled={!canCheckout || isSubmitting}
         >
-          {isSubmitting ? "Starting checkout…" : "Continue"}
+          {isSubmitting ? t("startingCheckout") : t("continue")}
         </Button>
       </div>
     </div>

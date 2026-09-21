@@ -4,7 +4,7 @@ import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { NextIntlClientProvider } from "next-intl";
 import { ScrollText, Activity, Shield } from "lucide-react";
-import messages from "@/messages/en.json";
+import messages from "@/messages/es.json";
 import { NavGroupMenu } from "./NavGroupMenu";
 import type { VisibleNavLink } from "../../hooks";
 
@@ -33,7 +33,7 @@ const ITEMS: VisibleNavLink[] = [
 
 function renderWithIntl(ui: React.ReactElement) {
   return render(
-    <NextIntlClientProvider locale="en" messages={messages}>
+    <NextIntlClientProvider locale="es" messages={messages}>
       {ui}
     </NextIntlClientProvider>,
   );
@@ -50,8 +50,8 @@ describe("NavGroupMenu", () => {
     );
 
     expect(screen.getByText("Admin")).toBeInTheDocument();
-    expect(screen.queryByText("Audit Log")).not.toBeInTheDocument();
-    expect(screen.queryByText("System Status")).not.toBeInTheDocument();
+    expect(screen.queryByText("Registro de auditoría")).not.toBeInTheDocument();
+    expect(screen.queryByText("Estado del sistema")).not.toBeInTheDocument();
   });
 
   it("reveals every grouped item as a link to its own href once the trigger is clicked", async () => {
@@ -62,12 +62,12 @@ describe("NavGroupMenu", () => {
     fireEvent.click(screen.getByText("Admin"));
 
     const auditLog = await screen.findByRole("menuitem", {
-      name: "Audit Log",
+      name: "Registro de auditoría",
     });
     expect(auditLog).toHaveAttribute("href", "/dashboard/audit-logs");
 
     const systemStatus = await screen.findByRole("menuitem", {
-      name: "System Status",
+      name: "Estado del sistema",
     });
     expect(systemStatus).toHaveAttribute("href", "/dashboard/admin-status");
   });
@@ -108,13 +108,13 @@ describe("NavGroupMenu", () => {
 
     fireEvent.click(screen.getByText("Admin"));
     expect(
-      screen.getByRole("menuitem", { name: "Audit Log" }),
+      screen.getByRole("menuitem", { name: "Registro de auditoría" }),
     ).toBeInTheDocument();
 
     fireEvent.mouseDown(screen.getByText("Elsewhere"));
 
     expect(
-      screen.queryByRole("menuitem", { name: "Audit Log" }),
+      screen.queryByRole("menuitem", { name: "Registro de auditoría" }),
     ).not.toBeInTheDocument();
   });
 
@@ -128,7 +128,7 @@ describe("NavGroupMenu", () => {
     fireEvent.mouseDown(menu);
 
     expect(
-      screen.getByRole("menuitem", { name: "Audit Log" }),
+      screen.getByRole("menuitem", { name: "Registro de auditoría" }),
     ).toBeInTheDocument();
   });
 
@@ -140,13 +140,13 @@ describe("NavGroupMenu", () => {
     const trigger = screen.getByRole("button", { name: "Admin" });
     fireEvent.click(trigger);
     expect(
-      screen.getByRole("menuitem", { name: "Audit Log" }),
+      screen.getByRole("menuitem", { name: "Registro de auditoría" }),
     ).toBeInTheDocument();
 
     fireEvent.keyDown(document, { key: "Escape" });
 
     expect(
-      screen.queryByRole("menuitem", { name: "Audit Log" }),
+      screen.queryByRole("menuitem", { name: "Registro de auditoría" }),
     ).not.toBeInTheDocument();
     expect(trigger).toHaveFocus();
   });

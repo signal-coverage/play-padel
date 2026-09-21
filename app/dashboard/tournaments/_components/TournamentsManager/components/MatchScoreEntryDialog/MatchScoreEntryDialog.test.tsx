@@ -9,7 +9,7 @@ import {
 } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/messages/en.json";
+import messages from "@/messages/es.json";
 import { MatchScoreEntryDialog } from "./MatchScoreEntryDialog";
 
 afterEach(cleanup);
@@ -18,7 +18,7 @@ function renderDialog(
   props: React.ComponentProps<typeof MatchScoreEntryDialog>,
 ) {
   return render(
-    <NextIntlClientProvider locale="en" messages={messages}>
+    <NextIntlClientProvider locale="es" messages={messages}>
       <MatchScoreEntryDialog {...props} />
     </NextIntlClientProvider>,
   );
@@ -35,14 +35,14 @@ describe("MatchScoreEntryDialog", () => {
       isSubmitting: false,
     });
 
-    const teamAInputs = screen.getAllByLabelText("Team A games");
-    const teamBInputs = screen.getAllByLabelText("Team B games");
+    const teamAInputs = screen.getAllByLabelText("Games del equipo A");
+    const teamBInputs = screen.getAllByLabelText("Games del equipo B");
     fireEvent.change(teamAInputs[0], { target: { value: "6" } });
     fireEvent.change(teamBInputs[0], { target: { value: "4" } });
     fireEvent.change(teamAInputs[1], { target: { value: "6" } });
     fireEvent.change(teamBInputs[1], { target: { value: "2" } });
 
-    fireEvent.click(screen.getByRole("button", { name: /save score/i }));
+    fireEvent.click(screen.getByRole("button", { name: /guardar resultado/i }));
 
     await waitFor(() =>
       expect(onSubmit).toHaveBeenCalledWith([
@@ -62,17 +62,17 @@ describe("MatchScoreEntryDialog", () => {
       isSubmitting: false,
     });
 
-    const teamAInputs = screen.getAllByLabelText("Team A games");
-    const teamBInputs = screen.getAllByLabelText("Team B games");
+    const teamAInputs = screen.getAllByLabelText("Games del equipo A");
+    const teamBInputs = screen.getAllByLabelText("Games del equipo B");
     fireEvent.change(teamAInputs[0], { target: { value: "6" } });
     fireEvent.change(teamBInputs[0], { target: { value: "4" } });
     fireEvent.change(teamAInputs[1], { target: { value: "3" } });
     fireEvent.change(teamBInputs[1], { target: { value: "6" } });
 
-    fireEvent.click(screen.getByRole("button", { name: /save score/i }));
+    fireEvent.click(screen.getByRole("button", { name: /guardar resultado/i }));
 
     await waitFor(() =>
-      expect(screen.getByText(/set 3 is required/i)).toBeInTheDocument(),
+      expect(screen.getByText(/el set 3 es obligatorio/i)).toBeInTheDocument(),
     );
     expect(onSubmit).not.toHaveBeenCalled();
   });
@@ -87,8 +87,8 @@ describe("MatchScoreEntryDialog", () => {
       isSubmitting: false,
     });
 
-    const teamAInputs = screen.getAllByLabelText("Team A games");
-    const teamBInputs = screen.getAllByLabelText("Team B games");
+    const teamAInputs = screen.getAllByLabelText("Games del equipo A");
+    const teamBInputs = screen.getAllByLabelText("Games del equipo B");
     fireEvent.change(teamAInputs[0], { target: { value: "6" } });
     fireEvent.change(teamBInputs[0], { target: { value: "4" } });
     fireEvent.change(teamAInputs[1], { target: { value: "3" } });
@@ -96,7 +96,7 @@ describe("MatchScoreEntryDialog", () => {
     fireEvent.change(teamAInputs[2], { target: { value: "7" } });
     fireEvent.change(teamBInputs[2], { target: { value: "5" } });
 
-    fireEvent.click(screen.getByRole("button", { name: /save score/i }));
+    fireEvent.click(screen.getByRole("button", { name: /guardar resultado/i }));
 
     await waitFor(() =>
       expect(onSubmit).toHaveBeenCalledWith([

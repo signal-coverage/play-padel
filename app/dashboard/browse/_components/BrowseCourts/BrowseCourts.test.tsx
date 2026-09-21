@@ -11,7 +11,7 @@ import "@testing-library/jest-dom/vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/messages/en.json";
+import messages from "@/messages/es.json";
 import type { ClubBrowseSummary, RawCourt } from "./types";
 
 const { toastMock } = vi.hoisted(() => ({
@@ -159,7 +159,7 @@ function renderBrowseCourts() {
   });
   return render(
     <QueryClientProvider client={queryClient}>
-      <NextIntlClientProvider locale="en" messages={messages}>
+      <NextIntlClientProvider locale="es" messages={messages}>
         {/* club/court are preselected via the URL (like a real shared
           `?club=X&court=Y` link) rather than driven through the stubbed
           ClubListPanel/ClubCourtsPanel — this keeps the test focused on the
@@ -210,15 +210,17 @@ describe("BrowseCourts — bank transfer payment method selection", () => {
     fireEvent.click(screen.getByText("Book slot"));
 
     expect(
-      await screen.findByRole("heading", { name: "Confirm reservation" }),
+      await screen.findByRole("heading", { name: "Confirmar reserva" }),
     ).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: /bank transfer/i }));
+    fireEvent.click(
+      screen.getByRole("button", { name: /transferencia bancaria/i }),
+    );
 
     // Club's transfer details should now be visible in the dialog.
     expect(screen.getByText("Banco Test")).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: /confirm booking/i }));
+    fireEvent.click(screen.getByRole("button", { name: /confirmar reserva/i }));
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
     const [url, init] = fetchMock.mock.calls[0];
@@ -228,30 +230,30 @@ describe("BrowseCourts — bank transfer payment method selection", () => {
 
     await waitFor(() =>
       expect(toastMock.success).toHaveBeenCalledWith(
-        "Slot held for 60 minutes — send your transfer and message the club.",
+        "Horario reservado por 60 minutos — enviá tu transferencia y escribile al club.",
       ),
     );
     // This is an unpaid 60-minute hold, not an actual confirmation — the
-    // free/instant "Reservation confirmed." copy and celebration must never
+    // free/instant "Reserva confirmada." copy and celebration must never
     // fire for this path.
-    expect(toastMock.success).not.toHaveBeenCalledWith(
-      "Reservation confirmed.",
-    );
+    expect(toastMock.success).not.toHaveBeenCalledWith("Reserva confirmada.");
     expect(toastMock.error).not.toHaveBeenCalled();
     expect(fireSuccessCelebrationMock).not.toHaveBeenCalled();
 
     // The dialog must stay open — closing it here would permanently lose the
     // bank details/WhatsApp number the player still needs.
     expect(
-      screen.getByRole("heading", { name: "Confirm reservation" }),
+      screen.getByRole("heading", { name: "Confirmar reserva" }),
     ).toBeInTheDocument();
     expect(screen.getByText("Banco Test")).toBeInTheDocument();
 
     // The footer swaps to a dismiss-only "Got it" action; the old confirm
     // button is gone.
-    expect(screen.getByRole("button", { name: /got it/i })).toBeInTheDocument();
     expect(
-      screen.queryByRole("button", { name: /confirm booking/i }),
+      screen.getByRole("button", { name: /entendido/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /confirmar reserva/i }),
     ).not.toBeInTheDocument();
   });
 
@@ -274,14 +276,12 @@ describe("BrowseCourts — bank transfer payment method selection", () => {
     fireEvent.click(screen.getByText("Book slot"));
 
     expect(
-      await screen.findByRole("heading", { name: "Confirm reservation" }),
+      await screen.findByRole("heading", { name: "Confirmar reserva" }),
     ).toBeInTheDocument();
 
     // MERCADOPAGO is already selected by default (first in the test club's
     // availablePaymentMethods).
-    fireEvent.click(
-      screen.getByRole("button", { name: /continue to payment/i }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: /continuar al pago/i }));
 
     await waitFor(() =>
       expect(window.location.href).toBe("https://mp.example.com/checkout/abc"),
@@ -316,18 +316,18 @@ describe("BrowseCourts — bank transfer payment method selection", () => {
     fireEvent.click(screen.getByText("Book slot"));
 
     expect(
-      await screen.findByRole("heading", { name: "Confirm reservation" }),
+      await screen.findByRole("heading", { name: "Confirmar reserva" }),
     ).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: /book court/i }));
+    fireEvent.click(screen.getByRole("button", { name: /reservar cancha/i }));
 
     await waitFor(() =>
-      expect(toastMock.success).toHaveBeenCalledWith("Reservation confirmed."),
+      expect(toastMock.success).toHaveBeenCalledWith("Reserva confirmada."),
     );
     expect(toastMock.error).not.toHaveBeenCalled();
     await waitFor(() =>
       expect(
-        screen.queryByRole("heading", { name: "Confirm reservation" }),
+        screen.queryByRole("heading", { name: "Confirmar reserva" }),
       ).not.toBeInTheDocument(),
     );
   });

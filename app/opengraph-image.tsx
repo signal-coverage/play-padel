@@ -12,9 +12,7 @@ import { ImageResponse } from "next/og";
 // pinned light theme, see the "Light-locked surfaces" convention): navy
 // background/foreground (#073d6b) with the lime accent (#dffd36).
 
-// Spanish-only while English is hidden site-wide — see
-// i18n/getRequestLocale.ts. Revert to "Play Padel — Book padel courts
-// online" alongside that change once both languages are live again.
+// Spanish-only — English support has been removed site-wide.
 export const alt = "Play Padel — Reservá canchas de pádel online";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";

@@ -4,7 +4,7 @@ import { render, screen, fireEvent, cleanup } from "@testing-library/react";
 import { afterEach } from "vitest";
 import "@testing-library/jest-dom/vitest";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/messages/en.json";
+import messages from "@/messages/es.json";
 import { GroupBuilder } from "./GroupBuilder";
 import type { CategoryGroup, CategoryTeam } from "../../types";
 
@@ -12,7 +12,7 @@ afterEach(cleanup);
 
 function renderBuilder(props: React.ComponentProps<typeof GroupBuilder>) {
   return render(
-    <NextIntlClientProvider locale="en" messages={messages}>
+    <NextIntlClientProvider locale="es" messages={messages}>
       <GroupBuilder {...props} />
     </NextIntlClientProvider>,
   );
@@ -54,7 +54,7 @@ describe("GroupBuilder", () => {
     renderBuilder(props);
 
     fireEvent.click(
-      screen.getByRole("button", { name: /generate groups automatically/i }),
+      screen.getByRole("button", { name: /generar grupos automáticamente/i }),
     );
 
     expect(props.onGenerateAutomatic).toHaveBeenCalled();
@@ -64,15 +64,15 @@ describe("GroupBuilder", () => {
     const props = baseProps();
     renderBuilder(props);
 
-    const saveButton = screen.getByRole("button", { name: /save groups/i });
+    const saveButton = screen.getByRole("button", { name: /guardar grupos/i });
     expect(saveButton).toBeDisabled();
 
-    fireEvent.change(screen.getByLabelText(/group for alice \/ ana/i), {
+    fireEvent.change(screen.getByLabelText(/grupo para alice \/ ana/i), {
       target: { value: "Group A" },
     });
     expect(saveButton).toBeDisabled();
 
-    fireEvent.change(screen.getByLabelText(/group for bob \/ ben/i), {
+    fireEvent.change(screen.getByLabelText(/grupo para bob \/ ben/i), {
       target: { value: "Group B" },
     });
     expect(saveButton).not.toBeDisabled();
@@ -82,13 +82,13 @@ describe("GroupBuilder", () => {
     const props = baseProps();
     renderBuilder(props);
 
-    fireEvent.change(screen.getByLabelText(/group for alice \/ ana/i), {
+    fireEvent.change(screen.getByLabelText(/grupo para alice \/ ana/i), {
       target: { value: "Group A" },
     });
-    fireEvent.change(screen.getByLabelText(/group for bob \/ ben/i), {
+    fireEvent.change(screen.getByLabelText(/grupo para bob \/ ben/i), {
       target: { value: "Group A" },
     });
-    fireEvent.click(screen.getByRole("button", { name: /save groups/i }));
+    fireEvent.click(screen.getByRole("button", { name: /guardar grupos/i }));
 
     expect(props.onSaveManual).toHaveBeenCalledWith([
       { groupName: "Group A", teamIds: ["t1", "t2"] },
@@ -106,10 +106,10 @@ describe("GroupBuilder", () => {
     expect(screen.getByText("Alice / Ana")).toBeInTheDocument();
     expect(screen.getByText("Bob / Ben")).toBeInTheDocument();
     expect(
-      screen.queryByRole("button", { name: /generate groups automatically/i }),
+      screen.queryByRole("button", { name: /generar grupos automáticamente/i }),
     ).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: /lock groups/i }));
+    fireEvent.click(screen.getByRole("button", { name: /bloquear grupos/i }));
     expect(props.onLock).toHaveBeenCalled();
   });
 
@@ -122,7 +122,7 @@ describe("GroupBuilder", () => {
     renderBuilder(props);
 
     expect(
-      screen.getByRole("button", { name: /groups locked/i }),
+      screen.getByRole("button", { name: /grupos bloqueados/i }),
     ).toBeDisabled();
   });
 });

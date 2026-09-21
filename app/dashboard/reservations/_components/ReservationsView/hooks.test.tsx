@@ -4,7 +4,7 @@ import { renderHook, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { NextIntlClientProvider } from "next-intl";
 import type { ReactNode } from "react";
-import messages from "@/messages/en.json";
+import messages from "@/messages/es.json";
 import { useDayReservations } from "./hooks";
 
 // jsdom doesn't implement EventSource. Same shape as
@@ -49,7 +49,7 @@ function makeWrapper() {
   });
   return function Wrapper({ children }: { children: ReactNode }) {
     return (
-      <NextIntlClientProvider locale="en" messages={messages}>
+      <NextIntlClientProvider locale="es" messages={messages}>
         <QueryClientProvider client={queryClient}>
           {children}
         </QueryClientProvider>

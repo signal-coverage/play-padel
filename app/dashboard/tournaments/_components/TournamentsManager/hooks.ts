@@ -9,6 +9,7 @@ import {
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import type {
+  CreateTournamentInput,
   EnterMatchScoreInput,
   RecordWalkoverInput,
   SetGroupsInput,
@@ -35,30 +36,112 @@ async function fetchJson<T>(
   return res.json();
 }
 
-function categoryPath(tournamentId: string, categoryId: string): string {
-  return `/api/clubs/tournaments/${tournamentId}/categories/${categoryId}`;
+// With a clubId, every request below routes through the admin-only
+// /api/admin/clubs/[clubId]/tournaments/** tree (see AdminTournamentsView) —
+// same shape as ClubSettingsView/hooks.ts's clubEndpoint/clubQueryKey.
+// Without one, this is byte-identical to the original owner-only
+// /api/clubs/tournaments/** endpoints/keys.
+function tournamentsBasePath(clubId?: string): string {
+  return clubId
+    ? `/api/admin/clubs/${clubId}/tournaments`
+    : "/api/clubs/tournaments";
 }
 
-export function useManagedTournaments() {
+function tournamentPath(
+  clubId: string | undefined,
+  tournamentId: string,
+): string {
+  return `${tournamentsBasePath(clubId)}/${tournamentId}`;
+}
+
+function categoryPath(
+  clubId: string | undefined,
+  tournamentId: string,
+  categoryId: string,
+): string {
+  return `${tournamentPath(clubId, tournamentId)}/categories/${categoryId}`;
+}
+
+// Only the top-level tournaments list's queryKey needs clubId added — every
+// other key below is already scoped by a real, globally-unique resource id
+// (tournamentId/categoryId/groupId), so switching the selected club in
+// AdminTournamentsView's picker can never show another club's stale data for
+// those. The plain list (no id of its own) is the one exception: without
+// this, switching clubs would keep showing the previously-selected club's
+// tournament list until a hard refetch.
+function tournamentsListQueryKey(clubId?: string) {
+  return clubId
+    ? (["tournaments", "manage", "admin", clubId] as const)
+    : (["tournaments", "manage"] as const);
+}
+
+export function useManagedTournaments(clubId?: string) {
   const t = useTranslations("TournamentsManagerData");
   return useQuery({
-    queryKey: ["tournaments", "manage"],
+    queryKey: tournamentsListQueryKey(clubId),
     queryFn: () =>
       fetchJson<{ tournaments: OwnerTournamentSummary[] }>(
-        "/api/clubs/tournaments",
+        tournamentsBasePath(clubId),
         undefined,
         t("genericError"),
       ).then((data) => data.tournaments),
   });
 }
 
-export function useTournamentDetail(tournamentId: string | null) {
+export function useCreateTournament(clubId?: string) {
+  const t = useTranslations("TournamentsManagerData");
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: CreateTournamentInput) =>
+      fetchJson<{ tournament: OwnerTournamentSummary }>(
+        tournamentsBasePath(clubId),
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(input),
+        },
+        t("genericError"),
+      ),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: tournamentsListQueryKey(clubId),
+      });
+      toast.success(t("tournamentCreated"));
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+}
+
+export function usePublishTournament(clubId?: string) {
+  const t = useTranslations("TournamentsManagerData");
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (tournamentId: string) =>
+      fetchJson<{ tournament: OwnerTournamentSummary }>(
+        `${tournamentPath(clubId, tournamentId)}/publish`,
+        { method: "POST" },
+        t("genericError"),
+      ),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: tournamentsListQueryKey(clubId),
+      });
+      toast.success(t("tournamentPublished"));
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+}
+
+export function useTournamentDetail(
+  tournamentId: string | null,
+  clubId?: string,
+) {
   const t = useTranslations("TournamentsManagerData");
   return useQuery({
-    queryKey: ["tournaments", "manage", "detail", tournamentId],
+    queryKey: ["tournaments", "manage", "detail", tournamentId, clubId],
     queryFn: () =>
       fetchJson<{ tournament: OwnerTournamentDetail }>(
-        `/api/clubs/tournaments/${tournamentId}`,
+        tournamentPath(clubId, tournamentId!),
         undefined,
         t("genericError"),
       ).then((data) => data.tournament),
@@ -69,13 +152,14 @@ export function useTournamentDetail(tournamentId: string | null) {
 export function useCategoryTeams(
   tournamentId: string | null,
   categoryId: string | null,
+  clubId?: string,
 ) {
   const t = useTranslations("TournamentsManagerData");
   return useQuery({
     queryKey: ["tournaments", "manage", "teams", categoryId],
     queryFn: () =>
       fetchJson<{ teams: CategoryTeam[] }>(
-        `${categoryPath(tournamentId!, categoryId!)}/teams`,
+        `${categoryPath(clubId, tournamentId!, categoryId!)}/teams`,
         undefined,
         t("genericError"),
       ).then((data) => data.teams),
@@ -86,13 +170,14 @@ export function useCategoryTeams(
 export function useCategoryGroups(
   tournamentId: string | null,
   categoryId: string | null,
+  clubId?: string,
 ) {
   const t = useTranslations("TournamentsManagerData");
   return useQuery({
     queryKey: ["tournaments", "manage", "groups", categoryId],
     queryFn: () =>
       fetchJson<{ groups: CategoryGroup[] }>(
-        `${categoryPath(tournamentId!, categoryId!)}/groups`,
+        `${categoryPath(clubId, tournamentId!, categoryId!)}/groups`,
         undefined,
         t("genericError"),
       ).then((data) => data.groups),
@@ -100,13 +185,17 @@ export function useCategoryGroups(
   });
 }
 
-export function useSetGroups(tournamentId: string, categoryId: string) {
+export function useSetGroups(
+  tournamentId: string,
+  categoryId: string,
+  clubId?: string,
+) {
   const t = useTranslations("TournamentsManagerData");
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (input: SetGroupsInput) =>
       fetchJson<{ ok: true }>(
-        `${categoryPath(tournamentId, categoryId)}/groups`,
+        `${categoryPath(clubId, tournamentId, categoryId)}/groups`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -127,19 +216,23 @@ export function useSetGroups(tournamentId: string, categoryId: string) {
   });
 }
 
-export function useLockGroups(tournamentId: string, categoryId: string) {
+export function useLockGroups(
+  tournamentId: string,
+  categoryId: string,
+  clubId?: string,
+) {
   const t = useTranslations("TournamentsManagerData");
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: () =>
       fetchJson<{ ok: true }>(
-        `${categoryPath(tournamentId, categoryId)}/groups/lock`,
+        `${categoryPath(clubId, tournamentId, categoryId)}/groups/lock`,
         { method: "POST" },
         t("genericError"),
       ),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["tournaments", "manage", "detail", tournamentId],
+        queryKey: ["tournaments", "manage", "detail", tournamentId, clubId],
       });
       toast.success(t("groupsLocked"));
     },
@@ -151,13 +244,14 @@ export function useGroupMatches(
   tournamentId: string | null,
   categoryId: string | null,
   groupId: string | null,
+  clubId?: string,
 ) {
   const t = useTranslations("TournamentsManagerData");
   return useQuery({
     queryKey: ["tournaments", "manage", "group-matches", groupId],
     queryFn: () =>
       fetchJson<{ matches: GroupMatch[] }>(
-        `${categoryPath(tournamentId!, categoryId!)}/groups/${groupId}/matches`,
+        `${categoryPath(clubId, tournamentId!, categoryId!)}/groups/${groupId}/matches`,
         undefined,
         t("genericError"),
       ).then((data) => data.matches),
@@ -169,13 +263,14 @@ export function useGroupStandings(
   tournamentId: string | null,
   categoryId: string | null,
   groupId: string | null,
+  clubId?: string,
 ) {
   const t = useTranslations("TournamentsManagerData");
   return useQuery({
     queryKey: ["tournaments", "manage", "group-standings", groupId],
     queryFn: () =>
       fetchJson<{ standings: StandingRowRecord[] }>(
-        `${categoryPath(tournamentId!, categoryId!)}/groups/${groupId}/standings`,
+        `${categoryPath(clubId, tournamentId!, categoryId!)}/groups/${groupId}/standings`,
         undefined,
         t("genericError"),
       ).then((data) => data.standings),
@@ -187,6 +282,7 @@ export function useEnterMatchScore(
   tournamentId: string,
   categoryId: string,
   groupId: string,
+  clubId?: string,
 ) {
   const t = useTranslations("TournamentsManagerData");
   const queryClient = useQueryClient();
@@ -199,7 +295,7 @@ export function useEnterMatchScore(
       input: EnterMatchScoreInput;
     }) =>
       fetchJson<{ ok: true }>(
-        `${categoryPath(tournamentId, categoryId)}/matches/${matchId}/score`,
+        `${categoryPath(clubId, tournamentId, categoryId)}/matches/${matchId}/score`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -224,6 +320,7 @@ export function useRecordWalkover(
   tournamentId: string,
   categoryId: string,
   groupId: string,
+  clubId?: string,
 ) {
   const t = useTranslations("TournamentsManagerData");
   const queryClient = useQueryClient();
@@ -236,7 +333,7 @@ export function useRecordWalkover(
       input: RecordWalkoverInput;
     }) =>
       fetchJson<{ ok: true }>(
-        `${categoryPath(tournamentId, categoryId)}/matches/${matchId}/walkover`,
+        `${categoryPath(clubId, tournamentId, categoryId)}/matches/${matchId}/walkover`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -272,6 +369,7 @@ export function useAllGroupMatches(
   tournamentId: string | null,
   categoryId: string | null,
   groupIds: string[],
+  clubId?: string,
 ) {
   const t = useTranslations("TournamentsManagerData");
   return useQueries({
@@ -279,7 +377,7 @@ export function useAllGroupMatches(
       queryKey: ["tournaments", "manage", "group-matches", groupId],
       queryFn: () =>
         fetchJson<{ matches: GroupMatch[] }>(
-          `${categoryPath(tournamentId!, categoryId!)}/groups/${groupId}/matches`,
+          `${categoryPath(clubId, tournamentId!, categoryId!)}/groups/${groupId}/matches`,
           undefined,
           t("genericError"),
         ).then((data) => data.matches),
@@ -291,13 +389,14 @@ export function useAllGroupMatches(
 export function useKnockoutMatches(
   tournamentId: string | null,
   categoryId: string | null,
+  clubId?: string,
 ) {
   const t = useTranslations("TournamentsManagerData");
   return useQuery({
     queryKey: ["tournaments", "manage", "knockout-matches", categoryId],
     queryFn: () =>
       fetchJson<{ matches: GroupMatch[] }>(
-        `${categoryPath(tournamentId!, categoryId!)}/knockout`,
+        `${categoryPath(clubId, tournamentId!, categoryId!)}/knockout`,
         undefined,
         t("genericError"),
       ).then((data) => data.matches),
@@ -308,13 +407,14 @@ export function useKnockoutMatches(
 export function useGenerateKnockoutBracket(
   tournamentId: string,
   categoryId: string,
+  clubId?: string,
 ) {
   const t = useTranslations("TournamentsManagerData");
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: () =>
       fetchJson<{ ok: true }>(
-        `${categoryPath(tournamentId, categoryId)}/knockout/generate`,
+        `${categoryPath(clubId, tournamentId, categoryId)}/knockout/generate`,
         { method: "POST" },
         t("genericError"),
       ),
@@ -323,7 +423,7 @@ export function useGenerateKnockoutBracket(
         queryKey: ["tournaments", "manage", "knockout-matches", categoryId],
       });
       queryClient.invalidateQueries({
-        queryKey: ["tournaments", "manage", "detail", tournamentId],
+        queryKey: ["tournaments", "manage", "detail", tournamentId, clubId],
       });
       toast.success(t("knockoutBracketGenerated"));
     },
@@ -334,6 +434,7 @@ export function useGenerateKnockoutBracket(
 export function useEnterKnockoutMatchScore(
   tournamentId: string,
   categoryId: string,
+  clubId?: string,
 ) {
   const t = useTranslations("TournamentsManagerData");
   const queryClient = useQueryClient();
@@ -346,7 +447,7 @@ export function useEnterKnockoutMatchScore(
       input: EnterMatchScoreInput;
     }) =>
       fetchJson<{ ok: true }>(
-        `${categoryPath(tournamentId, categoryId)}/matches/${matchId}/score`,
+        `${categoryPath(clubId, tournamentId, categoryId)}/matches/${matchId}/score`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -367,6 +468,7 @@ export function useEnterKnockoutMatchScore(
 export function useRecordKnockoutWalkover(
   tournamentId: string,
   categoryId: string,
+  clubId?: string,
 ) {
   const t = useTranslations("TournamentsManagerData");
   const queryClient = useQueryClient();
@@ -379,7 +481,7 @@ export function useRecordKnockoutWalkover(
       input: RecordWalkoverInput;
     }) =>
       fetchJson<{ ok: true }>(
-        `${categoryPath(tournamentId, categoryId)}/matches/${matchId}/walkover`,
+        `${categoryPath(clubId, tournamentId, categoryId)}/matches/${matchId}/walkover`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

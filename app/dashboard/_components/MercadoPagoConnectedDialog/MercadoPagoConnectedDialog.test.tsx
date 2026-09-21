@@ -10,7 +10,7 @@ import {
 import "@testing-library/jest-dom/vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/messages/en.json";
+import messages from "@/messages/es.json";
 import { MercadoPagoConnectedDialog } from "./MercadoPagoConnectedDialog";
 
 const { toastMock } = vi.hoisted(() => ({
@@ -54,7 +54,7 @@ function renderDialog(
   };
 
   const utils = render(
-    <NextIntlClientProvider locale="en" messages={messages}>
+    <NextIntlClientProvider locale="es" messages={messages}>
       <QueryClientProvider client={queryClient}>
         <MercadoPagoConnectedDialog {...props} />
       </QueryClientProvider>
@@ -79,24 +79,24 @@ describe("MercadoPagoConnectedDialog", () => {
     renderDialog({ open: false });
 
     expect(
-      screen.queryByText("Mercado Pago connected!"),
+      screen.queryByText("¡Mercado Pago conectado!"),
     ).not.toBeInTheDocument();
   });
 
   it("shows the title/description and the embedded card's fields when open", async () => {
     renderDialog();
 
-    expect(screen.getByText("Mercado Pago connected!")).toBeInTheDocument();
+    expect(screen.getByText("¡Mercado Pago conectado!")).toBeInTheDocument();
     expect(
-      screen.getByText(/players can now pay for reservations/i),
+      screen.getByText(/los jugadores ya pueden pagar sus reservas/i),
     ).toBeInTheDocument();
 
     await waitFor(() =>
-      expect(screen.getByLabelText(/bank name/i)).toBeInTheDocument(),
+      expect(screen.getByLabelText(/banco/i)).toBeInTheDocument(),
     );
     expect(screen.getByLabelText(/^cbu/i)).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: /save and continue/i }),
+      screen.getByRole("button", { name: /guardar y continuar/i }),
     ).toBeInTheDocument();
   });
 
@@ -104,17 +104,19 @@ describe("MercadoPagoConnectedDialog", () => {
     const { fetchMock, props } = renderDialog();
 
     await waitFor(() =>
-      expect(screen.getByLabelText(/bank name/i)).toBeInTheDocument(),
+      expect(screen.getByLabelText(/banco/i)).toBeInTheDocument(),
     );
 
-    fireEvent.change(screen.getByLabelText(/bank name/i), {
+    fireEvent.change(screen.getByLabelText(/banco/i), {
       target: { value: "Banco Nación" },
     });
     fireEvent.change(screen.getByLabelText(/^cbu/i), {
       target: { value: "0000000000000000000000" },
     });
 
-    fireEvent.click(screen.getByRole("button", { name: /save and continue/i }));
+    fireEvent.click(
+      screen.getByRole("button", { name: /guardar y continuar/i }),
+    );
 
     await waitFor(() =>
       expect(
@@ -133,10 +135,12 @@ describe("MercadoPagoConnectedDialog", () => {
     const { fetchMock, props } = renderDialog();
 
     await waitFor(() =>
-      expect(screen.getByLabelText(/bank name/i)).toBeInTheDocument(),
+      expect(screen.getByLabelText(/banco/i)).toBeInTheDocument(),
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /save and continue/i }));
+    fireEvent.click(
+      screen.getByRole("button", { name: /guardar y continuar/i }),
+    );
 
     expect(props.onOpenChange).toHaveBeenCalledWith(false);
     expect(

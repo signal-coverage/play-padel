@@ -10,7 +10,6 @@ const {
   userProfileFindManyMock,
   reservationFindManyMock,
   clubFindManyMock,
-  getUserLocaleMock,
   resolveNotificationContentMock,
 } = vi.hoisted(() => ({
   findManyMock: vi.fn(),
@@ -19,7 +18,6 @@ const {
   userProfileFindManyMock: vi.fn(),
   reservationFindManyMock: vi.fn(),
   clubFindManyMock: vi.fn(),
-  getUserLocaleMock: vi.fn(),
   resolveNotificationContentMock: vi.fn(),
 }));
 
@@ -40,10 +38,6 @@ vi.mock("@/infrastructure/db/client", () => ({
       findMany: clubFindManyMock,
     },
   },
-}));
-
-vi.mock("@/i18n/locale", () => ({
-  getUserLocale: getUserLocaleMock,
 }));
 
 vi.mock("@/lib/notifications/content", () => ({
@@ -84,20 +78,18 @@ describe("listRecipientNotifications", () => {
     findManyMock.mockReset();
     clubFindManyMock.mockReset();
     clubFindManyMock.mockResolvedValue([]);
-    getUserLocaleMock.mockReset();
     resolveNotificationContentMock.mockReset();
   });
 
-  it("re-renders title/message live, in the current VIEWER's locale, for a notification that has params stored", async () => {
+  it("re-renders title/message live, in the app's locale, for a notification that has params stored", async () => {
     findManyMock.mockResolvedValue([
       makeNotificationRow({
         type: "ADMIN_ACCESS_REVOKED",
-        title: "Your admin access on Play Padel was revoked",
-        message: "<div>stale English body</div>",
+        title: "Título obsoleto",
+        message: "<div>cuerpo obsoleto</div>",
         params: {},
       }),
     ]);
-    getUserLocaleMock.mockResolvedValue("es");
     resolveNotificationContentMock.mockResolvedValue({
       subject: "Se revocó tu acceso de administrador en Play Padel",
       html: "<div>cuerpo en español</div>",
@@ -127,18 +119,6 @@ describe("listRecipientNotifications", () => {
     expect(resolveNotificationContentMock).not.toHaveBeenCalled();
   });
 
-  // Skipping getUserLocale() entirely when nothing needs it isn't just an
-  // optimization — it's what lets every OTHER test in this file (built
-  // before Notification.params existed) keep passing without also having
-  // to mock i18n/locale.ts's cookies()-backed getUserLocale.
-  it("never calls getUserLocale at all when no notification in the page has params", async () => {
-    findManyMock.mockResolvedValue([makeNotificationRow({ params: null })]);
-
-    await listRecipientNotifications("user_1");
-
-    expect(getUserLocaleMock).not.toHaveBeenCalled();
-  });
-
   it("re-renders only the notifications that have params, leaving the rest untouched, in one page", async () => {
     findManyMock.mockResolvedValue([
       makeNotificationRow({
@@ -148,7 +128,6 @@ describe("listRecipientNotifications", () => {
       }),
       makeNotificationRow({ id: "notif_2", title: "Kept as-is", params: null }),
     ]);
-    getUserLocaleMock.mockResolvedValue("es");
     resolveNotificationContentMock.mockResolvedValue({
       subject: "Renovado",
       html: "<div>renovado</div>",

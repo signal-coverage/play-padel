@@ -10,7 +10,7 @@ import {
 import "@testing-library/jest-dom/vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/messages/en.json";
+import messages from "@/messages/es.json";
 import { MobileBottomNav } from "./MobileBottomNav";
 import type { SystemRole } from "@/providers/auth-provider";
 
@@ -30,7 +30,7 @@ function renderMobileBottomNav(
   });
 
   render(
-    <NextIntlClientProvider locale="en" messages={messages}>
+    <NextIntlClientProvider locale="es" messages={messages}>
       <QueryClientProvider client={queryClient}>
         <MobileBottomNav role={role} isAdmin={isAdmin} />
       </QueryClientProvider>
@@ -101,13 +101,15 @@ describe("MobileBottomNav", () => {
     renderMobileBottomNav("owner", fetchMock);
 
     await waitFor(() =>
-      expect(screen.queryByText("Courts")).not.toBeInTheDocument(),
+      expect(screen.queryByText("Canchas")).not.toBeInTheDocument(),
     );
 
-    expect(screen.getByText("Dashboard")).toBeInTheDocument();
-    expect(screen.queryByText("Reservations")).not.toBeInTheDocument();
-    expect(screen.queryByText("Club Settings")).not.toBeInTheDocument();
-    expect(screen.queryByText("Audit Log")).not.toBeInTheDocument();
+    expect(screen.getByText("Panel")).toBeInTheDocument();
+    expect(screen.queryByText("Reservas")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Configuración del club"),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText("Registro de auditoría")).not.toBeInTheDocument();
   });
 
   it("never fetches operational status for a player, and shows the full player nav", async () => {
@@ -117,8 +119,8 @@ describe("MobileBottomNav", () => {
     });
     renderMobileBottomNav("player", fetchMock);
 
-    expect(screen.getByText("Dashboard")).toBeInTheDocument();
-    expect(screen.getByText("Browse Courts")).toBeInTheDocument();
+    expect(screen.getByText("Panel")).toBeInTheDocument();
+    expect(screen.getByText("Buscar canchas")).toBeInTheDocument();
 
     // A player does fetch open-tournaments status (for the Tournaments nav
     // item's visibility/badge) — only the owner-only operational-status
@@ -147,12 +149,12 @@ describe("MobileBottomNav", () => {
     });
     renderMobileBottomNav("player", fetchMock);
 
-    expect(await screen.findByText("Tournaments")).toBeInTheDocument();
+    expect(await screen.findByText("Torneos")).toBeInTheDocument();
     // Mobile uses the compact dot variant (no room for a text pill next to
     // the icon+label column) — its label is accessible via sr-only text,
-    // not a visible "New"/"Open" pill like the desktop NavLinks badge.
+    // not a visible "Nuevo"/"Open" pill like the desktop NavLinks badge.
     expect(
-      screen.getByText("New", { selector: ".sr-only" }),
+      screen.getByText("Nuevo", { selector: ".sr-only" }),
     ).toBeInTheDocument();
   });
 
@@ -163,10 +165,8 @@ describe("MobileBottomNav", () => {
     });
     renderMobileBottomNav("owner", fetchMock, false);
 
-    await waitFor(() =>
-      expect(screen.getByText("Dashboard")).toBeInTheDocument(),
-    );
-    expect(screen.queryByText("Audit Log")).not.toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText("Panel")).toBeInTheDocument());
+    expect(screen.queryByText("Registro de auditoría")).not.toBeInTheDocument();
   });
 
   it("shows Audit Log for an admin owner", async () => {
@@ -180,7 +180,7 @@ describe("MobileBottomNav", () => {
     fireEvent.click(screen.getByText("Admin"));
 
     expect(
-      await screen.findByRole("menuitem", { name: "Audit Log" }),
+      await screen.findByRole("menuitem", { name: "Registro de auditoría" }),
     ).toBeInTheDocument();
   });
 
@@ -198,13 +198,13 @@ describe("MobileBottomNav", () => {
 
     await screen.findByText("Admin");
     expect(
-      screen.queryByRole("link", { name: /club settings/i }),
+      screen.queryByRole("link", { name: /configuración del club/i }),
     ).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByText("Admin"));
 
     expect(
-      await screen.findByRole("menuitem", { name: "Club Settings" }),
+      await screen.findByRole("menuitem", { name: "Configuración del club" }),
     ).toHaveAttribute("href", "/dashboard/settings/club");
   });
 
@@ -244,7 +244,7 @@ describe("MobileBottomNav", () => {
     // must never regress now that Admin lives inside this same container.
     expect(container.className).not.toMatch(/\boverflow-hidden\b/);
 
-    const dashboardLink = screen.getByRole("link", { name: "Dashboard" });
+    const dashboardLink = screen.getByRole("link", { name: "Panel" });
     const adminButton = screen.getByRole("button", { name: "Admin" });
     expect(container.contains(dashboardLink)).toBe(true);
     expect(container.contains(adminButton)).toBe(true);
@@ -256,8 +256,8 @@ describe("MobileBottomNav", () => {
         ok: true,
         json: async () => ({ operational: true }),
       });
-      // Only "Courts" (40px) + the trigger (30px) fit in 80px; Reservations
-      // and Club Settings overflow into "More".
+      // Only "Canchas" (40px) + the trigger (30px) fit in 80px; Reservations
+      // and Club Settings overflow into "Más".
       stubOffsetWidths({
         containerWidth: 80,
         itemWidths: {
@@ -270,20 +270,20 @@ describe("MobileBottomNav", () => {
       renderMobileBottomNav("owner", fetchMock, false);
 
       await waitFor(() =>
-        expect(screen.getByText("Courts")).toBeInTheDocument(),
+        expect(screen.getByText("Canchas")).toBeInTheDocument(),
       );
       // Role-based, not getByText: the hidden measurement clone (see
       // MobileBottomNav.tsx's own comment) always renders the currently-
       // overflowed items' text too, for measurement — aria-hidden correctly
       // excludes it from the accessibility tree, unlike a plain text query.
       expect(
-        screen.queryByRole("link", { name: /reservations/i }),
+        screen.queryByRole("link", { name: /reservas/i }),
       ).not.toBeInTheDocument();
       expect(
-        screen.queryByRole("link", { name: /club settings/i }),
+        screen.queryByRole("link", { name: /configuración del club/i }),
       ).not.toBeInTheDocument();
 
-      const moreButton = await screen.findByRole("button", { name: "More" });
+      const moreButton = await screen.findByRole("button", { name: "Más" });
       // The visible trigger must NOT be a descendant of the overflow-hidden
       // measuring container — jsdom doesn't compute real CSS clipping, so
       // this regression (the dropdown opening but staying invisible, since
@@ -296,10 +296,10 @@ describe("MobileBottomNav", () => {
       fireEvent.click(moreButton);
 
       expect(
-        await screen.findByRole("menuitem", { name: "Reservations" }),
+        await screen.findByRole("menuitem", { name: "Reservas" }),
       ).toHaveAttribute("href", "/dashboard/reservations");
       expect(
-        screen.getByRole("menuitem", { name: "Club Settings" }),
+        screen.getByRole("menuitem", { name: "Configuración del club" }),
       ).toHaveAttribute("href", "/dashboard/settings/club");
     });
 
@@ -334,12 +334,12 @@ describe("MobileBottomNav", () => {
         ).toBeInTheDocument(),
       );
       expect(
-        screen.queryByRole("link", { name: "Courts" }),
+        screen.queryByRole("link", { name: "Canchas" }),
       ).not.toBeInTheDocument();
 
-      fireEvent.click(screen.getByRole("button", { name: "More" }));
+      fireEvent.click(screen.getByRole("button", { name: "Más" }));
       expect(
-        await screen.findByRole("menuitem", { name: "Courts" }),
+        await screen.findByRole("menuitem", { name: "Canchas" }),
       ).toHaveAttribute("href", "/dashboard/courts");
     });
 
@@ -360,11 +360,9 @@ describe("MobileBottomNav", () => {
       renderMobileBottomNav("owner", fetchMock, false);
 
       await waitFor(() =>
-        expect(
-          screen.getByRole("button", { name: "More" }),
-        ).toBeInTheDocument(),
+        expect(screen.getByRole("button", { name: "Más" })).toBeInTheDocument(),
       );
-      expect(screen.getByText("Dashboard")).toBeInTheDocument();
+      expect(screen.getByText("Panel")).toBeInTheDocument();
     });
   });
 });

@@ -93,6 +93,22 @@ export const navItems: NavItem[] = [
     roles: ["owner"],
   },
   {
+    // The owner's own permanent tournament management entry point — always
+    // visible (no requiresCondition), unlike the player's gated "tournaments"
+    // item further below: it points at a different route
+    // (/dashboard/tournaments, the owner-only manager backed by
+    // TournamentsManager) and must not share that item's gated visibility.
+    // Distinct titleKey so both items can carry their own label under
+    // AppNavbar.navItems without colliding. Kept in this earlier, plain-
+    // owner-items block (not appended after the adminOnly group) so it
+    // doesn't disturb the adminOnly items' "last owner-role items in the
+    // source array" ordering — see the admin-only block's own tests.
+    titleKey: "manageTournaments",
+    href: "/dashboard/tournaments",
+    icon: Trophy,
+    roles: ["owner"],
+  },
+  {
     titleKey: "clubSettings",
     href: "/dashboard/settings/club",
     icon: Settings2,
@@ -165,6 +181,29 @@ export const navItems: NavItem[] = [
     titleKey: "approvals",
     href: "/dashboard/admin-approvals",
     icon: ClipboardCheck,
+    roles: ["owner", "player"],
+    adminOnly: true,
+    group: "admin",
+  },
+  {
+    // Lets any admin open ANY club's tournament management screen to
+    // troubleshoot (same full owner surface — create/publish, build groups,
+    // enter scores, generate brackets — see AdminTournamentsView), the same
+    // way admins already troubleshoot club settings via a club picker. A
+    // separate titleKey from the owner-only "manageTournaments" item above
+    // (same href, same icon) so the two can carry distinct labels under
+    // AppNavbar.navItems without colliding — reusing "manageTournaments"'s
+    // label here would also collide in meaning with the player-facing
+    // "tournaments" pill (see that item's own comment), since NavLinks/
+    // NavGroupMenu just render `t(item.titleKey)` with no per-viewer label
+    // branch. Same adminOnly narrowing pattern as Audit Log/Search/System
+    // Status/Approvals directly above: visible to any admin regardless of
+    // role, hidden from every non-admin including owners (a real owner who's
+    // also admin still reaches tournament management via the untouched
+    // "manageTournaments" item instead).
+    titleKey: "manageTournamentsAdmin",
+    href: "/dashboard/tournaments",
+    icon: Trophy,
     roles: ["owner", "player"],
     adminOnly: true,
     group: "admin",

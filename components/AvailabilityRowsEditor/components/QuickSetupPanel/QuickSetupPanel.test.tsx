@@ -2,17 +2,27 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
+import { NextIntlClientProvider } from "next-intl";
+import messages from "@/messages/es.json";
 import { QuickSetupPanel } from "./QuickSetupPanel";
 
 afterEach(() => {
   cleanup();
 });
 
-const ALL_DAY_ABBREVIATIONS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
+function renderPanel(props: React.ComponentProps<typeof QuickSetupPanel>) {
+  return render(
+    <NextIntlClientProvider locale="es" messages={messages}>
+      <QuickSetupPanel {...props} />
+    </NextIntlClientProvider>,
+  );
+}
+
+const ALL_DAY_ABBREVIATIONS = ["Do", "Lu", "Ma", "Mi", "Ju", "Vi", "Sá"];
 
 describe("QuickSetupPanel", () => {
   it("renders all 7 day checkboxes, checked by default", () => {
-    render(<QuickSetupPanel onApply={vi.fn()} />);
+    renderPanel({ onApply: vi.fn() });
 
     for (const abbreviation of ALL_DAY_ABBREVIATIONS) {
       expect(
@@ -22,9 +32,9 @@ describe("QuickSetupPanel", () => {
   });
 
   it("unchecks a day's checkbox when clicked, and checks it again on a second click", () => {
-    render(<QuickSetupPanel onApply={vi.fn()} />);
+    renderPanel({ onApply: vi.fn() });
 
-    const sunday = screen.getByRole("checkbox", { name: "Su" });
+    const sunday = screen.getByRole("checkbox", { name: "Do" });
 
     fireEvent.click(sunday);
     expect(sunday).not.toBeChecked();
@@ -35,9 +45,9 @@ describe("QuickSetupPanel", () => {
 
   it("calls onApply with all 7 days when defaults are untouched", () => {
     const onApply = vi.fn();
-    render(<QuickSetupPanel onApply={onApply} />);
+    renderPanel({ onApply });
 
-    fireEvent.click(screen.getByRole("button", { name: "Apply" }));
+    fireEvent.click(screen.getByRole("button", { name: "Aplicar" }));
 
     expect(onApply).toHaveBeenCalledTimes(1);
     const [startTime, endTime, days] = onApply.mock.calls[0];
@@ -48,22 +58,22 @@ describe("QuickSetupPanel", () => {
 
   it("excludes an unchecked day from the days passed to onApply", () => {
     const onApply = vi.fn();
-    render(<QuickSetupPanel onApply={onApply} />);
+    renderPanel({ onApply });
 
-    fireEvent.click(screen.getByRole("checkbox", { name: "Su" }));
-    fireEvent.click(screen.getByRole("button", { name: "Apply" }));
+    fireEvent.click(screen.getByRole("checkbox", { name: "Do" }));
+    fireEvent.click(screen.getByRole("button", { name: "Aplicar" }));
 
     const [, , days] = onApply.mock.calls[0];
     expect([...days].sort()).toEqual([1, 2, 3, 4, 5, 6]);
   });
 
   it("disables the Apply button when every day is unchecked", () => {
-    render(<QuickSetupPanel onApply={vi.fn()} />);
+    renderPanel({ onApply: vi.fn() });
 
     for (const abbreviation of ALL_DAY_ABBREVIATIONS) {
       fireEvent.click(screen.getByRole("checkbox", { name: abbreviation }));
     }
 
-    expect(screen.getByRole("button", { name: "Apply" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Aplicar" })).toBeDisabled();
   });
 });

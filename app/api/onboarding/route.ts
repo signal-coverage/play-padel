@@ -8,7 +8,7 @@ import { logAudit } from "@/core/audit/services/audit.service";
 import { notifyAllAdmins } from "@/lib/notifications/dispatcher";
 import type { Plan } from "@/core/clubs/types";
 import { getTranslations } from "next-intl/server";
-import { getUserLocale } from "@/i18n/locale";
+import { DEFAULT_LOCALE } from "@/i18n/localeConstants";
 import { buildOnboardingFormSchema } from "@/app/onboarding/types";
 import { requireAuthUser } from "@/lib/auth/requireAuthUser";
 import { checkBot } from "@/lib/security/botGuard";
@@ -27,13 +27,13 @@ export async function POST(request: Request) {
   const authResult = await requireAuthUser();
   if (!authResult.ok) return authResult.response;
   const { userId } = authResult;
-  // Captured once, from whatever locale the submitting session is actually
-  // using — only ever written on the CREATE branch of each upsert below,
-  // never update: a resubmit (this upsert exists to make retries
-  // idempotent) must not silently reset a locale the user may have changed
-  // via the LocaleSwitcher between their first submit and a later one, same
+  // The app is Spanish-only, so this is always DEFAULT_LOCALE. Kept as its
+  // own variable (rather than inlining the constant at each `locale,`
+  // call below) since it's only ever written on the CREATE branch of each
+  // upsert below, never update — a resubmit (this upsert exists to make
+  // retries idempotent) must not touch an existing row's locale, same
   // reasoning as preferredSide/dominantHand/photoURL further down.
-  const locale = await getUserLocale();
+  const locale = DEFAULT_LOCALE;
 
   const botCheck = await checkBot();
   if (botCheck) return botCheck;

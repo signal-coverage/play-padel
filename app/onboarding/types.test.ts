@@ -1,13 +1,13 @@
 import { describe, it, expect } from "vitest";
-import enMessages from "@/messages/en.json";
+import esMessages from "@/messages/es.json";
 import { buildOnboardingFormSchema } from "./types";
 
-// Built from the REAL English message catalog (not re-typed literals) so
+// Built from the REAL Spanish message catalog (not re-typed literals) so
 // this test can never silently drift from what actually ships — if
-// messages/en.json's OnboardingValidation.invalidWhatsappNumber ever
+// messages/es.json's OnboardingValidation.invalidWhatsappNumber ever
 // changes, this test's expectations change with it automatically.
 const t = (key: string): string =>
-  (enMessages.OnboardingValidation as Record<string, string>)[key] ?? key;
+  (esMessages.OnboardingValidation as Record<string, string>)[key] ?? key;
 const onboardingFormSchema = buildOnboardingFormSchema(t);
 
 // Base valid "owner" payload — every required owner field filled with a
@@ -38,7 +38,9 @@ describe("onboardingFormSchema — WhatsApp number validation (owner branch)", (
       const whatsappIssue = result.error.issues.find(
         (issue) => issue.path[0] === "whatsappNumber",
       );
-      expect(whatsappIssue?.message).toBe("Enter a valid WhatsApp number");
+      expect(whatsappIssue?.message).toBe(
+        "Ingresá un número de WhatsApp válido",
+      );
     }
   });
 
@@ -50,7 +52,9 @@ describe("onboardingFormSchema — WhatsApp number validation (owner branch)", (
       const whatsappIssue = result.error.issues.find(
         (issue) => issue.path[0] === "whatsappNumber",
       );
-      expect(whatsappIssue?.message).toBe("Enter a valid WhatsApp number");
+      expect(whatsappIssue?.message).toBe(
+        "Ingresá un número de WhatsApp válido",
+      );
     }
   });
 

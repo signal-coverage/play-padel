@@ -2,6 +2,8 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
+import { NextIntlClientProvider } from "next-intl";
+import messages from "@/messages/es.json";
 import { CardCollectionPanel } from "./CardCollectionPanel";
 
 afterEach(() => {
@@ -16,7 +18,11 @@ function renderPanel(
     onPayerEmailChange: vi.fn(),
     ...overrides,
   };
-  render(<CardCollectionPanel {...props} />);
+  render(
+    <NextIntlClientProvider locale="es" messages={messages}>
+      <CardCollectionPanel {...props} />
+    </NextIntlClientProvider>,
+  );
   return props;
 }
 
@@ -25,7 +31,7 @@ describe("CardCollectionPanel", () => {
     renderPanel({ payerEmail: "" });
 
     expect(screen.getByLabelText(/email/i)).not.toBeDisabled();
-    expect(screen.getByRole("button", { name: /^verify$/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /^verificar$/i })).toBeDisabled();
   });
 
   it("pre-fills the draft with defaultEmail, editable and not yet verified", () => {
@@ -37,7 +43,7 @@ describe("CardCollectionPanel", () => {
     expect(screen.getByLabelText(/email/i)).toHaveValue("owner@club.com");
     expect(screen.getByLabelText(/email/i)).not.toBeDisabled();
 
-    fireEvent.click(screen.getByRole("button", { name: /^verify$/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^verificar$/i }));
     expect(props.onPayerEmailChange).toHaveBeenCalledWith("owner@club.com");
   });
 
@@ -50,7 +56,7 @@ describe("CardCollectionPanel", () => {
     fireEvent.change(screen.getByLabelText(/email/i), {
       target: { value: "billing@club.com" },
     });
-    fireEvent.click(screen.getByRole("button", { name: /^verify$/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^verificar$/i }));
 
     expect(props.onPayerEmailChange).toHaveBeenCalledWith("billing@club.com");
   });
@@ -63,7 +69,7 @@ describe("CardCollectionPanel", () => {
     });
     expect(props.onPayerEmailChange).not.toHaveBeenCalled();
 
-    fireEvent.click(screen.getByRole("button", { name: /^verify$/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^verificar$/i }));
     expect(props.onPayerEmailChange).toHaveBeenCalledWith("a@b.com");
   });
 
@@ -74,7 +80,7 @@ describe("CardCollectionPanel", () => {
       target: { value: "not-an-email" },
     });
 
-    expect(screen.getByRole("button", { name: /^verify$/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /^verificar$/i })).toBeDisabled();
   });
 
   it("commits the email on Enter, same as clicking Verify", () => {
@@ -94,14 +100,14 @@ describe("CardCollectionPanel", () => {
     expect(screen.getByLabelText(/email/i)).toBeDisabled();
     expect(screen.getByLabelText(/email/i)).toHaveValue("owner@club.com");
     expect(
-      screen.getByRole("button", { name: /change email/i }),
+      screen.getByRole("button", { name: /cambiar email/i }),
     ).toBeInTheDocument();
   });
 
   it("clears the verified email when Change email is clicked", () => {
     const props = renderPanel({ payerEmail: "owner@club.com" });
 
-    fireEvent.click(screen.getByRole("button", { name: /change email/i }));
+    fireEvent.click(screen.getByRole("button", { name: /cambiar email/i }));
 
     expect(props.onPayerEmailChange).toHaveBeenCalledWith("");
   });

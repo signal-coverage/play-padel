@@ -4,7 +4,7 @@ import { useTranslations } from "next-intl";
 import { useAuth } from "@/hooks/use-auth";
 import { PlayerHelpSection } from "./components/PlayerHelpSection";
 import { OwnerHelpSection } from "./components/OwnerHelpSection";
-import { AccountLanguageHelpSection } from "./components/AccountLanguageHelpSection";
+import { AccountHelpSection } from "./components/AccountHelpSection";
 
 // In-app user manual for /dashboard/help (see AppNavbar/components/UserMenu's
 // existing "Help" link, previously dead). Branches on the signed-in user's
@@ -30,7 +30,7 @@ export function HelpView() {
       </div>
 
       {isOwner ? <OwnerHelpSection /> : <PlayerHelpSection />}
-      <AccountLanguageHelpSection />
+      <AccountHelpSection />
     </div>
   );
 }

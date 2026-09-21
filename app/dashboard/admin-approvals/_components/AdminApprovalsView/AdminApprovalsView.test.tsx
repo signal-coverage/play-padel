@@ -10,7 +10,7 @@ import {
 import "@testing-library/jest-dom/vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/messages/en.json";
+import messages from "@/messages/es.json";
 import { AdminApprovalsView } from "./AdminApprovalsView";
 
 const { toastMock } = vi.hoisted(() => ({
@@ -55,7 +55,7 @@ function renderView(fetchImpl: (url: string, init?: RequestInit) => unknown) {
   });
 
   render(
-    <NextIntlClientProvider locale="en" messages={messages}>
+    <NextIntlClientProvider locale="es" messages={messages}>
       <QueryClientProvider client={queryClient}>
         <AdminApprovalsView />
       </QueryClientProvider>
@@ -88,7 +88,7 @@ describe("AdminApprovalsView", () => {
     });
 
     expect(
-      await screen.findByText("No clubs are waiting for approval."),
+      await screen.findByText("No hay clubes esperando aprobación."),
     ).toBeInTheDocument();
   });
 
@@ -101,12 +101,14 @@ describe("AdminApprovalsView", () => {
 
     expect(await screen.findByText("New Padel Club")).toBeInTheDocument();
     expect(screen.getByText("owner@newclub.com")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Approve" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Reject" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Aprobar" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Rechazar" }),
+    ).toBeInTheDocument();
   });
 
   const DUPLICATE_WARNING_TITLE =
-    "Another club already has this email or address — check before approving.";
+    "Otro club ya tiene este email o dirección — revisá antes de aprobar.";
 
   it("shows a duplicate-warning badge when possibleDuplicate is true", async () => {
     renderView((url) => {
@@ -153,7 +155,7 @@ describe("AdminApprovalsView", () => {
 
     await screen.findByText("New Padel Club");
 
-    fireEvent.click(screen.getByRole("button", { name: "Approve" }));
+    fireEvent.click(screen.getByRole("button", { name: "Aprobar" }));
 
     await waitFor(() =>
       expect(fetchMock).toHaveBeenCalledWith(
@@ -164,10 +166,10 @@ describe("AdminApprovalsView", () => {
 
     await waitFor(() =>
       expect(
-        screen.getByText("No clubs are waiting for approval."),
+        screen.getByText("No hay clubes esperando aprobación."),
       ).toBeInTheDocument(),
     );
-    expect(toastMock.success).toHaveBeenCalledWith("Club approved");
+    expect(toastMock.success).toHaveBeenCalledWith("Club aprobado");
   });
 
   it("requires confirmation before rejecting, and removes the club from the list once confirmed", async () => {
@@ -185,18 +187,18 @@ describe("AdminApprovalsView", () => {
 
     await screen.findByText("New Padel Club");
 
-    fireEvent.click(screen.getByRole("button", { name: "Reject" }));
+    fireEvent.click(screen.getByRole("button", { name: "Rechazar" }));
 
     // The confirm dialog blocks the actual mutation until explicitly
-    // confirmed — clicking "Reject" alone must not have called the API yet.
-    const confirmHeading = await screen.findByText("Reject this club?");
+    // confirmed — clicking "Rechazar" alone must not have called the API yet.
+    const confirmHeading = await screen.findByText("¿Rechazar este club?");
     expect(confirmHeading).toBeInTheDocument();
     expect(fetchMock).not.toHaveBeenCalledWith(
       "/api/admin/clubs/club_1/reject",
       expect.anything(),
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Reject club" }));
+    fireEvent.click(screen.getByRole("button", { name: "Rechazar club" }));
 
     await waitFor(() =>
       expect(fetchMock).toHaveBeenCalledWith(
@@ -207,10 +209,10 @@ describe("AdminApprovalsView", () => {
 
     await waitFor(() =>
       expect(
-        screen.getByText("No clubs are waiting for approval."),
+        screen.getByText("No hay clubes esperando aprobación."),
       ).toBeInTheDocument(),
     );
-    expect(toastMock.success).toHaveBeenCalledWith("Club rejected");
+    expect(toastMock.success).toHaveBeenCalledWith("Club rechazado");
   });
 
   it("removes the approved club from the list even when the follow-up background refetch fails", async () => {
@@ -240,16 +242,16 @@ describe("AdminApprovalsView", () => {
     });
 
     await screen.findByText("New Padel Club");
-    fireEvent.click(screen.getByRole("button", { name: "Approve" }));
+    fireEvent.click(screen.getByRole("button", { name: "Aprobar" }));
 
     await waitFor(() =>
       expect(
-        screen.getByText("No clubs are waiting for approval."),
+        screen.getByText("No hay clubes esperando aprobación."),
       ).toBeInTheDocument(),
     );
   });
 
-  it('shows "Approving…" only on the clicked row while the request is in flight', async () => {
+  it('shows "Aprobando…" only on the clicked row while the request is in flight', async () => {
     let resolveApprove: (() => void) | undefined;
     renderView((url, init) => {
       if (url === "/api/admin/clubs/pending") {
@@ -268,15 +270,15 @@ describe("AdminApprovalsView", () => {
     });
 
     await screen.findByText("New Padel Club");
-    const approveButtons = screen.getAllByRole("button", { name: "Approve" });
+    const approveButtons = screen.getAllByRole("button", { name: "Aprobar" });
     fireEvent.click(approveButtons[0]);
 
     expect(
-      await screen.findByRole("button", { name: "Approving…" }),
+      await screen.findByRole("button", { name: "Aprobando…" }),
     ).toBeInTheDocument();
     // The second club's row is untouched — its own Approve button stays
     // enabled and unlabeled while only the first row's request is in flight.
-    expect(screen.getByRole("button", { name: "Approve" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Aprobar" })).toBeEnabled();
 
     resolveApprove?.();
   });
@@ -296,7 +298,7 @@ describe("AdminApprovalsView", () => {
     });
 
     await screen.findByText("New Padel Club");
-    fireEvent.click(screen.getByRole("button", { name: "Approve" }));
+    fireEvent.click(screen.getByRole("button", { name: "Aprobar" }));
 
     await waitFor(() =>
       expect(toastMock.error).toHaveBeenCalledWith(

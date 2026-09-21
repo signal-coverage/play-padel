@@ -11,7 +11,7 @@ import {
 import "@testing-library/jest-dom/vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/messages/en.json";
+import messages from "@/messages/es.json";
 
 // Mocked the same way PlanSelectionModal.test.tsx mocks it — the real module
 // is a plain event dispatch with no DOM/canvas involvement, but these tests
@@ -98,7 +98,7 @@ function renderCourtsView(
 
   render(
     <QueryClientProvider client={queryClient}>
-      <NextIntlClientProvider locale="en" messages={messages}>
+      <NextIntlClientProvider locale="es" messages={messages}>
         <CourtsView />
       </NextIntlClientProvider>
     </QueryClientProvider>,
@@ -116,33 +116,35 @@ function renderCourtsView(
 // enabled before clicking, rather than firing right after the field change.
 async function clickNextWhenReady() {
   await waitFor(() =>
-    expect(screen.getByRole("button", { name: /^next$/i })).not.toBeDisabled(),
+    expect(
+      screen.getByRole("button", { name: /^siguiente$/i }),
+    ).not.toBeDisabled(),
   );
-  fireEvent.click(screen.getByRole("button", { name: /^next$/i }));
+  fireEvent.click(screen.getByRole("button", { name: /^siguiente$/i }));
 }
 
 async function openFormAndFillMinimumFields() {
-  fireEvent.click(await screen.findByRole("button", { name: /new court/i }));
+  fireEvent.click(await screen.findByRole("button", { name: /nueva cancha/i }));
 
   // Step 0 — Details: name.
-  fireEvent.change(screen.getByLabelText(/^name/i), {
+  fireEvent.change(screen.getByLabelText(/^nombre/i), {
     target: { value: "Court 1" },
   });
   await clickNextWhenReady();
 
   // Step 1 — Attributes: surface. Scoped to the Surface fieldset: the Wall
-  // type field also offers a "Concrete" radio option, so an unscoped query
+  // type field also offers a "Concreto" radio option, so an unscoped query
   // would now match both.
   fireEvent.click(
-    within(screen.getByRole("group", { name: /^surface/i })).getByRole(
+    within(screen.getByRole("group", { name: /^superficie/i })).getByRole(
       "radio",
-      { name: "Concrete" },
+      { name: "Concreto" },
     ),
   );
   await clickNextWhenReady();
 
   // Step 2 — Pricing: reservation fee.
-  fireEvent.change(screen.getByLabelText(/reservation fee/i), {
+  fireEvent.change(screen.getByLabelText(/seña de reserva/i), {
     target: { value: "5000" },
   });
   await clickNextWhenReady();
@@ -153,7 +155,7 @@ async function openFormAndFillMinimumFields() {
   // last field change above.
   await waitFor(() => {
     expect(
-      screen.getByRole("button", { name: /create court/i }),
+      screen.getByRole("button", { name: /crear cancha/i }),
     ).not.toBeDisabled();
   });
 }
@@ -206,29 +208,29 @@ describe("CourtsView", () => {
     await openFormAndFillMinimumFields();
 
     const file = new File(["photo"], "court.jpg", { type: "image/jpeg" });
-    fireEvent.change(screen.getByLabelText("Upload picture"), {
+    fireEvent.change(screen.getByLabelText("Subir foto"), {
       target: { files: [file] },
     });
 
-    fireEvent.click(screen.getByRole("button", { name: /create court/i }));
+    fireEvent.click(screen.getByRole("button", { name: /crear cancha/i }));
 
     // Create POST resolves, but the photo upload is still pending: no
     // success signal yet, and the Sheet must still show its pending state.
-    await screen.findByRole("button", { name: /saving/i });
+    await screen.findByRole("button", { name: /guardando/i });
     expect(toastMock.success).not.toHaveBeenCalled();
     expect(fireSuccessCelebrationMock).not.toHaveBeenCalled();
     expect(
-      screen.getByRole("heading", { name: "New court" }),
+      screen.getByRole("heading", { name: "Nueva cancha" }),
     ).toBeInTheDocument();
 
     resolvePhotoUpload?.();
 
     await waitFor(() => {
-      expect(toastMock.success).toHaveBeenCalledWith("Court created");
+      expect(toastMock.success).toHaveBeenCalledWith("Cancha creada");
     });
     expect(fireSuccessCelebrationMock).toHaveBeenCalledTimes(1);
     expect(
-      screen.queryByRole("heading", { name: "New court" }),
+      screen.queryByRole("heading", { name: "Nueva cancha" }),
     ).not.toBeInTheDocument();
   }, 15000);
 
@@ -261,11 +263,11 @@ describe("CourtsView", () => {
     await openFormAndFillMinimumFields();
 
     const file = new File(["photo"], "court.jpg", { type: "image/jpeg" });
-    fireEvent.change(screen.getByLabelText("Upload picture"), {
+    fireEvent.change(screen.getByLabelText("Subir foto"), {
       target: { files: [file] },
     });
 
-    fireEvent.click(screen.getByRole("button", { name: /create court/i }));
+    fireEvent.click(screen.getByRole("button", { name: /crear cancha/i }));
 
     await waitFor(() => {
       expect(toastMock.error).toHaveBeenCalledWith(
@@ -274,7 +276,7 @@ describe("CourtsView", () => {
     });
 
     // The just-created court gets rolled back via a silent delete — no
-    // "Court deactivated" toast, since that toast is reserved for an
+    // "Cancha desactivada" toast, since that toast is reserved for an
     // owner-initiated deactivation, not this internal cleanup.
     await waitFor(() => {
       const deleteCall = fetchMock.mock.calls.find(
@@ -284,15 +286,15 @@ describe("CourtsView", () => {
       );
       expect(deleteCall).toBeDefined();
     });
-    expect(toastMock.success).not.toHaveBeenCalledWith("Court deactivated");
+    expect(toastMock.success).not.toHaveBeenCalledWith("Cancha desactivada");
 
-    // No "Court created" success signal fires for this failed operation.
-    expect(toastMock.success).not.toHaveBeenCalledWith("Court created");
+    // No "Cancha creada" success signal fires for this failed operation.
+    expect(toastMock.success).not.toHaveBeenCalledWith("Cancha creada");
     expect(fireSuccessCelebrationMock).not.toHaveBeenCalled();
 
     // The Sheet stays open so the owner can retry.
     expect(
-      screen.getByRole("heading", { name: "New court" }),
+      screen.getByRole("heading", { name: "Nueva cancha" }),
     ).toBeInTheDocument();
   });
 
@@ -312,14 +314,14 @@ describe("CourtsView", () => {
 
     await openFormAndFillMinimumFields();
 
-    fireEvent.click(screen.getByRole("button", { name: /create court/i }));
+    fireEvent.click(screen.getByRole("button", { name: /crear cancha/i }));
 
     await waitFor(() => {
-      expect(toastMock.success).toHaveBeenCalledWith("Court created");
+      expect(toastMock.success).toHaveBeenCalledWith("Cancha creada");
     });
     expect(fireSuccessCelebrationMock).toHaveBeenCalledTimes(1);
     expect(
-      screen.queryByRole("heading", { name: "New court" }),
+      screen.queryByRole("heading", { name: "Nueva cancha" }),
     ).not.toBeInTheDocument();
   });
 
@@ -336,7 +338,7 @@ describe("CourtsView", () => {
 
     fireEvent.click(
       await screen.findByRole("button", {
-        name: `Edit availability for ${EXISTING_COURT.name}`,
+        name: `Editar disponibilidad de ${EXISTING_COURT.name}`,
       }),
     );
 
@@ -350,10 +352,10 @@ describe("CourtsView", () => {
     ).not.toHaveAttribute("aria-current");
 
     // Same merged modal, not a separate one — the heading still reads
-    // "Edit court" (CourtFormSheet's edit-mode title), not a standalone
+    // "Editar cancha" (CourtFormSheet's edit-mode title), not a standalone
     // "Weekly availability" title.
     expect(
-      screen.getByRole("heading", { name: "Edit court" }),
+      screen.getByRole("heading", { name: "Editar cancha" }),
     ).toBeInTheDocument();
   });
 
@@ -385,14 +387,14 @@ describe("CourtsView", () => {
 
     fireEvent.click(
       await screen.findByRole("button", {
-        name: `Edit availability for ${EXISTING_COURT.name}`,
+        name: `Editar disponibilidad de ${EXISTING_COURT.name}`,
       }),
     );
 
     // Apply the Quick setup panel's default window to all 7 days.
-    fireEvent.click(await screen.findByRole("button", { name: "Apply" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Aplicar" }));
 
-    fireEvent.click(screen.getByRole("button", { name: /save changes/i }));
+    fireEvent.click(screen.getByRole("button", { name: /guardar cambios/i }));
 
     await waitFor(() => {
       const putCall = fetchMock.mock.calls.find(
@@ -445,10 +447,10 @@ describe("CourtsView", () => {
     // row must be expanded before its club-default-derived value can be
     // observed, without ever touching it — the default should flow through
     // untouched.
-    fireEvent.click(screen.getByText("Monday"));
+    fireEvent.click(screen.getByText("Lunes"));
     await screen.findByDisplayValue("08:00");
 
-    fireEvent.click(screen.getByRole("button", { name: /create court/i }));
+    fireEvent.click(screen.getByRole("button", { name: /crear cancha/i }));
 
     await waitFor(() => {
       const postCall = fetchMock.mock.calls.find(
@@ -484,10 +486,14 @@ describe("CourtsView", () => {
       ).not.toBeInTheDocument();
 
       fireEvent.click(
-        screen.getByRole("checkbox", { name: `Select ${EXISTING_COURT.name}` }),
+        screen.getByRole("checkbox", {
+          name: `Seleccionar ${EXISTING_COURT.name}`,
+        }),
       );
 
-      expect(await screen.findByText("1 court selected")).toBeInTheDocument();
+      expect(
+        await screen.findByText("1 cancha seleccionada"),
+      ).toBeInTheDocument();
     });
 
     it("clears the selection when Clear is clicked", async () => {
@@ -495,11 +501,13 @@ describe("CourtsView", () => {
 
       await screen.findByText(EXISTING_COURT.name);
       fireEvent.click(
-        screen.getByRole("checkbox", { name: `Select ${EXISTING_COURT.name}` }),
+        screen.getByRole("checkbox", {
+          name: `Seleccionar ${EXISTING_COURT.name}`,
+        }),
       );
-      await screen.findByText("1 court selected");
+      await screen.findByText("1 cancha seleccionada");
 
-      fireEvent.click(screen.getByRole("button", { name: /clear/i }));
+      fireEvent.click(screen.getByRole("button", { name: /limpiar/i }));
 
       expect(
         screen.queryByText(/court\(s\) selected/i),
@@ -511,14 +519,18 @@ describe("CourtsView", () => {
 
       await screen.findByText(EXISTING_COURT.name);
       fireEvent.click(
-        screen.getByRole("checkbox", { name: `Select ${EXISTING_COURT.name}` }),
+        screen.getByRole("checkbox", {
+          name: `Seleccionar ${EXISTING_COURT.name}`,
+        }),
       );
-      await screen.findByText("1 court selected");
+      await screen.findByText("1 cancha seleccionada");
 
-      fireEvent.click(screen.getByRole("button", { name: /bulk edit/i }));
+      fireEvent.click(screen.getByRole("button", { name: /edición masiva/i }));
 
       expect(
-        await screen.findByRole("heading", { name: "Bulk edit courts" }),
+        await screen.findByRole("heading", {
+          name: "Edición masiva de canchas",
+        }),
       ).toBeInTheDocument();
     });
   });
@@ -592,7 +604,9 @@ describe("CourtsView", () => {
         isFreePlan: false,
       });
 
-      const button = await screen.findByRole("button", { name: /new court/i });
+      const button = await screen.findByRole("button", {
+        name: /nueva cancha/i,
+      });
       await waitFor(() =>
         expect(button.className).not.toMatch(/\bcursor-not-allowed\b/),
       );
@@ -605,7 +619,9 @@ describe("CourtsView", () => {
         isFreePlan: false,
       });
 
-      const button = await screen.findByRole("button", { name: /new court/i });
+      const button = await screen.findByRole("button", {
+        name: /nueva cancha/i,
+      });
       await waitFor(() =>
         expect(button.className).toMatch(/\bcursor-not-allowed\b/),
       );
@@ -615,10 +631,10 @@ describe("CourtsView", () => {
       fireEvent.click(button);
 
       expect(
-        await screen.findByText(/court limit reached/i),
+        await screen.findByText(/límite de canchas alcanzado/i),
       ).toBeInTheDocument();
       expect(
-        screen.queryByRole("heading", { name: "New court" }),
+        screen.queryByRole("heading", { name: "Nueva cancha" }),
       ).not.toBeInTheDocument();
     });
 
@@ -630,7 +646,9 @@ describe("CourtsView", () => {
         isFreePlan: false,
       });
 
-      const button = await screen.findByRole("button", { name: /new court/i });
+      const button = await screen.findByRole("button", {
+        name: /nueva cancha/i,
+      });
       await waitFor(() =>
         expect(button.className).toMatch(/\bcursor-not-allowed\b/),
       );
@@ -643,13 +661,15 @@ describe("CourtsView", () => {
         isFreePlan: true,
       });
 
-      const button = await screen.findByRole("button", { name: /new court/i });
+      const button = await screen.findByRole("button", {
+        name: /nueva cancha/i,
+      });
       await screen.findByText("Court 0");
       expect(button.className).not.toMatch(/\bcursor-not-allowed\b/);
 
       fireEvent.click(button);
       expect(
-        await screen.findByRole("heading", { name: "New court" }),
+        await screen.findByRole("heading", { name: "Nueva cancha" }),
       ).toBeInTheDocument();
     });
   });

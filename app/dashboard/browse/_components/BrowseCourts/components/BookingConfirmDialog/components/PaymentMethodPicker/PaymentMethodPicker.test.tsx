@@ -3,7 +3,7 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/messages/en.json";
+import messages from "@/messages/es.json";
 import { PaymentMethodPicker } from "./PaymentMethodPicker";
 
 afterEach(() => cleanup());
@@ -11,7 +11,7 @@ afterEach(() => cleanup());
 describe("PaymentMethodPicker", () => {
   it("renders nothing when only one method is available", () => {
     const { container } = render(
-      <NextIntlClientProvider locale="en" messages={messages}>
+      <NextIntlClientProvider locale="es" messages={messages}>
         <PaymentMethodPicker
           availableMethods={["MERCADOPAGO"]}
           selectedMethod="MERCADOPAGO"
@@ -25,7 +25,7 @@ describe("PaymentMethodPicker", () => {
   it("renders a choice between both methods and calls onSelectMethod on click", () => {
     const onSelectMethod = vi.fn();
     render(
-      <NextIntlClientProvider locale="en" messages={messages}>
+      <NextIntlClientProvider locale="es" messages={messages}>
         <PaymentMethodPicker
           availableMethods={["MERCADOPAGO", "TRANSFER"]}
           selectedMethod="MERCADOPAGO"
@@ -33,7 +33,9 @@ describe("PaymentMethodPicker", () => {
         />
       </NextIntlClientProvider>,
     );
-    fireEvent.click(screen.getByRole("button", { name: /bank transfer/i }));
+    fireEvent.click(
+      screen.getByRole("button", { name: /transferencia bancaria/i }),
+    );
     expect(onSelectMethod).toHaveBeenCalledWith("TRANSFER");
   });
 });

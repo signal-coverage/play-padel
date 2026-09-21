@@ -78,6 +78,7 @@ describe("getVisibleNavItems", () => {
         "/dashboard/admin-search",
         "/dashboard/admin-status",
         "/dashboard/admin-approvals",
+        "/dashboard/tournaments",
       ]);
     });
 
@@ -221,6 +222,42 @@ describe("getVisibleNavItems", () => {
       const result = getVisibleNavItems("player", undefined, true);
       expect(result.map((item) => item.href)).toContain(
         "/dashboard/admin-approvals",
+      );
+    });
+  });
+
+  // Manage Tournaments (admin) is the fifth adminOnly item, added alongside
+  // Audit Log, Search, System Status, and Approvals — same narrowing
+  // semantics. Distinct from the owner-only "manageTournaments" item (same
+  // href, different titleKey) which stays visible to a plain owner via the
+  // normal role match regardless of isAdmin — see that item's own comment
+  // in consts.ts.
+  describe("admin-only Manage Tournaments (admin) nav item", () => {
+    it("hides it from a non-admin owner (the owner still sees the plain manageTournaments item)", () => {
+      const result = getVisibleNavItems("owner", true);
+      expect(
+        result.filter((item) => item.href === "/dashboard/tournaments"),
+      ).toHaveLength(1);
+    });
+
+    it("hides it from a non-admin player", () => {
+      const result = getVisibleNavItems("player", undefined);
+      expect(result.map((item) => item.href)).not.toContain(
+        "/dashboard/tournaments",
+      );
+    });
+
+    it("shows it to an admin owner in addition to the plain manageTournaments item (two distinct entries, same href)", () => {
+      const result = getVisibleNavItems("owner", true, true);
+      expect(
+        result.filter((item) => item.href === "/dashboard/tournaments"),
+      ).toHaveLength(2);
+    });
+
+    it("shows it to an admin whose role is player", () => {
+      const result = getVisibleNavItems("player", undefined, true);
+      expect(result.map((item) => item.href)).toContain(
+        "/dashboard/tournaments",
       );
     });
   });

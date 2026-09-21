@@ -5,7 +5,7 @@ import "@testing-library/jest-dom/vitest";
 import { useForm } from "react-hook-form";
 import type { Path } from "react-hook-form";
 import { NextIntlClientProvider } from "next-intl";
-import messages from "@/messages/en.json";
+import messages from "@/messages/es.json";
 import { PhoneField } from "./PhoneField";
 import type { PhoneFieldValues } from "./types";
 
@@ -52,7 +52,7 @@ function Harness({
 
 function renderPhoneField(overrides: HarnessOverrides = {}) {
   return render(
-    <NextIntlClientProvider locale="en" messages={messages}>
+    <NextIntlClientProvider locale="es" messages={messages}>
       <Harness {...overrides} />
     </NextIntlClientProvider>,
   );
@@ -81,7 +81,7 @@ describe("PhoneField", () => {
 
   it("renders with the default label and binds to the 'phone'/'country' fields when no overrides are passed", () => {
     const { getByText } = renderPhoneField();
-    expect(getByText("Phone *")).toBeInTheDocument();
+    expect(getByText("Teléfono *")).toBeInTheDocument();
   });
 
   it("renders with a custom label and writes to custom field names when phoneFieldName/countryFieldName/label are provided", () => {

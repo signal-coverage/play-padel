@@ -24,12 +24,8 @@ interface FaqTranslation {
   answer: string;
 }
 
-// The actual landing page body, shared by app/page.tsx (Spanish, the
-// cookie-driven default) and app/en/page.tsx (the standalone English URL —
-// see i18n/getRequestLocale.ts for how that route forces its locale). Both
-// pages render this exact same component so the two language versions can
-// never drift apart from each other; only their own generateMetadata
-// (canonical + hreflang alternates) differs between the two.
+// The actual landing page body, rendered by app/page.tsx (the app is
+// Spanish-only — there is no separate English route anymore).
 //
 // A signed-in visitor has no reason to see marketing content — send them
 // straight to the app instead of making them notice "Go to app" in the
@@ -72,24 +68,34 @@ export async function LandingPage() {
     })),
   };
 
-  // One Product-with-nested-Offer per real pricing plan, in PLAN_ORDER (the
+  // One Service-with-nested-Offer per real pricing plan, in PLAN_ORDER (the
   // same read-only plan list/data LandingPricing already imports from
   // lib/consts/planPricing and components/PlanSelectionModal/consts). MAX is
   // skipped — it has no fixed monthlyPrice, and Offer.price must never be
   // fabricated for a "contact us" tier.
+  //
+  // "Service", not "Product": a SaaS subscription plan isn't a physical
+  // product, and Google's Product-snippet guidelines expect real
+  // aggregateRating/review data we don't have — fabricating either would be
+  // schema spam (and this app's own no-fake-marketing-claims stance, see
+  // the "no refunds" policy elsewhere, rules that out anyway). Service has
+  // no such expectation, so this sidesteps the Search Console warning
+  // instead of leaving it permanently "non-critical but unresolved".
   const planStructuredData = PLAN_ORDER.filter(
     (plan) => PLAN_DETAILS[plan].monthlyPrice !== null,
   ).map((plan) => {
     const details = PLAN_DETAILS[plan];
     return {
       "@context": "https://schema.org",
-      "@type": "Product",
+      "@type": "Service",
+      serviceType: "SaaS",
       name: `Play Padel ${plan}`,
       description: tPlan(`${plan}.tagline`),
       offers: {
         "@type": "Offer",
         price: details.monthlyPrice,
         priceCurrency: "ARS",
+        availability: "https://schema.org/InStock",
       },
     };
   });
