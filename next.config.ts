@@ -28,6 +28,10 @@ const withBundleAnalyzer = createBundleAnalyzer({
 //     MercadoPago-hosted iframe for card entry — this is NOT the Checkout Pro
 //     redirect flow (that's a plain top-level navigation, needs no CSP entry).
 //   - img.clerk.com: Clerk-hosted user avatars.
+//   - www.googletagmanager.com: the gtag.js loader
+//     (@next/third-parties/google's GoogleAnalytics, see app/layout.tsx).
+//   - *.google-analytics.com: GA4's hit-collection endpoint gtag.js calls
+//     into (region-specific subdomain, e.g. region1.google-analytics.com).
 //   - api2.amplitude.com: @amplitude/unified ships as a bundled module (no
 //     external <script> tag), but still calls out to Amplitude's ingestion
 //     API directly over fetch/XHR.
@@ -65,11 +69,11 @@ const CONTENT_SECURITY_POLICY = [
   // nonce injection via middleware). It still blocks any externally-hosted
   // script that isn't explicitly allow-listed below, which is the bulk of
   // real-world script-injection XSS.
-  `script-src 'self' 'unsafe-inline'${IS_DEV ? " 'unsafe-eval'" : ""} https://*.clerk.accounts.dev https://${CLERK_FRONTEND_API_HOST} https://challenges.cloudflare.com https://sdk.mercadopago.com`,
+  `script-src 'self' 'unsafe-inline'${IS_DEV ? " 'unsafe-eval'" : ""} https://*.clerk.accounts.dev https://${CLERK_FRONTEND_API_HOST} https://challenges.cloudflare.com https://sdk.mercadopago.com https://www.googletagmanager.com`,
   "style-src 'self' 'unsafe-inline'",
   `img-src 'self' data: blob: https://images.unsplash.com https://i.pravatar.cc https://picsum.photos https://img.clerk.com https://*.mercadopago.com https://http2.mlstatic.com`,
   "font-src 'self' data:",
-  `connect-src 'self' https://*.clerk.accounts.dev https://${CLERK_FRONTEND_API_HOST} https://api.mercadopago.com https://api2.amplitude.com https://sr-client-cfg.amplitude.com https://api-sr.amplitude.com https://*.sentry.io https://*.ingest.sentry.io https://challenges.cloudflare.com`,
+  `connect-src 'self' https://*.clerk.accounts.dev https://${CLERK_FRONTEND_API_HOST} https://api.mercadopago.com https://api2.amplitude.com https://sr-client-cfg.amplitude.com https://api-sr.amplitude.com https://*.sentry.io https://*.ingest.sentry.io https://challenges.cloudflare.com https://*.google-analytics.com https://www.googletagmanager.com`,
   "frame-src 'self' https://challenges.cloudflare.com https://*.mercadopago.com",
   // Session Replay compresses event batches inside a Web Worker spawned
   // from a blob: URL (see node_modules/@amplitude/session-replay-browser's
