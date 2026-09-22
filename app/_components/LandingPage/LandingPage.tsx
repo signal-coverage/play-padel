@@ -81,6 +81,14 @@ export async function LandingPage() {
   // the "no refunds" policy elsewhere, rules that out anyway). Service has
   // no such expectation, so this sidesteps the Search Console warning
   // instead of leaving it permanently "non-critical but unresolved".
+  //
+  // `image` is required regardless of `@type`: Search Console's Merchant
+  // listing check applies to any item with a nested Offer, not just
+  // `Product`, and flags a missing "image" field as invalid. There's no
+  // distinct art per tier, so this reuses the same branded card
+  // app/opengraph-image.tsx already generates for link previews rather than
+  // fabricating per-plan imagery that doesn't exist.
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
   const planStructuredData = PLAN_ORDER.filter(
     (plan) => PLAN_DETAILS[plan].monthlyPrice !== null,
   ).map((plan) => {
@@ -91,6 +99,7 @@ export async function LandingPage() {
       serviceType: "SaaS",
       name: `Play Padel ${plan}`,
       description: tPlan(`${plan}.tagline`),
+      image: `${appUrl}/opengraph-image`,
       offers: {
         "@type": "Offer",
         price: details.monthlyPrice,
