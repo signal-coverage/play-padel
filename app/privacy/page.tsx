@@ -5,7 +5,9 @@ import { CONTAINER } from "@/lib/consts";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("PrivacyPage");
-  return { title: t("heading") };
+  // See app/terms/page.tsx — without this it silently inherits the root
+  // layout's canonical (the homepage) instead of pointing at itself.
+  return { title: t("heading"), alternates: { canonical: "/privacy" } };
 }
 
 export default async function PrivacyPage() {

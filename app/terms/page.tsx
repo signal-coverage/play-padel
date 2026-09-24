@@ -5,7 +5,10 @@ import { CONTAINER } from "@/lib/consts";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("TermsPage");
-  return { title: t("heading") };
+  // Without this, this page silently inherits the root layout's canonical
+  // (the homepage) instead of pointing at itself — see app/(auth)/login for
+  // why a wrong canonical is a real indexing problem, not just noise.
+  return { title: t("heading"), alternates: { canonical: "/terms" } };
 }
 
 // Renders the exact same legal text the user accepts in TermsStep during

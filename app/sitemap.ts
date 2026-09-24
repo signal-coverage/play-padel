@@ -15,18 +15,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "weekly",
       priority: 1,
     },
-    {
-      url: `${baseUrl}/login`,
-      lastModified,
-      changeFrequency: "yearly",
-      priority: 0.3,
-    },
-    {
-      url: `${baseUrl}/signup`,
-      lastModified,
-      changeFrequency: "yearly",
-      priority: 0.3,
-    },
+    // /login and /signup are deliberately absent: they're marked `noindex`
+    // (see their own page metadata) since a login form has no organic-search
+    // value — listing a noindex URL in the sitemap is itself flagged by
+    // Google Search Console as invalid.
     {
       url: `${baseUrl}/terms`,
       lastModified,

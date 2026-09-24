@@ -14,7 +14,7 @@ afterEach(() => {
 });
 
 describe("sitemap", () => {
-  it("publishes every public marketing and authentication route", () => {
+  it("publishes every public marketing route, excluding noindex auth pages", () => {
     vi.stubEnv("NEXT_PUBLIC_APP_URL", "https://padel.example.com");
 
     expect(sitemap()).toEqual([
@@ -23,18 +23,6 @@ describe("sitemap", () => {
         lastModified: NOW,
         changeFrequency: "weekly",
         priority: 1,
-      },
-      {
-        url: "https://padel.example.com/login",
-        lastModified: NOW,
-        changeFrequency: "yearly",
-        priority: 0.3,
-      },
-      {
-        url: "https://padel.example.com/signup",
-        lastModified: NOW,
-        changeFrequency: "yearly",
-        priority: 0.3,
       },
       {
         url: "https://padel.example.com/terms",
@@ -56,8 +44,6 @@ describe("sitemap", () => {
 
     expect(sitemap().map((entry) => entry.url)).toEqual([
       "http://localhost:3000",
-      "http://localhost:3000/login",
-      "http://localhost:3000/signup",
       "http://localhost:3000/terms",
       "http://localhost:3000/privacy",
     ]);
